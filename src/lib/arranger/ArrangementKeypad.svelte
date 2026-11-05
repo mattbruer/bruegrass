@@ -19,12 +19,20 @@
 	let timeOpen = $state(false);
 	/** Distance from the bottom of the layout to the top of the system keyboard. */
 	let keyboardOffset = $state(0);
+	/**
+	 * The part of the page on screen (CSS px). When Safari is zoomed in, the
+	 * page is wider than the screen, so the keypad follows what's visible
+	 * instead of spanning the whole page.
+	 */
+	/** @type {{ left: number, width: number } | null} */
+	let visible = $state(null);
 
 	onMount(() => {
 		const viewport = window.visualViewport;
 		if (!viewport) return;
 		const update = () => {
 			keyboardOffset = Math.max(0, window.innerHeight - (viewport.offsetTop + viewport.height));
+			visible = { left: viewport.offsetLeft, width: viewport.width };
 		};
 		update();
 		viewport.addEventListener('resize', update);
@@ -81,7 +89,13 @@
 	const keepFocus = (/** @type {PointerEvent} */ event) => event.preventDefault();
 </script>
 
-<div class="keypad-dock" style:bottom="{keyboardOffset}px" bind:offsetHeight={height}>
+<div
+	class="keypad-dock"
+	style:bottom="{keyboardOffset}px"
+	style:left={visible ? `${visible.left}px` : null}
+	style:width={visible ? `${visible.width}px` : null}
+	bind:offsetHeight={height}
+>
 	{#if mode === 'text'}
 		<!-- Above the phone's own keyboard while typing a name -->
 		<div class="letters-bar">

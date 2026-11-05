@@ -443,7 +443,7 @@
 
 <!-- Extra room at the bottom while the mixer is open, so nothing is stuck under it -->
 <main
-	class="mx-auto max-w-5xl p-8"
+	class="mx-auto max-w-5xl px-4 py-8 sm:px-8"
 	style:padding-bottom={mixerOpen ? '26rem' : keypadShown ? `${keypadHeight + 32}px` : null}
 >
 	<h1 class="mb-6 text-3xl font-bold">Bluegrass Arranger</h1>
@@ -598,7 +598,7 @@
 				{#each DISPLAYS as display (display.id)}
 					<button
 						type="button"
-						class="border-l border-gray-300 px-3 py-1 text-sm font-semibold first:border-l-0 {chordDisplay ===
+						class="border-l border-gray-300 px-1.5 py-1 text-sm font-semibold first:border-l-0 sm:px-3 {chordDisplay ===
 						display.id
 							? 'bg-gray-900 text-white'
 							: 'hover:bg-gray-100'}"
@@ -673,7 +673,7 @@
 		id="arrangement"
 		bind:this={textarea}
 		bind:value={arrangement}
-		class="min-h-96 w-full rounded-lg border border-gray-300 p-4 font-mono text-sm"
+		class="min-h-96 w-full rounded-lg border border-gray-300 p-4 font-mono text-sm pointer-coarse:text-base"
 		spellcheck="false"
 		autocapitalize="off"
 		autocomplete="off"
@@ -711,7 +711,7 @@
 			bind:value={abcNotation}
 			aria-label="ABC notation"
 			placeholder={ABC_PLACEHOLDER}
-			class="min-h-48 w-full rounded-lg border border-gray-300 p-4 font-mono text-sm"
+			class="min-h-48 w-full rounded-lg border border-gray-300 p-4 font-mono text-sm pointer-coarse:text-base"
 			spellcheck="false"
 			autocapitalize="off"
 			autocomplete="off"
@@ -827,7 +827,7 @@
 	aria-label="Mixer"
 	inert={!mixerOpen}
 >
-	<div class="mx-auto max-w-5xl px-8 pt-3 pb-5">
+	<div class="mx-auto max-w-5xl px-4 pt-3 pb-5 sm:px-8">
 		<div class="mb-2 flex items-center justify-between">
 			<h2 class="font-semibold text-gray-100">Mixer</h2>
 			<button
