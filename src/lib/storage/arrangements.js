@@ -1,21 +1,29 @@
 /**
- * Saved arrangements.
+ * Saved arrangements ("your songs").
  *
- * An arrangement is a plain document: an id, timestamps, and the fields a
- * page edits. Pages only ever go through these functions, never storage
- * directly, so where documents live can change without touching them:
+ * An arrangement is a plain document: an id, timestamps, and the fields
+ * the arranger edits. Pages only ever go through these functions, never
+ * storage directly, so where songs live can change without touching them:
  * today this browser's localStorage (a per-device copy that works offline);
  * later a database, with this copy as an offline draft that syncs up.
  *
  * Nothing here knows about Svelte, so it can move to a server or a sync
  * worker unchanged.
  */
+import { readStored, removeStored, writeStored } from './localStore.js';
 
 /** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
 export const ARRANGEMENT_VERSION = 1;
 
-const STORE_KEY = 'bruegrass.arrangements';
-const CURRENT_KEY = 'bruegrass.currentArrangement';
+/** Where every saved song is kept, as { [id]: Arrangement }. */
+const SONGS_KEY = 'bruegrass.arrangements';
+
+/**
+ * Before songs were saved by name, the arranger reopened the last one it
+ * autosaved, using this key. Songs now only open when you choose them, so
+ * it's no longer needed (the songs themselves are kept).
+ */
+const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
 
 /**
  * @typedef {{
@@ -31,13 +39,14 @@ const CURRENT_KEY = 'bruegrass.currentArrangement';
  *   createdAt: string,
  *   updatedAt: string
  * }} Arrangement
- *   arrangement: the chord chart text; abc: the melody in ABC notation;
- *   transpose: semitones from the Key setting; mix: the mixer's settings
- *   (see mixSnapshot in mixer.svelte.js); dates are ISO strings
+ *   title: the song's name; arrangement: the chord chart text; abc: the
+ *   melody in ABC notation; transpose: semitones from the Key setting;
+ *   mix: the mixer's settings (see mixSnapshot in mixer.svelte.js);
+ *   dates are ISO strings
  */
 
 /**
- * A new arrangement document, not yet saved.
+ * A new song document, not yet saved.
  * @param {Partial<Arrangement>} [fields]
  * @returns {Arrangement}
  */
@@ -60,78 +69,68 @@ export function createArrangement(fields = {}) {
 }
 
 /**
- * The arrangement you were last working on, if any.
- * @returns {Arrangement | null}
- */
-export function currentArrangement() {
-	const id = read(CURRENT_KEY);
-	if (typeof id !== 'string') return null;
-	const doc = allArrangements()[id];
-	return doc ? upgrade(doc) : null;
-}
-
-/**
- * Save an arrangement (stamping its update time) and make it the current one.
- * @param {Arrangement} doc
- * @returns {Arrangement} the saved copy
- */
-export function saveArrangement(doc) {
-	const saved = { ...doc, version: ARRANGEMENT_VERSION, updatedAt: new Date().toISOString() };
-	const all = allArrangements();
-	all[saved.id] = saved;
-	write(STORE_KEY, all);
-	write(CURRENT_KEY, saved.id);
-	return saved;
-}
-
-/**
- * Every saved arrangement, newest first (for a future library or sync).
+ * Every saved song, most recently saved first.
  * @returns {Arrangement[]}
  */
 export function listArrangements() {
-	return Object.values(allArrangements())
+	return Object.values(allSongs())
 		.map(upgrade)
 		.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
+/**
+ * One saved song, or null if there's no song with that id.
+ * @param {string} id
+ * @returns {Arrangement | null}
+ */
+export function getArrangement(id) {
+	const song = allSongs()[id];
+	return song ? upgrade(song) : null;
+}
+
+/**
+ * Save a song (stamping when it was saved).
+ * @param {Arrangement} song
+ * @returns {Arrangement} the saved copy
+ */
+export function saveArrangement(song) {
+	const saved = { ...song, version: ARRANGEMENT_VERSION, updatedAt: new Date().toISOString() };
+	writeStored(SONGS_KEY, { ...allSongs(), [saved.id]: saved });
+	return saved;
+}
+
+/**
+ * Delete a saved song for good.
+ * @param {string} id
+ */
+export function deleteArrangement(id) {
+	const songs = allSongs();
+	delete songs[id];
+	writeStored(SONGS_KEY, songs);
+}
+
 /** @returns {Record<string, Arrangement>} */
-function allArrangements() {
-	const all = read(STORE_KEY);
-	return all && typeof all === 'object' ? all : {};
+function allSongs() {
+	removeStored(RETIRED_LAST_OPENED_KEY);
+	const songs = readStored(SONGS_KEY);
+	return songs && typeof songs === 'object' ? songs : {};
 }
 
 /**
  * Bring an older saved document up to the current shape.
- * @param {Arrangement} doc
+ * @param {Arrangement} song
  * @returns {Arrangement}
  */
-function upgrade(doc) {
-	return { ...createArrangement(), ...doc, version: ARRANGEMENT_VERSION };
+function upgrade(song) {
+	return {
+		...createArrangement(),
+		...song,
+		title: song.title || 'Untitled song',
+		version: ARRANGEMENT_VERSION
+	};
 }
 
 function newId() {
 	if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
 	return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-/** @param {string} key */
-function read(key) {
-	try {
-		const text = localStorage.getItem(key);
-		return text === null ? null : JSON.parse(text);
-	} catch {
-		return null; // no storage (private mode, server render) or unreadable
-	}
-}
-
-/**
- * @param {string} key
- * @param {unknown} value
- */
-function write(key, value) {
-	try {
-		localStorage.setItem(key, JSON.stringify(value));
-	} catch {
-		// no storage or full: the arrangement lasts for this visit
-	}
 }

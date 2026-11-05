@@ -31,6 +31,8 @@ Code is grouped by feature under `src/lib/`. `src/lib/README.md` and `src/lib/ar
   - `state/`: small state classes combined in `Arranger.svelte.js`; components get them via `useArranger()`
   - `components/` (by area)
 - The page `src/routes/arranger/+page.svelte` is only an outline.
+- The arranger always opens on the starter song in `src/lib/arranger/starterSong.js` (Amazing Grace, written for this app); New starts from it too.
+- Don't take ABC from thesession.org: its content licence forbids use with LLMs. Write public-domain tunes ourselves.
 - Every page: the top bar (`src/lib/components/TopBar.svelte`) and the Settings panel (`src/lib/settings/`), set up in `src/routes/+layout.svelte`.
 
 The user wants code they can read and change without help:
@@ -43,7 +45,13 @@ The user wants code they can read and change without help:
 ## Saved data and settings
 
 - `src/lib/storage/arrangements.js`: an arrangement is a plain document (`id`, `version`, `title`, `arrangement`, `abc`, `tempo`, `capo`, `transpose`, `mix`, `createdAt`, `updatedAt`). Pages only go through this module, never storage directly. Today it's localStorage, a per-device copy that works offline. A database is planned (social features, realtime, PWA), so keep data serializable and in this shape, and bump `ARRANGEMENT_VERSION` and migrate in `upgrade` when the shape changes.
-- The arranger restores the current arrangement on mount and autosaves changes (debounced, and flushed on leaving the page or the tab). The mix is saved with it (`mixSnapshot`/`applyMix` in `mixer.svelte.js`).
+- Songs are saved only when the user presses Save; there is no autosave and nothing auto-loads.
+  - The song bar is `components/song/`, and the logic is `state/SongState.svelte.js`.
+  - The first save asks for a name; after that, Save (or Cmd/Ctrl+S) saves under it.
+  - A dot shows unsaved changes, judged by comparing `readSongFields` with the fields as last saved.
+  - New, Open and leaving the page (`state/guardUnsavedChanges.svelte.js`, via `beforeNavigate`) ask before discarding unsaved changes.
+  - The mix is saved with the song (`mixSnapshot`/`applyMix`/`resetMix` in `mixer.svelte.js`).
+- `src/lib/components/Dialog.svelte` is the shared dialog frame used by Settings, Save and Open. Use it for any new dialog.
 - `src/lib/settings/settings.svelte.js` holds preferences, grouped by Settings tab, and saves them (only values of the right type are restored).
 - The panel is `SettingsPanel.svelte`, with one component per tab in `tabs/` and shared controls in `controls/`. To add a tab, add one line to `TABS`.
 

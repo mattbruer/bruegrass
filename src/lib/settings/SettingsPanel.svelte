@@ -3,11 +3,9 @@
 	 * The Settings panel: a dialog over whatever page you're on (so opening it
 	 * never interrupts your work), with a tab for each group of settings.
 	 *
-	 * It's a native <dialog>: Esc closes it, and keyboard focus stays inside
-	 * while it's open. Tapping the dimmed backdrop closes it too.
-	 *
 	 * To add a tab: write a component in ./tabs/ and add it to TABS below.
 	 */
+	import Dialog from '$lib/components/Dialog.svelte';
 	import GeneralTab from './tabs/GeneralTab.svelte';
 	import AppearanceTab from './tabs/AppearanceTab.svelte';
 
@@ -21,21 +19,6 @@
 
 	let currentTabId = $state(TABS[0].id);
 	let currentTab = $derived(TABS.find((tab) => tab.id === currentTabId) ?? TABS[0]);
-
-	/** @type {HTMLDialogElement | undefined} */
-	let dialog = $state();
-
-	// Keep the dialog in step with `open`
-	$effect(() => {
-		if (!dialog) return;
-		if (open && !dialog.open) dialog.showModal();
-		if (!open && dialog.open) dialog.close();
-	});
-
-	/** A click on the backdrop (outside the panel itself) closes it. */
-	function closeIfBackdropClicked(/** @type {MouseEvent} */ event) {
-		if (event.target === dialog) open = false;
-	}
 
 	/**
 	 * Left/right arrows move between tabs, as screen readers and keyboard
@@ -54,25 +37,7 @@
 	}
 </script>
 
-<dialog
-	bind:this={dialog}
-	class="panel"
-	aria-labelledby="settings-title"
-	onclose={() => (open = false)}
-	onclick={closeIfBackdropClicked}
->
-	<header class="flex items-center justify-between px-6 pt-6">
-		<h2 id="settings-title" class="text-xl font-bold">Settings</h2>
-		<button
-			type="button"
-			class="h-9 w-9 ui-button rounded-full"
-			aria-label="Close settings"
-			onclick={() => (open = false)}
-		>
-			✕
-		</button>
-	</header>
-
+<Dialog bind:open title="Settings">
 	<!-- Tab bar: a sunk well with the chosen tab raised -->
 	<div
 		class="mx-6 mt-5 flex ui-well rounded-[var(--corner-control)] p-1"
@@ -109,25 +74,4 @@
 	>
 		<currentTab.component />
 	</div>
-</dialog>
-
-<style>
-	.panel {
-		margin: auto;
-		width: min(30rem, calc(100% - 2rem));
-		max-height: calc(100% - 2rem);
-		overflow-y: auto;
-		border: none;
-		border-radius: var(--corner-panel);
-		background: var(--color-surface);
-		color: var(--color-ink);
-		box-shadow: var(--shadow-raised);
-		padding: 0;
-	}
-
-	/* The page behind is dimmed (in the text colour, so it suits any theme) and blurred */
-	.panel::backdrop {
-		background: color-mix(in oklab, var(--color-ink) 35%, transparent);
-		backdrop-filter: blur(3px);
-	}
-</style>
+</Dialog>

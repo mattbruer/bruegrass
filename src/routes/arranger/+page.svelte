@@ -3,9 +3,13 @@
 	 * The arranger page: an outline of its parts. The state they share lives
 	 * in $lib/arranger/state (see Arranger.svelte.js), and each part is a
 	 * component in $lib/arranger/components.
+	 *
+	 * It always opens on the starter song; your own songs open from the song
+	 * bar. Leaving with unsaved changes asks first.
 	 */
 	import { provideArranger } from '$lib/arranger/state/context.js';
-	import { keepArrangementSaved } from '$lib/arranger/state/autosave.svelte.js';
+	import { guardUnsavedChanges } from '$lib/arranger/state/guardUnsavedChanges.svelte.js';
+	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
 	import PlayerCard from '$lib/arranger/components/player/PlayerCard.svelte';
 	import ArrangementEditor from '$lib/arranger/components/editor/ArrangementEditor.svelte';
 	import MelodyPanel from '$lib/arranger/components/melody/MelodyPanel.svelte';
@@ -13,7 +17,7 @@
 	import MixerDrawer from '$lib/arranger/components/mixer/MixerDrawer.svelte';
 
 	const arranger = provideArranger();
-	keepArrangementSaved(arranger);
+	guardUnsavedChanges(arranger.song);
 </script>
 
 <svelte:head>
@@ -27,6 +31,7 @@
 >
 	<h1 class="mb-6 text-3xl font-bold">Bluegrass Arranger</h1>
 
+	<SongBar />
 	<PlayerCard />
 	<ArrangementEditor />
 	<MelodyPanel />

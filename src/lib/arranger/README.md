@@ -59,10 +59,16 @@ object (`state/Arranger.svelte.js`) made of small pieces:
 | `arranger.melody`      | `state/MelodyState.svelte.js`      | the ABC melody and the tune drawn from it                           |
 | `arranger.player`      | `state/PlayerState.svelte.js`      | play/stop, and a problem to show                                    |
 | `arranger.layout`      | `state/PageLayoutState.svelte.js`  | what covers the bottom of the screen (mixer, keypad)                |
+| `arranger.song`        | `state/SongState.svelte.js`        | which song is open; New, Open, Save, unsaved changes                |
 
 Components get it with `useArranger()` (`state/context.js`), so nothing is
-passed down through layers. Saving is set up once by `keepArrangementSaved()`
-(`state/autosave.svelte.js`).
+passed down through layers.
+
+`arranger.song` (`state/SongState.svelte.js`) is which song is open: the
+starter song as a new song until you save it (the song bar in
+`components/song/` has New, Open and Save). `state/songFields.js` moves a
+song between the page and a saved document, and
+`state/guardUnsavedChanges.svelte.js` asks before unsaved changes are lost.
 
 **Where to make a change:**
 
@@ -71,6 +77,8 @@ passed down through layers. Saving is set up once by `keepArrangementSaved()`
 - **Looks:** in the theme tokens (`$lib/theme`).
 
 ## Good to know
+
+- **The starter song** (what a new visitor sees) is in `starterSong.js`: a chord chart and its ABC melody. Swap both to change it.
 
 - **All musical time is in quarter notes** from bar 1, so every part lines up.
   `chart/timeline.js` is the single source of truth; never assume a fixed bar length.

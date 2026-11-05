@@ -6,10 +6,11 @@ import { NOTHING_DRAWN } from '../melody/drawSheetMusic.js';
 import { readMelody } from '../melody/readMelody.js';
 import { hasChords } from '../melody/abcChords.js';
 import { playedQuarters, sheetEvents } from '../melody/follow.js';
+import { STARTER_SONG } from '../starterSong.js';
 
 export class MelodyState {
 	/** The tune in ABC notation, as typed. */
-	notation = $state('');
+	notation = $state(STARTER_SONG.abc);
 
 	/**
 	 * What abcjs drew from the notation (set by the SheetMusic component,

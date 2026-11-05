@@ -9,6 +9,7 @@
  *   arranger.melody        the ABC melody
  *   arranger.player        play/stop, and problems to show
  *   arranger.layout        mixer drawer and phone keypad (what covers the screen)
+ *   arranger.song          which song is open; New, Open, Save
  *   arranger.chordReport   what the last chord conversion wants you to know
  */
 import { ArrangementState } from './ArrangementState.svelte.js';
@@ -16,6 +17,7 @@ import { LoopState } from './LoopState.svelte.js';
 import { MelodyState } from './MelodyState.svelte.js';
 import { PlayerState } from './PlayerState.svelte.js';
 import { PageLayoutState } from './PageLayoutState.svelte.js';
+import { SongState } from './SongState.svelte.js';
 import { abcWithChords, arrangementFromAbc } from '../melody/abcChords.js';
 
 export class Arranger {
@@ -24,6 +26,8 @@ export class Arranger {
 	melody = new MelodyState();
 	player = new PlayerState(this.arrangement, this.loop, this.melody);
 	layout = new PageLayoutState();
+	/** Which song is open, and saving it (created last: it reads all of the above). */
+	song = new SongState(this);
 
 	/** @type {{ title: string, notes: string[] } | null} */
 	chordReport = $state(null);

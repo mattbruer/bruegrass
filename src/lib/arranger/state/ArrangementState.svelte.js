@@ -9,18 +9,11 @@ import { keyChoicesFor } from '../chart/keyChoices.js';
 import { TEMPO_DEFAULT, validTempo } from '../chart/tempo.js';
 import { validCapo } from '../chart/capo.js';
 import { settings } from '$lib/settings/settings.svelte.js';
-
-/** What a brand-new arrangement starts with. */
-const STARTING_TEXT = `
-
-"Chorus"|G|G|G|G|C|C|G|G|G|G|G|G|G|G,D|G|G|
-
-
-`;
+import { STARTER_SONG } from '../starterSong.js';
 
 export class ArrangementState {
 	/** The chord chart as typed (see chart/parseArrangement.js for the format). */
-	text = $state(STARTING_TEXT);
+	text = $state(STARTER_SONG.arrangement);
 	/** Beats per minute, as typed (tidied by tidyTempo when you leave the field). */
 	tempo = $state(TEMPO_DEFAULT);
 	/** Capo fret, 0 = none. */

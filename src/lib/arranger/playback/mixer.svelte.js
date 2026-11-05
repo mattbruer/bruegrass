@@ -41,6 +41,14 @@ export const mixer = $state({
 	master: { volume: 0 }
 });
 
+/** The mix the app starts with: every fader where it ships. */
+const DEFAULT_MIX = $state.snapshot(mixer);
+
+/** Put every fader, knob and mute back to how the app starts. */
+export function resetMix() {
+	applyMix(DEFAULT_MIX);
+}
+
 /**
  * A plain copy of the mix, to save with an arrangement. Reading it inside an
  * effect tracks every setting, so the effect reruns whenever the mix changes.
