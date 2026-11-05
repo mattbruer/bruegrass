@@ -308,6 +308,14 @@ function loadBuffer(Tone, url) {
  * }>}
  */
 export async function playArrangement(sections, options = {}) {
+	/*
+	 * iPhone: the ring/silent switch mutes Web Audio unless the page says it
+	 * plays music, as a music app does (Safari 16.4+'s Audio Session API).
+	 * Set before anything is awaited, while we're still inside the tap.
+	 */
+	const audioSession = /** @type {any} */ (globalThis.navigator)?.audioSession;
+	if (audioSession) audioSession.type = 'playback';
+
 	const bpm = options.bpm ?? 120;
 	const shift = (options.capo ?? 0) + (options.transpose ?? 0);
 	const tuning = guitarTuning(sections, shift);
