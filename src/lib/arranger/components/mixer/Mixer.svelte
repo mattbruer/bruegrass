@@ -162,7 +162,7 @@
 		/* Inside the mixer, up/down is for the faders: only sideways swipes scroll */
 		touch-action: pan-x;
 		border-radius: var(--corner-panel);
-		background: var(--color-surface-deep);
+		background: var(--mixer-tray);
 		padding: 0.85rem;
 		box-shadow: var(--shadow-inset);
 		color: var(--color-ink);
@@ -177,7 +177,12 @@
 		gap: 0.6rem;
 		min-width: 6.5rem;
 		border-radius: var(--corner-card);
-		background: var(--color-surface);
+		background: var(--mixer-strip);
+		/*
+		 * Inside a strip, the strip's tone is the "surface": the knobs, caps,
+		 * readouts and mute button (which use --color-surface) match it.
+		 */
+		--color-surface: var(--mixer-strip);
 		padding: 0.85rem 0.75rem 1rem;
 		box-shadow: var(--shadow-raised-small);
 	}

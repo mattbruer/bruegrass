@@ -71,6 +71,22 @@
 	--corner-control: calc(0.75rem * var(--theme-roundness)); /* buttons, fields, keys */
 	--corner-card: calc(1rem * var(--theme-roundness)); /* cards, wells, mixer strips */
 	--corner-panel: calc(1.25rem * var(--theme-roundness)); /* the settings panel, the mixer tray */
+
+	/* ------------------------------------------------------------------ */
+	/* 3. Exceptions to Soft UI (on purpose)                              */
+	/* ------------------------------------------------------------------ */
+
+	/* Sheet music is always black on white, like printed music, whatever the theme */
+	--sheet-music-paper: #ffffff;
+	--sheet-music-ink: #000000;
+
+	/*
+	 * The mixer: channel strips stand out from their tray in tone, not just
+	 * shadow, so each channel reads at a glance. Both are worked out from the
+	 * background, so they suit light and dark themes alike.
+	 */
+	--mixer-tray: oklch(from var(--theme-background) calc(l - 0.08) c h);
+	--mixer-strip: oklch(from var(--theme-background) calc(l + 0.045) c h);
 }
 
 /*

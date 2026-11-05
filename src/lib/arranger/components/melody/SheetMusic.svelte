@@ -88,11 +88,22 @@
 			</ul>
 		{/if}
 
-		<div bind:this={page} class="overflow-x-auto ui-well p-2"></div>
+		<div bind:this={page} class="paper overflow-x-auto p-2"></div>
 	</section>
 {/if}
 
 <style>
+	/*
+	 * Always black notes on white paper, whatever the theme. abcjs draws in
+	 * the current text colour, so setting `color` here colours the music.
+	 */
+	.paper {
+		border-radius: var(--corner-card);
+		background: var(--sheet-music-paper);
+		color: var(--sheet-music-ink);
+		box-shadow: var(--shadow-inset-small);
+	}
+
 	/* Classes set by followSheetMusic.js: the sounding note, and the cursor */
 	:global(.abcjs-playing) {
 		fill: var(--color-accent);
