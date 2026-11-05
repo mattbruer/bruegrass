@@ -68,6 +68,8 @@ The core of the arranger.
 - Reactive `mixer` settings drive a lazily built Tone graph: per-instrument channel strips with sub-part `Tone.Volume`s (guitar: `bass`, `strum`), a shared reverb bus fed by sends, and master.
 - Instruments connect via `getChannel(id, part)`.
 - New instruments should add a channel to `mixer.channels` rather than connect to the destination directly.
+- Every mixer control is a `Slider.svelte`, the same on desktop and touch. Only the cap drags, and it moves relative to where it is, so the track never jumps. Off the cap, touches are left to the page (`touch-action: pan-x`). Tapping the readout resets; arrow keys step past detents.
+- The console is one row that scrolls sideways on narrow screens, so in the mixer up/down only ever means a fader. Keep strips short enough that the drawer fits a phone without vertical scrolling.
 
 ### `midi.js`
 

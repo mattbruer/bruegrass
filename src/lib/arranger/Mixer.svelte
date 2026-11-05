@@ -1,8 +1,7 @@
 <script>
 	import { mixer, formatDb, dbToFader, faderToDb, UNITY } from './mixer.svelte.js';
+	import Slider from './Slider.svelte';
 
-	/** Slider resolution: positions run 0–STEPS along the fader taper. */
-	const STEPS = 1000;
 	/** Dial marks beside each fader. */
 	const SCALE = [
 		{ db: 6, text: '+6' },
@@ -16,53 +15,68 @@
 	/** Small unlabelled ticks between the numbers (every 5 dB, plus +3). */
 	const MINOR_TICKS = [3, -5, -15, -25, -35, -50];
 
-	/**
-	 * Two-way binding between a dB setting and a slider on the console taper.
-	 * @param {Record<string, any>} target
-	 * @param {string} field
-	 */
-	function taper(target, field) {
-		return {
-			get: () => Math.round(dbToFader(target[field]) * STEPS),
-			set: (/** @type {number} */ value) => (target[field] = faderToDb(value / STEPS))
-		};
-	}
+	/* Where a reset puts each control */
+	const RESET_LEVEL = 0; // dB, unity
+	const RESET_SEND = -12; // dB
+	const RESET_PAN = 0;
+	const RESET_DECAY = 2.5; // s
+	const DECAY_MIN = 0.5;
+	const DECAY_MAX = 8;
 
-	/** @param {number} pan */
-	function formatPan(pan) {
-		if (Math.abs(pan) < 0.01) return 'C';
-		return `${pan < 0 ? 'L' : 'R'}${Math.round(Math.abs(pan) * 100)}`;
-	}
+	/** Levels and sends follow the console fader taper (see mixer.svelte.js). */
+	const level = {
+		toPosition: dbToFader,
+		fromPosition: faderToDb,
+		format: formatDb
+	};
+
+	const pan = {
+		toPosition: (/** @type {number} */ value) => (value + 1) / 2,
+		// Snap to the centre near it, like a centre-detented pan pot
+		fromPosition: (/** @type {number} */ position) => {
+			const value = Math.round((position * 2 - 1) * 100) / 100;
+			return Math.abs(value) < 0.04 ? 0 : value;
+		},
+		format: (/** @type {number} */ value) =>
+			Math.abs(value) < 0.01 ? 'C' : `${value < 0 ? 'L' : 'R'}${Math.round(Math.abs(value) * 100)}`
+	};
+
+	const decay = {
+		toPosition: (/** @type {number} */ seconds) => (seconds - DECAY_MIN) / (DECAY_MAX - DECAY_MIN),
+		fromPosition: (/** @type {number} */ position) =>
+			Math.round((DECAY_MIN + position * (DECAY_MAX - DECAY_MIN)) * 10) / 10,
+		format: (/** @type {number} */ seconds) => `${seconds.toFixed(1)} s`
+	};
 </script>
 
-{#snippet fader(/** @type {{ volume: number }} */ target, /** @type {string} */ label)}
-	{@const level = taper(target, 'volume')}
-	<div class="flex flex-col items-center gap-2">
-		<div class="fader-wrap">
-			<!-- The slot the fader cap rides in -->
-			<div class="slot" aria-hidden="true"></div>
-			<input
-				type="range"
-				class="fader"
-				min="0"
-				max={STEPS}
-				step="1"
-				aria-label="{label} fader"
-				bind:value={level.get, level.set}
-				ondblclick={() => (target.volume = 0)}
-			/>
-			<div class="scale" aria-hidden="true">
-				{#each MINOR_TICKS as db (db)}
-					<span class="tick minor" style="--at: {dbToFader(db)}"></span>
-				{/each}
-				{#each SCALE as mark (mark.text)}
-					<span class="tick" class:unity={mark.db === 0} style="--at: {dbToFader(mark.db)}"></span>
-					<span class="number" class:unity={mark.db === 0} style="--at: {dbToFader(mark.db)}">{mark.text}</span>
-				{/each}
-			</div>
-		</div>
-		<!-- <span class="w-12 text-center font-mono text-xs text-gray-300">{formatDb(target.volume)} dB</span> -->
+{#snippet scale()}
+	<div class="scale" aria-hidden="true">
+		{#each MINOR_TICKS as db (db)}
+			<span class="tick minor" style="--at: {dbToFader(db)}"></span>
+		{/each}
+		{#each SCALE as mark (mark.text)}
+			<span class="tick" class:unity={mark.db === 0} style="--at: {dbToFader(mark.db)}"></span>
+			<span class="number" class:unity={mark.db === 0} style="--at: {dbToFader(mark.db)}"
+				>{mark.text}</span
+			>
+		{/each}
 	</div>
+{/snippet}
+
+{#snippet fader(
+	/** @type {{ volume: number }} */ target,
+	/** @type {string} */ label,
+	variant = ''
+)}
+	<Slider
+		bind:value={target.volume}
+		{...level}
+		reset={RESET_LEVEL}
+		label="{label} fader"
+		orientation="vertical"
+		{variant}
+		children={scale}
+	/>
 {/snippet}
 
 {#snippet screws()}
@@ -71,60 +85,46 @@
 {/snippet}
 
 <section aria-label="Mixer">
+	<!-- One row of channels; on a narrow screen, swipe sideways for more -->
 	<div class="console">
 		{#each mixer.channels as channel (channel.id)}
-			{@const send = taper(channel, 'send')}
 			<div class="strip">
 				{@render screws()}
 				<h3 class="strip-name">{channel.name}</h3>
 
 				{#each channel.parts as part (part.id)}
-					{@const partLevel = taper(part, 'volume')}
-					<label class="knob">
-						<span>{part.name}</span>
-						<input
-							type="range"
-							min="0"
-							max={STEPS}
-							step="1"
-							bind:value={partLevel.get, partLevel.set}
-							ondblclick={() => (part.volume = 0)}
-						/>
-						<span class="readout">{formatDb(part.volume)}</span>
-					</label>
+					<Slider
+						name={part.name}
+						bind:value={part.volume}
+						{...level}
+						reset={RESET_LEVEL}
+						label="{channel.name} {part.name}"
+					/>
 				{/each}
 
-				<label class="knob">
-					<span>Reverb</span>
-					<input
-						type="range"
-						min="0"
-						max={UNITY * STEPS}
-						step="1"
-						bind:value={send.get, send.set}
-						ondblclick={() => (channel.send = -12)}
-					/>
-					<span class="readout">{formatDb(channel.send)}</span>
-				</label>
+				<Slider
+					name="Reverb"
+					bind:value={channel.send}
+					{...level}
+					max={UNITY}
+					reset={RESET_SEND}
+					label="{channel.name} reverb send"
+				/>
 
-				<label class="knob">
-					<span>Pan</span>
-					<input
-						type="range"
-						min="-1"
-						max="1"
-						step="0.01"
-						bind:value={channel.pan}
-						ondblclick={() => (channel.pan = 0)}
-					/>
-					<span class="readout">{formatPan(channel.pan)}</span>
-				</label>
+				<Slider
+					name="Pan"
+					bind:value={channel.pan}
+					{...pan}
+					reset={RESET_PAN}
+					label="{channel.name} pan"
+				/>
 
 				<button
 					type="button"
 					class="mute"
 					class:on={channel.mute}
 					aria-pressed={channel.mute}
+					aria-label="Mute {channel.name}"
 					onclick={() => (channel.mute = !channel.mute)}
 				>
 					M
@@ -138,11 +138,13 @@
 			{@render screws()}
 			<h3 class="strip-name">Reverb</h3>
 
-			<label class="knob">
-				<span>Decay</span>
-				<input type="range" min="0.5" max="8" step="0.1" bind:value={mixer.reverb.decay} />
-				<span class="readout">{mixer.reverb.decay.toFixed(1)} s</span>
-			</label>
+			<Slider
+				name="Decay"
+				bind:value={mixer.reverb.decay}
+				{...decay}
+				reset={RESET_DECAY}
+				label="Reverb decay"
+			/>
 
 			{@render fader(mixer.reverb, 'Reverb return')}
 		</div>
@@ -150,19 +152,22 @@
 		<div class="strip master">
 			{@render screws()}
 			<h3 class="strip-name">Master</h3>
-			{@render fader(mixer.master, 'Master')}
+			{@render fader(mixer.master, 'Master', 'master')}
 		</div>
 	</div>
 
-	<p class="mt-2 text-xs text-gray-500">Double-click a control to reset it.</p>
+	<p class="mt-2 text-xs text-gray-500">Drag a control by its cap. Tap a value to reset it.</p>
 </section>
 
 <style>
 	/* The console: a recessed dark tray the channel modules sit in */
 	.console {
 		display: flex;
-		flex-wrap: wrap;
 		align-items: stretch;
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		/* Inside the mixer, up/down is for the faders: only sideways swipes scroll */
+		touch-action: pan-x;
 		gap: 0.375rem;
 		border-radius: 0.75rem;
 		background: linear-gradient(180deg, rgb(10 11 13), rgb(22 24 28));
@@ -180,7 +185,8 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: flex-end;
-		gap: 0.75rem;
+		gap: 0.6rem;
+		flex-shrink: 0;
 		min-width: 6.5rem;
 		border-radius: 0.375rem;
 		background: linear-gradient(90deg, rgb(44 48 56), rgb(54 59 68) 45%, rgb(40 44 51));
@@ -239,74 +245,6 @@
 			0 1px 0 rgb(255 255 255 / 0.08);
 	}
 
-	.knob {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.3rem;
-		font-size: 0.65rem;
-		font-weight: 600;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: rgb(156 163 175);
-	}
-
-	.readout {
-		min-width: 3.5rem;
-		border-radius: 0.2rem;
-		background: rgb(8 9 11);
-		padding: 0.05rem 0.3rem;
-		text-align: center;
-		font-family: ui-monospace, monospace;
-		font-size: 0.65rem;
-		letter-spacing: 0;
-		text-transform: none;
-		color: rgb(251 191 36);
-		box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.8);
-	}
-
-	/* Small sliders: a recessed groove with a round cap */
-	.knob input {
-		width: 5rem;
-		height: 1rem;
-		appearance: none;
-		background: transparent;
-		cursor: pointer;
-	}
-
-	.knob input::-webkit-slider-runnable-track {
-		height: 0.3rem;
-		border-radius: 9999px;
-		background: rgb(10 11 13);
-		box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.9);
-	}
-
-	.knob input::-moz-range-track {
-		height: 0.3rem;
-		border-radius: 9999px;
-		background: rgb(10 11 13);
-		box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.9);
-	}
-
-	.knob input::-webkit-slider-thumb {
-		appearance: none;
-		margin-top: -0.35rem;
-		width: 1rem;
-		height: 1rem;
-		border-radius: 9999px;
-		background: radial-gradient(circle at 35% 30%, rgb(250 250 250), rgb(150 155 162) 60%, rgb(90 94 100));
-		box-shadow: 0 2px 3px rgb(0 0 0 / 0.6);
-	}
-
-	.knob input::-moz-range-thumb {
-		width: 1rem;
-		height: 1rem;
-		border: none;
-		border-radius: 9999px;
-		background: radial-gradient(circle at 35% 30%, rgb(250 250 250), rgb(150 155 162) 60%, rgb(90 94 100));
-		box-shadow: 0 2px 3px rgb(0 0 0 / 0.6);
-	}
-
 	/* Illuminated mute button */
 	.mute {
 		width: 2.25rem;
@@ -329,91 +267,9 @@
 			inset 0 1px 0 rgb(255 255 255 / 0.4);
 	}
 
-	/* Fader: a dark slot, a ridged cap, and a scale with tick marks */
-	.fader-wrap {
-		--cap: 1.1rem; /* fader cap height; the scale is inset by half of it */
-		position: relative;
-		display: flex;
-		gap: 0.15rem;
-		height: 11rem;
-	}
-
-	.slot {
-		position: absolute;
-		top: calc(var(--cap) / 2);
-		bottom: calc(var(--cap) / 2);
-		left: calc(1.125rem - 0.15rem);
-		width: 0.3rem;
-		border-radius: 9999px;
-		background: rgb(5 6 8);
-		box-shadow:
-			inset 0 1px 3px rgb(0 0 0 / 1),
-			0 0 0 1px rgb(255 255 255 / 0.05);
-	}
-
-	.fader {
-		position: relative;
-		writing-mode: vertical-lr;
-		direction: rtl;
-		height: 100%;
-		width: 2.25rem;
-		appearance: none;
-		background: transparent;
-		cursor: grab;
-	}
-
-	.fader:active {
-		cursor: grabbing;
-	}
-
-	.fader::-webkit-slider-runnable-track {
-		background: transparent;
-	}
-
-	.fader::-moz-range-track {
-		background: transparent;
-	}
-
-	.fader::-webkit-slider-thumb {
-		appearance: none;
-		width: 2.25rem;
-		height: var(--cap);
-		border-radius: 0.2rem;
-		background:
-			linear-gradient(rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.9)) center / 100% 2px no-repeat,
-			linear-gradient(rgb(235 237 240), rgb(170 175 182) 45%, rgb(120 125 132) 55%, rgb(190 194 200));
-		box-shadow:
-			0 3px 5px rgb(0 0 0 / 0.7),
-			inset 0 1px 0 rgb(255 255 255 / 0.8);
-	}
-
-	.fader::-moz-range-thumb {
-		width: 2.25rem;
-		height: var(--cap);
-		border: none;
-		border-radius: 0.2rem;
-		background:
-			linear-gradient(rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.9)) center / 100% 2px no-repeat,
-			linear-gradient(rgb(235 237 240), rgb(170 175 182) 45%, rgb(120 125 132) 55%, rgb(190 194 200));
-		box-shadow:
-			0 3px 5px rgb(0 0 0 / 0.7),
-			inset 0 1px 0 rgb(255 255 255 / 0.8);
-	}
-
-	.master .fader::-webkit-slider-thumb {
-		background:
-			linear-gradient(rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.9)) center / 100% 2px no-repeat,
-			linear-gradient(rgb(248 113 113), rgb(200 50 50) 50%, rgb(150 30 30));
-	}
-
-	.master .fader::-moz-range-thumb {
-		background:
-			linear-gradient(rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.9)) center / 100% 2px no-repeat,
-			linear-gradient(rgb(248 113 113), rgb(200 50 50) 50%, rgb(150 30 30));
-	}
-
 	/* Scale: ticks line up with the centre of the fader cap at each level */
 	.scale {
+		--cap: 1.1rem; /* the fader cap's height (Slider.svelte): ticks line up with its centre */
 		position: relative;
 		width: 1.75rem;
 	}
@@ -454,5 +310,12 @@
 	.number.unity {
 		font-weight: 700;
 		color: rgb(245 158 11);
+	}
+
+	/* Short screens (a phone on its side): shorter faders, so the mixer fits */
+	@media (max-height: 600px) {
+		.console {
+			--fader-length: 7rem;
+		}
 	}
 </style>

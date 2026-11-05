@@ -19,8 +19,8 @@ import { chordLabel, songKey } from './key.js';
 import { barQuarters, slotPositions } from './timeline.js';
 
 const EPSILON = 1e-6;
-/** Capo positions tried when fitting chords to shapes. */
-const MAX_CAPO = 7;
+/** Highest capo the arranger offers (and tries when fitting chords to shapes). */
+export const MAX_CAPO = 5;
 /** Shape keys a bluegrass guitarist reaches for first (with a capo). */
 const HOME_SHAPES = ['G', 'C', 'D', 'Am', 'Em'];
 /* Capo choice: a missing shape matters most, then a simplified chord, then playing out of a home shape, then a higher capo */

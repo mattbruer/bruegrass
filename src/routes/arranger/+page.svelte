@@ -2,7 +2,7 @@
 	import { parseArrangement } from '$lib/arranger/parseArrangement.js';
 	import { rhythm, slotPositions } from '$lib/arranger/timeline.js';
 	import { melodyEvents, melodyFit, melodyFromTune } from '$lib/arranger/melody.js';
-	import { abcWithChords, arrangementFromAbc, hasChords } from '$lib/arranger/abcChords.js';
+	import { MAX_CAPO, abcWithChords, arrangementFromAbc, hasChords } from '$lib/arranger/abcChords.js';
 	import { eventAt, melodyTime, playedQuarters, sheetEvents } from '$lib/arranger/follow.js';
 	import { resolve } from '$app/paths';
 	import { playArrangement } from '$lib/arranger/guitar.js';
@@ -34,7 +34,18 @@
 	let sections = $derived(parsed.sections);
 
 	let capo = $state(0);
+	/** Frets a capo can go on (0 = no capo). */
+	const CAPO_CHOICES = Array.from({ length: MAX_CAPO + 1 }, (_, fret) => fret);
 	let tempo = $state(120);
+	const TEMPO_MIN = 40;
+	const TEMPO_MAX = 300;
+	const TEMPO_DEFAULT = 120;
+
+	/** Whatever was typed becomes a whole BPM in range (Safari allows letters in number fields). */
+	function tidyTempo() {
+		const bpm = Math.round(Number(tempo));
+		tempo = Number.isFinite(bpm) && bpm > 0 ? Math.min(TEMPO_MAX, Math.max(TEMPO_MIN, bpm)) : TEMPO_DEFAULT;
+	}
 
 	/** Semitones on top of the capo, for every instrument (a new key for a singer). */
 	let transpose = $state(0);
@@ -67,6 +78,8 @@
 	});
 	let strumError = $state('');
 	let mixerOpen = $state(false);
+	/** The mixer drawer's height, so the page can scroll its content clear of it. */
+	let mixerHeight = $state(0);
 
 	/*
 	 * Optional melody in ABC notation: drawn as sheet music with abcjs, and
@@ -444,7 +457,11 @@
 <!-- Extra room at the bottom while the mixer is open, so nothing is stuck under it -->
 <main
 	class="mx-auto max-w-5xl px-4 py-8 sm:px-8"
-	style:padding-bottom={mixerOpen ? '26rem' : keypadShown ? `${keypadHeight + 32}px` : null}
+	style:padding-bottom={mixerOpen
+		? `${mixerHeight + 32}px`
+		: keypadShown
+			? `${keypadHeight + 32}px`
+			: null}
 >
 	<h1 class="mb-6 text-3xl font-bold">Bluegrass Arranger</h1>
 
@@ -476,9 +493,11 @@
 					Tempo
 					<input
 						type="number"
-						min="40"
-						max="300"
+						inputmode="numeric"
+						min={TEMPO_MIN}
+						max={TEMPO_MAX}
 						bind:value={tempo}
+						onchange={tidyTempo}
 						class="w-18 rounded-lg border border-gray-300 bg-white px-2 py-1"
 					/>
 					<span class="text-sm font-normal text-gray-500">BPM</span>
@@ -486,13 +505,11 @@
 
 				<label class="setting">
 					Capo
-					<input
-						type="number"
-						min="0"
-						max="9"
-						bind:value={capo}
-						class="w-14 rounded-lg border border-gray-300 bg-white px-2 py-1"
-					/>
+					<select bind:value={capo} class="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1">
+						{#each CAPO_CHOICES as fret (fret)}
+							<option value={fret}>{fret === 0 ? 'None' : fret}</option>
+						{/each}
+					</select>
 				</label>
 
 				<label class="setting">
@@ -524,10 +541,11 @@
 					Mixer
 				</button>
 
+				<!-- A MIDI file is for a computer DAW (Logic), so it's hidden on touch screens -->
 				<button
 					type="button"
 					onclick={downloadMidi}
-					class="rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold hover:bg-gray-100"
+					class="rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold hover:bg-gray-100 pointer-coarse:hidden"
 				>
 					Download .mid
 				</button>
@@ -821,6 +839,7 @@
 -->
 <div
 	id="mixer-drawer"
+	bind:offsetHeight={mixerHeight}
 	class="mixer-drawer"
 	class:open={mixerOpen}
 	role="region"
@@ -863,6 +882,7 @@
 	 * Player toolbar: three fixed areas instead of free wrapping.
 	 *   wide:    [Play Stop] [Tempo Capo Key] [Mixer .mid]
 	 *   medium:  [Play Stop]          [Mixer .mid]
+	 *   (.mid is hidden on touch screens)
 	 *            [Tempo Capo Key]
 	 *   narrow:  each area on its own row
 	 */
