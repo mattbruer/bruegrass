@@ -19,8 +19,42 @@ There is no test runner. To check pure logic (bass lines, event timing, MIDI byt
 
 ## Layout
 
-- `/` (`src/routes/+page.svelte`, `src/components/`, `src/lib/songs.js`): a simple playlist of MP3s in `static/audio/`.
-- `/arranger`: the main project, a bluegrass rhythm-guitar player/arranger. Its code lives in `src/lib/arranger/`.
+Code is grouped by feature under `src/lib/`. `src/lib/README.md` and `src/lib/arranger/README.md` are the maps; keep them current when adding or moving files.
+
+- `/` (`src/routes/+page.svelte`, `src/lib/songs/`): a simple playlist of MP3s in `static/audio/`.
+- `/arranger`: the main project, a bluegrass rhythm-section player/arranger, in `src/lib/arranger/`:
+  - `chart/`: parsing, timing, capo, tempo, key choices
+  - `instruments/`: what each part plays
+  - `playback/`: scheduler and mixer
+  - `melody/`: ABC, sheet music drawing and following
+  - `export/`: MIDI
+  - `state/`: small state classes combined in `Arranger.svelte.js`; components get them via `useArranger()`
+  - `components/` (by area)
+- The page `src/routes/arranger/+page.svelte` is only an outline.
+- Every page: the top bar (`src/lib/components/TopBar.svelte`) and the Settings panel (`src/lib/settings/`), set up in `src/routes/+layout.svelte`.
+
+The user wants code they can read and change without help:
+
+- Very modular: small functions in their own modules, imported by thin components; small components composed together.
+- One place per decision.
+- Descriptive names, and comments that explain the _why_.
+- Refactor toward this whenever touching code. Next candidates: `instruments/guitar.js` (where playback starts lives there) and `melody/abcChords.js`.
+
+## Saved data and settings
+
+- `src/lib/storage/arrangements.js`: an arrangement is a plain document (`id`, `version`, `title`, `arrangement`, `abc`, `tempo`, `capo`, `transpose`, `mix`, `createdAt`, `updatedAt`). Pages only go through this module, never storage directly. Today it's localStorage, a per-device copy that works offline. A database is planned (social features, realtime, PWA), so keep data serializable and in this shape, and bump `ARRANGEMENT_VERSION` and migrate in `upgrade` when the shape changes.
+- The arranger restores the current arrangement on mount and autosaves changes (debounced, and flushed on leaving the page or the tab). The mix is saved with it (`mixSnapshot`/`applyMix` in `mixer.svelte.js`).
+- `src/lib/settings/settings.svelte.js` holds preferences, grouped by Settings tab, and saves them (only values of the right type are restored).
+- The panel is `SettingsPanel.svelte`, with one component per tab in `tabs/` and shared controls in `controls/`. To add a tab, add one line to `TABS`.
+
+### Look and theming
+
+- The look is Soft UI, and it all comes from five tokens at the top of `src/lib/theme/tokens.css`: background, text, accent, depth and roundness.
+- Everything else is derived from those tokens in CSS: softer text colours, the shadow edges (OKLCH lighter/darker of the background, so dark themes work), and the corner sizes.
+- Settings → Appearance changes the same five variables at runtime (`theme.js` `applyTheme`, presets, and the WCAG contrast check).
+- `src/app.html` has a tiny copy of `applyTheme` that runs before first paint. Keep the two in step.
+- Shared classes are in `src/lib/theme/ui.css`: `ui-card`, `ui-well`, `ui-button`, `ui-button-primary`, `ui-button-on`, `ui-field`. They're named for what a thing is, not how it looks.
+- Components must not hard-code colours or corner sizes. Use the variables `--color-*`, `--shadow-*` and `--corner-*`, or Tailwind classes like `text-ink-soft`.
 
 ## Arranger architecture
 
@@ -41,7 +75,9 @@ Parsed by `parseArrangement.js`. Example: `"Chorus"|G,G|C,C|G,G|D,D|`, plus `"Br
   - Each example goes through `{@render example(...)}`, which draws it as a chart. The examples must parse.
 
 ### `timeline.js`
+
 The single source of musical time. All times are in quarter notes.
+
 - `slotPositions` gives each chord's start and length.
 - `rhythm` gives the boom/chuck grid: `beatGroups` makes 2 = boom-chuck and 3 = boom-chuck-chuck.
 - The guitar, mandolin, bass line, MIDI, chart and playhead all derive from it. Never assume a fixed bar length.

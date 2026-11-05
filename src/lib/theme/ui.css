@@ -1,0 +1,87 @@
+/*
+ * SHARED UI STYLES
+ *
+ * A handful of classes that give every page the same look. They're named
+ * for what a thing *is* (a card, a button), not how it looks, so changing
+ * the visual style later means editing this file, not every component.
+ *
+ * The current look is Soft UI (neumorphism): everything is the background
+ * colour, and shape comes from light and shadow.
+ *   raised = you can press it, or it sits on top (cards, buttons)
+ *   inset  = you type into it, it holds content, or it's pressed/selected
+ * Shadows alone are too faint to show state, so "on" also turns the accent
+ * colour.
+ *
+ * All values come from tokens.css.
+ */
+
+/* A card or panel, raised off the page */
+@utility ui-card {
+	border-radius: var(--corner-card);
+	background: var(--color-surface);
+	box-shadow: var(--shadow-raised);
+}
+
+/* A well sunk into the page, holding content (the chord chart, sheet music) */
+@utility ui-well {
+	border-radius: var(--corner-card);
+	background: var(--color-surface);
+	box-shadow: var(--shadow-inset);
+}
+
+/* A button: raised, and it presses in while tapped */
+@utility ui-button {
+	border-radius: var(--corner-control);
+	background: var(--color-surface);
+	box-shadow: var(--shadow-raised-small);
+	font-weight: 600;
+	color: var(--color-ink);
+	transition:
+		box-shadow 0.15s ease,
+		color 0.15s ease;
+
+	&:hover:not(:disabled) {
+		color: var(--color-accent);
+	}
+
+	&:active:not(:disabled) {
+		box-shadow: var(--shadow-inset-small);
+	}
+
+	&:disabled {
+		opacity: 0.45;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+}
+
+/* The main action on a screen (Play): a button in the accent colour */
+@utility ui-button-primary {
+	color: var(--color-accent);
+}
+
+/* A toggle that's on, or the chosen option in a group: pressed in and lit */
+@utility ui-button-on {
+	box-shadow: var(--shadow-inset-small);
+	color: var(--color-accent);
+}
+
+/* Something to type into or choose from (inputs, selects, text areas) */
+@utility ui-field {
+	border-radius: var(--corner-control);
+	background: var(--color-surface);
+	box-shadow: var(--shadow-inset-small);
+	color: var(--color-ink);
+
+	&:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 1px;
+	}
+
+	&:disabled {
+		opacity: 0.45;
+	}
+}

@@ -4,6 +4,35 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+		<script>
+			/*
+			 * Apply the user's saved theme before the page first paints, so a dark
+			 * theme doesn't flash light while the app starts. This is a tiny copy of
+			 * applyTheme() in src/lib/theme/theme.js (the app re-applies it properly
+			 * once it's running); keep the two in step.
+			 */
+			try {
+				const settings = JSON.parse(localStorage.getItem('bruegrass.settings') || '{}');
+				const appearance = settings.appearance || {};
+				const cssVariableFor = {
+					background: '--theme-background',
+					text: '--theme-text',
+					accent: '--theme-accent',
+					depth: '--theme-depth',
+					roundness: '--theme-roundness'
+				};
+				for (const choice in cssVariableFor) {
+					if (appearance[choice] !== undefined) {
+						document.documentElement.style.setProperty(
+							cssVariableFor[choice],
+							String(appearance[choice])
+						);
+					}
+				}
+			} catch {
+				// No saved theme (or no storage): the defaults in tokens.css apply
+			}
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

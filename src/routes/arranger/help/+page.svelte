@@ -4,9 +4,9 @@
 	 * every example drawn as a chart the same way the arranger shows it.
 	 * When the syntax grows, add a section to TOPICS.
 	 */
-	import { parseArrangement } from '$lib/arranger/parseArrangement.js';
-	import { barQuarters, meterText, slotPositions } from '$lib/arranger/timeline.js';
-	import chords from '$lib/arranger/guitar-chords.json';
+	import { parseArrangement } from '$lib/arranger/chart/parseArrangement.js';
+	import { barQuarters, meterText, slotPositions } from '$lib/arranger/chart/timeline.js';
+	import chords from '$lib/arranger/instruments/guitar-chords.json';
 
 	const chordNames = Object.keys(chords);
 
@@ -69,17 +69,17 @@
 	</div>
 {/snippet}
 
-<main class="mx-auto max-w-3xl px-6 py-10 text-gray-900">
-	<p class="mb-2 text-sm text-gray-500">Bluegrass Arranger · Help</p>
+<main class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+	<p class="mb-2 text-sm text-ink-soft">Bluegrass Arranger · Help</p>
 	<h1 class="mb-3 text-3xl font-bold">How to write an arrangement</h1>
-	<p class="mb-10 text-lg text-gray-700">
+	<p class="mb-10 text-lg text-ink-soft">
 		You type your song into the box, and the arranger plays it. Here's everything you can type, one
 		step at a time. Each example shows what you type, and underneath, what it turns into.
 	</p>
 
-	<nav class="mb-12 rounded-lg bg-gray-100 p-4">
+	<nav class="mb-12 ui-card p-4">
 		<p class="mb-2 font-semibold">On this page</p>
-		<ol class="list-inside list-decimal space-y-1 text-blue-700">
+		<ol class="list-inside list-decimal space-y-1 text-accent">
 			<li><a href="#parts" class="hover:underline">Parts of the song</a></li>
 			<li><a href="#bars" class="hover:underline">Bars</a></li>
 			<li><a href="#two-chords" class="hover:underline">Two chords in one bar</a></li>
@@ -102,8 +102,8 @@
 		{@render example(`"Chorus"|G|C|G|D|`)}
 		<p class="tip">
 			The name can be anything: <code>"Verse 1"</code>, <code>"Banjo Break"</code>,
-			<code>"Ending"</code>. Lines without a name in quotes are ignored, so you can leave blank lines
-			between parts.
+			<code>"Ending"</code>. Lines without a name in quotes are ignored, so you can leave blank
+			lines between parts.
 		</p>
 	</section>
 
@@ -116,16 +116,16 @@
 		</p>
 		{@render example(`"Verse"|G|G|C|C|`)}
 		<p class="tip">
-			That's G for two bars, then C for two bars. The <code>|</code> key is above Enter on most
-			keyboards (hold Shift).
+			That's G for two bars, then C for two bars. The <code>|</code> key is above Enter on most keyboards
+			(hold Shift).
 		</p>
 	</section>
 
 	<section id="two-chords">
 		<h2>3. Two chords in one bar</h2>
 		<p>
-			Put a <b>comma</b> between them. The bar is split in half: the first chord gets beats 1 and 2,
-			the second chord gets beats 3 and 4.
+			Put a <b>comma</b> between them. The bar is split in half: the first chord gets beats 1 and 2, the
+			second chord gets beats 3 and 4.
 		</p>
 		{@render example(`"Verse"|G|C,D|G|`)}
 		<p class="tip">
@@ -142,8 +142,8 @@
 		</p>
 		{@render example(`"Chorus"|G|C|G|D|\n"Fiddle Break" as Chorus`)}
 		<p class="tip">
-			The name after <code>as</code> must match exactly, capital letters too. The bass player will
-			change things up a little when a part comes around again, like a real player.
+			The name after <code>as</code> must match exactly, capital letters too. The bass player will change
+			things up a little when a part comes around again, like a real player.
 		</p>
 	</section>
 
@@ -164,9 +164,9 @@
 	<section id="crooked">
 		<h2>6. Crooked tunes (odd bars)</h2>
 		<p>
-			Some tunes have a bar with extra or missing beats. Put the count for <b>just that one bar</b> in
-			square brackets right before it, with no <code>M:</code>. The next bar goes back to normal on its
-			own.
+			Some tunes have a bar with extra or missing beats. Put the count for <b>just that one bar</b>
+			in square brackets right before it, with no <code>M:</code>. The next bar goes back to normal
+			on its own.
 		</p>
 		{@render example(`"Crooked"|G|C|[2/4]D|G|`)}
 		<p class="tip">
@@ -190,7 +190,7 @@
 		<p>Right now, the guitar knows these chords:</p>
 		<p class="mb-4 flex flex-wrap gap-2">
 			{#each chordNames as name (name)}
-				<span class="rounded-md bg-gray-900 px-3 py-1 font-mono font-bold text-white">{name}</span>
+				<span class="ui-button px-3 py-1 font-mono">{name}</span>
 			{/each}
 		</p>
 		<p class="tip">
@@ -206,8 +206,13 @@
 			only the keys you need, so no hunting for <code>|</code>.
 		</p>
 		<ul class="mb-4 list-disc space-y-2 pl-6">
-			<li><b>A to G, #, b, m, 7</b>: tap out chords. Tap two chords in a row and the comma goes in for you.</li>
-			<li><b>New part</b>: starts a new line and lets you type the part's name with normal letters.</li>
+			<li>
+				<b>A to G, #, b, m, 7</b>: tap out chords. Tap two chords in a row and the comma goes in for
+				you.
+			</li>
+			<li>
+				<b>New part</b>: starts a new line and lets you type the part's name with normal letters.
+			</li>
 			<li>
 				<b>♪ Music keys</b>: when the name is done, tap this. The closing quote and the first
 				<code>|</code> go in for you.
@@ -226,12 +231,12 @@
 		<p>A red message appears under the box. The usual causes:</p>
 		<ul class="mb-4 list-disc space-y-2 pl-6">
 			<li>
-				<b>Unknown chord</b>: a chord the guitar doesn't know yet, or a small letter
-				(<code>g</code> instead of <code>G</code>).
+				<b>Unknown chord</b>: a chord the guitar doesn't know yet, or a small letter (<code>g</code>
+				instead of <code>G</code>).
 			</li>
 			<li>
-				<b>Unknown section</b>: the name after <code>as</code> doesn't match a part above. Check the
-				spelling and capitals.
+				<b>Unknown section</b>: the name after <code>as</code> doesn't match a part above. Check the spelling
+				and capitals.
 			</li>
 			<li>
 				<b>More chords than beats</b>: too many chords for one bar, like 4 chords in a 3-beat bar.
@@ -275,34 +280,38 @@
 	}
 
 	code {
-		border-radius: 0.25rem;
-		background: rgb(243 244 246);
+		border-radius: var(--corner-small);
+		background: var(--color-surface);
+		box-shadow: var(--shadow-inset-small);
 		padding: 0.1rem 0.35rem;
 		font-family: ui-monospace, monospace;
 		font-size: 0.95em;
 	}
 
 	.tip {
-		border-left: 4px solid rgb(245 158 11);
-		background: rgb(255 251 235);
+		border-left: 4px solid var(--color-accent);
+		border-radius: var(--corner-control);
+		background: var(--color-surface);
+		box-shadow: var(--shadow-raised-small);
 		padding: 0.6rem 0.9rem;
-		color: rgb(55 65 81);
+		color: var(--color-ink-soft);
 	}
 
 	.example {
 		margin-bottom: 1rem;
 		overflow: hidden;
-		border-radius: 0.5rem;
-		border: 1px solid rgb(229 231 235);
+		border-radius: var(--corner-card);
+		background: var(--color-surface);
+		box-shadow: var(--shadow-raised);
 	}
 
 	.code {
 		margin: 0;
 		overflow-x: auto;
-		background: rgb(17 24 39);
+		background: var(--color-ink);
 		padding: 0.75rem 1rem;
 		font-family: ui-monospace, monospace;
-		color: white;
+		color: var(--color-surface);
 	}
 
 	.chart {
@@ -315,11 +324,11 @@
 		position: relative;
 		display: flex;
 		flex-shrink: 0;
-		border-left: 2px solid rgb(31 41 55);
+		border-left: 2px solid var(--color-ink);
 	}
 
 	.bar.new-part {
-		border-left: 6px double rgb(31 41 55);
+		border-left: 6px double var(--color-ink);
 	}
 
 	.bar-label {
@@ -336,15 +345,15 @@
 	.part {
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		color: rgb(180 83 9);
+		color: var(--color-accent);
 	}
 
 	.meter {
-		border-radius: 0.25rem;
-		background: rgb(31 41 55);
+		border-radius: var(--corner-small);
+		background: var(--color-ink);
 		padding: 0 0.3rem;
 		font-family: ui-monospace, monospace;
-		color: white;
+		color: var(--color-surface);
 	}
 
 	.chord {
@@ -358,6 +367,6 @@
 	.beats {
 		font-family: ui-monospace, monospace;
 		font-weight: 700;
-		color: rgb(156 163 175);
+		color: var(--color-ink-faint);
 	}
 </style>

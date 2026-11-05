@@ -1,1 +1,14 @@
+/*
+ * Global styles for every page. The look itself lives in src/lib/theme:
+ *   tokens.css  the five theme choices, and everything worked out from them
+ *   ui.css      shared classes: ui-card, ui-well, ui-button, ui-field, ...
+ */
 @import 'tailwindcss';
+@import '../lib/theme/tokens.css';
+@import '../lib/theme/ui.css';
+
+body {
+	background: var(--color-surface);
+	color: var(--color-ink);
+	-webkit-tap-highlight-color: transparent;
+}

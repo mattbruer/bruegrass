@@ -1,0 +1,90 @@
+/*
+ * THEME TOKENS
+ *
+ * The whole look of the app comes from the five choices in section 1.
+ * Everything else (softer text, the light and dark edges of the soft
+ * shadows, corner sizes) is worked out from them in section 2.
+ *
+ *   - To restyle the app by hand: change the values in section 1.
+ *   - The Appearance settings change these same five variables while the
+ *     app runs (see theme.js), so a user's choices override the defaults.
+ *   - Components never use raw colours; they use the variables below
+ *     (or the Tailwind classes made from them, like `text-ink-soft`).
+ */
+
+:root {
+	/* ------------------------------------------------------------------ */
+	/* 1. Choices                                                          */
+	/* ------------------------------------------------------------------ */
+
+	--theme-background: #e4e9f0; /* the soft surface everything sits on */
+	--theme-text: #283041;
+	--theme-accent: #d97706; /* "on", "selected", "playing" */
+	--theme-depth: 1; /* shadow strength: 0 = flat, 1 = normal, 2 = deep */
+	--theme-roundness: 1; /* corners: 0 = square, 1 = normal, 2 = extra round */
+
+	/* ------------------------------------------------------------------ */
+	/* 2. Worked out from the choices (no need to edit)                    */
+	/* ------------------------------------------------------------------ */
+
+	/*
+	 * Soft UI shadows: light falls from the top left, so every raised shape
+	 * has a lighter edge up-left and a darker edge down-right. Both are the
+	 * background colour made lighter or darker (in OKLCH, which keeps the
+	 * hue), so they suit any background, light or dark.
+	 */
+	--shadow-light-edge: oklch(from var(--theme-background) calc(l + 0.08) c h / 0.9);
+	--shadow-dark-edge: oklch(from var(--theme-background) calc(l - 0.16) c h / 0.75);
+
+	/* How far shadows reach, scaled by the depth choice */
+	--shadow-reach-large: calc(6px * var(--theme-depth));
+	--shadow-reach-small: calc(3px * var(--theme-depth));
+	--shadow-reach-inset: calc(4px * var(--theme-depth));
+	--shadow-reach-inset-small: calc(2px * var(--theme-depth));
+
+	/* Raised: sits up off the surface (buttons, cards) */
+	--shadow-raised:
+		var(--shadow-reach-large) var(--shadow-reach-large) calc(2 * var(--shadow-reach-large))
+			var(--shadow-dark-edge),
+		calc(-1 * var(--shadow-reach-large)) calc(-1 * var(--shadow-reach-large))
+			calc(2 * var(--shadow-reach-large)) var(--shadow-light-edge);
+	--shadow-raised-small:
+		var(--shadow-reach-small) var(--shadow-reach-small) calc(2 * var(--shadow-reach-small))
+			var(--shadow-dark-edge),
+		calc(-1 * var(--shadow-reach-small)) calc(-1 * var(--shadow-reach-small))
+			calc(2 * var(--shadow-reach-small)) var(--shadow-light-edge);
+
+	/* Inset: pressed into the surface (fields, wells, a pressed button) */
+	--shadow-inset:
+		inset var(--shadow-reach-inset) var(--shadow-reach-inset) calc(2 * var(--shadow-reach-inset))
+			var(--shadow-dark-edge),
+		inset calc(-1 * var(--shadow-reach-inset)) calc(-1 * var(--shadow-reach-inset))
+			calc(2 * var(--shadow-reach-inset)) var(--shadow-light-edge);
+	--shadow-inset-small:
+		inset var(--shadow-reach-inset-small) var(--shadow-reach-inset-small)
+			calc(2 * var(--shadow-reach-inset-small)) var(--shadow-dark-edge),
+		inset calc(-1 * var(--shadow-reach-inset-small)) calc(-1 * var(--shadow-reach-inset-small))
+			calc(2 * var(--shadow-reach-inset-small)) var(--shadow-light-edge);
+
+	/* Corner sizes, scaled by the roundness choice */
+	--corner-small: calc(0.4rem * var(--theme-roundness)); /* readouts, small caps */
+	--corner-control: calc(0.75rem * var(--theme-roundness)); /* buttons, fields, keys */
+	--corner-card: calc(1rem * var(--theme-roundness)); /* cards, wells, mixer strips */
+	--corner-panel: calc(1.25rem * var(--theme-roundness)); /* the settings panel, the mixer tray */
+}
+
+/*
+ * Colours as Tailwind theme values, so classes like `text-ink-soft` and
+ * `bg-surface` work. They point at the variables above, so they follow the
+ * user's choices too.
+ */
+@theme static {
+	--color-surface: var(--theme-background);
+	--color-surface-deep: oklch(from var(--theme-background) calc(l - 0.04) c h);
+	--color-ink: var(--theme-text);
+	--color-ink-soft: color-mix(in oklab, var(--theme-text), var(--theme-background) 30%);
+	--color-ink-faint: color-mix(in oklab, var(--theme-text), var(--theme-background) 50%);
+	--color-accent: var(--theme-accent);
+	--color-accent-soft: color-mix(in oklab, var(--theme-accent), var(--theme-background) 35%);
+	--color-danger: #c2410c;
+}

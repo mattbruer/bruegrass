@@ -1,0 +1,28 @@
+# `src/lib`: where everything lives
+
+Pages are in `src/routes` (one folder per URL). Everything they use is here,
+grouped by feature. Import from here with `$lib/...`.
+
+| Folder        | What's in it                                                                                                                                   |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `arranger/`   | The rhythm-section arranger (the `/arranger` page): chord charts, instruments, playback, melody. See [arranger/README.md](arranger/README.md). |
+| `songs/`      | The song list (the `/` page): the list of MP3s and the player.                                                                                 |
+| `settings/`   | The Settings panel (opened from the top bar) and the saved preferences behind it.                                                              |
+| `theme/`      | The look of the app: colour, shadow and corner tokens, and the shared `ui-*` classes.                                                          |
+| `storage/`    | Saving and loading user data (arrangements). Today: this browser's localStorage. A database later.                                             |
+| `components/` | Small pieces used across the whole app (the top bar).                                                                                          |
+| `utils/`      | Tiny general helpers with no app knowledge (download a file, make a slug, watch for a touch screen).                                           |
+| `assets/`     | Images bundled with the app (the favicon).                                                                                                     |
+
+## A few conventions
+
+- **Small pieces, composed.** Functions live in their own modules and are imported by thin components. Each decision (a limit, a list of choices, a colour) lives in one place, so a change of direction is a one-file edit.
+
+- **Files ending `.svelte.js`** use Svelte's reactive state (`$state`,
+  `$effect`) outside a component. The suffix is required for that.
+- **Styling** comes from the tokens in `theme/tokens.css` and the classes in
+  `theme/ui.css`. Components don't use raw colours, so changing the look (or
+  a user's Appearance settings) restyles everything.
+- **Saving data** always goes through `storage/` (or `settings/` for
+  preferences), never straight to `localStorage`, so where data lives can
+  change in one place.
