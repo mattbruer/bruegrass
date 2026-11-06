@@ -22,9 +22,15 @@ export function describeTarget(target, checklist) {
 	return {
 		group: group?.name ?? '',
 		how: group?.how ?? '',
-		click: describeClick(group),
+		click: describeClick(group, target.tempo),
 		where,
-		layer: `${capitalise(target.intensity)} · take ${target.take} of ${target.takes}`,
+		layer: [
+			capitalise(target.intensity),
+			target.tempo && `${target.tempo} BPM`,
+			`take ${target.take} of ${target.takes}`
+		]
+			.filter(Boolean)
+			.join(' · '),
 		note: target.midi === null ? null : noteName(target.midi)
 	};
 }
@@ -40,7 +46,7 @@ export function checkDetails(target, checklist) {
 		pitched: target.midi !== null,
 		stringName: checklist.strings.find((each) => each.id === target.stringId)?.name ?? null,
 		fretted: (target.fret ?? 0) > 0,
-		pattern: Boolean(group?.click)
+		pattern: Boolean(group?.pattern)
 	};
 }
 

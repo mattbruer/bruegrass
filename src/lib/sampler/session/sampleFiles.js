@@ -5,6 +5,7 @@
  *
  *   note/D-f05-hard-t2.wav     a string, fret, intensity and take
  *   dead/down-hard-t3.wav      a strum direction, intensity and take
+ *   graze/D-f00-normal-80bpm-t1.wav   a layer recorded at a tempo
  */
 
 /** The manifest's format name and version: raise the version when its shape changes. */
@@ -23,9 +24,9 @@ export function sampleFileName(target) {
 	const take = `t${target.take}`;
 	if (target.stringId !== null) {
 		const fret = `f${String(target.fret ?? 0).padStart(2, '0')}`;
-		return `${target.groupId}/${target.stringId}-${fret}-${target.intensity}-${take}.wav`;
+		return `${target.groupId}/${target.stringId}-${fret}-${target.layer}-${take}.wav`;
 	}
-	return `${target.groupId}/${target.direction}-${target.intensity}-${take}.wav`;
+	return `${target.groupId}/${target.direction}-${target.layer}-${take}.wav`;
 }
 
 /**
@@ -52,6 +53,7 @@ export function manifestEntry(target, record, frames) {
 		midi: target.midi,
 		direction: target.direction,
 		intensity: target.intensity,
+		tempo: target.tempo,
 		take: target.take,
 		tier: sampleTier(target),
 		seconds: round(frames / record.sampleRate, 3),

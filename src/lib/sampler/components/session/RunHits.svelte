@@ -2,6 +2,7 @@
 	The hits found in a recording of many: tick the ones to keep (as many
 	as there are takes to fill), listen to each as it would be cut, and see
 	what the checks found. Keep (K) cuts the ticked ones out as takes.
+	Played to a click, each hit shows its timing against your own beat.
 -->
 <script>
 	import { formatDb } from '../../takeSummary.js';
@@ -22,6 +23,16 @@
 			: Math.abs(cents) < 0.5
 				? 'in tune'
 				: `${cents > 0 ? '+' : '−'}${Math.abs(cents).toFixed(0)} cents`;
+
+	/** @param {import('../../session/RecordingSession.svelte.js').Hit} hit how long it rings, as cut */
+	const seconds = (hit) =>
+		(hit.analysis.trim.end - hit.analysis.trim.start) / (session.shown?.record.sampleRate ?? 48000);
+
+	/** @param {number} ms against the beat as you played it (your average is on the beat) */
+	const formatTiming = (ms) =>
+		Math.abs(ms) < 2.5
+			? 'on the beat'
+			: `${Math.abs(ms).toFixed(0)} ms ${ms < 0 ? 'early' : 'late'}`;
 
 	const filling = $derived(
 		slots.length === 1
@@ -60,8 +71,9 @@
 					{session.playing && session.playingHit === index ? 'Stop' : 'Listen'}
 				</button>
 				<span class="text-ink-soft tabular-nums">
-					{formatDb(hit.analysis.peakDb)}
+					{seconds(hit).toFixed(1)} s · {formatDb(hit.analysis.peakDb)}
 					{#if hit.analysis.cents !== null}· {formatCents(hit.analysis.cents)}{/if}
+					{#if hit.offBeatMs !== null}· {formatTiming(hit.offBeatMs)}{/if}
 				</span>
 				{#each problems as problem (problem.text)}
 					<span class:text-danger={problem.severity === 'redo'} class="text-ink-soft">

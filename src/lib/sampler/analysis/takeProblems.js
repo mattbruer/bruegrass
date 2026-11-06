@@ -38,11 +38,13 @@ const BRIGHTNESS_SPREAD = 0.25;
  *   fretted: boolean,
  *   pattern: boolean,
  *   afterAnotherHit?: boolean,
- *   endsAtNextHit?: boolean
+ *   endsAtNextHit?: boolean,
+ *   inMotion?: boolean
  * }} target
  *   pattern: many hits on purpose (a strum pattern to a click), so no second-hit check.
  *   afterAnotherHit / endsAtNextHit: one hit of a longer recording, so the
- *   last note's ring before it isn't noise, and it may be cut by the next
+ *   last note's ring before it isn't noise, and it may be cut by the next.
+ *   inMotion: played to a click, where a hit cut short by the next is expected
  * @param {import('./analyseTake.js').TakeAnalysis[]} others kept takes of the same note and intensity
  * @returns {TakeProblem[]}
  */
@@ -79,7 +81,8 @@ export function takeProblems(analysis, target, others) {
 			const fix = target.fretted ? ', or fret with a lighter touch' : '';
 			check(`${cents} cents ${which}: retune the ${target.stringName} string${fix}.`);
 		}
-		if (analysis.endingDb > CUT_OFF_DB) {
+		const cutShortAsExpected = target.endsAtNextHit && target.inMotion;
+		if (analysis.endingDb > CUT_OFF_DB && !cutShortAsExpected) {
 			check(
 				target.endsAtNextHit
 					? 'Still ringing when the next hit came: leave longer between them.'

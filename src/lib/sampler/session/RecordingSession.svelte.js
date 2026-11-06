@@ -287,7 +287,8 @@ export class RecordingSession {
 		const details = {
 			...checkDetails(this.target, this.checklist),
 			afterAnotherHit: index > 0,
-			endsAtNextHit: index < hits.length - 1
+			endsAtNextHit: index < hits.length - 1,
+			inMotion: clickRun(this.checklist, this.target) !== null
 		};
 		return takeProblems(hits[index].analysis, details, this.#keptOfLayer(this.target));
 	}
@@ -321,7 +322,8 @@ export class RecordingSession {
 	 */
 	#findRun(record, take) {
 		if (record.kept || checkDetails(this.target, this.checklist).pattern) return null;
-		const hits = analyseHits(take, this.target.midi);
+		const click = clickRun(this.checklist, this.target);
+		const hits = analyseHits(take, this.target.midi, click ? 60 / click.tempo : null);
 		if (hits.length < 2) return null;
 		// Ticked to start with: the first hits without a reason to redo, as many as there are takes to fill
 		const clean = hits
@@ -349,7 +351,8 @@ export class RecordingSession {
 				const { kept, fresh } = this.takesFor(target.id);
 				const replacing = fresh && fresh.id !== recording.id ? fresh : null;
 				const take = cutOut(shown.take, hit.range);
-				const record = await saveNewTake(this.session.id, target.id, take, hit.analysis, replacing);
+				const analysis = { ...hit.analysis, offBeatMs: hit.offBeatMs };
+				const record = await saveNewTake(this.session.id, target.id, take, analysis, replacing);
 				const nowKept = await keepTake(record, kept);
 				this.#setTakes(target.id, { kept: nowKept, fresh: null });
 				this.projectCopy.saveKept({ target, record: nowKept }, this.keptSamples());

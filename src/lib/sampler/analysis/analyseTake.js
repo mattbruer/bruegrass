@@ -34,7 +34,8 @@ const ENDING_MS = 50;
  *   hz: number | null,
  *   cents: number | null,
  *   secondHitSeconds: number | null,
- *   startedLate: boolean
+ *   startedLate: boolean,
+ *   offBeatMs?: number | null
  * }} TakeAnalysis
  *   Levels in dBFS, except beforeHitDb and endingDb, which are relative to
  *   the peak. trim and onset in frames. noiseDb: null when there was no

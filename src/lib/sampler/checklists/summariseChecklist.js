@@ -7,7 +7,7 @@
  * summary can never disagree with what the session asks for.
  */
 import { describeClick } from './groupClick.js';
-import { groupNotes, listTargets } from './targets.js';
+import { groupNotes, layerName, listTargets } from './targets.js';
 
 /** A rough guess at one take's time: play, listen, keep. Only for the estimate. */
 const SECONDS_PER_TAKE = 15;
@@ -41,11 +41,11 @@ export function summariseChecklist(checklist) {
  */
 function groupSum(group, count) {
 	const factors = !group.pitched
-		? [plural(group.directions?.length ?? 0, group.click ? 'pattern' : 'direction')]
+		? [plural(group.directions?.length ?? 0, group.pattern ? 'pattern' : 'direction')]
 		: group.notes
 			? [plural(groupNotes(group).length, 'note')]
 			: [plural(group.strings?.length ?? 0, 'string'), plural(group.frets?.length ?? 0, 'fret')];
-	const layers = group.layers.map((layer) => `${layer.takes} ${layer.intensity}`).join(' + ');
+	const layers = group.layers.map((layer) => `${layer.takes} ${layerName(layer)}`).join(' + ');
 	const takes = group.layers.length > 1 ? `(${layers}) takes` : `${layers} takes`;
 	return `${[...factors, takes].join(' × ')} = ${count}`;
 }

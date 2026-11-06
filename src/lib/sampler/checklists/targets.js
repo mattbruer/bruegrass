@@ -29,11 +29,15 @@ export function findChecklist(id) {
  *   midi: number | null,
  *   direction: string | null,
  *   intensity: string,
+ *   tempo: number | null,
+ *   layer: string,
  *   take: number,
  *   takes: number,
  *   row: string,
  *   column: string
  * }} Target
+ *   layer: the layer's name, intensity plus any tempo ("normal-80bpm"),
+ *   as used in ids and file names.
  *   take: 1-based, of `takes` in its layer. row/column: where it sits in the
  *   progress grid (string × fret, or direction × intensity).
  */
@@ -56,13 +60,15 @@ export function listTargets(checklist) {
 					for (const fret of frets) {
 						for (let take = 1; take <= layer.takes; take++) {
 							targets.push({
-								id: `${group.id}:${stringId}:f${fret}:${layer.intensity}:t${take}`,
+								id: `${group.id}:${stringId}:f${fret}:${layerName(layer)}:t${take}`,
 								groupId: group.id,
 								stringId,
 								fret,
 								midi: string.midi + fret,
 								direction: null,
 								intensity: layer.intensity,
+								tempo: layer.tempo ?? null,
+								layer: layerName(layer),
 								take,
 								takes: layer.takes,
 								row: string.name,
@@ -77,17 +83,19 @@ export function listTargets(checklist) {
 				for (const layer of group.layers) {
 					for (let take = 1; take <= layer.takes; take++) {
 						targets.push({
-							id: `${group.id}:${direction}:${layer.intensity}:t${take}`,
+							id: `${group.id}:${direction}:${layerName(layer)}:t${take}`,
 							groupId: group.id,
 							stringId: null,
 							fret: null,
 							midi: null,
 							direction,
 							intensity: layer.intensity,
+							tempo: layer.tempo ?? null,
+							layer: layerName(layer),
 							take,
 							takes: layer.takes,
 							row: capitalise(direction),
-							column: capitalise(layer.intensity)
+							column: capitalise(layerName(layer))
 						});
 					}
 				}
@@ -95,6 +103,14 @@ export function listTargets(checklist) {
 		}
 	}
 	return targets;
+}
+
+/**
+ * A layer's name: its intensity, plus its tempo when it has one ("normal-80bpm").
+ * @param {import('./guitar.js').Layer} layer
+ */
+export function layerName(layer) {
+	return layer.tempo ? `${layer.intensity}-${layer.tempo}bpm` : layer.intensity;
 }
 
 /**
@@ -109,7 +125,7 @@ export function groupNotes(group) {
 }
 
 /**
- * Takes of the same thing (same note or strum, same intensity): the ones a
+ * Takes of the same thing (same note or strum, same layer): the ones a
  * take is compared with for loudness and brightness.
  * @param {Target} a
  * @param {Target} b
@@ -120,7 +136,7 @@ export function isSameLayer(a, b) {
 		a.stringId === b.stringId &&
 		a.fret === b.fret &&
 		a.direction === b.direction &&
-		a.intensity === b.intensity
+		a.layer === b.layer
 	);
 }
 
