@@ -11,8 +11,8 @@
  */
 export const STRUM_PATTERNS = {
 	boomChuck: { label: 'Boom-chuck', steps: 2, groups: { 1: 'B.', 2: 'B.x.', 3: 'B.x.x.' } },
-	// Bum (a quarter), ti-ty (two eighths, down-up); duple only
-	bumTitty: { label: 'Bum-titty', steps: 2, groups: { 2: 'B.xx' } }
+	// Bum (a quarter), ti-ty (two eighths, down-up); a waltz plays boom, chuck, chuck-a
+	bumTitty: { label: 'Bum-titty', steps: 2, groups: { 2: 'B.xx', 3: 'B.x.xx' } }
 };
 
 /** How often each pattern is played: mostly boom-chuck, the others sprinkled in. */
