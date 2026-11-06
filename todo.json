@@ -11,7 +11,7 @@
 		{
 			"id": "export-audio",
 			"text": "Export the backing track as an audio file",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{

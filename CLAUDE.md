@@ -42,33 +42,10 @@ The user wants code they can read and change without help, and that makes the ne
 - Build for the next feature, not just this one. A new feature should mostly be new small modules plugged into existing seams (a list entry, a shared helper, a document collection), not edits spread across many files. When adding something, leave a seam the following feature can use (e.g. `storage/collection.js` made a second saved-document type a few lines; `TABS` makes a new Settings tab one line).
 - **Design every change for both phone and desktop.** The user uses the app on an iPhone and a MacBook. For everything (features, controls, layout, wording), decide how it works on each: touch vs mouse/keyboard, hover (none on touch; use `ui-hover-only` for hover-only things), screen size (the mixer must fit a phone without vertical scrolling), and the iPhone's quirks. If something only makes sense on one, hide or adapt it on the other, and say what you decided. Check both sizes in the browser (the pane's mobile preset emulates touch).
 - **Never let unsaved work vanish, especially on iPhone.** iPhone Safari never asks before leaving (switching apps can unload the page; a swipe closes the tab), so a "leave without saving?" prompt alone isn't enough. Anything the user can change and lose keeps a draft on the device while it has unsaved changes and offers it back next visit, using `storage/drafts.js` (`writeDraft`/`readDraft`/`clearDraft`; see `arranger/state/drafts.svelte.js` for the pattern). The user asked for this to be applied every time it comes up, without asking.
+- **Clean up whatever you start**: event listeners, timers, frame loops (`onEveryFrame` returns its stop), observers, `$effect`s, audio nodes and contexts (an offline render disposes its context; see `renderOffline` in `export/renderSong.js`). In a component, return the cleanup from `onMount`/`$effect`; in an action, from `destroy`. Something deliberately kept for the life of the page (the live mixer graph and its watchers, the tooltip bubble) says so in a comment.
 - One place per decision.
 - Descriptive names, and comments that explain the _why_.
-- Refactor toward this whenever touching code. Next candidates: `instruments/guitar.js` (where playback starts lives there) and `melody/abcChords.js`.
-
-## In progress: audio export (roadmap step 1)
-
-Started 2026-11-05; pick up here. The user wants **Export**: a full-mix WAV, or stems as a zip of WAVs, and keep the `.mid` download (they use it in Logic).
-
-Decided with the user:
-
-- Full mix = as you hear it (levels, pan, EQ, reverb, loudness stage, mutes/solos).
-- Stems = **dry by default** (each instrument after its input trim: no EQ, pan, fader, reverb; mono files), with an option **"include my mix"** for processed stems (post-fader/pan) plus a separate Reverb stem, so they sum to the mix (without master EQ/fader/output stage). Stems ignore mute/solo. Option to put the full mix in the zip too.
-- WAV, 48 kHz, 24-bit. One pass of the whole arrangement (not the loop region) + a reverb tail (~decay + 1 s, capped). Every file starts at the same point and **lines up with the `.mid`**: when the melody has a pickup, bar 1 starts one bar in (as `midi.js` does with `lead`).
-- One **Export…** button (phone and desktop) opening a dialog: Full mix / Stems / MIDI (MIDI hidden on touch screens, as now). Stop playback before rendering (Tone.Offline swaps Tone's global context).
-
-Done so far:
-
-- `playback/graph/buildMixerGraph.js` builds the whole mixer in whatever context Tone is using (live or offline), with `channelInput`, `applyChannels`, `applyReverbAndMaster`, `applyAll`. `mixerGraph.svelte.js` is now just the live wrapper (speakers, effects, taps). Reverb sends are wired by hand (Tone's named send/receive buses are one registry shared by all contexts, which would break offline). Tested: playback, meters, reverb, loudness all work.
-
-Next steps, in order:
-
-1. (Done: a fresh EQ/reverb now sets its first values outright instead of gliding in.)
-2. Split `playArrangement` out of `instruments/guitar.js` (CLAUDE.md already lists this refactor): `instruments/performance.js` (pure: all notes and sample URLs for a song; `loop` option; export uses `loop: false` like `midi.js`, bass notes filtered to one pass, melody via `melodyEvents(..., { loop: false })`), `instruments/band.js` (`createBand(Tone, performance, channelInput)`: touch filters, upright, sample loading, a `play` per stream), and `playback/livePlayback.js` (the lookahead scheduler, `beats()`/`position()`/`stop()`). Update `PlayerState` and the type import in `ArrangementStrip.svelte`.
-3. `export/renderSong.js`: `Tone.Offline(async () => {...}, seconds, channels, 48000)`; build the graph, schedule one pass at `lead + time`, render. Stems in one render: each stem bus → `ChannelSplitter` → one native `ChannelMergerNode` → the raw destination (`channelCount` = 2 × stems, `channelInterpretation: 'discrete'`).
-4. `export/wav.js` (24-bit PCM writer) and `export/zip.js` (store-only zip with CRC-32), then `export/exportAudio.js` to name and download (`slugify`, `downloadFile`).
-5. `components/export/ExportDialog.svelte` + an Export button replacing `MidiDownloadButton` in `PlayerToolbar` (move the MIDI download into the dialog). Tooltips in `tips.js`. Check phone and desktop.
-6. Test: render, check lengths/alignment against the `.mid`, open the WAVs, update the arranger README and this file, tick roadmap step 1 in `todo.json`.
+- Refactor toward this whenever touching code. Next candidate: `melody/abcChords.js`.
 
 ## The todo list (`todo.json`)
 
@@ -147,7 +124,7 @@ The core of the arranger.
   - A note rings until its string is reused or the chord changes.
 - **Strum spread** uses a pendulum model of the right hand (string spacing and swing amplitude vs. tempo).
 - **Lighter touch** above 120 BPM: lower level, low-pass filter and softer attack.
-- **`playArrangement`** places every note at an absolute audio-clock time (`start + pass × duration + offset`).
+- **`playArrangement`** (now in `playback/livePlayback.js`) places every note at an absolute audio-clock time (`start + pass × duration + offset`).
   - A Tone context timer queues passes within a lookahead, catches up if it's late, and skips past-due notes.
   - Don't use `setTimeout` for musical timing.
   - It returns `{ position(), stop() }`.
@@ -195,6 +172,19 @@ The core of the arranger.
   - Slider tracks use `touch-action: pan-x pan-y`: the console's own `pan-x` still limits the mixer to sideways swipes, while a window like the EQ can scroll up/down over its sliders.
   - Floating windows start just under the top bar on short screens, and the EQ graph is shorter there (9rem), so the EQ window fits a phone.
   - `:hover` styles go inside `@media (hover: hover)`: on a touch screen a tapped hover sticks.
+
+### Playback and export: one band, two clocks
+
+- `instruments/performance.js` (`preparePerformance`): every note of every instrument for a song, as plain data (loop for live; one pass for export, like the MIDI file).
+- `instruments/band.js` (`createBand`): turns a performance into sound (sample players, the upright synth, touch filters) in the current Tone context. `{ live: false }` for offline: Tone reports an offline player stopped before it has played, so the live clean-up (dispose on stop) would silence it.
+- `playback/livePlayback.js` (`playArrangement`): the lookahead scheduler. `playback/graph/buildMixerGraph.js`: the whole mixer in any context; `mixerGraph.svelte.js` is the live wrapper.
+- **Export** (`export/`, the Export… button and dialog in `components/export/`, phone and desktop; MIDI is a choice there, hidden on touch):
+  - `renderSong.js`: `Tone.Offline` at 48 kHz renders one pass + a reverb tail (decay + 1 s, 2–8 s). Bar 1 starts one bar in when the melody has a pickup, so files line up with the `.mid`. Full mix = as heard (mutes kept, solos dropped). Stems come from one render, each to its own channels of a native `ChannelMergerNode`: dry by default (after the input trim: mono, unity, no EQ/pan/reverb) or processed (post-fader stereo + a Reverb stem; they sum to the mix before the master). Stems ignore mutes.
+  - Don't set an offline destination's `channelCount` (it's fixed; setting it throws a message-less `InvalidStateError`); only `channelInterpretation: 'discrete'`.
+  - `wav.js` (24-bit PCM) and `zip.js` (stored, CRC-32) are hand-written and checked against Python's `wave` and `zipfile`. `exportAudio.js` names (`song-120bpm.wav`, `song-120bpm-stems.zip`) and downloads.
+  - Rendering stops live playback first (Tone.Offline swaps Tone's global context).
+  - Measured on the starter song: full mix 2.5 s to render, peak −1.0 dBFS; stems + mix 8.5 s; melody pickup at 1.0 s, bar 1 at 1.5 s, 29.0 s long.
+  - Later: compressed formats for sharing (WebCodecs `AudioEncoder` can make AAC/Opus without a library like ffmpeg.wasm).
 
 ### `midi.js`
 

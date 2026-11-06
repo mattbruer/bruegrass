@@ -2,7 +2,7 @@
  * Playback: starting and stopping the band (and the melody), and any
  * problem to show the user.
  */
-import { playArrangement } from '../instruments/guitar.js';
+import { playArrangement } from '../playback/livePlayback.js';
 import { audioTaps } from '../playback/mixerGraph.svelte.js';
 import { melodyEvents } from '../melody/melody.js';
 import { melodyTime } from '../melody/follow.js';

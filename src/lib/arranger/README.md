@@ -20,7 +20,8 @@ sections
    │  chart/timeline.js           where every chord and beat falls (in quarter notes)
    ▼
 timeline
-   │  instruments/guitar.js       boom-chuck notes on the guitar samples
+   │  instruments/performance.js  every instrument's notes (guitar.js, mandolin.js, bassline.js)
+   │  instruments/band.js         those notes as sound: samples and the upright's synth
    │  instruments/mandolin.js     off-beat chops
    │  instruments/bassline.js     the bass part (instruments/upright.js plays it)
    ▼
@@ -32,8 +33,10 @@ notes
 sound
 ```
 
-`playArrangement()` in `instruments/guitar.js` is where playback starts: it
-builds every instrument's notes and runs the scheduler.
+`playArrangement()` in `playback/livePlayback.js` is where playback starts:
+it prepares the notes, builds the band and runs the scheduler. The Export
+dialog renders the same band and mixer offline (`export/renderSong.js`) to
+WAV files, or writes the MIDI file.
 
 ## Folders
 
@@ -44,7 +47,7 @@ builds every instrument's notes and runs the scheduler.
 | `instruments/` | What each instrument plays, and the guitar's chord shapes (`guitar-chords.json`).                                                                                                                                                                                                                                                       |
 | `playback/`    | The audio engine: the note scheduler, the mixer (settings, fader curve, audio graph), the reverb plugin (`reverb/`), the channel EQ (`eq/`, with EQ presets and listening setups), the output stage (`output/`: loudness and limiter), our own AudioWorklet DSP (`worklets/`) and analysis for meters and the visualiser (`analysis/`). |
 | `melody/`      | The ABC melody: turning it into notes, converting chords between ABC and the chart, following the sheet music while it plays.                                                                                                                                                                                                           |
-| `export/`      | The `.mid` download.                                                                                                                                                                                                                                                                                                                    |
+| `export/`      | Export: the full mix or stems as WAV (rendered offline), and the `.mid` file.                                                                                                                                                                                                                                                           |
 | `components/`  | Small Svelte components, by area: `player/`, `editor/`, `melody/`, `mixer/` (with `mixer/eq/`, the EQ window, and `mixer/listening/`, listening setups, and `mixer/output/`, the Loudness strip), `keypad/`, `chart/`, `icons/`.                                                                                                        |
 
 ## How the page is put together

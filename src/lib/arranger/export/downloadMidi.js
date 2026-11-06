@@ -1,5 +1,5 @@
 /**
- * The "Download .mid" button's job: build the MIDI file and save it.
+ * The Export dialog's MIDI choice: build the MIDI file and save it.
  */
 import { arrangementToMidi } from './midi.js';
 import { mixer } from '../playback/mixer.svelte.js';

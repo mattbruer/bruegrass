@@ -53,7 +53,7 @@ export const TIPS = Object.freeze({
 		capo: 'Where the guitar’s capo sits. The chord shapes stay the same; everything sounds higher.',
 		key: 'Move the whole song to another key. The guitar keeps its shapes and moves the capo to get there.',
 		mixer: 'Open the mixer: levels, pan, EQ, reverb and loudness for each instrument.',
-		midi: 'Download the arrangement as a MIDI file, with a track per instrument, for Logic or another DAW.',
+		export: 'Download the song: the full mix or stems as WAV files, or a MIDI file.',
 		loopSection: 'Choose which part of the song repeats while it plays.',
 		loopFrom: 'The first bar of the loop.',
 		loopTo: 'The last bar of the loop.',
@@ -68,6 +68,15 @@ export const TIPS = Object.freeze({
 
 	editor: {
 		help: 'How to write an arrangement: bars, chords, sections, repeats and time signatures.'
+	},
+
+	export: {
+		mix: 'One WAV of the whole song as you hear it, ready to listen to or share.',
+		stems: 'One WAV per instrument, in a zip, all lined up, to mix in a DAW like Logic.',
+		midi: 'The notes as a MIDI file, a track per instrument, for Logic or another DAW.',
+		processed:
+			'On: each stem with your levels, pan, EQ and reverb (plus a reverb stem). Off: dry stems.',
+		withMix: 'Also put the full mix in the zip.'
 	},
 
 	melody: {

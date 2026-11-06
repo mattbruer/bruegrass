@@ -97,6 +97,8 @@ function createTaps(Tone, { master, reverbAux, reverbEq, output, strips }) {
  */
 function followMixerSettings(graph) {
 	const { strips, reverbEq, masterEq, reverb, output } = graph;
+	// Never torn down, on purpose: the live graph is built once and lasts as
+	// long as the page, so its settings watchers do too (they're made once)
 	$effect.root(() => {
 		$effect(() => graph.applyChannels($state.snapshot(mixer.channels), anyChannelSoloed()));
 

@@ -185,6 +185,7 @@ function ensureBubble() {
 	bubble.setAttribute('aria-hidden', 'true'); // the control already carries the text, as its description
 	document.body.append(bubble);
 
+	// Added once, with the one shared bubble, and kept for the life of the page
 	window.addEventListener('keydown', (event) => event.key === 'Escape' && hideNow());
 	window.addEventListener('scroll', hideNow, { capture: true, passive: true });
 	return bubble;

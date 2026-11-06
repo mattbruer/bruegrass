@@ -15,7 +15,7 @@
 	import CapoSelect from './CapoSelect.svelte';
 	import KeySelect from './KeySelect.svelte';
 	import MixerToggleButton from './MixerToggleButton.svelte';
-	import MidiDownloadButton from './MidiDownloadButton.svelte';
+	import ExportButton from '../export/ExportButton.svelte';
 </script>
 
 <div class="toolbar">
@@ -31,7 +31,7 @@
 
 	<div class="actions">
 		<MixerToggleButton />
-		<MidiDownloadButton />
+		<ExportButton />
 	</div>
 </div>
 

@@ -5,7 +5,7 @@
 	 * end and wraps seamlessly.
 	 */
 
-	/** @typedef {Awaited<ReturnType<typeof import('../../instruments/guitar.js').playArrangement>>} Playback */
+	/** @typedef {Awaited<ReturnType<typeof import('../../playback/livePlayback.js').playArrangement>>} Playback */
 
 	/**
 	 * @type {{

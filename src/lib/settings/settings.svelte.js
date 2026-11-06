@@ -63,6 +63,7 @@ function restoreSavedSettings() {
 }
 
 function saveSettingsWheneverTheyChange() {
+	// Never torn down, on purpose: settings are saved for the life of the page (set up once)
 	$effect.root(() => {
 		$effect(() => {
 			const everySetting = JSON.stringify(settings); // reading every setting makes this rerun on any change
