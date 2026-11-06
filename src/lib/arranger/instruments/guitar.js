@@ -15,13 +15,10 @@ const OPEN_MIDI = [40, 45, 50, 55, 59, 64];
 /** Highest fret with a sample. */
 export const MAX_FRET = 12;
 
-/**
- * What each kind of stroke plays, low string first (an upstroke plays them
- * in reverse). A graze is the top two strings, much lighter, until there's
- * a real graze sample.
- */
-const STROKE_STRINGS = { strum: [3, 4, 5], graze: [4, 5] };
-const STROKE_DB = { strum: 0, graze: -8 };
+/** Strings a strum plays, low first (an upstroke plays them high to low). */
+const STRUM_STRINGS = [3, 4, 5];
+/** An upstroke is a little lighter than a downstroke. */
+const STROKE_DB = { down: 0, up: -3 };
 
 /** Seed for the strum pattern choices, so a song always plays (and exports) the same. */
 const STRUM_SEED = 11;
@@ -201,7 +198,7 @@ export function guitarTuning(sections, shift) {
  *
  * Each beat group of the rhythm grid from timeline.js (boom-chuck, or
  * boom-chuck-chuck in 3/4) gets a strum pattern (strumPatterns.js): mostly
- * boom-chuck, with the odd bum-titty or boom-chuck-a-chuck-a. Bass notes on
+ * boom-chuck, with the odd bum-titty. Bass notes on
  * the same chord alternate root/fifth; a new chord (or a new pass) starts on
  * its root. A note rings until its string is played again or the chord
  * changes. When looping, the notes span LOOP_PASSES passes and that rule
@@ -275,7 +272,7 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false, strum
 				}
 
 				const shape = chordShape(chord);
-				const strings = STROKE_STRINGS[stroke.hit].filter((string) => shape[string] !== null);
+				const strings = STRUM_STRINGS.filter((string) => shape[string] !== null);
 				const offsets = strumOffsets(strings, bpm, stroke);
 				strings.forEach((string, i) => {
 					events.push({
@@ -285,7 +282,7 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false, strum
 						fret: /** @type {number} */ (shape[string]) + capo,
 						chord,
 						part: 'strum',
-						levelDb: levelDb.strum + STROKE_DB[stroke.hit],
+						levelDb: levelDb.strum + STROKE_DB[stroke.direction],
 						force: feel.forceDb,
 						nudge: feel.delay + offsets[i] * (feel.spread - 1)
 					});

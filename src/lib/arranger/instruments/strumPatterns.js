@@ -5,27 +5,23 @@
  * per quarter note, and each pattern is written per beat group (2 =
  * boom-chuck, 3 = waltz boom-chuck-chuck, 1 = a lone beat).
  *
- *   B  bass note     x  strum     g  light graze     .  the hand misses
+ *   B  bass note     x  strum     .  the hand misses
  *
  * A pattern without a group size falls back to boom-chuck's.
  */
 export const STRUM_PATTERNS = {
 	boomChuck: { label: 'Boom-chuck', steps: 2, groups: { 1: 'B.', 2: 'B.x.', 3: 'B.x.x.' } },
-	bumTitty: { label: 'Bum-titty', steps: 2, groups: { 2: 'B.xg', 3: 'B.x.xg' } },
-	boomChuckaChucka: {
-		label: 'Boom-chuck-a-chuck-a',
-		steps: 4,
-		groups: { 2: 'B...xgxg', 3: 'B...x...xgxg' }
-	}
+	// Bum (a quarter), ti-ty (two eighths, down-up); duple only
+	bumTitty: { label: 'Bum-titty', steps: 2, groups: { 2: 'B.xx' } }
 };
 
 /** How often each pattern is played: mostly boom-chuck, the others sprinkled in. */
-const STRUM_MIX = { boomChuck: 0.75, bumTitty: 0.15, boomChuckaChucka: 0.1 };
+const STRUM_MIX = { boomChuck: 0.8, bumTitty: 0.2 };
 
-const HITS = /** @type {const} */ ({ B: 'bass', x: 'strum', g: 'graze' });
+const HITS = /** @type {const} */ ({ B: 'bass', x: 'strum' });
 
 /**
- * @typedef {'bass' | 'strum' | 'graze'} Hit
+ * @typedef {'bass' | 'strum'} Hit
  * @typedef {{ at: number, hit: Hit, direction: 'down' | 'up', steps: number }} Stroke
  *   at: quarters from the group's boom; steps: the hand's strokes per quarter
  */
