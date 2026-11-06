@@ -78,17 +78,24 @@ export function createEq(Tone, settings) {
 		return stages.slice(0, band.slope === 24 ? MAX_STAGES : 1);
 	}
 
+	/** The first settings are set outright; only later changes glide. */
+	let first = true;
+
 	/**
 	 * Follow new settings.
 	 * @param {import('./eqBands.js').EqSettings} next
 	 */
 	function update(next) {
 		const now = audio.currentTime;
+		// A new EQ gliding in from the filters' defaults would colour the first
+		// moments of sound (the start of an exported file, say)
+		const set = first ? setNow : glide;
+		first = false;
 		for (const band of next.bands) {
 			for (const filter of stagesByBand.get(band.id) ?? []) {
-				glide(filter.frequency, band.frequency, now);
-				if (filter.type === 'peaking') glide(filter.Q, band.q, now);
-				if (!isCut(filter.type)) glide(filter.gain, band.gain, now);
+				set(filter.frequency, band.frequency, now);
+				if (filter.type === 'peaking') set(filter.Q, band.q, now);
+				if (!isCut(filter.type)) set(filter.gain, band.gain, now);
 			}
 		}
 		rewire(next);
@@ -96,6 +103,15 @@ export function createEq(Tone, settings) {
 
 	update(settings);
 	return { input, output, update };
+}
+
+/**
+ * @param {AudioParam} param
+ * @param {number} value
+ * @param {number} now
+ */
+function setNow(param, value, now) {
+	param.setValueAtTime(value, now);
 }
 
 /**

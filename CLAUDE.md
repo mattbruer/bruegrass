@@ -63,7 +63,7 @@ Done so far:
 
 Next steps, in order:
 
-1. Make a fresh EQ/reverb set its first values immediately (they currently glide in from defaults over ~30–50 ms, which would colour the start of an export): a `first` flag in `createEq.js` `update` and `createReverb.js`.
+1. (Done: a fresh EQ/reverb now sets its first values outright instead of gliding in.)
 2. Split `playArrangement` out of `instruments/guitar.js` (CLAUDE.md already lists this refactor): `instruments/performance.js` (pure: all notes and sample URLs for a song; `loop` option; export uses `loop: false` like `midi.js`, bass notes filtered to one pass, melody via `melodyEvents(..., { loop: false })`), `instruments/band.js` (`createBand(Tone, performance, channelInput)`: touch filters, upright, sample loading, a `play` per stream), and `playback/livePlayback.js` (the lookahead scheduler, `beats()`/`position()`/`stop()`). Update `PlayerState` and the type import in `ArrangementStrip.svelte`.
 3. `export/renderSong.js`: `Tone.Offline(async () => {...}, seconds, channels, 48000)`; build the graph, schedule one pass at `lead + time`, render. Stems in one render: each stem bus → `ChannelSplitter` → one native `ChannelMergerNode` → the raw destination (`channelCount` = 2 × stems, `channelInterpretation: 'discrete'`).
 4. `export/wav.js` (24-bit PCM writer) and `export/zip.js` (store-only zip with CRC-32), then `export/exportAudio.js` to name and download (`slugify`, `downloadFile`).

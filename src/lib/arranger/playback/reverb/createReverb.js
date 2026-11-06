@@ -59,15 +59,22 @@ export function createReverb(Tone, settings) {
 	function update(next) {
 		const wetLevel = next.enabled ? next.wet / 100 : 0;
 		const dryLevel = next.enabled ? next.dry / 100 : 1; // bypassed: straight through
-		wet.gain.rampTo(wetLevel, GLIDE_SECONDS);
-		dry.gain.rampTo(dryLevel, GLIDE_SECONDS);
-		preDelay.delayTime.rampTo(next.preDelay / 1000, GLIDE_SECONDS);
-		lowCut.frequency.rampTo(next.lowCut, GLIDE_SECONDS);
-		highCut.frequency.rampTo(next.highCut, GLIDE_SECONDS);
+		// The first settings are set outright (gliding in from the defaults
+		// would colour the first moments of sound); later changes glide
+		const firstBuild = builtRoom === '';
+		/** @param {{ value: number, rampTo: (value: number, time: number) => unknown }} param @param {number} value */
+		const set = (param, value) => {
+			if (firstBuild) param.value = value;
+			else param.rampTo(value, GLIDE_SECONDS);
+		};
+		set(wet.gain, wetLevel);
+		set(dry.gain, dryLevel);
+		set(preDelay.delayTime, next.preDelay / 1000);
+		set(lowCut.frequency, next.lowCut);
+		set(highCut.frequency, next.highCut);
 
 		const room = `${next.decay}|${next.damping}|${next.width}`;
 		if (room === builtRoom) return;
-		const firstBuild = builtRoom === '';
 		builtRoom = room;
 		clearTimeout(rebuildTimer);
 		if (firstBuild) rebuildRoom(next);
