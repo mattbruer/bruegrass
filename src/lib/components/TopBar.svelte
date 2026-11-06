@@ -2,7 +2,8 @@
 	/**
 	 * The bar across the top of every page: the app's name, a link to each
 	 * section (the one you're on is pressed in and lit), the tips on/off
-	 * button, and the Settings button. It stays at the top while you scroll.
+	 * button, and the Settings button. While developing on this machine,
+	 * a dashed Todo button too (it never appears in the real app). It stays at the top while you scroll.
 	 *
 	 * To add a section: add it to PAGES below.
 	 */
@@ -10,6 +11,7 @@
 	import { page } from '$app/state';
 	import GearIcon from './GearIcon.svelte';
 	import TipsToggle from '$lib/tooltips/TipsToggle.svelte';
+	import { isLocalDev } from '$lib/devOnly.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -54,11 +56,25 @@
 			</a>
 		{/each}
 
+		{#if isLocalDev(page.url)}
+			<a
+				href={resolve('/todo')}
+				class="dev-link ui-button px-3 py-1.5 text-sm"
+				class:ui-button-on={isCurrentSection('/todo')}
+				aria-current={isCurrentSection('/todo') ? 'page' : undefined}
+				aria-label="Todo"
+				use:tooltip={TIPS.todo.open}
+			>
+				<!-- Just a tick on a narrow screen, so the top bar still fits -->
+				<span class="max-sm:hidden">Todo</span><span class="sm:hidden" aria-hidden="true">✓</span>
+			</a>
+		{/if}
+
 		<TipsToggle />
 
 		<button
 			type="button"
-			class="flex h-9 w-9 items-center justify-center ui-button rounded-full"
+			class="flex h-9 w-9 shrink-0 items-center justify-center ui-button rounded-full"
 			class:ui-button-on={settingsOpen}
 			aria-label="Settings"
 			use:tooltip={TIPS.app.settings}
@@ -71,6 +87,12 @@
 </header>
 
 <style>
+	/* Dev-only: dashed, so it's clearly not part of the real app */
+	.dev-link {
+		outline: 1.5px dashed var(--color-ink-faint);
+		outline-offset: 2px;
+	}
+
 	.topbar {
 		position: sticky;
 		top: 0;

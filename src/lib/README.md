@@ -10,6 +10,7 @@ grouped by feature. Import from here with `$lib/...`.
 | `settings/`   | The Settings panel (opened from the top bar) and the saved preferences behind it.                                                                                                   |
 | `theme/`      | The look of the app: colour, shadow and corner tokens, and the shared `ui-*` classes.                                                                                               |
 | `tooltips/`   | Tooltips on every control: the `use:tooltip` action and all their wording (`tips.js`).                                                                                              |
+| `todo/`       | The dev-only todo page's pieces (`/todo`, saved in `todo.json`). `server/todoList.js` reads and writes the file; `devOnly.js` says when dev tools show.                             |
 | `storage/`    | Saving and loading user data (songs, EQ presets, listening setups, which setup this device uses, and drafts of unsaved work). Today: this browser's localStorage. A database later. |
 | `components/` | Small pieces used across the whole app (the top bar, the dialog frame, the name-it dialog, the unsaved-changes dot).                                                                |
 | `utils/`      | Tiny general helpers with no app knowledge (download a file, make a slug, watch for a touch screen).                                                                                |

@@ -19,6 +19,15 @@ export const TIPS = Object.freeze({
 		tipsToggle: 'Tips are on: rest on any control to see what it does. Tap to turn them off.'
 	},
 
+	todo: {
+		open: 'Your todo list for the app (only shown while developing on this machine).',
+		add: 'Add this idea to your list. It’s saved to todo.json, where Claude can see it.',
+		done: 'Mark this done.',
+		undone: 'Mark this not done yet.',
+		adopt: 'Move this suggestion to your list: you want it.',
+		remove: 'Delete this from the list.'
+	},
+
 	songs: {
 		playAll: 'Play every song in the list, one after another.',
 		song: 'Play this song.'

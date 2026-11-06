@@ -1,0 +1,72 @@
+{
+	"mine": [
+		{
+			"id": "record-along",
+			"text": "Record myself playing along with the backing track",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		}
+	],
+	"suggestions": [
+		{
+			"id": "export-audio",
+			"text": "Export the backing track as an audio file",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
+			"id": "metronome",
+			"text": "Optional metronome click track",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
+			"id": "count-in",
+			"text": "Count-in clicks before the band starts",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
+			"id": "tap-to-play",
+			"text": "Tap a note in the sheet music to play from there",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
+			"id": "speed-trainer",
+			"text": "Speed trainer: loop gets a little faster each pass",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
+			"id": "input-meter",
+			"text": "Mic input level meter (groundwork for recording)",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
+			"id": "tuner",
+			"text": "Tuner using the microphone",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
+			"id": "latency-calibration",
+			"text": "Latency calibration so recordings line up with the band",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
+			"id": "melody-tab",
+			"text": "Guitar or mandolin tab under the melody (with capo)",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
+			"id": "abc-warnings",
+			"text": "Show ABC mistakes under the melody box",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		}
+	]
+}

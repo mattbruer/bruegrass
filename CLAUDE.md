@@ -46,6 +46,39 @@ The user wants code they can read and change without help, and that makes the ne
 - Descriptive names, and comments that explain the _why_.
 - Refactor toward this whenever touching code. Next candidates: `instruments/guitar.js` (where playback starts lives there) and `melody/abcChords.js`.
 
+## In progress: audio export (roadmap step 1)
+
+Started 2026-11-05; pick up here. The user wants **Export**: a full-mix WAV, or stems as a zip of WAVs, and keep the `.mid` download (they use it in Logic).
+
+Decided with the user:
+
+- Full mix = as you hear it (levels, pan, EQ, reverb, loudness stage, mutes/solos).
+- Stems = **dry by default** (each instrument after its input trim: no EQ, pan, fader, reverb; mono files), with an option **"include my mix"** for processed stems (post-fader/pan) plus a separate Reverb stem, so they sum to the mix (without master EQ/fader/output stage). Stems ignore mute/solo. Option to put the full mix in the zip too.
+- WAV, 48 kHz, 24-bit. One pass of the whole arrangement (not the loop region) + a reverb tail (~decay + 1 s, capped). Every file starts at the same point and **lines up with the `.mid`**: when the melody has a pickup, bar 1 starts one bar in (as `midi.js` does with `lead`).
+- One **Export…** button (phone and desktop) opening a dialog: Full mix / Stems / MIDI (MIDI hidden on touch screens, as now). Stop playback before rendering (Tone.Offline swaps Tone's global context).
+
+Done so far:
+
+- `playback/graph/buildMixerGraph.js` builds the whole mixer in whatever context Tone is using (live or offline), with `channelInput`, `applyChannels`, `applyReverbAndMaster`, `applyAll`. `mixerGraph.svelte.js` is now just the live wrapper (speakers, effects, taps). Reverb sends are wired by hand (Tone's named send/receive buses are one registry shared by all contexts, which would break offline). Tested: playback, meters, reverb, loudness all work.
+
+Next steps, in order:
+
+1. Make a fresh EQ/reverb set its first values immediately (they currently glide in from defaults over ~30–50 ms, which would colour the start of an export): a `first` flag in `createEq.js` `update` and `createReverb.js`.
+2. Split `playArrangement` out of `instruments/guitar.js` (CLAUDE.md already lists this refactor): `instruments/performance.js` (pure: all notes and sample URLs for a song; `loop` option; export uses `loop: false` like `midi.js`, bass notes filtered to one pass, melody via `melodyEvents(..., { loop: false })`), `instruments/band.js` (`createBand(Tone, performance, channelInput)`: touch filters, upright, sample loading, a `play` per stream), and `playback/livePlayback.js` (the lookahead scheduler, `beats()`/`position()`/`stop()`). Update `PlayerState` and the type import in `ArrangementStrip.svelte`.
+3. `export/renderSong.js`: `Tone.Offline(async () => {...}, seconds, channels, 48000)`; build the graph, schedule one pass at `lead + time`, render. Stems in one render: each stem bus → `ChannelSplitter` → one native `ChannelMergerNode` → the raw destination (`channelCount` = 2 × stems, `channelInterpretation: 'discrete'`).
+4. `export/wav.js` (24-bit PCM writer) and `export/zip.js` (store-only zip with CRC-32), then `export/exportAudio.js` to name and download (`slugify`, `downloadFile`).
+5. `components/export/ExportDialog.svelte` + an Export button replacing `MidiDownloadButton` in `PlayerToolbar` (move the MIDI download into the dialog). Tooltips in `tips.js`. Check phone and desktop.
+6. Test: render, check lengths/alignment against the `.mid`, open the WAVs, update the arranger README and this file, tick roadmap step 1 in `todo.json`.
+
+## The todo list (`todo.json`)
+
+- The user's roadmap: `todo.json` at the project root, shown on the dev-only `/todo` page (two columns, "My ideas" and "Claude's suggestions"). The Todo button in the top bar and the page only exist in dev on localhost (`$lib/devOnly.js`); anywhere else `/todo` is a 404 and nothing can write the file. The page writes through form actions in `src/routes/todo/+page.server.js` → `$lib/server/todoList.js`.
+- **Read it at the start of a chat** to know what the user wants next.
+- **Keep the suggestions column going:** as you work, add ideas that fit where the app is heading, and drop ones that are done, adopted or stale. At most about 10, each a very short, high-level line (the user asks for details when they want them). Edit `todo.json` directly; keep the shape (`id`, `text`, `done`, `addedAt`).
+- **The suggestions are a roadmap, in build order** (the page numbers them): each step should set up the next, so later work needs the least refactoring. Insert a new idea where it fits that order, not at the end. The current order's logic: (1) export, because rendering offline makes the audio graph work in any audio context, so every later node is built that way from the start; (2–3) a click channel, then count-in on top of it; (4–5) the scheduler learns to start mid-song and change tempo per pass; (6–8) mic input, then the tuner and latency calibration on it, which leads straight into recording; (9–10) independent abcjs display work, any time.
+- Don't edit "mine" except to tick off something you've built (`done: true`), and say so.
+- **Where it's heading: recording.** The user wants to record themselves playing along with the backing track (not built yet). Make choices that keep that easy: a stable audio clock, measured latency (`outputLatency`), mic input through Web Audio with echo cancellation and auto-gain off, and the mixer able to take a new input channel.
+
 ## Saved data and settings
 
 - `src/lib/storage/arrangements.js`: an arrangement is a plain document (`id`, `version`, `title`, `arrangement`, `abc`, `tempo`, `capo`, `transpose`, `mix`, `createdAt`, `updatedAt`). Pages only go through this module, never storage directly. Today it's localStorage, a per-device copy that works offline. A database is planned (social features, realtime, PWA), so keep data serializable and in this shape, and bump `ARRANGEMENT_VERSION` and migrate in `upgrade` when the shape changes.
