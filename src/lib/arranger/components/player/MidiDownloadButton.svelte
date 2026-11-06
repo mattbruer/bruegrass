@@ -5,6 +5,8 @@
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { downloadArrangementMidi } from '../../export/downloadMidi.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const { arrangement, melody, player } = useArranger();
 
@@ -27,6 +29,11 @@
 	}
 </script>
 
-<button type="button" class="ui-button px-4 py-2 pointer-coarse:hidden" onclick={download}>
+<button
+	type="button"
+	class="ui-button px-4 py-2 pointer-coarse:hidden"
+	onclick={download}
+	use:tooltip={TIPS.player.midi}
+>
 	Download .mid
 </button>

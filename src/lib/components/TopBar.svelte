@@ -9,6 +9,8 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import GearIcon from './GearIcon.svelte';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** @type {{ onOpenSettings: () => void, settingsOpen: boolean }} */
 	let { onOpenSettings, settingsOpen } = $props();
@@ -31,7 +33,11 @@
 
 <header class="topbar">
 	<nav class="mx-auto flex max-w-5xl items-center gap-3 px-4 sm:px-8" aria-label="Main">
-		<a href={resolve('/')} class="mr-auto text-lg font-extrabold tracking-tight">
+		<a
+			href={resolve('/')}
+			class="mr-auto text-lg font-extrabold tracking-tight"
+			use:tooltip={TIPS.app.home}
+		>
 			Brue<span class="text-accent">grass</span>
 		</a>
 
@@ -41,6 +47,7 @@
 				class="ui-button px-3 py-1.5 text-sm"
 				class:ui-button-on={isCurrentSection(section.path)}
 				aria-current={isCurrentSection(section.path) ? 'page' : undefined}
+				use:tooltip={TIPS.app.pages[/** @type {keyof typeof TIPS.app.pages} */ (section.path)]}
 			>
 				{section.name}
 			</a>
@@ -51,6 +58,7 @@
 			class="flex h-9 w-9 items-center justify-center ui-button rounded-full"
 			class:ui-button-on={settingsOpen}
 			aria-label="Settings"
+			use:tooltip={TIPS.app.settings}
 			aria-haspopup="dialog"
 			onclick={onOpenSettings}
 		>

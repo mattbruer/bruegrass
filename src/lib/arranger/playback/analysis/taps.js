@@ -21,12 +21,12 @@ const SPECTRUM_SMOOTHING = 0.8;
 /**
  * Listen to both sides of a stereo signal.
  * @param {typeof import('tone')} Tone
- * @param {import('tone').ToneAudioNode} source
+ * @param {import('tone').ToneAudioNode | AudioNode} source
  * @returns {StereoTap}
  */
 export function createStereoTap(Tone, source) {
 	const analyser = new Tone.Analyser({ type: 'waveform', size: WAVEFORM_SAMPLES, channels: 2 });
-	source.connect(analyser);
+	Tone.connect(source, analyser); // works for Tone nodes and native Web Audio nodes alike
 
 	return {
 		read() {
@@ -39,7 +39,7 @@ export function createStereoTap(Tone, source) {
 /**
  * Listen to how loud each frequency is.
  * @param {typeof import('tone')} Tone
- * @param {import('tone').ToneAudioNode} source
+ * @param {import('tone').ToneAudioNode | AudioNode} source
  * @returns {SpectrumTap}
  */
 export function createSpectrumTap(Tone, source) {
@@ -48,7 +48,7 @@ export function createSpectrumTap(Tone, source) {
 		size: SPECTRUM_BANDS,
 		smoothing: SPECTRUM_SMOOTHING
 	});
-	source.connect(analyser);
+	Tone.connect(source, analyser);
 
 	return {
 		read: () => /** @type {Float32Array} */ (analyser.getValue()),

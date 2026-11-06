@@ -11,6 +11,7 @@
 	import ReverbPluginWindow from './ReverbPluginWindow.svelte';
 	import { mixer, DEFAULT_REVERB_LEVEL_DB } from '../../playback/mixer.svelte.js';
 	import { audioTaps } from '../../playback/mixerGraph.svelte.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	let pluginWindowOpen = $state(false);
 </script>
@@ -28,6 +29,7 @@
 		reset={DEFAULT_REVERB_LEVEL_DB}
 		label="Reverb"
 		meter={audioTaps.current?.reverb ?? null}
+		tip={TIPS.mixer.reverbFader}
 	/>
 </Strip>
 

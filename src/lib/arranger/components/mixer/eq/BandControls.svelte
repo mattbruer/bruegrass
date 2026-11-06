@@ -12,6 +12,8 @@
 		isCut
 	} from '../../../playback/eq/eqBands.js';
 	import { FREQUENCY_SCALE, GAIN_SCALE, Q_SCALE } from './bandControlScales.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
 	 * @type {{
@@ -41,8 +43,14 @@
 				aria-pressed={band.on}
 				aria-label="{EQ_BANDS[index].name} on"
 				onclick={() => (band.on = !band.on)}
+				use:tooltip={TIPS.eq.bandPower}
 			></button>
-			<button type="button" class="name" onclick={() => (selectedBandId = band.id)}>
+			<button
+				type="button"
+				class="name"
+				onclick={() => (selectedBandId = band.id)}
+				use:tooltip={TIPS.eq.bands[band.id]}
+			>
 				{EQ_BANDS[index].name}
 			</button>
 		</div>
@@ -58,6 +66,7 @@
 			{...FREQUENCY_SCALE}
 			reset={definition.defaults.frequency}
 			label="{definition.name} frequency"
+			tip={TIPS.eq.frequency}
 		/>
 
 		{#if !isCut(definition.shape)}
@@ -67,6 +76,7 @@
 				{...GAIN_SCALE}
 				reset={0}
 				label="{definition.name} gain"
+				tip={TIPS.eq.gain}
 			/>
 		{/if}
 
@@ -77,6 +87,7 @@
 				{...Q_SCALE}
 				reset={definition.defaults.q}
 				label="{definition.name} Q"
+				tip={TIPS.eq.q}
 			/>
 		{/if}
 
@@ -91,6 +102,7 @@
 							class:ui-button-on={selected.slope === slope}
 							aria-pressed={selected.slope === slope}
 							onclick={() => (selected.slope = slope)}
+							use:tooltip={TIPS.eq.slope}
 						>
 							{slope} dB/oct
 						</button>

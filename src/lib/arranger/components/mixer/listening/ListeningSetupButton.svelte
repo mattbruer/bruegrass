@@ -11,6 +11,8 @@
 	import HeadphonesIcon from '../../icons/HeadphonesIcon.svelte';
 	import { listening, setupHasUnsavedChanges } from '../../../playback/eq/listeningSetup.svelte.js';
 	import { openListeningDialog } from './listeningDialogState.svelte.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	let changed = $derived(setupHasUnsavedChanges());
 	/** With no setup yet, the button invites you to make one. */
@@ -25,6 +27,7 @@
 		? ', unsaved changes'
 		: ''}"
 	onclick={openListeningDialog}
+	use:tooltip={TIPS.mixer.listening}
 >
 	<HeadphonesIcon />
 	<span class="truncate">{label}</span>

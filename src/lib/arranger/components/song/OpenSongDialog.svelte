@@ -8,6 +8,8 @@
 	import { useArranger } from '../../state/context.js';
 	import { okToDiscardChanges } from '../../state/guardUnsavedChanges.svelte.js';
 	import { formatSavedDate } from './formatSavedDate.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** @type {{ open: boolean }} */
 	let { open = $bindable(false) } = $props();
@@ -50,6 +52,7 @@
 							class:ui-button-on={isOpen}
 							aria-current={isOpen ? 'true' : undefined}
 							onclick={() => openSong(saved.id)}
+							use:tooltip={TIPS.song.openSaved}
 						>
 							<span class="block truncate">{saved.title}</span>
 							<span class="block text-xs font-normal text-ink-soft">
@@ -61,6 +64,7 @@
 							class="ui-button px-3 py-2 text-sm text-danger"
 							aria-label="Delete {saved.title}"
 							onclick={() => deleteSong(saved)}
+							use:tooltip={TIPS.song.deleteSaved}
 						>
 							Delete
 						</button>

@@ -12,6 +12,8 @@
 	import { peakLevel, toDecibels } from '../../../playback/analysis/levels.js';
 	import { createMeterBallistics } from '../../../playback/analysis/meterBallistics.js';
 	import { onEveryFrame } from '../../../playback/analysis/frameLoop.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/* Where the colours change, in dB */
 	const HOT_FROM_DB = -12;
@@ -62,7 +64,7 @@
 	type="button"
 	class="meter"
 	class:clipped
-	title={clipped ? 'Clipped: tap to clear' : 'Level'}
+	use:tooltip={TIPS.mixer.meter}
 	aria-label={clipped ? 'Clipped. Tap to clear.' : 'Level meter'}
 	onclick={clearClip}
 	style:--ramp={colourRamp}

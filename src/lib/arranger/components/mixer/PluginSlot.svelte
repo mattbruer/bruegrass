@@ -3,6 +3,8 @@
 	 * An insert slot on a strip, as in Logic: a power button that bypasses
 	 * the plugin, and its name, which opens the plugin's window.
 	 */
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
 	 * @type {{
@@ -21,7 +23,7 @@
 		class="power"
 		aria-pressed={enabled}
 		aria-label="{name} on"
-		title={enabled ? 'Bypass' : 'Turn on'}
+		use:tooltip={TIPS.mixer.pluginPower}
 		onclick={() => (enabled = !enabled)}
 	>
 		⏻
@@ -32,7 +34,7 @@
 		class:open={windowOpen}
 		aria-haspopup="dialog"
 		aria-expanded={windowOpen}
-		title="Open {name}"
+		use:tooltip={TIPS.mixer.pluginOpen}
 		onclick={onOpen}
 	>
 		{name}

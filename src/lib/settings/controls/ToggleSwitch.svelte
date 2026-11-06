@@ -4,10 +4,12 @@
 	 * and the track lights up in the accent colour when on.
 	 *
 	 * Usage: <ToggleSwitch bind:on={settings.something} labelledBy="setting-id" />
+	 * Optional: tip="what it does" for a tooltip.
 	 */
+	import { tooltip } from '$lib/tooltips/tooltip.js';
 
-	/** @type {{ on: boolean, labelledBy: string }} */
-	let { on = $bindable(), labelledBy } = $props();
+	/** @type {{ on: boolean, labelledBy: string, tip?: string }} */
+	let { on = $bindable(), labelledBy, tip } = $props();
 </script>
 
 <button
@@ -18,6 +20,7 @@
 	class="switch"
 	class:on
 	onclick={() => (on = !on)}
+	use:tooltip={tip}
 >
 	<span class="knob"></span>
 </button>

@@ -9,6 +9,8 @@
 	import Mixer from './Mixer.svelte';
 	import SlidersIcon from '../icons/SlidersIcon.svelte';
 	import ListeningSetupButton from './listening/ListeningSetupButton.svelte';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const { layout } = useArranger();
 
@@ -31,6 +33,7 @@
 		class="handle"
 		aria-controls="mixer-drawer"
 		onclick={() => (layout.mixerOpen = true)}
+		use:tooltip={TIPS.mixer.openHandle}
 	>
 		<SlidersIcon />
 		Mixer ▲
@@ -56,6 +59,7 @@
 				class="shrink-0 ui-button px-3 py-1 text-sm"
 				aria-label="Close mixer"
 				onclick={() => (layout.mixerOpen = false)}
+				use:tooltip={TIPS.mixer.close}
 			>
 				Close ✕
 			</button>

@@ -6,6 +6,8 @@
 	import { useArranger } from '../../state/context.js';
 	import MelodyFitNote from './MelodyFitNote.svelte';
 	import ChordConversion from './ChordConversion.svelte';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** An example shown in the empty box. */
 	const EXAMPLE_NOTATION = [
@@ -31,7 +33,8 @@
 			href="https://abcnotation.com/learn"
 			target="_blank"
 			rel="noopener"
-			class="text-accent underline">ABC notation</a
+			class="text-accent underline"
+			use:tooltip={TIPS.melody.abcLink}>ABC notation</a
 		>. It's drawn as sheet music at the bottom of the page, and the guitar plays it along with the
 		band: the tune's first full bar starts with the arrangement's first bar, at the tempo above. The
 		band always plays the arrangement: if the tune has chord symbols (like <code>"G"</code>), the

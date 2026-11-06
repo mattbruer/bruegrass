@@ -6,10 +6,12 @@
  *   instrument ─▶ channel (fader, pan, mute/solo) ─┬────────────────────────────▶ master ─▶ out
  *                                                  └─ send ─▶ reverb aux ───────▶ master
  *                                                            (reverb plugin, fader, mute)
+ *   master ─▶ output stage (gain to a loudness target, true-peak limiter) ─▶ speakers
  */
 import { REVERB_DEFAULTS } from './reverb/reverbSettings.js';
 import { FADER_MIN } from './faderTaper.js';
 import { flatEq } from './eq/eqBands.js';
+import { DEFAULT_OUTPUT_GAIN_DB } from './output/outputSettings.js';
 
 /*
  * The default mix: a loose, natural bluegrass balance. Change it here.
@@ -73,7 +75,12 @@ export const mixer = $state({
 		plugin: { ...REVERB_DEFAULTS }
 	},
 	/** The master: its EQ shapes the whole mix. */
-	master: { volume: 0, eq: flatEq() }
+	master: { volume: 0, eq: flatEq() },
+	/**
+	 * The output stage after the master (see output/): `gain` (dB) brings
+	 * the mix up to a loudness target; a limiter after it stops any clipping.
+	 */
+	output: { gain: DEFAULT_OUTPUT_GAIN_DB }
 });
 
 /** The mix the app starts with (what New and "reset" go back to). */
@@ -89,9 +96,10 @@ export function defaultChannel(id) {
 	return channel;
 }
 
-/** The reverb aux's and master's default fader levels, in dB. */
+/** The reverb aux's and master's default fader levels, and the default output gain, in dB. */
 export const DEFAULT_REVERB_LEVEL_DB = DEFAULT_MIX.reverb.volume;
 export const DEFAULT_MASTER_LEVEL_DB = DEFAULT_MIX.master.volume;
+export const DEFAULT_OUTPUT_GAIN = DEFAULT_MIX.output.gain;
 
 /** Is any channel soloed? (Then only soloed channels are heard, plus the reverb.) */
 export function anyChannelSoloed() {
@@ -146,6 +154,8 @@ export function applyMix(saved) {
 		copyMatching(mixer.master, mix.master, ['volume']);
 		applyEq(mixer.master.eq, mix.master.eq);
 	}
+	// Songs saved before the output stage existed get the default gain
+	copyMatching(mixer.output, mix.output ?? DEFAULT_MIX.output, ['gain']);
 }
 
 /**

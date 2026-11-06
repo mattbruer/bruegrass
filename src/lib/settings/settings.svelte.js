@@ -21,6 +21,9 @@ const OLD_KEYPAD_STORAGE_KEY = 'arranger.phoneKeyboard';
 export const settings = $state({
 	// General tab
 
+	/** Show tooltips (a short summary of what each control does). */
+	showTips: true,
+
 	/** On touch screens, type arrangements with the music keypad (else the phone's keyboard). */
 	musicKeypad: true,
 

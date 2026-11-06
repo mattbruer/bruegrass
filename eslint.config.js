@@ -23,6 +23,12 @@ export default defineConfig([
 	},
 
 	{
+		// AudioWorklet processors run on the audio thread, which has its own globals
+		files: ['**/worklets/*Processor.js'],
+		languageOptions: { globals: { ...globals.audioWorklet } }
+	},
+
+	{
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
 		rules: {}

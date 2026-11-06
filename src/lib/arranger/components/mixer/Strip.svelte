@@ -2,8 +2,9 @@
 	/**
 	 * A channel strip's card, shared by every kind of strip (instrument,
 	 * reverb aux, master). Every strip has its name and EQ at the top, in
-	 * the same place, so they line up across the console. What goes below
-	 * is up to each strip, and sits at the bottom so the faders line up too.
+	 * the same place, so they line up across the console (a strip with no EQ,
+	 * like the output stage, leaves the space empty). What goes below is up
+	 * to each strip, and sits at the bottom so the faders line up too.
 	 */
 	import EqButton from './eq/EqButton.svelte';
 
@@ -12,16 +13,17 @@
 	 *   id: string,
 	 *   name: string,
 	 *   kind?: 'channel' | 'aux' | 'master',
+	 *   hasEq?: boolean,
 	 *   children: import('svelte').Snippet
 	 * }}
 	 */
-	let { id, name, kind = 'channel', children } = $props();
+	let { id, name, kind = 'channel', hasEq = true, children } = $props();
 </script>
 
 <div class="strip {kind}">
 	<div class="strip-top">
 		<h3 class="strip-name">{name}</h3>
-		<EqButton stripId={id} />
+		{#if hasEq}<EqButton stripId={id} />{/if}
 	</div>
 	<div class="strip-controls">
 		{@render children()}

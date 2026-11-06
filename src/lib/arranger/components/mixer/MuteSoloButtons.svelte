@@ -3,6 +3,8 @@
 	 * Mute (M) and, for instrument channels, Solo (S). Soloing any channel
 	 * silences the channels that aren't soloed; the reverb carries on.
 	 */
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
 	 * @type {{ settings: { mute: boolean, solo?: boolean }, name: string }}
@@ -20,7 +22,7 @@
 		class:on={settings.mute}
 		aria-pressed={settings.mute}
 		aria-label="Mute {name}"
-		title="Mute"
+		use:tooltip={TIPS.mixer.mute}
 		onclick={() => (settings.mute = !settings.mute)}
 	>
 		M
@@ -33,7 +35,7 @@
 			class:on={settings.solo}
 			aria-pressed={settings.solo}
 			aria-label="Solo {name}"
-			title="Solo"
+			use:tooltip={TIPS.mixer.solo}
 			onclick={() => (settings.solo = !settings.solo)}
 		>
 			S

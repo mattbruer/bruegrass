@@ -13,6 +13,8 @@
 		READABLE_CONTRAST,
 		contrastRatio
 	} from '$lib/theme/theme.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** How readable the text is on the background (warns below READABLE_CONTRAST). */
 	let textContrast = $derived(
@@ -48,6 +50,7 @@
 					class:ui-button-on={isCurrentLook(preset.appearance)}
 					aria-pressed={isCurrentLook(preset.appearance)}
 					onclick={() => useAppearance(preset.appearance)}
+					use:tooltip={TIPS.settings.preset}
 				>
 					<!-- A little preview: the background, with the accent as a dot -->
 					<span
@@ -134,6 +137,7 @@
 		type="button"
 		class="self-start ui-button px-4 py-2 text-sm"
 		onclick={() => useAppearance(DEFAULT_APPEARANCE)}
+		use:tooltip={TIPS.settings.resetAppearance}
 	>
 		Reset to the original look
 	</button>

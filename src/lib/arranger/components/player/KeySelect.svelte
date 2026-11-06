@@ -1,11 +1,16 @@
 <script>
 	/** Move the whole band to another key (for a singer). */
 	import { useArranger } from '../../state/context.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const { arrangement } = useArranger();
 </script>
 
-<label class="flex items-center gap-2 font-semibold whitespace-nowrap">
+<label
+	class="flex items-center gap-2 font-semibold whitespace-nowrap"
+	use:tooltip={TIPS.player.key}
+>
 	Key
 	<select
 		bind:value={arrangement.transpose}

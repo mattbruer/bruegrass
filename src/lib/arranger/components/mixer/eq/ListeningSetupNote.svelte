@@ -13,6 +13,8 @@
 		setupHasUnsavedChanges
 	} from '../../../playback/eq/listeningSetup.svelte.js';
 	import { openListeningDialog } from '../listening/listeningDialogState.svelte.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	let changed = $derived(setupHasUnsavedChanges());
 </script>
@@ -30,6 +32,7 @@
 					type="button"
 					class="ui-button px-3 py-1.5 ui-button-primary"
 					onclick={saveSetupChanges}
+					use:tooltip={TIPS.eq.saveToSetup}
 				>
 					Save to {listening.setup.name}
 				</button>
@@ -45,6 +48,7 @@
 			type="button"
 			class="mt-2 ui-button px-3 py-1.5 ui-button-primary"
 			onclick={openListeningDialog}
+			use:tooltip={TIPS.eq.openSetups}
 		>
 			Listening setups…
 		</button>

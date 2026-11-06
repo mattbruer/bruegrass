@@ -7,6 +7,8 @@
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { WHOLE_ARRANGEMENT } from '../../state/LoopState.svelte.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const { arrangement, loop, player } = useArranger();
 
@@ -34,6 +36,7 @@
 		onchange={chooseSection}
 		disabled={arrangement.sections.length === 0}
 		aria-label="Loop which part"
+		use:tooltip={TIPS.player.loopSection}
 		class="w-44 ui-field px-2 py-1"
 	>
 		<option value={WHOLE_ARRANGEMENT}>Whole arrangement</option>
@@ -51,6 +54,7 @@
 			bind:value={loop.from}
 			onchange={() => player.restartIfPlaying()}
 			aria-label="First bar"
+			use:tooltip={TIPS.player.loopFrom}
 			class="w-16 ui-field px-2 py-1"
 		/>
 	</label>
@@ -63,13 +67,19 @@
 			value={Math.min(loop.to, loop.barCount)}
 			onchange={chooseLastBar}
 			aria-label="Last bar"
+			use:tooltip={TIPS.player.loopTo}
 			class="w-16 ui-field px-2 py-1"
 		/>
 	</label>
 	<span class="text-sm text-ink-soft">of {loop.barCount}</span>
 
 	{#if loop.isPartial}
-		<button type="button" class="ui-button px-3 py-1 text-sm text-accent" onclick={loopEverything}>
+		<button
+			type="button"
+			class="ui-button px-3 py-1 text-sm text-accent"
+			onclick={loopEverything}
+			use:tooltip={TIPS.player.loopEverything}
+		>
 			Loop everything
 		</button>
 	{/if}

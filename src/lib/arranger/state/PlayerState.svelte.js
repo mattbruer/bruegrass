@@ -3,6 +3,7 @@
  * problem to show the user.
  */
 import { playArrangement } from '../instruments/guitar.js';
+import { audioTaps } from '../playback/mixerGraph.svelte.js';
 import { melodyEvents } from '../melody/melody.js';
 import { melodyTime } from '../melody/follow.js';
 
@@ -52,6 +53,8 @@ export class PlayerState {
 				bpm: this.#arrangement.bpm,
 				melody: this.#melodyForThisPass()
 			});
+			// Each play is measured afresh, so the loudness reading is this song as it is now
+			audioTaps.current?.output.resetLoudness();
 		} catch (problem) {
 			this.showProblem(problem);
 		}

@@ -5,7 +5,7 @@
  *
  *   instrument parts ─▶ input trim ─▶ EQ ─▶ fader/pan/mute ─┬──────────────────────────────▶ mix bus
  *                                                           └─ send ─▶ reverb ─▶ EQ ─▶ aux fader ─▶ mix bus
- *   mix bus ─▶ master EQ ─▶ master fader ─▶ speakers
+ *   mix bus ─▶ master EQ ─▶ master fader ─▶ output stage (gain, true-peak limiter) ─▶ speakers
  *
  * Every bus after the channels (reverb aux, mix bus, master) is stereo: a
  * Tone Channel is mono unless told otherwise, and a mono master would fold
@@ -16,6 +16,8 @@ import { faderGain } from './faderTaper.js';
 import { createReverb } from './reverb/createReverb.js';
 import { createEq } from './eq/createEq.js';
 import { createSpectrumTap, createStereoTap } from './analysis/taps.js';
+import { createOutputStage } from './output/createOutputStage.js';
+import { outputComparison } from './output/outputStage.svelte.js';
 
 /** The name Tone uses to route channel sends to the reverb aux. */
 const REVERB_SEND = 'reverb';
@@ -46,6 +48,7 @@ const INPUT_TRIM_DB = -14;
  *   reverbAux: import('tone').Channel,
  *   reverbEq: Eq,
  *   reverb: ReturnType<typeof createReverb>,
+ *   output: Awaited<ReturnType<typeof createOutputStage>>,
  *   strips: Map<string, Strip>
  * }} Graph
  */
@@ -62,9 +65,14 @@ let graph = null;
  *   reverb: import('./analysis/taps.js').StereoTap,
  *   master: import('./analysis/taps.js').StereoTap,
  *   spectrum: import('./analysis/taps.js').SpectrumTap,
- *   afterEq: Map<string, import('./analysis/taps.js').SpectrumTap>
+ *   afterEq: Map<string, import('./analysis/taps.js').SpectrumTap>,
+ *   output: { read: () => import('./output/createOutputStage.js').OutputReadings, resetLoudness: () => void }
  * }} AudioTaps
- *   afterEq: each strip's sound just after its EQ, by strip id ('reverb' and 'master' too)
+ *   master, spectrum: what reaches the speakers (after the output stage);
+ *   afterEq: each strip's sound just after its EQ, by strip id ('reverb' and 'master' too);
+ *   output: the output stage's loudness and limiter readings (read through a
+ *     function, like every tap: this object is reactive state, and Svelte would
+ *     otherwise keep a copy of the readings that the worklets never update)
  */
 export const audioTaps = $state({ current: /** @type {AudioTaps | null} */ (null) });
 
@@ -89,8 +97,11 @@ export async function getChannel(id, part) {
 async function buildGraph() {
 	const Tone = await import('tone');
 
-	// Master: the mix bus → master EQ → master fader → speakers
-	const master = new Tone.Channel(STEREO).toDestination();
+	// Master: the mix bus → master EQ → master fader → output stage → speakers
+	const output = await createOutputStage(Tone, { gainDb: mixer.output.gain });
+	Tone.connect(output.output, Tone.getDestination());
+	const master = new Tone.Channel(STEREO);
+	Tone.connect(master, output.input);
 	const masterEq = createEq(Tone, $state.snapshot(mixer.master.eq));
 	masterEq.output.connect(master);
 	const mixBus = masterEq.input;
@@ -112,7 +123,7 @@ async function buildGraph() {
 		strips.set(settings.id, buildStrip(Tone, settings, mixBus));
 	}
 
-	const built = { master, masterEq, reverbAux, reverbEq, reverb, strips };
+	const built = { master, masterEq, reverbAux, reverbEq, reverb, output, strips };
 	followMixerSettings(built);
 	audioTaps.current = createTaps(Tone, built);
 	return built;
@@ -147,7 +158,7 @@ function buildStrip(Tone, settings, mixBus) {
  * @param {Graph} graph
  * @returns {AudioTaps}
  */
-function createTaps(Tone, { master, reverbAux, reverbEq, strips }) {
+function createTaps(Tone, { master, reverbAux, reverbEq, output, strips }) {
 	// Audio nodes, not UI state, so these maps don't need to be reactive
 	/** @type {AudioTaps['channels']} */
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
@@ -160,16 +171,17 @@ function createTaps(Tone, { master, reverbAux, reverbEq, strips }) {
 		channels.set(id, createStereoTap(Tone, strip.channel));
 		afterEq.set(id, createSpectrumTap(Tone, strip.eq.output));
 	}
-	const masterSpectrum = createSpectrumTap(Tone, master);
 	afterEq.set('reverb', createSpectrumTap(Tone, reverbEq.output));
-	afterEq.set('master', masterSpectrum);
+	afterEq.set('master', createSpectrumTap(Tone, master));
 
+	// The master meter and the visualiser show what reaches the speakers
 	return {
 		channels,
 		reverb: createStereoTap(Tone, reverbAux),
-		master: createStereoTap(Tone, master),
-		spectrum: masterSpectrum,
-		afterEq
+		master: createStereoTap(Tone, output.output),
+		spectrum: createSpectrumTap(Tone, output.output),
+		afterEq,
+		output: { read: () => output.readings, resetLoudness: output.resetLoudness }
 	};
 }
 
@@ -177,7 +189,7 @@ function createTaps(Tone, { master, reverbAux, reverbEq, strips }) {
  * Push mixer settings onto the audio nodes whenever they change.
  * @param {Graph} graph
  */
-function followMixerSettings({ master, masterEq, reverbAux, reverbEq, reverb, strips }) {
+function followMixerSettings({ master, masterEq, reverbAux, reverbEq, reverb, output, strips }) {
 	$effect.root(() => {
 		$effect(() => {
 			const soloing = anyChannelSoloed();
@@ -215,5 +227,8 @@ function followMixerSettings({ master, masterEq, reverbAux, reverbEq, reverb, st
 		$effect(() => {
 			reverb.update($state.snapshot(mixer.reverb.plugin));
 		});
+
+		$effect(() => output.setGain(mixer.output.gain));
+		$effect(() => output.setComparison({ ...outputComparison }));
 	});
 }

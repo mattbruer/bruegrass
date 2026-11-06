@@ -5,6 +5,8 @@
 	 */
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { CHORD_DISPLAYS } from '../../chart/key.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 </script>
 
 <!-- A sunk well with the chosen option raised -->
@@ -23,6 +25,7 @@
 			class:text-ink-soft={!chosen}
 			aria-pressed={chosen}
 			onclick={() => (settings.chordDisplay = display.id)}
+			use:tooltip={TIPS.player.chordDisplay[display.id]}
 		>
 			{display.name}
 		</button>

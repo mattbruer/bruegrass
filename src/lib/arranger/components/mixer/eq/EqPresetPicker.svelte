@@ -19,6 +19,8 @@
 		saveStripAsPreset
 	} from '../../../playback/eq/eqPresets.svelte.js';
 	import { listening } from '../../../playback/eq/listeningSetup.svelte.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** @type {{ stripId: string, stripName: string }} */
 	let { stripId, stripName } = $props();
@@ -60,6 +62,7 @@
 			value={chosenId}
 			onchange={load}
 			disabled={!hasPresets}
+			use:tooltip={TIPS.eq.preset}
 		>
 			<option value="">{hasPresets ? 'Load a preset…' : 'No presets saved yet'}</option>
 			{#if lists.own.length}
@@ -80,9 +83,19 @@
 	</label>
 
 	{#if chosen}
-		<button type="button" class="ui-button px-3 py-1.5" onclick={deleteChosen}>Delete</button>
+		<button
+			type="button"
+			class="ui-button px-3 py-1.5"
+			onclick={deleteChosen}
+			use:tooltip={TIPS.eq.deletePreset}>Delete</button
+		>
 	{/if}
-	<button type="button" class="ui-button px-3 py-1.5" onclick={() => (saveDialogOpen = true)}>
+	<button
+		type="button"
+		class="ui-button px-3 py-1.5"
+		onclick={() => (saveDialogOpen = true)}
+		use:tooltip={TIPS.eq.savePreset}
+	>
 		Save preset…
 	</button>
 </div>

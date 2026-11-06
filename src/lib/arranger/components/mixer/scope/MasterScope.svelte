@@ -16,6 +16,8 @@
 	import { drawWaveform } from './drawWaveform.js';
 	import { drawSpectrum } from './drawSpectrum.js';
 	import { drawStereoField } from './drawStereoField.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const VIEWS = /** @type {const} */ ([
 		{ id: 'waveform', name: 'Wave' },
@@ -82,6 +84,7 @@
 				class:text-ink-soft={!chosen}
 				aria-pressed={chosen}
 				onclick={() => (settings.scopeView = view.id)}
+				use:tooltip={TIPS.mixer.scopeView[view.id]}
 			>
 				{view.name}
 			</button>

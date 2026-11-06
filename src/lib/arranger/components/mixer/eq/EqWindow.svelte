@@ -15,6 +15,8 @@
 	import ListeningSetupNote from './ListeningSetupNote.svelte';
 	import { closeEq, eqStrip, eqWindow } from './eqWindowState.svelte.js';
 	import { flatEq } from '../../../playback/eq/eqBands.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** The band chosen for exact control (the low mid, to start with: the most used). */
 	let selectedBandId = $state('bell1');
@@ -38,7 +40,7 @@
 		<div class="px-6 pt-4 pb-6">
 			<div class="mb-3 flex items-center justify-between">
 				<span id="eq-enabled" class="font-semibold">On</span>
-				<ToggleSwitch bind:on={strip.eq.enabled} labelledBy="eq-enabled" />
+				<ToggleSwitch bind:on={strip.eq.enabled} labelledBy="eq-enabled" tip={TIPS.eq.on} />
 			</div>
 
 			{#key eqWindow.stripId}
@@ -50,7 +52,12 @@
 
 			<div class="mt-4 flex justify-between gap-3 text-sm">
 				<p class="text-ink-soft">Drag a dot on the curve, or tap a band.</p>
-				<button type="button" class="ui-button px-3 py-1.5" onclick={makeFlat}>Flat</button>
+				<button
+					type="button"
+					class="ui-button px-3 py-1.5"
+					onclick={makeFlat}
+					use:tooltip={TIPS.eq.flat}>Flat</button
+				>
 			</div>
 
 			<ListeningSetupNote />

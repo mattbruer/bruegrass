@@ -21,6 +21,8 @@
 		handlePositions
 	} from './drawEqGraph.js';
 	import { frequencyAtX, gainAtY } from './eqGraphScale.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** How close (in px) a touch must land to a dot to grab it: bigger than the dot, for fingers. */
 	const GRAB_DISTANCE = HANDLE_RADIUS * 3;
@@ -105,6 +107,7 @@
 	bind:this={canvas}
 	class="graph"
 	aria-label="EQ curve: drag a band's dot to move it"
+	use:tooltip={TIPS.eq.graph}
 	onpointerdown={grab}
 	onpointermove={drag}
 	onpointerup={release}

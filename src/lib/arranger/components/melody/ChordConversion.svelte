@@ -5,6 +5,8 @@
 	 * show anything the conversion couldn't do exactly.
 	 */
 	import { useArranger } from '../../state/context.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const arranger = useArranger();
 	const { arrangement, melody } = arranger;
@@ -17,6 +19,7 @@
 				type="button"
 				class="ui-button px-3 py-1.5 text-sm"
 				onclick={() => arranger.writeArrangementFromMelodyChords()}
+				use:tooltip={TIPS.melody.arrangementFromChords}
 			>
 				Write the arrangement from these chords
 			</button>
@@ -25,6 +28,7 @@
 				type="button"
 				class="ui-button px-3 py-1.5 text-sm"
 				onclick={() => arranger.writeChordsIntoMelody()}
+				use:tooltip={TIPS.melody.chordsIntoMelody}
 			>
 				Add the arrangement's chords to the melody
 			</button>

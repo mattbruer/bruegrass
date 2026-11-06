@@ -8,6 +8,8 @@
 	import SaveSongDialog from './SaveSongDialog.svelte';
 	import OpenSongDialog from './OpenSongDialog.svelte';
 	import UnsavedDot from '$lib/components/UnsavedDot.svelte';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const { song } = useArranger();
 
@@ -53,8 +55,18 @@
 		<p class="text-sm text-ink-soft" aria-live="polite">{status}</p>
 	</div>
 
-	<button type="button" class="ui-button px-4 py-2" onclick={startNewSong}>New</button>
-	<button type="button" class="ui-button px-4 py-2" onclick={() => (openDialogOpen = true)}>
+	<button
+		type="button"
+		class="ui-button px-4 py-2"
+		onclick={startNewSong}
+		use:tooltip={TIPS.song.new}>New</button
+	>
+	<button
+		type="button"
+		class="ui-button px-4 py-2"
+		onclick={() => (openDialogOpen = true)}
+		use:tooltip={TIPS.song.open}
+	>
 		Open
 	</button>
 	<button
@@ -62,6 +74,7 @@
 		class="ui-button px-5 py-2 ui-button-primary"
 		disabled={nothingToSave}
 		onclick={save}
+		use:tooltip={TIPS.song.save}
 	>
 		Save
 	</button>

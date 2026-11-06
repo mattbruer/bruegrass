@@ -15,6 +15,7 @@ There is no test runner. To check pure logic (bass lines, event timing, MIDI byt
 ## Stack
 
 - SvelteKit with Svelte 5 runes (`$state`, `$derived`, `$effect`), plain JavaScript with JSDoc types (no TypeScript), Tailwind v4, Tone.js.
+- **Prefer the Web Audio API itself** wherever it's the better tool: native nodes (`BiquadFilterNode`, `IIRFilterNode`, `ConvolverNode`, `AnalyserNode`, `GainNode`…) and `AudioWorklet` for custom DSP. The user wants to use Web Audio's full capabilities, and more DSP is coming. Tone.js stays for scheduling, samplers and the existing channels; new processing goes in native nodes or worklets.
 - The `.svelte.js` suffix is required for any module that uses runes outside a component, e.g. `mixer.svelte.js`.
 
 ## Layout
@@ -35,9 +36,10 @@ Code is grouped by feature under `src/lib/`. `src/lib/README.md` and `src/lib/ar
 - Don't take ABC from thesession.org: its content licence forbids use with LLMs. Write public-domain tunes ourselves.
 - Every page: the top bar (`src/lib/components/TopBar.svelte`) and the Settings panel (`src/lib/settings/`), set up in `src/routes/+layout.svelte`.
 
-The user wants code they can read and change without help:
+The user wants code they can read and change without help, and that makes the next feature easy to add:
 
 - Very modular: small functions in their own modules, imported by thin components; small components composed together.
+- Build for the next feature, not just this one. A new feature should mostly be new small modules plugged into existing seams (a list entry, a shared helper, a document collection), not edits spread across many files. When adding something, leave a seam the following feature can use (e.g. `storage/collection.js` made a second saved-document type a few lines; `TABS` makes a new Settings tab one line).
 - One place per decision.
 - Descriptive names, and comments that explain the _why_.
 - Refactor toward this whenever touching code. Next candidates: `instruments/guitar.js` (where playback starts lives there) and `melody/abcChords.js`.
@@ -55,6 +57,13 @@ The user wants code they can read and change without help:
 - `src/lib/components/Dialog.svelte` is the shared dialog frame used by Settings, Save and Open. Use it for any new dialog. `NameDialog.svelte` asks for a name (songs, presets, setups), and `UnsavedDot.svelte` marks unsaved changes.
 - `src/lib/settings/settings.svelte.js` holds preferences, grouped by Settings tab, and saves them (only values of the right type are restored).
 - The panel is `SettingsPanel.svelte`, with one component per tab in `tabs/` and shared controls in `controls/`. To add a tab, add one line to `TABS`.
+
+### Tooltips
+
+- Every control gets a tooltip: `use:tooltip={TIPS.area.thing}` (`src/lib/tooltips/tooltip.js`). Shared controls take a `tip` prop instead (`Slider`, `ChannelFader`, `ToggleSwitch`). **When adding a control, add its tip.**
+- All the wording is in `src/lib/tooltips/tips.js`, grouped by area: one or two plain sentences on what it does, for a non-technical user. Lists keyed by id (EQ bands, reverb controls, chord displays, visualiser views) follow the ids in the code that defines them.
+- Behaviour (timings are constants at the top of `tooltip.js`): mouse after 0.7 s, then instant for neighbours for 0.6 s; keyboard focus; touch press-and-hold 0.5 s, which swallows the lift-off click so reading a tip never presses the button. One shared bubble, a native `popover`, so it sits above dialogs. Settings → General → Tips turns them off; the text stays on the control as `aria-description` for screen readers.
+- Deliberately without tips: the phone music keypad (holding would fight fast typing), text areas, plain Cancel/Close, and Settings rows that already show a description.
 
 ### Look and theming
 
@@ -114,14 +123,21 @@ The core of the arranger.
 - Each instrument has a channel (input trim → EQ → fader/pan) with sub-part `Tone.Volume`s (guitar: `bass`, `strum`), a post-fader send to the reverb aux, mute and solo.
 - Instruments connect via `getChannel(id, part)` from `mixerGraph.svelte.js`.
 - Meters and the master visualiser read **analyser taps** (`playback/analysis/taps.js`), created in `mixerGraph.svelte.js` and published as `audioTaps.current` (null until the first Play).
-  - There's one tap after each channel's fader and pan, one on the reverb aux, and the master's waveform and spectrum.
+  - There's one tap after each channel's fader and pan, one on the reverb aux, the master's waveform and spectrum (taken after the output stage: what reaches the speakers), and the output stage's loudness/limiter readings.
+  - A tap always exposes its data through a function (`read()`). `audioTaps` is `$state`, and Svelte's proxy copies a plain object's values the first time they're read, so an object that audio code keeps mutating would freeze in the UI.
   - Everything that animates subscribes to the one shared loop in `analysis/frameLoop.js` (`onEveryFrame`), and writes straight to the DOM or canvas each frame, not through Svelte state.
   - Level maths is in `analysis/levels.js`; meter movement (fall, peak hold, clip latch) is in `analysis/meterBallistics.js`.
   - The meters use the fader's dB scale, so they line up with its marks.
   - The master visualiser is a small fixed-size card after the master strip (size: `--scope-width` and `--scope-screen-height` in `MasterScope.svelte`). Its views are separate draw functions in `components/mixer/scope/`.
 - The automated browser pane in this app doesn't run `requestAnimationFrame`. To test meters or the visualiser there, replace it with a 16 ms timer, then navigate away and back so the frame loop restarts on it.
 - The default mix (pans, sends, reverb level) is a documented block at the top of `mixer.svelte.js`. Resetting a control (tap its readout, double-click its cap) returns it to that default.
-- **Headroom.** Every channel starts with an input trim (`INPUT_TRIM_DB` in `mixerGraph.svelte.js`, −14 dB), before its EQ. With every fader at unity the master peaks around −8 dBFS, so it clips only when pushed well past unity. There's deliberately no limiter. Change the trim, not the samples or instrument levels, to move the whole mix up or down; it keeps the balance between instruments.
+- **Headroom.** Every channel starts with an input trim (`INPUT_TRIM_DB` in `mixerGraph.svelte.js`, −14 dB), before its EQ. With every fader at unity the master peaks around −8 dBFS: healthy mixing headroom. Change the trim, not the samples or instrument levels, to move the whole mix up or down; it keeps the balance between instruments. Loudness is added at the very end, by the output stage, never by raising the trim.
+- **Output stage** (`playback/output/`, after the master fader; the "Loudness" strip, `components/mixer/output/`). Like a mastering chain: output gain (native `GainNode`) → true-peak lookahead limiter (worklet) → compare trim → speakers, with a loudness meter branch (K-weighting as two native `IIRFilterNode`s → worklet).
+  - The user never wants the master to clip and doesn't want loudness left on the table. Target −14 LUFS (streaming level), ceiling −1 dBTP; tuning constants in `output/outputSettings.js`. `DEFAULT_OUTPUT_GAIN_DB` (+7.7) was measured in the browser: the starter song's default mix is about −21.7 LUFS before it.
+  - `mixer.output.gain` saves with the song. Match (`output/outputStage.svelte.js`) sets it from the song's integrated LUFS since Play; the integrated reading resets on Play and on a gain change.
+  - Compare is a level-matched A/B (not saved): while comparing, everything is trimmed back down by the output gain, and B bypasses the limiter, so A and B differ only by the limiter.
+  - Verified in Node against references: K-weighting matches the BS.1770 48 kHz table; a −20 dBFS stereo 1 kHz sine reads −20.0 LUFS; the limiter holds plucks, clicks, +12 dB sines and inter-sample test signals to −1.0 dBTP, and passes signals under the ceiling bit-exact (5 ms delay). Its detector uses 16 taps per phase (12 let full-band noise through by ~1 dB).
+- **AudioWorklets** (`playback/worklets/`): our own DSP on the audio thread. `worklets.js` is the one place they're loaded (Tone's loader only takes one module per context); a new processor is a self-contained `*Processor.js` file (no imports) plus one line in `PROCESSORS`. ESLint gives `**/worklets/*Processor.js` the worklet globals, and `vite.config.js` keeps processor files from being inlined as data: URLs (Safari won't load those). A processor that throws logs `Audio processor "…" stopped`. In the browser pane, a worklet's messages arrive normally; for its numbers on screen, use the rAF-timer trick above.
 - **EQ** (Logic Channel EQ-style) on every channel, the reverb aux (after the plugin) and the master (the whole mix):
   - Bands and their defaults are defined once in `playback/eq/eqBands.js`: low/high cut (12 or 24 dB/oct), low/high shelf, four bells. The settings live in each strip's `eq` in `mixer.svelte.js` and save with the song.
   - `createEq.js` builds it from native `BiquadFilterNode`s, because `Tone.Filter` rejects the negative Q a Butterworth cut needs in dB. A 24 dB/oct cut is two 12 dB stages.

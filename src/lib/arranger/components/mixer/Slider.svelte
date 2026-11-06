@@ -12,6 +12,7 @@
 	 * The value can be on any scale: `toPosition`/`fromPosition` map it to
 	 * the cap's travel, 0 (bottom/left) to 1 (top/right).
 	 */
+	import { tooltip } from '$lib/tooltips/tooltip.js';
 
 	/**
 	 * @type {{
@@ -26,6 +27,7 @@
 	 *   variant?: string,
 	 *   name?: string,
 	 *   showValue?: boolean,
+	 *   tip?: string,
 	 *   children?: import('svelte').Snippet
 	 * }}
 	 *   max: highest position the cap may reach (e.g. a send that stops at unity)
@@ -34,6 +36,7 @@
 	 *   showValue: false hides the readout, for controls where the position
 	 *     says it all (a send: none at one end, the most at the other).
 	 *     `format` is still what screen readers hear; double-click resets.
+	 *   tip: a tooltip saying what the control does (see $lib/tooltips)
 	 *   children: drawn beside the track, the same length as it (a fader's scale)
 	 */
 	let {
@@ -48,6 +51,7 @@
 		variant = '',
 		name = '',
 		showValue = true,
+		tip,
 		children
 	} = $props();
 
@@ -120,18 +124,12 @@
 </script>
 
 {#snippet readout()}
-	<button
-		type="button"
-		class="readout"
-		tabindex="-1"
-		title="Tap to reset"
-		onclick={() => (value = reset)}
-	>
+	<button type="button" class="readout" tabindex="-1" onclick={() => (value = reset)}>
 		{format(value)}
 	</button>
 {/snippet}
 
-<div class="slider {orientation} {variant}" class:dragging>
+<div class="slider {orientation} {variant}" class:dragging use:tooltip={tip}>
 	{#if !vertical}
 		<div class="caption">
 			<span class="name">{name}</span>

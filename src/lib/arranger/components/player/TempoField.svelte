@@ -2,11 +2,16 @@
 	/** Tempo in BPM. Shows a number pad on phones; tidied into range when you leave it. */
 	import { useArranger } from '../../state/context.js';
 	import { TEMPO_MAX, TEMPO_MIN } from '../../chart/tempo.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const { arrangement } = useArranger();
 </script>
 
-<label class="flex items-center gap-2 font-semibold whitespace-nowrap">
+<label
+	class="flex items-center gap-2 font-semibold whitespace-nowrap"
+	use:tooltip={TIPS.player.tempo}
+>
 	Tempo
 	<input
 		type="number"

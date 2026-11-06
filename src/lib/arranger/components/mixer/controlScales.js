@@ -4,6 +4,7 @@
  * (Resetting a control puts it back to its default in mixer.svelte.js.)
  */
 import { UNITY, dbToFader, faderToDb, formatDb } from '../../playback/faderTaper.js';
+import { OUTPUT_GAIN_RANGE } from '../../playback/output/outputSettings.js';
 
 /** Faders and part levels: the console fader taper. */
 export const LEVEL_SCALE = Object.freeze({
@@ -38,4 +39,15 @@ export const PAN_SCALE = Object.freeze({
 		if (Math.abs(pan) < 0.01) return 'C';
 		return `${pan < 0 ? 'L' : 'R'}${Math.round(Math.abs(pan) * 100)}`;
 	}
+});
+
+/** The output stage's gain: an even dB scale across its range, shown as +6.0 dB. */
+export const OUTPUT_GAIN_SCALE = Object.freeze({
+	toPosition: (/** @type {number} */ db) =>
+		(db - OUTPUT_GAIN_RANGE.min) / (OUTPUT_GAIN_RANGE.max - OUTPUT_GAIN_RANGE.min),
+	fromPosition: (/** @type {number} */ position) =>
+		Math.round(
+			(OUTPUT_GAIN_RANGE.min + position * (OUTPUT_GAIN_RANGE.max - OUTPUT_GAIN_RANGE.min)) * 10
+		) / 10,
+	format: (/** @type {number} */ db) => `${db > 0 ? '+' : ''}${db.toFixed(1)} dB`
 });

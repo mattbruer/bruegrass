@@ -13,6 +13,8 @@
 		positionOf,
 		valueAt
 	} from '../../playback/reverb/reverbSettings.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
 	 * @type {{
@@ -31,7 +33,7 @@
 	<div class="px-6 pt-4 pb-6">
 		<div class="mb-4 flex items-center justify-between">
 			<span id="reverb-enabled" class="font-semibold">On</span>
-			<ToggleSwitch bind:on={settings.enabled} labelledBy="reverb-enabled" />
+			<ToggleSwitch bind:on={settings.enabled} labelledBy="reverb-enabled" tip={TIPS.reverb.on} />
 		</div>
 
 		<div class="controls ui-well p-4" class:bypassed={!settings.enabled}>
@@ -44,13 +46,19 @@
 					format={control.format}
 					reset={REVERB_DEFAULTS[control.key]}
 					label="Reverb {control.name}"
+					tip={TIPS.reverb.controls[control.key]}
 				/>
 			{/each}
 		</div>
 
 		<div class="mt-4 flex justify-between gap-3 text-sm">
 			<p class="text-ink-soft">Tap a value to reset it.</p>
-			<button type="button" class="ui-button px-3 py-1.5" onclick={resetAll}>Reset all</button>
+			<button
+				type="button"
+				class="ui-button px-3 py-1.5"
+				onclick={resetAll}
+				use:tooltip={TIPS.reverb.resetAll}>Reset all</button
+			>
 		</div>
 	</div>
 </Dialog>

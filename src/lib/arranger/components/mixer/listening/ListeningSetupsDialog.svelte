@@ -23,6 +23,8 @@
 		useEachSongsOwnEq
 	} from '../../../playback/eq/listeningSetup.svelte.js';
 	import { listeningDialog } from './listeningDialogState.svelte.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	let changed = $derived(setupHasUnsavedChanges());
 	let nameDialogOpen = $state(false);
@@ -69,6 +71,7 @@
 					type="button"
 					class="ui-button px-4 py-1.5 ui-button-primary"
 					onclick={saveSetupChanges}
+					use:tooltip={TIPS.listening.save}
 				>
 					Save
 				</button>
@@ -85,6 +88,7 @@
 						class:ui-button-on={inUse}
 						aria-current={inUse ? 'true' : undefined}
 						onclick={() => choose(setup.id)}
+						use:tooltip={TIPS.listening.choose}
 					>
 						<span class="block truncate">{setup.name}</span>
 						{#if inUse}
@@ -96,6 +100,7 @@
 						class="ui-button px-3 py-2 text-sm text-danger"
 						aria-label="Delete {setup.name}"
 						onclick={() => remove(setup)}
+						use:tooltip={TIPS.listening.delete}
 					>
 						Delete
 					</button>
@@ -109,6 +114,7 @@
 						class:ui-button-on={!listening.setup}
 						aria-current={!listening.setup ? 'true' : undefined}
 						onclick={chooseNone}
+						use:tooltip={TIPS.listening.none}
 					>
 						<span class="block">No setup</span>
 						<span class="block text-xs font-normal text-ink-soft">Each song’s own EQ</span>
@@ -123,6 +129,7 @@
 				class="ui-button px-4 py-2"
 				class:ui-button-primary={!listening.setup}
 				onclick={() => (nameDialogOpen = true)}
+				use:tooltip={TIPS.listening.saveNew}
 			>
 				Save the EQs as a new setup…
 			</button>

@@ -2,6 +2,8 @@
 	/** Opens and closes the mixer drawer. Same label either way (pressed in = open), so its width never changes. */
 	import { useArranger } from '../../state/context.js';
 	import SlidersIcon from '../icons/SlidersIcon.svelte';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const { layout } = useArranger();
 </script>
@@ -13,6 +15,7 @@
 	aria-expanded={layout.mixerOpen}
 	aria-controls="mixer-drawer"
 	onclick={() => (layout.mixerOpen = !layout.mixerOpen)}
+	use:tooltip={TIPS.player.mixer}
 >
 	<SlidersIcon />
 	Mixer

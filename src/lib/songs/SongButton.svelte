@@ -1,4 +1,6 @@
 <script>
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 	let { title, onclick, isPlaying } = $props();
 </script>
 
@@ -9,6 +11,7 @@
 	class:ui-button-on={isPlaying}
 	aria-current={isPlaying ? 'true' : undefined}
 	{onclick}
+	use:tooltip={TIPS.songs.song}
 >
 	{isPlaying ? '♪ ' : ''}{title}
 </button>

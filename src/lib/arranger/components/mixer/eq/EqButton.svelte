@@ -6,6 +6,8 @@
 	import { eqResponseDb } from '../../../playback/eq/eqResponse.js';
 	import { curveFrequencies, xForFrequency, yForGain } from './eqGraphScale.js';
 	import { eqStrip, eqWindow, openEq } from './eqWindowState.svelte.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** The thumbnail's curve is worked out at a typical sample rate (it's only a picture). */
 	const THUMBNAIL_SAMPLE_RATE = 48000;
@@ -42,6 +44,7 @@
 	aria-haspopup="dialog"
 	aria-expanded={isOpen}
 	onclick={() => openEq(stripId)}
+	use:tooltip={TIPS.mixer.stripEq}
 >
 	<svg viewBox="0 0 {WIDTH} {HEIGHT}" preserveAspectRatio="none" aria-hidden="true">
 		<line x1="0" y1={HEIGHT / 2} x2={WIDTH} y2={HEIGHT / 2} class="zero" />

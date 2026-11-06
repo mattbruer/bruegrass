@@ -26,7 +26,8 @@ timeline
    ▼
 notes
    │  playback/scheduler.js       queues notes on the audio clock, a little ahead
-   │  playback/mixerGraph.svelte.js  channels (trim, EQ, fader, pan, mute/solo) → reverb aux (+EQ) → master EQ → master → speakers
+   │  playback/mixerGraph.svelte.js  channels (trim, EQ, fader, pan, mute/solo) → reverb aux (+EQ) → master EQ → master
+   │  playback/output/            output gain → true-peak limiter (loudness to −14 LUFS, never clips) → speakers
    ▼
 sound
 ```
@@ -36,15 +37,15 @@ builds every instrument's notes and runs the scheduler.
 
 ## Folders
 
-| Folder         | What's in it                                                                                                                                                                                                                                |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `state/`       | What the page knows, in small classes (see below).                                                                                                                                                                                          |
-| `chart/`       | Reading the chord chart and its timing: parsing, the timeline, keys and transposition, loop regions.                                                                                                                                        |
-| `instruments/` | What each instrument plays, and the guitar's chord shapes (`guitar-chords.json`).                                                                                                                                                           |
-| `playback/`    | The audio engine: the note scheduler, the mixer (settings, fader curve, audio graph), the reverb plugin (`reverb/`), the channel EQ (`eq/`, with EQ presets and listening setups) and analysis for meters and the visualiser (`analysis/`). |
-| `melody/`      | The ABC melody: turning it into notes, converting chords between ABC and the chart, following the sheet music while it plays.                                                                                                               |
-| `export/`      | The `.mid` download.                                                                                                                                                                                                                        |
-| `components/`  | Small Svelte components, by area: `player/`, `editor/`, `melody/`, `mixer/` (with `mixer/eq/`, the EQ window, and `mixer/listening/`, listening setups), `keypad/`, `chart/`, `icons/`.                                                     |
+| Folder         | What's in it                                                                                                                                                                                                                                                                                                                            |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `state/`       | What the page knows, in small classes (see below).                                                                                                                                                                                                                                                                                      |
+| `chart/`       | Reading the chord chart and its timing: parsing, the timeline, keys and transposition, loop regions.                                                                                                                                                                                                                                    |
+| `instruments/` | What each instrument plays, and the guitar's chord shapes (`guitar-chords.json`).                                                                                                                                                                                                                                                       |
+| `playback/`    | The audio engine: the note scheduler, the mixer (settings, fader curve, audio graph), the reverb plugin (`reverb/`), the channel EQ (`eq/`, with EQ presets and listening setups), the output stage (`output/`: loudness and limiter), our own AudioWorklet DSP (`worklets/`) and analysis for meters and the visualiser (`analysis/`). |
+| `melody/`      | The ABC melody: turning it into notes, converting chords between ABC and the chart, following the sheet music while it plays.                                                                                                                                                                                                           |
+| `export/`      | The `.mid` download.                                                                                                                                                                                                                                                                                                                    |
+| `components/`  | Small Svelte components, by area: `player/`, `editor/`, `melody/`, `mixer/` (with `mixer/eq/`, the EQ window, and `mixer/listening/`, listening setups, and `mixer/output/`, the Loudness strip), `keypad/`, `chart/`, `icons/`.                                                                                                        |
 
 ## How the page is put together
 

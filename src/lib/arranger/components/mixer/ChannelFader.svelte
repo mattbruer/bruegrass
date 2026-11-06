@@ -24,12 +24,13 @@
 	 *   reset: number,
 	 *   label: string,
 	 *   meter: import('../../playback/analysis/taps.js').StereoTap | null,
-	 *   variant?: string
+	 *   variant?: string,
+	 *   tip?: string
 	 * }}
 	 *   reset: where a reset puts the fader (its default), in dB
 	 *   meter: what the level meter measures (null until the audio exists)
 	 */
-	let { level, reset, label, meter, variant = '' } = $props();
+	let { level, reset, label, meter, variant = '', tip } = $props();
 </script>
 
 {#snippet scaleAndMeter()}
@@ -54,6 +55,7 @@
 	label="{label} fader"
 	orientation="vertical"
 	{variant}
+	{tip}
 	children={scaleAndMeter}
 />
 

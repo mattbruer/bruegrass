@@ -4,6 +4,11 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	build: {
+		// AudioWorklet processors must load from a real file: browsers (Safari
+		// especially) don't reliably load worklet code from an inlined data: URL
+		assetsInlineLimit: (file) => (/Processor\.js$/.test(file) ? false : undefined)
+	},
 	plugins: [
 		tailwindcss(),
 		sveltekit({

@@ -1,6 +1,8 @@
 <script>
 	import SongButton from './SongButton.svelte';
 	import { songs } from '$lib/songs/songs.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	let sortedSongs = songs.toSorted((a, b) => a.title.localeCompare(b.title));
 
@@ -29,8 +31,11 @@
 <!-- Now playing, with the player -->
 <section class="mb-8 ui-card p-4 sm:p-5" aria-label="Player">
 	<div class="mb-3 flex items-center gap-4">
-		<button type="button" class="ui-button px-6 py-2 ui-button-primary" onclick={playAll}
-			>Play All</button
+		<button
+			type="button"
+			class="ui-button px-6 py-2 ui-button-primary"
+			onclick={playAll}
+			use:tooltip={TIPS.songs.playAll}>Play All</button
 		>
 		<p class="min-w-0 truncate text-sm text-ink-soft">
 			{#if selectedIndex !== null}

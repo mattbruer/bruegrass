@@ -2,12 +2,14 @@
 	/**
 	 * The mixer: a tray of channel strips in one row (swipe sideways on a
 	 * narrow screen). An instrument strip each, then the reverb aux, the
-	 * master, and a small master visualiser.
+	 * master, the output stage (loudness and limiter), and a small
+	 * visualiser of what reaches the speakers.
 	 */
 	import { mixer } from '../../playback/mixer.svelte.js';
 	import ChannelStrip from './ChannelStrip.svelte';
 	import ReverbStrip from './ReverbStrip.svelte';
 	import MasterStrip from './MasterStrip.svelte';
+	import OutputStrip from './output/OutputStrip.svelte';
 	import MasterScope from './scope/MasterScope.svelte';
 	import EqWindow from './eq/EqWindow.svelte';
 	import ListeningSetupsDialog from './listening/ListeningSetupsDialog.svelte';
@@ -20,6 +22,7 @@
 		{/each}
 		<ReverbStrip />
 		<MasterStrip />
+		<OutputStrip />
 		<MasterScope />
 	</div>
 
