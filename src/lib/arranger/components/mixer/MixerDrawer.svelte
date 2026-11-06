@@ -8,6 +8,7 @@
 	import { useArranger } from '../../state/context.js';
 	import Mixer from './Mixer.svelte';
 	import SlidersIcon from '../icons/SlidersIcon.svelte';
+	import ListeningSetupButton from './listening/ListeningSetupButton.svelte';
 
 	const { layout } = useArranger();
 
@@ -15,7 +16,10 @@
 	let showHandle = $derived(!layout.mixerOpen && !layout.keypadVisible);
 
 	function closeOnEscape(/** @type {KeyboardEvent} */ event) {
-		if (event.key === 'Escape' && layout.mixerOpen) layout.mixerOpen = false;
+		if (event.key !== 'Escape' || !layout.mixerOpen) return;
+		// Esc closes the top-most thing first: a window open over the mixer (like the reverb plugin)
+		const windowOnTop = document.querySelector('dialog[open]');
+		if (!windowOnTop) layout.mixerOpen = false;
 	}
 </script>
 
@@ -43,11 +47,13 @@
 	inert={!layout.mixerOpen}
 >
 	<div class="mx-auto max-w-5xl px-4 pt-3 pb-5 sm:px-8">
-		<div class="mb-2 flex items-center justify-between">
+		<div class="mb-2 flex items-center gap-3">
 			<h2 class="font-semibold">Mixer</h2>
+			<!-- What you're listening on: this device's EQs for its speakers or headphones -->
+			<div class="mr-auto min-w-0"><ListeningSetupButton /></div>
 			<button
 				type="button"
-				class="ui-button px-3 py-1 text-sm"
+				class="shrink-0 ui-button px-3 py-1 text-sm"
 				aria-label="Close mixer"
 				onclick={() => (layout.mixerOpen = false)}
 			>
@@ -101,8 +107,11 @@
 			visibility 0s linear 0.25s;
 	}
 
+	/* `none`, not translateY(0): any transform would make the drawer the frame
+	   for fixed-position windows inside it (the EQ and reverb windows), so they
+	   would sit relative to the drawer and could run off the bottom of the screen. */
 	.drawer.open {
-		transform: translateY(0);
+		transform: none;
 		visibility: visible;
 		transition: transform 0.25s ease;
 	}

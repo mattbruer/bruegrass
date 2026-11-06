@@ -7,6 +7,9 @@
 	 * It's a native <dialog>: Esc closes it, keyboard focus stays inside
 	 * while it's open, and tapping the dimmed backdrop closes it too.
 	 *
+	 * With modal={false} it's a floating window instead (like a plugin
+	 * window): the page stays usable behind it, with no backdrop.
+	 *
 	 * Usage:
 	 *   <Dialog bind:open title="Settings">...content...</Dialog>
 	 */
@@ -15,10 +18,11 @@
 	 * @type {{
 	 *   open: boolean,
 	 *   title: string,
+	 *   modal?: boolean,
 	 *   children: import('svelte').Snippet
 	 * }}
 	 */
-	let { open = $bindable(false), title, children } = $props();
+	let { open = $bindable(false), title, modal = true, children } = $props();
 
 	/** @type {HTMLDialogElement | undefined} */
 	let dialog = $state();
@@ -28,7 +32,10 @@
 	// Keep the dialog in step with `open`
 	$effect(() => {
 		if (!dialog) return;
-		if (open && !dialog.open) dialog.showModal();
+		if (open && !dialog.open) {
+			if (modal) dialog.showModal();
+			else dialog.show();
+		}
 		if (!open && dialog.open) dialog.close();
 	});
 
@@ -36,11 +43,19 @@
 	function closeIfBackdropClicked(/** @type {MouseEvent} */ event) {
 		if (event.target === dialog) open = false;
 	}
+
+	/** A floating window doesn't get Esc from the browser, so handle it here. */
+	function closeOnEscape(/** @type {KeyboardEvent} */ event) {
+		if (!modal && open && event.key === 'Escape') open = false;
+	}
 </script>
+
+<svelte:window onkeydown={closeOnEscape} />
 
 <dialog
 	bind:this={dialog}
 	class="panel"
+	class:floating={!modal}
 	aria-labelledby={titleId}
 	onclose={() => (open = false)}
 	onclick={closeIfBackdropClicked}
@@ -72,6 +87,15 @@
 		color: var(--color-ink);
 		box-shadow: var(--shadow-raised);
 		padding: 0;
+	}
+
+	/* A floating window sits near the top, over the page, which stays usable */
+	.panel.floating {
+		position: fixed;
+		inset: 5rem 0 auto;
+		z-index: 40;
+		/* Fit between its top and the bottom of the screen, scrolling inside if taller */
+		max-height: calc(100dvh - 6rem);
 	}
 
 	/* The page behind is dimmed (in the text colour, so it suits any theme) and blurred */

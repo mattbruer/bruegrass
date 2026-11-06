@@ -25,11 +25,15 @@
 	 *   max?: number,
 	 *   variant?: string,
 	 *   name?: string,
+	 *   showValue?: boolean,
 	 *   children?: import('svelte').Snippet
 	 * }}
 	 *   max: highest position the cap may reach (e.g. a send that stops at unity)
 	 *   variant: extra class on the root for a different cap (e.g. 'master')
 	 *   name: a small caption, beside the readout above a horizontal slider
+	 *   showValue: false hides the readout, for controls where the position
+	 *     says it all (a send: none at one end, the most at the other).
+	 *     `format` is still what screen readers hear; double-click resets.
 	 *   children: drawn beside the track, the same length as it (a fader's scale)
 	 */
 	let {
@@ -43,6 +47,7 @@
 		max = 1,
 		variant = '',
 		name = '',
+		showValue = true,
 		children
 	} = $props();
 
@@ -130,7 +135,7 @@
 	{#if !vertical}
 		<div class="caption">
 			<span class="name">{name}</span>
-			{@render readout()}
+			{#if showValue}{@render readout()}{/if}
 		</div>
 	{/if}
 	<div class="body">
@@ -164,7 +169,7 @@
 		{@render children?.()}
 	</div>
 	{#if vertical}
-		{@render readout()}
+		{#if showValue}{@render readout()}{/if}
 	{/if}
 </div>
 
@@ -288,7 +293,7 @@
 
 	.horizontal .track {
 		--cap: 1rem;
-		width: 5rem;
+		width: var(--slider-length, 5rem);
 		height: var(--cap);
 	}
 

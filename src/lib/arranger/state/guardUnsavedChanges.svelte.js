@@ -3,6 +3,10 @@
  * page in the app, reloading, or closing the tab.
  */
 import { beforeNavigate } from '$app/navigation';
+import {
+	setupDiscardQuestion,
+	setupHasUnsavedChanges
+} from '../playback/eq/listeningSetup.svelte.js';
 
 /**
  * Call once while the arranger page is being set up.
@@ -10,7 +14,10 @@ import { beforeNavigate } from '$app/navigation';
  */
 export function guardUnsavedChanges(song) {
 	beforeNavigate((navigation) => {
-		if (!song.hasUnsavedChanges) return;
+		const songChanged = song.hasUnsavedChanges;
+		// A listening setup isn't part of the song (New and Open keep it), but leaving loses its changes
+		const setupChanged = setupHasUnsavedChanges();
+		if (!songChanged && !setupChanged) return;
 
 		// Reloading or closing the tab: cancelling makes the browser show its own "Leave site?" prompt
 		if (navigation.willUnload) {
@@ -18,7 +25,8 @@ export function guardUnsavedChanges(song) {
 			return;
 		}
 
-		if (!confirm(discardQuestion(song))) navigation.cancel();
+		const question = songChanged ? discardQuestion(song) : setupDiscardQuestion();
+		if (!confirm(question)) navigation.cancel();
 	});
 }
 

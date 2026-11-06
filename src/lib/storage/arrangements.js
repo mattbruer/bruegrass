@@ -11,6 +11,7 @@
  * worker unchanged.
  */
 import { readStored, removeStored, writeStored } from './localStore.js';
+import { newId } from './newId.js';
 
 /** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
 export const ARRANGEMENT_VERSION = 1;
@@ -128,9 +129,4 @@ function upgrade(song) {
 		title: song.title || 'Untitled song',
 		version: ARRANGEMENT_VERSION
 	};
-}
-
-function newId() {
-	if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-	return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }

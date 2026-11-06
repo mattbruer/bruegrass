@@ -87,6 +87,24 @@
 	 */
 	--mixer-tray: oklch(from var(--theme-background) calc(l - 0.08) c h);
 	--mixer-strip: oklch(from var(--theme-background) calc(l + 0.045) c h);
+	/* Lit mute and solo buttons, in the colours most DAWs use */
+	--mixer-mute-on: #3b82f6;
+	--mixer-solo-on: #facc15;
+
+	/* Level meters: green while safe, amber as it gets hot, red at clipping */
+	--meter-safe: #22c55e;
+	--meter-hot: #f59e0b;
+	--meter-clip: #ef4444;
+
+	/* EQ bands, low to high (as in eqBands.js), each its own colour as in Logic */
+	--eq-band-1: #ef4444;
+	--eq-band-2: #f97316;
+	--eq-band-3: #eab308;
+	--eq-band-4: #22c55e;
+	--eq-band-5: #06b6d4;
+	--eq-band-6: #3b82f6;
+	--eq-band-7: #a855f7;
+	--eq-band-8: #ec4899;
 }
 
 /*

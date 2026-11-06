@@ -5,8 +5,10 @@
 	 * component in $lib/arranger/components.
 	 *
 	 * It always opens on the starter song; your own songs open from the song
-	 * bar. Leaving with unsaved changes asks first.
+	 * bar. Leaving with unsaved changes asks first. If this device has a
+	 * listening setup, its EQs go on as the page starts.
 	 */
+	import { onMount } from 'svelte';
 	import { provideArranger } from '$lib/arranger/state/context.js';
 	import { guardUnsavedChanges } from '$lib/arranger/state/guardUnsavedChanges.svelte.js';
 	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
@@ -15,9 +17,12 @@
 	import MelodyPanel from '$lib/arranger/components/melody/MelodyPanel.svelte';
 	import SheetMusic from '$lib/arranger/components/melody/SheetMusic.svelte';
 	import MixerDrawer from '$lib/arranger/components/mixer/MixerDrawer.svelte';
+	import { startThisDevicesSetup } from '$lib/arranger/playback/eq/listeningSetup.svelte.js';
 
 	const arranger = provideArranger();
 	guardUnsavedChanges(arranger.song);
+	// The EQs this device's speakers or headphones were tuned for (saved in this browser, so only once it's running)
+	onMount(startThisDevicesSetup);
 </script>
 
 <svelte:head>

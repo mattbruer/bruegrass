@@ -1,5 +1,5 @@
 import chords from './guitar-chords.json';
-import { getChannel } from '../playback/mixer.svelte.js';
+import { getChannel } from '../playback/mixerGraph.svelte.js';
 import { bassEvents, createUpright } from './upright.js';
 import { chopNotes, mandoSampleUrl } from './mandolin.js';
 import { mod12 } from '../chart/key.js';

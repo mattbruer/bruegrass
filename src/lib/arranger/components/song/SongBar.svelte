@@ -7,6 +7,7 @@
 	import { okToDiscardChanges } from '../../state/guardUnsavedChanges.svelte.js';
 	import SaveSongDialog from './SaveSongDialog.svelte';
 	import OpenSongDialog from './OpenSongDialog.svelte';
+	import UnsavedDot from '$lib/components/UnsavedDot.svelte';
 
 	const { song } = useArranger();
 
@@ -45,7 +46,7 @@
 	<div class="mr-auto min-w-0">
 		<h2 class="flex items-center gap-2 truncate text-lg font-bold">
 			{#if song.hasUnsavedChanges}
-				<span class="unsaved-dot" aria-hidden="true"></span>
+				<UnsavedDot />
 			{/if}
 			{displayName}
 		</h2>
@@ -68,14 +69,3 @@
 
 <SaveSongDialog bind:open={saveDialogOpen} />
 <OpenSongDialog bind:open={openDialogOpen} />
-
-<style>
-	/* Unsaved changes: a small dot in the accent colour, like an editor's tab */
-	.unsaved-dot {
-		flex-shrink: 0;
-		width: 0.6rem;
-		height: 0.6rem;
-		border-radius: 9999px;
-		background: var(--color-accent);
-	}
-</style>

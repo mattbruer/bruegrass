@@ -2,7 +2,7 @@
  * Moving a song between the page and a saved document: which fields a
  * song is made of, reading them off the page, and putting a song onto it.
  */
-import { applyMix, mixSnapshot, resetMix } from '../playback/mixer.svelte.js';
+import { applySongMix, songMixSnapshot } from '../playback/eq/listeningSetup.svelte.js';
 import { validCapo } from '../chart/capo.js';
 
 /**
@@ -23,13 +23,14 @@ export function readSongFields(arranger) {
 		tempo: arranger.arrangement.bpm,
 		capo: arranger.arrangement.capoFret,
 		transpose: arranger.arrangement.transpose,
-		mix: mixSnapshot()
+		mix: songMixSnapshot() // the song's own EQs, even while a listening setup is in use
 	};
 }
 
 /**
  * Put a song on the page, replacing what's there: stop playing, show its
- * chart, melody and settings, use its mix, and loop the whole thing.
+ * chart, melody and settings, use its mix (except the EQs, if this device
+ * uses a listening setup), and loop the whole thing.
  * @param {import('./Arranger.svelte.js').Arranger} arranger
  * @param {SongFields} song
  */
@@ -42,8 +43,7 @@ export function loadSongIntoPage(arranger, song) {
 	arranger.arrangement.transpose = song.transpose;
 	arranger.melody.notation = song.abc;
 
-	if (song.mix) applyMix(song.mix);
-	else resetMix();
+	applySongMix(song.mix); // keeps this device's listening setup on, if it has one
 
 	arranger.loop.loopEverything();
 	arranger.chordReport = null;

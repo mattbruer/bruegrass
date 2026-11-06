@@ -3,16 +3,16 @@
 Pages are in `src/routes` (one folder per URL). Everything they use is here,
 grouped by feature. Import from here with `$lib/...`.
 
-| Folder        | What's in it                                                                                                                                   |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `arranger/`   | The rhythm-section arranger (the `/arranger` page): chord charts, instruments, playback, melody. See [arranger/README.md](arranger/README.md). |
-| `songs/`      | The song list (the `/` page): the list of MP3s and the player.                                                                                 |
-| `settings/`   | The Settings panel (opened from the top bar) and the saved preferences behind it.                                                              |
-| `theme/`      | The look of the app: colour, shadow and corner tokens, and the shared `ui-*` classes.                                                          |
-| `storage/`    | Saving and loading user data (arrangements). Today: this browser's localStorage. A database later.                                             |
-| `components/` | Small pieces used across the whole app (the top bar).                                                                                          |
-| `utils/`      | Tiny general helpers with no app knowledge (download a file, make a slug, watch for a touch screen).                                           |
-| `assets/`     | Images bundled with the app (the favicon).                                                                                                     |
+| Folder        | What's in it                                                                                                                                                |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `arranger/`   | The rhythm-section arranger (the `/arranger` page): chord charts, instruments, playback, melody. See [arranger/README.md](arranger/README.md).              |
+| `songs/`      | The song list (the `/` page): the list of MP3s and the player.                                                                                              |
+| `settings/`   | The Settings panel (opened from the top bar) and the saved preferences behind it.                                                                           |
+| `theme/`      | The look of the app: colour, shadow and corner tokens, and the shared `ui-*` classes.                                                                       |
+| `storage/`    | Saving and loading user data (songs, EQ presets, listening setups, and which setup this device uses). Today: this browser's localStorage. A database later. |
+| `components/` | Small pieces used across the whole app (the top bar, the dialog frame, the name-it dialog, the unsaved-changes dot).                                        |
+| `utils/`      | Tiny general helpers with no app knowledge (download a file, make a slug, watch for a touch screen).                                                        |
+| `assets/`     | Images bundled with the app (the favicon).                                                                                                                  |
 
 ## A few conventions
 

@@ -27,6 +27,9 @@ export const settings = $state({
 	/** How the arranger shows chords: guitar shapes, concert, roman or nashville (see key.js). */
 	chordDisplay: /** @type {import('$lib/arranger/chart/key.js').ChordDisplay} */ ('shapes'),
 
+	/** Which view the mixer's master visualiser shows. */
+	scopeView: /** @type {'waveform' | 'spectrum' | 'stereo'} */ ('spectrum'),
+
 	// Appearance tab
 
 	/** Colours, shadow depth and corner roundness (see $lib/theme). */

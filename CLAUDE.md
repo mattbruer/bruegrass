@@ -51,7 +51,8 @@ The user wants code they can read and change without help:
   - A dot shows unsaved changes, judged by comparing `readSongFields` with the fields as last saved.
   - New, Open and leaving the page (`state/guardUnsavedChanges.svelte.js`, via `beforeNavigate`) ask before discarding unsaved changes.
   - The mix is saved with the song (`mixSnapshot`/`applyMix`/`resetMix` in `mixer.svelte.js`).
-- `src/lib/components/Dialog.svelte` is the shared dialog frame used by Settings, Save and Open. Use it for any new dialog.
+- EQ presets (`storage/eqPresets.js`, one strip's EQ) and listening setups (`storage/listeningSetups.js`, every strip's EQ) are documents in the same style, through `storage/collection.js`. Which setup this device uses is in `storage/thisDevice.js`, kept apart because it must never sync between devices.
+- `src/lib/components/Dialog.svelte` is the shared dialog frame used by Settings, Save and Open. Use it for any new dialog. `NameDialog.svelte` asks for a name (songs, presets, setups), and `UnsavedDot.svelte` marks unsaved changes.
 - `src/lib/settings/settings.svelte.js` holds preferences, grouped by Settings tab, and saves them (only values of the right type are restored).
 - The panel is `SettingsPanel.svelte`, with one component per tab in `tabs/` and shared controls in `controls/`. To add a tab, add one line to `TABS`.
 
@@ -107,10 +108,35 @@ The core of the arranger.
   - Don't use `setTimeout` for musical timing.
   - It returns `{ position(), stop() }`.
 
-### `mixer.svelte.js` and `Mixer.svelte`
+### The mixer (`playback/` and `components/mixer/`)
 
-- Reactive `mixer` settings drive a lazily built Tone graph: per-instrument channel strips with sub-part `Tone.Volume`s (guitar: `bass`, `strum`), a shared reverb bus fed by sends, and master.
-- Instruments connect via `getChannel(id, part)`.
+- `mixer.svelte.js` holds the settings, with snapshot, apply and reset. `faderTaper.js` holds the fader curve. `mixerGraph.svelte.js` builds the Tone graph lazily and keeps it in step.
+- Each instrument has a channel (input trim → EQ → fader/pan) with sub-part `Tone.Volume`s (guitar: `bass`, `strum`), a post-fader send to the reverb aux, mute and solo.
+- Instruments connect via `getChannel(id, part)` from `mixerGraph.svelte.js`.
+- Meters and the master visualiser read **analyser taps** (`playback/analysis/taps.js`), created in `mixerGraph.svelte.js` and published as `audioTaps.current` (null until the first Play).
+  - There's one tap after each channel's fader and pan, one on the reverb aux, and the master's waveform and spectrum.
+  - Everything that animates subscribes to the one shared loop in `analysis/frameLoop.js` (`onEveryFrame`), and writes straight to the DOM or canvas each frame, not through Svelte state.
+  - Level maths is in `analysis/levels.js`; meter movement (fall, peak hold, clip latch) is in `analysis/meterBallistics.js`.
+  - The meters use the fader's dB scale, so they line up with its marks.
+  - The master visualiser is a small fixed-size card after the master strip (size: `--scope-width` and `--scope-screen-height` in `MasterScope.svelte`). Its views are separate draw functions in `components/mixer/scope/`.
+- The automated browser pane in this app doesn't run `requestAnimationFrame`. To test meters or the visualiser there, replace it with a 16 ms timer, then navigate away and back so the frame loop restarts on it.
+- The default mix (pans, sends, reverb level) is a documented block at the top of `mixer.svelte.js`. Resetting a control (tap its readout, double-click its cap) returns it to that default.
+- **Headroom.** Every channel starts with an input trim (`INPUT_TRIM_DB` in `mixerGraph.svelte.js`, −14 dB), before its EQ. With every fader at unity the master peaks around −8 dBFS, so it clips only when pushed well past unity. There's deliberately no limiter. Change the trim, not the samples or instrument levels, to move the whole mix up or down; it keeps the balance between instruments.
+- **EQ** (Logic Channel EQ-style) on every channel, the reverb aux (after the plugin) and the master (the whole mix):
+  - Bands and their defaults are defined once in `playback/eq/eqBands.js`: low/high cut (12 or 24 dB/oct), low/high shelf, four bells. The settings live in each strip's `eq` in `mixer.svelte.js` and save with the song.
+  - `createEq.js` builds it from native `BiquadFilterNode`s, because `Tone.Filter` rejects the negative Q a Butterworth cut needs in dB. A 24 dB/oct cut is two 12 dB stages.
+  - `eqResponse.js` works out the curve with the same (RBJ) formulas the browser uses, for the graph and the strip thumbnails; it matches `getFrequencyResponse` exactly.
+  - The UI is `components/mixer/eq/`: `EqButton` (the curve thumbnail, under the name at the top of every strip, placed by `Strip.svelte`) opens one shared, non-modal `EqWindow` (`eqWindowState.svelte.js` says which strip). The graph shows the strip's sound after the EQ (`audioTaps.current.afterEq`).
+- **Listening setups and EQ presets.** Every speaker and pair of headphones sounds different, so the user should tune and save EQs per device and per speaker/headphones; the UI says so plainly, so keep that wording when changing it.
+  - A listening setup is every strip's EQ (`eqsSnapshot`/`applyEqs` in `mixer.svelte.js`, strips from `stripsWithEq`). `playback/eq/listeningSetup.svelte.js` is the one place for its rules: this device's setup goes on at page start and stays through New and Open (`applySongMix`); while it's in use the song's own EQs are put aside and saved back unchanged (`songMixSnapshot`), so it never marks the song changed; setup edits save only when you press Save, and leaving the page asks first.
+  - The UI is `components/mixer/listening/`: a small button in the mixer's title row (kept small so the drawer fits a phone) opens the "What are you listening on?" dialog. The EQ window's note links to it.
+  - EQ presets (`playback/eq/eqPresets.svelte.js`, UI `eq/EqPresetPicker.svelte`) are one strip's EQ; any preset loads on any strip, the strip's own listed first.
+- **Every bus after the channels must be stereo** (`new Tone.Channel({ channelCount: 2 })`). A Tone Channel defaults to mono and would fold every pan back to centre; that was the "pan does nothing" bug.
+- Solo is done in our own code, not Tone's `Channel.solo`, which would also mute the master and aux. A soloed channel mutes the others; the reverb aux is solo-safe. Solo isn't saved with a song.
+- The reverb aux is Logic-style, a strip with an insert slot (power = bypass) that opens the plugin window, a non-modal `Dialog`.
+  - The plugin is hand-built on Web Audio (`playback/reverb/`): a generated impulse response (decay, damping, width) into a convolver, plus pre-delay, low/high cut and separate wet/dry (100/0 by default).
+  - Its controls are defined once in `reverbSettings.js`.
+  - Older songs' `reverb.decay` maps to `plugin.decay` in `applyMix`.
 - New instruments should add a channel to `mixer.channels` rather than connect to the destination directly.
 - Every mixer control is a `Slider.svelte`, the same on desktop and touch. Only the cap drags, and it moves relative to where it is, so the track never jumps. Off the cap, touches are left to the page (`touch-action: pan-x`). Tapping the readout resets; arrow keys step past detents.
 - The console is one row that scrolls sideways on narrow screens, so in the mixer up/down only ever means a fader. Keep strips short enough that the drawer fits a phone without vertical scrolling.
