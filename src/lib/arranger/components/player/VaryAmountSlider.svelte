@@ -5,14 +5,14 @@
 	 */
 	import Slider from '../mixer/Slider.svelte';
 	import { settings } from '$lib/settings/settings.svelte.js';
-	import { LEVEL_DB, PITCH_CENTS } from '../../instruments/roundRobin.js';
+	import { LEVEL_DB, pitchCents } from '../../instruments/roundRobin.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const MAX_AMOUNT = 5;
 
 	/** @param {number} amount */
 	const format = (amount) =>
-		`±${Math.round(PITCH_CENTS * amount)}¢ ±${(LEVEL_DB * amount).toFixed(1)} dB`;
+		`±${Math.round(pitchCents(amount))}¢ ±${(LEVEL_DB * amount).toFixed(1)} dB`;
 </script>
 
 <div class="amount" class:off={!settings.varyNotes}>
