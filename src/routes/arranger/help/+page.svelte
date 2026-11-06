@@ -8,7 +8,13 @@
 	import { barQuarters, meterText, slotPositions } from '$lib/arranger/chart/timeline.js';
 	import chords from '$lib/arranger/instruments/guitar-chords.json';
 
-	const chordNames = Object.keys(chords);
+	const QUALITIES = [
+		{ suffix: '', label: 'Major' },
+		{ suffix: 'm', label: 'Minor' },
+		{ suffix: '7', label: 'Seventh' },
+		{ suffix: 'dim', label: 'Diminished' }
+	];
+	const roots = Object.keys(chords).filter((name) => /^[A-G][#b]?$/.test(name));
 
 	/**
 	 * Bars of an example, for drawing it as a little chart.
@@ -187,16 +193,33 @@
 
 	<section id="chords">
 		<h2>7. Which chords can I use?</h2>
-		<p>Right now, the guitar knows these chords:</p>
-		<p class="mb-4 flex flex-wrap gap-2">
-			{#each chordNames as name (name)}
-				<span class="ui-button px-3 py-1 font-mono">{name}</span>
-			{/each}
+		<p>
+			Major, minor, seventh and diminished chords in every key. Put the letter first, then # or b if
+			it has one, then the kind of chord:
 		</p>
+		<dl class="mb-4 space-y-2">
+			{#each QUALITIES as quality (quality.suffix)}
+				<div>
+					<dt class="text-ink-soft">{quality.label}</dt>
+					<dd class="flex flex-wrap gap-1.5">
+						{#each roots as root (root)}
+							<span class="ui-button px-2 py-0.5 font-mono text-sm">{root + quality.suffix}</span>
+						{/each}
+					</dd>
+				</div>
+			{/each}
+		</dl>
 		<p class="tip">
 			Type them exactly like that, with a capital letter. Want the song in a different key? Don't
 			rewrite it. Use the <b>Capo</b> box, or the <b>Key</b> menu above the chart.
 		</p>
+		<h3>A different bass note</h3>
+		<p>
+			Put <code>/</code> and a note after a chord to choose its bass note. <code>G/F#</code> is a G chord
+			with F# in the bass. The guitar strums the chord as usual and plays that note on its bass strings,
+			so you can walk the bass down from G to Em:
+		</p>
+		{@render example(`"Walk"|G,G/F#|Em,Em/D|C|D|`)}
 	</section>
 
 	<section id="phone">
@@ -207,8 +230,8 @@
 		</p>
 		<ul class="mb-4 list-disc space-y-2 pl-6">
 			<li>
-				<b>A to G, #, b, m, 7</b>: tap out chords. Tap two chords in a row and the comma goes in for
-				you.
+				<b>A to G, #, b, m, 7, /</b>: tap out chords. Tap two chords in a row and the comma goes in
+				for you.
 			</li>
 			<li>
 				<b>New part</b>: starts a new line and lets you type the part's name with normal letters.

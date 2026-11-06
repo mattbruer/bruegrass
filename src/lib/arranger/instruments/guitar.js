@@ -59,6 +59,10 @@ const TOUCH_BASS_RATIO = 0.5; // bass notes are still picked deliberately
 const TOUCH_FULL_CUTOFF = 16000; // Hz at full touch; falls 10x per -12 dB
 const TOUCH_FADE_IN_PER_DB = 0.0005; // s of fade-in per dB lighter (3 ms at -6 dB)
 
+/* A slash chord's bass is found on these strings, low E first, up to this fret */
+const SLASH_BASS_STRINGS = [0, 1, 2];
+const SLASH_BASS_MAX_FRET = 4;
+
 const PITCH_CLASS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
 /**
@@ -67,13 +71,21 @@ const PITCH_CLASS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
  * @returns {(number | null)[]}
  */
 export function chordShape(name) {
-	const shape = chords[name];
+	const shape = chords[withoutBass(name)];
 	if (!shape) throw new Error(`Unknown chord: ${name}`);
 	return shape;
 }
 
 /**
- * Pitch class (0–11) of the chord's root, from its name.
+ * The chord without a slash bass: "G/B" → "G".
+ * @param {string} name
+ */
+export function withoutBass(name) {
+	return name.split('/')[0];
+}
+
+/**
+ * Pitch class (0–11) of the chord's root, from its name (or of a note name like "Bb").
  * @param {string} name
  */
 export function rootPitchClass(name) {
@@ -84,6 +96,49 @@ export function rootPitchClass(name) {
 }
 
 /**
+ * Pitch class of a slash chord's bass ("G/B" → B), or null without one.
+ * @param {string} name
+ */
+export function slashBassPitchClass(name) {
+	const bass = name.split('/')[1];
+	return bass ? rootPitchClass(bass) : null;
+}
+
+/**
+ * Semitones from root to fifth: diminished chords have a flat fifth.
+ * @param {string} name
+ */
+export function fifthInterval(name) {
+	return /^[A-G][#b]?dim/.test(name) ? 6 : 7;
+}
+
+/**
+ * The bass note that alternates with the root: the fifth, or the root when
+ * a slash chord already has its fifth in the bass (C/G alternates G and C).
+ * @param {string} name
+ */
+export function alternatingPitchClass(name) {
+	const root = rootPitchClass(name);
+	const fifth = (root + fifthInterval(name)) % 12;
+	return slashBassPitchClass(name) === fifth ? root : fifth;
+}
+
+/**
+ * A slash chord's bass: the lowest note with this pitch class on the bottom
+ * strings in open position, the way a guitarist walks G, G/F#, Em.
+ * @param {number} pc
+ * @returns {{ string: number, fret: number }}
+ */
+function lowestOpenNote(pc) {
+	for (const string of SLASH_BASS_STRINGS) {
+		for (let fret = 0; fret <= SLASH_BASS_MAX_FRET; fret++) {
+			if ((OPEN_MIDI[string] + fret) % 12 === pc) return { string, fret };
+		}
+	}
+	throw new Error(`No open-position bass note for pitch class ${pc}`);
+}
+
+/**
  * Where the bass note lives in the chord shape: the lowest-sounding played
  * string whose note is the root (or fifth). Frets are without capo.
  * @param {string} name
@@ -91,8 +146,11 @@ export function rootPitchClass(name) {
  * @returns {{ string: number, fret: number }}
  */
 export function bassNote(name, which) {
+	const slashBass = slashBassPitchClass(name);
+	if (which === 'root' && slashBass !== null) return lowestOpenNote(slashBass);
+
 	const shape = chordShape(name);
-	const pc = (rootPitchClass(name) + (which === 'fifth' ? 7 : 0)) % 12;
+	const pc = which === 'root' ? rootPitchClass(name) : alternatingPitchClass(name);
 	let best = null;
 
 	shape.forEach((fret, string) => {

@@ -29,6 +29,7 @@ Code is grouped by feature under `src/lib/`. `src/lib/README.md` and `src/lib/ar
   - `playback/`: scheduler and mixer
   - `melody/`: ABC, sheet music drawing and following
   - `export/`: MIDI
+  - `theory/`: music theory in a key, kept for the planned jazz style and its richer harmony (not used by playback yet). `musicInKey.js`: Roman numerals (`bII7`, `#iv°`, `I/3`), notes as scale steps, correct spelling (`chordName`, `plainestNote`). `chordScales.js`: chord-scale theory, the user's way of understanding music: the key's mode for diatonic chords, Lydian/Dorian/Mixolydian/Phrygian dominant/Lydian dominant/whole-half for the rest, bebop notes, tensions minus avoid notes (a half step above a chord tone, except on dominants).
   - `state/`: small state classes combined in `Arranger.svelte.js`; components get them via `useArranger()`
   - `components/` (by area)
 - The page `src/routes/arranger/+page.svelte` is only an outline.
@@ -125,6 +126,7 @@ The single source of musical time. All times are in quarter notes.
 The core of the arranger.
 
 - **Chord shapes** come from `guitar-chords.json`. Each shape is 6 frets from low E to high e, with `null` for a muted string. The capo adds to every fret.
+- `guitar-chords.json` has major, minor, 7 and dim in every key (both sharp and flat names), lowest position, open strings where they fit. **Slash chords** (`G/B`) strum the chord's shape and boom the slash note, the lowest one on the bottom three strings up to fret 4; the alternating boom is the chord's fifth, or its root when the fifth is already the bass (`alternatingPitchClass`). The MIDI bass follows the same rule. abcjs writes chord flats as ♭; `plainChordName` in `abcChords.js` turns them back.
 - **Samples** are in `static/samples/guitar/{E,A,D,G,B,ee}{0..12}.mp3`.
 - **`buildEvents`** turns sections into timed note events:
   - Each beat group of the rhythm grid gets a **strum pattern** (`strumPatterns.js`, plain data): one character per stroke of a hand that keeps moving down and up (even = down, odd = up), `B` bass, `x` strum, `.` miss, at `steps` strokes per quarter. Boom-chuck and bum-titty (`B.xx`: a quarter, then two eighths down-up; in 3/4 `B.x.xx`) mixed at random, half and half for now (`STRUM_MIX`, seeded so export and MIDI match live's first pass). A new pattern is one entry.

@@ -67,7 +67,7 @@ function walk(voice) {
 				src: element.timing * 4,
 				length,
 				startChar: element.elem?.startChar,
-				chord: chord ? chord.name.trim() : null
+				chord: chord ? plainChordName(chord.name) : null
 			});
 			t += length;
 		}
@@ -82,7 +82,15 @@ function walk(voice) {
 
 /** @param {string} name */
 function isChordName(name) {
-	return /^[A-G][#b]?[^\s"]*$/.test(name.trim());
+	return /^[A-G][#b]?[^\s"]*$/.test(plainChordName(name));
+}
+
+/**
+ * A chord symbol as the arrangement writes it: abcjs shows "Ab7" as "A♭7".
+ * @param {string} name
+ */
+function plainChordName(name) {
+	return name.trim().replace(/♭/g, 'b').replace(/♯/g, '#');
 }
 
 /** @param {AbcMeter} meter */
@@ -221,7 +229,7 @@ function arrangementMeter(meter) {
 
 /**
  * Concert chord names as the guitar's shapes with a capo, simplified
- * (Cmaj7 → C, Am7 → Am, G/B → G) where there's no shape for the full chord.
+ * (Cmaj7 → C, Am7 → Am, Am7/G → Am/G) where there's no shape for the full chord.
  * @param {string[]} names concert pitch
  * @param {number} capo
  */
@@ -231,19 +239,21 @@ function fitShapes(names, capo) {
 	const fitted = new Map();
 	for (const name of new Set(names)) {
 		const written = chordLabel(name, { key, shift: -capo, mode: 'concert' });
-		const match = written.match(/^([A-G][#b]?)(.*?)(?:\/.*)?$/);
-		const root = match?.[1] ?? written;
+		const [chord, bass] = written.split('/');
+		const match = chord.match(/^([A-G][#b]?)(.*)$/);
+		const root = match?.[1] ?? chord;
 		const rest = match?.[2] ?? '';
 		const minor = /^(m(?!aj)|min)/.test(rest);
 		const candidates = [
-			written.split('/')[0],
+			chord,
 			root + (minor ? 'm' : '') + (/^m?7$/.test(rest) ? '7' : ''),
 			root + (minor ? 'm' : '')
 		];
 		const shape = candidates.find((candidate) => candidate in shapes);
+		const slash = bass && /^[A-G][#b]?$/.test(bass) ? `/${bass}` : '';
 		fitted.set(name, {
-			shape: shape ?? written,
-			simplified: shape !== undefined && shape !== written,
+			shape: shape ? shape + slash : written,
+			simplified: shape !== undefined && shape + slash !== written,
 			missing: shape === undefined
 		});
 	}

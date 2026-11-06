@@ -24,6 +24,7 @@ export const KEYS = [
 		text('flat', 'b', 'b'),
 		text('minor', 'm', 'm'),
 		text('seventh', '7', '7'),
+		text('slash', '/', '/'),
 		text('comma', ',', ','),
 		text('bar', '|', '|'),
 		action('backspace', '⌫')
@@ -50,7 +51,7 @@ export const TIME_KEYS = [
 ];
 
 /** A complete chord name, as far as the keypad can type one. */
-const CHORD = /^[A-G][#b]?(m|maj|min|dim|aug|sus)?\d*$/;
+const CHORD = /^[A-G][#b]?(m|maj|min|dim|aug|sus)?\d*(\/[A-G][#b]?)?$/;
 
 /**
  * Insert text at the caret (replacing any selection).

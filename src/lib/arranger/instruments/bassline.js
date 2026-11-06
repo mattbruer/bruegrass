@@ -24,7 +24,14 @@
  * the line. Choices are seeded, so the same arrangement always exports the
  * same bass part.
  */
-import { bassNote, midiNote, rootPitchClass } from './guitar.js';
+import {
+	alternatingPitchClass,
+	bassNote,
+	fifthInterval,
+	midiNote,
+	rootPitchClass,
+	slashBassPitchClass
+} from './guitar.js';
 import { rhythm } from '../chart/timeline.js';
 import { createRng } from './seededRandom.js';
 
@@ -177,6 +184,12 @@ function render({ runs, capo, key }, decisions) {
 	 * @param {number} near
 	 */
 	const placeChord = (name, near) => {
+		const slashBass = slashBassPitchClass(name);
+		if (slashBass !== null) {
+			// The slash note is the bass's root, alternating with the chord's fifth (or root)
+			const bass = nearest((slashBass + capo) % 12, near);
+			return { root: bass, fifth: nearest((alternatingPitchClass(name) + capo) % 12, bass) };
+		}
 		let root = nearest(rootPc(name), near);
 		let fifth = contraryFifth(name, root);
 		if (fifth === null) {
@@ -191,7 +204,8 @@ function render({ runs, capo, key }, decisions) {
 				}
 			}
 		}
-		fifth ??= root - 5 >= LOW ? root - 5 : root + 7;
+		const up = fifthInterval(name);
+		fifth ??= root - (12 - up) >= LOW ? root - (12 - up) : root + up;
 		return { root, fifth };
 	};
 
@@ -329,8 +343,8 @@ function contraryFifth(name, root) {
 	const guitarUp =
 		midiNote(guitarFifth.string, guitarFifth.fret) > midiNote(guitarRoot.string, guitarRoot.fret);
 
-	const below = root - 5;
-	const above = root + 7;
+	const below = root - (12 - fifthInterval(name));
+	const above = root + fifthInterval(name);
 	if (guitarUp) return below >= LOW ? below : null;
 	return above <= FIFTH_HIGH ? above : null;
 }
