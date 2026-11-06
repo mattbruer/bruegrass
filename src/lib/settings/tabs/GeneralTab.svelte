@@ -28,4 +28,12 @@
 	>
 		<ToggleSwitch bind:on={settings.musicKeypad} labelledBy="setting-music-keypad" />
 	</SettingRow>
+
+	<SettingRow
+		id="setting-vary-notes"
+		label="Vary each note"
+		description="Every note sounds a touch different, like a real player. Flip it while playing to compare."
+	>
+		<ToggleSwitch bind:on={settings.varyNotes} labelledBy="setting-vary-notes" />
+	</SettingRow>
 </section>
