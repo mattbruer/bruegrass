@@ -48,7 +48,7 @@
 				aria-label="Move to my list: {item.text}"
 				use:tooltip={TIPS.todo.adopt}
 			>
-				← Mine
+				← Mine{step !== null ? ` (${step})` : ''}
 			</button>
 		</form>
 	{/if}
