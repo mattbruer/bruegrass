@@ -1,12 +1,17 @@
 /**
  * Keys for the sampling page, so you can record with the guitar in your
  * hands. One place for the key list: the page and its hints read it.
+ * The test take uses R and Space; the session uses them all.
  */
 
 /** Each action's key (`event.key`, lower case) and how it's written on screen. */
 export const SHORTCUTS = Object.freeze({
 	record: { key: 'r', label: 'R' },
-	play: { key: ' ', label: 'Space' }
+	play: { key: ' ', label: 'Space' },
+	keep: { key: 'k', label: 'K' },
+	discard: { key: 'x', label: 'X' },
+	previous: { key: 'arrowleft', label: '←' },
+	next: { key: 'arrowright', label: '→' }
 });
 
 /** @typedef {keyof typeof SHORTCUTS} ShortcutAction */

@@ -1,6 +1,6 @@
 # Handoff: sampling-session tool and a richer, human-sounding sample set
 
-Written 2026-11-05 at the end of a brainstorming chat. Nothing in this note has been built. Delete this file once its contents are in the code, `CLAUDE.md` and the READMEs.
+Written 2026-11-05 at the end of a brainstorming chat. **Built so far:** the `/sampler` input check (2026-11-06) and the guided recording session (2026-11-06; described in `CLAUDE.md`). **Not built:** everything in "The sound plan" and "Loading and memory" (the app doesn't play recorded samples yet), the pilot ear tests, the phone memory test and the compressed format. Delete this file once its contents are in the code, `CLAUDE.md` and the READMEs.
 
 ## Goal
 
@@ -70,7 +70,17 @@ Plan, biggest win first:
 
 **Test first:** a phone memory-ceiling test. Load samples in growing batches on the user's iPhone and see where it slows or reloads.
 
-## The sampling-session tool (what to build)
+## The sampling-session tool (built 2026-11-06)
+
+What's left of this list, or done differently:
+
+- Takes are saved when recording stops, not in chunks while recording: a crash mid-take loses only that take. Fine for short hits; revisit if takes get long.
+- No live tuner yet: each take's pitch is measured, and the check asks for a retune past 10 cents. A live tuner is its own roadmap step.
+- Export is WAV (24-bit, cut and faded) + `manifest.json`; compressed files wait for the format test below.
+- Recording is one target per take (R, play, R). The "long continuous runs" idea (one recording, hits split automatically) would sit on top of `analysis/findHit.js`; try it if pressing R per hit gets tedious.
+- Thresholds for the checks are guesses checked on synthetic plucks only. Tune them (`analysis/takeProblems.js`, `analysis/analyseTake.js`, `analysis/findHit.js`) after the first real session.
+
+The original list:
 
 A separate desktop-only route. Suggested features:
 

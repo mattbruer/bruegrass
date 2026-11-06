@@ -57,15 +57,21 @@
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
-			"id": "melody-tab",
-			"text": "Guitar or mandolin tab under the melody (with capo)",
+			"id": "sample-ear-tests",
+			"text": "Ear-test a few recorded samples (repitch, derived soft, dead strum)",
 			"done": false,
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
-			"id": "abc-warnings",
-			"text": "Show ABC mistakes under the melody box",
-			"done": true,
+			"id": "play-own-samples",
+			"text": "Band plays my recorded samples from the manifest",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
+			"id": "melody-tab",
+			"text": "Guitar or mandolin tab under the melody (with capo)",
+			"done": false,
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		}
 	]

@@ -7,10 +7,11 @@
 /**
  * @param {AudioContext} context
  * @param {import('./takeRecorder.js').Take} take
- * @param {() => void} onEnded called when it finishes or is stopped
+ * @param {() => void} onEnded called once, when it finishes or is stopped
+ * @param {{ start: number, end: number }} [range] the frames to play (default: all of it)
  * @returns {() => void} stop
  */
-export function playTake(context, take, onEnded) {
+export function playTake(context, take, onEnded, range) {
 	const frames = take.channels[0]?.length ?? 0;
 	const buffer = context.createBuffer(take.channels.length, Math.max(1, frames), take.sampleRate);
 	take.channels.forEach((channel, index) => buffer.copyToChannel(channel, index));
@@ -18,11 +19,25 @@ export function playTake(context, take, onEnded) {
 	const player = context.createBufferSource();
 	player.buffer = buffer;
 	player.connect(context.destination);
-	player.onended = () => {
+
+	let ended = false;
+	// Called straight away on stop, not left to `onended`: a context closing at the same time never sends it
+	const finish = () => {
+		if (ended) return;
+		ended = true;
+		player.onended = null;
 		player.disconnect();
 		onEnded();
 	};
-	player.start();
+	player.onended = finish;
 
-	return () => player.stop();
+	const start = range ? range.start / take.sampleRate : 0;
+	const seconds = range ? Math.max(0, range.end - range.start) / take.sampleRate : undefined;
+	player.start(0, start, seconds);
+
+	return () => {
+		if (ended) return;
+		player.stop();
+		finish();
+	};
 }

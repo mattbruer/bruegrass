@@ -3,20 +3,20 @@
 Pages are in `src/routes` (one folder per URL). Everything they use is here,
 grouped by feature. Import from here with `$lib/...`.
 
-| Folder        | What's in it                                                                                                                                                                             |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `arranger/`   | The rhythm-section arranger (the `/arranger` page): chord charts, instruments, playback, melody. See [arranger/README.md](arranger/README.md).                                           |
-| `sampler/`    | The sampling page (`/sampler`, a dev tool: local dev on a computer only): record your own instrument samples. Today the input check: choose the interface, meters, a test take.          |
-| `recording/`  | Recording from a microphone or audio interface, in plain Web Audio: the input (call-style processing off), meters' taps, the recorder and take playback. Shared with the arranger later. |
-| `songs/`      | The song list (the `/` page): the list of MP3s and the player.                                                                                                                           |
-| `settings/`   | The Settings panel (opened from the top bar) and the saved preferences behind it.                                                                                                        |
-| `theme/`      | The look of the app: colour, shadow and corner tokens, and the shared `ui-*` classes.                                                                                                    |
-| `tooltips/`   | Tooltips on every control: the `use:tooltip` action and all their wording (`tips.js`).                                                                                                   |
-| `todo/`       | The dev-only todo page's pieces (`/todo`, saved in `todo.json`). `server/todoList.js` reads and writes the file; `devOnly.js` says when dev tools show.                                  |
-| `storage/`    | Saving and loading user data (songs, EQ presets, listening setups, which setup this device uses, and drafts of unsaved work). Today: this browser's localStorage. A database later.      |
-| `components/` | Small pieces used across the whole app (the top bar, the dialog frame, the name-it dialog, the unsaved-changes dot).                                                                     |
-| `utils/`      | Tiny general helpers with no app knowledge (download a file, make a slug, watch for a touch screen).                                                                                     |
-| `assets/`     | Images bundled with the app (the favicon).                                                                                                                                               |
+| Folder        | What's in it                                                                                                                                                                                                                                    |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `arranger/`   | The rhythm-section arranger (the `/arranger` page): chord charts, instruments, playback, melody. See [arranger/README.md](arranger/README.md).                                                                                                  |
+| `sampler/`    | The sampling page (`/sampler`, a dev tool: local dev on a computer only): record your own instrument samples: the input check and test take, then a guided session (checklists, take analysis and checks, progress, export as WAVs + manifest). |
+| `recording/`  | Recording from a microphone or audio interface, in plain Web Audio: the input (call-style processing off), meters' taps, the recorder and take playback. Shared with the arranger later.                                                        |
+| `songs/`      | The song list (the `/` page): the list of MP3s and the player.                                                                                                                                                                                  |
+| `settings/`   | The Settings panel (opened from the top bar) and the saved preferences behind it.                                                                                                                                                               |
+| `theme/`      | The look of the app: colour, shadow and corner tokens, and the shared `ui-*` classes.                                                                                                                                                           |
+| `tooltips/`   | Tooltips on every control: the `use:tooltip` action and all their wording (`tips.js`).                                                                                                                                                          |
+| `todo/`       | The dev-only todo page's pieces (`/todo`, saved in `todo.json`). `server/todoList.js` reads and writes the file; `devOnly.js` says when dev tools show.                                                                                         |
+| `storage/`    | Saving and loading user data (songs, EQ presets, listening setups, which setup this device uses, and drafts of unsaved work) in this browser's localStorage, and sampling sessions' audio in IndexedDB. A database later.                       |
+| `components/` | Small pieces used across the whole app (the top bar, the dialog frame, the name-it dialog, the unsaved-changes dot).                                                                                                                            |
+| `utils/`      | Tiny general helpers with no app knowledge (download a file, make a slug, watch for a touch screen).                                                                                                                                            |
+| `assets/`     | Images bundled with the app (the favicon).                                                                                                                                                                                                      |
 
 ## A few conventions
 

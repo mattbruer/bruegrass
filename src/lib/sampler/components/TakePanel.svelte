@@ -12,12 +12,15 @@
 	import { formatDb, summariseTake } from '../takeSummary.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import KeyHint from './KeyHint.svelte';
+	import RecordButton from './RecordButton.svelte';
 
-	/** @type {{ input: import('../InputCheck.svelte.js').InputCheck }} */
-	let { input } = $props();
+	/** @type {{ test: import('../TestTake.svelte.js').TestTake }} */
+	let { test } = $props();
 
+	const input = $derived(test.input);
 	const recording = $derived(input.status === 'recording');
-	const summary = $derived(input.take ? summariseTake(input.take) : null);
+	const summary = $derived(test.take ? summariseTake(test.take) : null);
 
 	/** @type {HTMLCanvasElement | undefined} */
 	let canvas = $state();
@@ -26,7 +29,7 @@
 	$effect(() => {
 		if (!canvas) return;
 		const target = canvas;
-		const channels = input.take?.channels ?? [];
+		const channels = test.take?.channels ?? [];
 		drawWaveform(target, channels);
 		const watcher = new ResizeObserver(() => drawWaveform(target, channels));
 		watcher.observe(target);
@@ -35,52 +38,46 @@
 
 	onMount(() =>
 		listenForShortcuts({
-			record: () => input.toggleRecording(),
-			play: () => input.togglePlaying()
+			record: () => test.toggleRecording(),
+			play: () => test.togglePlaying()
 		})
 	);
 
 	function download() {
-		if (!input.take) return;
+		if (!test.take) return;
 		const stamp = new Date().toISOString().slice(0, 19).replaceAll(':', '-');
 		downloadFile(
-			encodeWav(input.take.channels, input.take.sampleRate),
+			encodeWav(test.take.channels, test.take.sampleRate),
 			`test-take-${stamp}.wav`,
 			'audio/wav'
 		);
-		input.takeDownloaded = true;
+		test.downloaded = true;
 	}
 </script>
 
 <div class="flex flex-wrap items-center gap-3">
-	<button
-		type="button"
-		class="ui-button px-4 py-2"
-		class:ui-button-on={recording}
+	<RecordButton
+		{recording}
 		disabled={input.status !== 'on' && !recording}
-		onclick={() => input.toggleRecording()}
-		use:tooltip={TIPS.sampler.record}
-	>
-		<span class="record-dot" class:live={recording} aria-hidden="true"></span>
-		{recording ? 'Stop' : 'Record'}
-		<kbd>{SHORTCUTS.record.label}</kbd>
-	</button>
+		tip={TIPS.sampler.record}
+		onclick={() => test.toggleRecording()}
+	/>
 
 	<button
 		type="button"
 		class="ui-button px-4 py-2"
-		disabled={!input.take || recording}
-		onclick={() => input.togglePlaying()}
+		disabled={!test.take || recording}
+		onclick={() => test.togglePlaying()}
 		use:tooltip={TIPS.sampler.play}
 	>
-		{input.playing ? 'Stop' : 'Play'}
-		<kbd>{SHORTCUTS.play.label}</kbd>
+		{test.playing ? 'Stop' : 'Play'}
+		<KeyHint label={SHORTCUTS.play.label} />
 	</button>
 
 	<button
 		type="button"
 		class="ui-button px-4 py-2"
-		disabled={!input.take || recording}
+		disabled={!test.take || recording}
 		onclick={download}
 		use:tooltip={TIPS.sampler.download}
 	>
@@ -101,35 +98,8 @@
 		{summary.seconds.toFixed(1)} s. Peak: {summary.peaksDb
 			.map((db, index) => `input ${index + 1} ${formatDb(db)}`)
 			.join(', ')}.
-		{#if input.hasUnsavedTake}Not saved: download it to keep it.{/if}
+		{#if test.unsaved}Not saved: download it to keep it.{/if}
 	{:else}
 		No take yet. Turn the input on, then press Record.
 	{/if}
 </p>
-
-<style>
-	kbd {
-		margin-left: 0.4rem;
-		padding: 0 0.3rem;
-		border-radius: var(--corner-control);
-		box-shadow: var(--shadow-inset-small);
-		font-family: inherit;
-		font-size: 0.7rem;
-		font-weight: 500;
-		color: var(--color-ink-soft);
-	}
-
-	.record-dot {
-		display: inline-block;
-		width: 0.6rem;
-		height: 0.6rem;
-		margin-right: 0.35rem;
-		border-radius: 50%;
-		background: var(--color-ink-faint);
-		vertical-align: 0.05em;
-	}
-
-	.record-dot.live {
-		background: var(--meter-clip);
-	}
-</style>

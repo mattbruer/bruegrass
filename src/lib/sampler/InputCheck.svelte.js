@@ -1,14 +1,16 @@
 /**
- * The sampling page's first step: choose the audio interface, see its
- * levels, record a test take, look at it and listen back.
+ * The sampling page's input: choose the audio interface, see its levels,
+ * record from it and play takes back through it. The test take
+ * (TestTake.svelte.js) and the session (session/) both record through this
+ * one input, so there's one place that opens and closes it.
  *
  * The audio work is in $lib/recording; this only holds what the page shows
- * and does the steps in order. Not kept between visits yet (the take is
- * only in memory), so leaving with a take asks first.
+ * and does the steps in order.
  */
 import { openInputChain } from '$lib/recording/inputChain.js';
 import { listInputs, watchInputs } from '$lib/recording/micInput.js';
 import { playTake } from '$lib/recording/playTake.js';
+/** @typedef {import('$lib/recording/takeRecorder.js').Take} Take */
 import {
 	rememberThisDevicesRecordingInput,
 	thisDevicesRecordingInput
@@ -31,22 +33,11 @@ export class InputCheck {
 	/** @type {string[]} */
 	processingLeftOn = $state([]);
 
-	/** The last take (raw: big arrays, nothing in them changes). */
-	/** @type {import('$lib/recording/takeRecorder.js').Take | null} */
-	take = $state.raw(null);
-	/** Saved to a file since it was recorded? */
-	takeDownloaded = $state(false);
-	playing = $state(false);
-
 	/** @type {import('$lib/recording/inputChain.js').InputChain | null} */
 	#chain = null;
+	/** Stops whatever is playing (only one take plays at a time). */
 	/** @type {(() => void) | null} */
 	#stopPlaying = null;
-
-	/** Is there a take that would be lost by leaving? */
-	get hasUnsavedTake() {
-		return this.take !== null && !this.takeDownloaded;
-	}
 
 	/**
 	 * Start watching for inputs being plugged in. Returns the clean-up.
@@ -100,7 +91,7 @@ export class InputCheck {
 	/** @param {string} id */
 	async chooseInput(id) {
 		const wasOn = this.status !== 'off';
-		if (this.status === 'recording') await this.stopRecording();
+		await this.stopRecording();
 		await this.turnOff();
 		this.chosenId = id;
 		if (wasOn) await this.turnOn();
@@ -111,43 +102,48 @@ export class InputCheck {
 		return this.#chain?.read() ?? [];
 	}
 
+	/** Start recording (does nothing unless the input is on and idle). */
 	startRecording() {
-		if (this.status !== 'on' || !this.#chain) return;
+		if (this.status !== 'on' || !this.#chain) return false;
 		this.stopPlaying();
 		this.#chain.recorder.start();
 		this.status = 'recording';
+		return true;
 	}
 
+	/** @returns {Promise<Take | null>} everything since startRecording (null if not recording) */
 	async stopRecording() {
-		if (this.status !== 'recording' || !this.#chain) return;
+		if (this.status !== 'recording' || !this.#chain) return null;
 		const take = await this.#chain.recorder.stop();
 		this.status = 'on';
-		this.take = take;
-		this.takeDownloaded = false;
+		return take;
 	}
 
-	toggleRecording() {
-		if (this.status === 'recording') this.stopRecording();
-		else this.startRecording();
-	}
-
-	play() {
-		if (!this.take || !this.#chain || this.status === 'recording') return;
+	/**
+	 * Play a take, or part of it, stopping anything else playing.
+	 * @param {Take} take
+	 * @param {() => void} onEnded when it finishes or is stopped
+	 * @param {{ start: number, end: number }} [range] frames to play (default: all)
+	 * @returns {boolean} whether it started (needs the input on, and not recording)
+	 */
+	play(take, onEnded, range) {
+		if (!this.#chain || this.status !== 'on') return false;
 		this.stopPlaying();
-		this.playing = true;
-		this.#stopPlaying = playTake(this.#chain.context, this.take, () => {
-			this.playing = false;
-			this.#stopPlaying = null;
-		});
+		const stop = playTake(
+			this.#chain.context,
+			take,
+			() => {
+				if (this.#stopPlaying === stop) this.#stopPlaying = null;
+				onEnded();
+			},
+			range
+		);
+		this.#stopPlaying = stop;
+		return true;
 	}
 
 	stopPlaying() {
 		this.#stopPlaying?.();
-	}
-
-	togglePlaying() {
-		if (this.playing) this.stopPlaying();
-		else this.play();
 	}
 
 	/** Let go of everything (leaving the page). */

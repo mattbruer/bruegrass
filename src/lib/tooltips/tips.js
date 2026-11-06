@@ -38,7 +38,23 @@ export const TIPS = Object.freeze({
 			'How loud each input is. Aim for your hardest hits to peak around -6 dB. Click to clear the red clip light.',
 		record: 'Record a test take (R). Press again to stop.',
 		play: 'Listen to the take (Space). With two mics, one plays on each side.',
-		download: 'Save the take as a 24-bit WAV file, to check it in Logic.'
+		download: 'Save the take as a 24-bit WAV file, to check it in Logic.',
+		newSession:
+			'Start recording a new sample set. It’s saved on this computer as you go, so you can stop and come back.',
+		continueSession: 'Carry on with this session, at the first thing still to record.',
+		deleteSession: 'Delete this session and all its recordings from this computer, for good.',
+		closeSession: 'Go back to the session list. Everything is already saved.',
+		recordTarget:
+			'Record this target (R), and press again to stop. The take is checked and saved straight away.',
+		playSample: 'Listen to the sample as it will be cut (Space).',
+		keep: 'Keep this take and go on to the next thing to record (K).',
+		discard: 'Throw away this new take (X). To redo it, just record again.',
+		previous: 'The previous target (←).',
+		next: 'The next target (→).',
+		gridCell: 'Go to the first take still to record here. The bar fills as takes are kept.',
+		exportSamples:
+			'Download every kept sample as a WAV, cut and faded, with a manifest listing them, in one zip.',
+		includeRaw: 'Also put the uncut takes in the zip, to reprocess later. Makes it much bigger.'
 	},
 
 	songs: {
