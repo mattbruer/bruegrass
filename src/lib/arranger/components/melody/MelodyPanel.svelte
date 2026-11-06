@@ -5,6 +5,7 @@
 	 */
 	import { useArranger } from '../../state/context.js';
 	import MelodyFitNote from './MelodyFitNote.svelte';
+	import MelodyWarnings from './MelodyWarnings.svelte';
 	import ChordConversion from './ChordConversion.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -52,6 +53,7 @@
 		autocapitalize="off"
 		autocomplete="off"></textarea>
 
+	<MelodyWarnings />
 	<MelodyFitNote />
 	<ChordConversion />
 </details>

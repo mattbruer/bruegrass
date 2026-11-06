@@ -80,14 +80,6 @@
 	<section class="mt-10" aria-label="Sheet music">
 		<h2 class="mb-3 text-xl font-semibold">Sheet music</h2>
 
-		{#if melody.warnings.length > 0}
-			<ul class="mb-3 list-disc pl-6 text-sm text-danger">
-				{#each melody.warnings as warning, index (index)}
-					<li>{warning}</li>
-				{/each}
-			</ul>
-		{/if}
-
 		<div bind:this={page} class="paper overflow-x-auto p-2"></div>
 	</section>
 {/if}
