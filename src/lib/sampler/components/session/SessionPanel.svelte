@@ -13,6 +13,8 @@
 	import SessionTake from './SessionTake.svelte';
 	import ProgressGrid from './ProgressGrid.svelte';
 	import ExportSamples from './ExportSamples.svelte';
+	import RecordingListButton from './RecordingListButton.svelte';
+	import ProjectFolderStatus from './ProjectFolderStatus.svelte';
 
 	/**
 	 * @type {{
@@ -41,6 +43,7 @@
 			{session.keptCount} of {session.targets.length} kept · saved on this computer as you go
 		</p>
 	</div>
+	<RecordingListButton checklist={session.checklist} {session} />
 	<button
 		type="button"
 		class="ui-button px-3 py-1.5 text-sm"
@@ -68,6 +71,7 @@
 	<ProgressGrid {session} />
 </div>
 
-<div class="mt-6">
+<div class="mt-6 space-y-3">
+	<ProjectFolderStatus {session} />
 	<ExportSamples {session} />
 </div>

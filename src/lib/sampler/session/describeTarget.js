@@ -45,6 +45,15 @@ export function noteName(midi) {
 	return `${NOTE_NAMES[midi % 12]}, ${Math.round(midiToHz(midi))} Hz`;
 }
 
+/**
+ * The note with its octave ("G2"), short enough for a table cell.
+ * Scientific numbering, so the guitar's low E is E2.
+ * @param {number} midi
+ */
+export function shortNoteName(midi) {
+	return `${NOTE_NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`;
+}
+
 /** @param {string} text */
 function capitalise(text) {
 	return text.charAt(0).toUpperCase() + text.slice(1);

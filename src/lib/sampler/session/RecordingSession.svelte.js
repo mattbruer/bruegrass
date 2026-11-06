@@ -9,13 +9,15 @@
  *   Space  listen (the trimmed sample)   ← →  previous / next target
  *
  * Everything is saved as it happens (storage/samplingSessions.js), so
- * there's nothing to lose on leaving and nothing to "save". The audio of
- * only the shown take is in memory at a time.
+ * there's nothing to lose on leaving and nothing to "save". Each kept take
+ * is also written into the project folder (ProjectCopy). The audio of only
+ * the shown take is in memory at a time.
  */
 import { analyseTake } from '../analysis/analyseTake.js';
 import { takeProblems } from '../analysis/takeProblems.js';
 import { findChecklist, isSameLayer, listTargets } from '../checklists/targets.js';
 import { checkDetails } from './describeTarget.js';
+import { ProjectCopy } from './ProjectCopy.svelte.js';
 import {
 	discardTake,
 	keepTake,
@@ -57,6 +59,8 @@ export class RecordingSession {
 		this.session = session;
 		this.checklist = checklist;
 		this.targets = listTargets(checklist);
+		/** The copy in the project folder (samples-source/), written as takes are kept. */
+		this.projectCopy = new ProjectCopy(session, checklist);
 
 		/** @type {Record<string, TargetTakes>} */
 		const takes = {};
@@ -88,6 +92,14 @@ export class RecordingSession {
 	/** @param {string} targetId */
 	takesFor(targetId) {
 		return this.takes[targetId] ?? { kept: null, fresh: null };
+	}
+
+	/** Every kept take, in checklist order. */
+	keptSamples() {
+		return this.targets.flatMap((target) => {
+			const record = this.takesFor(target.id).kept;
+			return record ? [{ target, record }] : [];
+		});
 	}
 
 	get keptCount() {
@@ -176,6 +188,8 @@ export class RecordingSession {
 			const nowKept = await keepTake(fresh, kept);
 			this.#setTakes(target.id, { kept: nowKept, fresh: null });
 			if (this.shown?.record.id === nowKept.id) this.shown = { ...this.shown, record: nowKept };
+			// In the background: the next target needn't wait for the disk
+			this.projectCopy.saveKept({ target, record: nowKept }, this.keptSamples());
 		});
 		const next = this.nextMissingFrom(this.index + 1);
 		if (next >= 0) await this.go(next);

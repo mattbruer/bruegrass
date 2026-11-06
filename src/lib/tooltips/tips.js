@@ -43,6 +43,8 @@ export const TIPS = Object.freeze({
 			'Start recording a new sample set. It’s saved on this computer as you go, so you can stop and come back.',
 		continueSession: 'Carry on with this session, at the first thing still to record.',
 		deleteSession: 'Delete this session and all its recordings from this computer, for good.',
+		recordingList:
+			'Everything this session asks you to record, counted up: every note, how many takes, and the total.',
 		closeSession: 'Go back to the session list. Everything is already saved.',
 		recordTarget:
 			'Record this target (R), and press again to stop. The take is checked and saved straight away.',
@@ -54,6 +56,8 @@ export const TIPS = Object.freeze({
 		gridCell: 'Go to the first take still to record here. The bar fills as takes are kept.',
 		exportSamples:
 			'Download every kept sample as a WAV, cut and faded, with a manifest listing them, in one zip.',
+		saveAllToProject:
+			'Write every kept take into the project folder again, and remove any no longer on the list. Kept takes are saved there by themselves; use this to catch up.',
 		includeRaw: 'Also put the uncut takes in the zip, to reprocess later. Makes it much bigger.'
 	},
 

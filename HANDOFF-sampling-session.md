@@ -77,6 +77,7 @@ What's left of this list, or done differently:
 - Takes are saved when recording stops, not in chunks while recording: a crash mid-take loses only that take. Fine for short hits; revisit if takes get long.
 - No live tuner yet: each take's pitch is measured, and the check asks for a retune past 10 cents. A live tuner is its own roadmap step.
 - Export is WAV (24-bit, cut and faded) + `manifest.json`; compressed files wait for the format test below.
+- Every kept take is also written to `samples-source/` in the project (cut + raw + manifest): the masters, gitignored, backed up by the user. Decided 2026-11-06: masters never go in `static/` or a database. Shipping files will be built from them into `static/samples/` (after the mic-blend and format choices) and found via the manifest plus one base URL, so moving them to a bucket (Firebase Storage or Cloudflare R2, to match the database choice) is a one-line change.
 - Recording is one target per take (R, play, R). The "long continuous runs" idea (one recording, hits split automatically) would sit on top of `analysis/findHit.js`; try it if pressing R per hit gets tedious.
 - Thresholds for the checks are guesses checked on synthetic plucks only. Tune them (`analysis/takeProblems.js`, `analysis/analyseTake.js`, `analysis/findHit.js`) after the first real session.
 
@@ -114,10 +115,8 @@ The mic input in `todo.json` (steps 6-8: mic input, tuner, latency calibration) 
 - **Chord shapes: G, C, D, A and E** (open "cowboy" chords); every other key comes from the capo. The capo goes anywhere from 1 to 5, sometimes up to 7 (e.g. a song in D: D shapes with no capo, C shapes at fret 2, or G shapes at fret 7). Open shapes stay in frets 0-3, so strummed notes stay at fret 10 or below: the recorded frets (0, 2, 5, 8, 11 with +-1 repitch) cover it. The capo chooser in `abcChords.js` prefers G/C/D/Am/Em home shapes; A and E should count too.
 - **`guitar-chords.json` is temporary.** The user plans a voicing engine that builds voicings from theory with functions (string set, frets, chord tones), possibly on the fly from the melody, instead of looking up shapes. Don't build new work on the JSON table: the sample list, capo choice and strum strings should take a voicing (strings + frets) from whatever produces it.
 
-## Open questions for the user
-
-- Keep the dead-strum bank, or the attack/body split, if the first doesn't pass the ear test?
-- Bass-string chucks: should the voicing engine be able to strike all six strings?
+- **If the dead-strum bank fails the ear test, switch to the attack/body split.**
+- **The voicing engine may strum all six strings,** bass strings included. Rare in bluegrass, but wanted for things like an ending that lands on a big, ringing 1 chord instead of boom-chuck. So the strum-note group covers all six strings (it already does), and the strum code mustn't assume only the top strings.
 
 ## Project rules to keep in mind
 

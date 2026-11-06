@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import { CHECKLISTS } from '../../checklists/targets.js';
 	import { createSession, deleteSession, listSessions } from '$lib/storage/samplingSessions.js';
+	import RecordingListButton from './RecordingListButton.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -59,6 +60,7 @@
 		>
 			New {checklist.name.toLowerCase()} session
 		</button>
+		<RecordingListButton {checklist} label="What to record ({checklist.name.toLowerCase()})" />
 	{/each}
 </div>
 
