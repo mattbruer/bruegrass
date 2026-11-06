@@ -19,7 +19,7 @@ const TICK = 0.1;
  * Play the arrangement on a loop until stopped. Resolves once the first pass
  * is scheduled; later passes are scheduled shortly before they start.
  * @param {import('../chart/timeline.js').Section[]} sections
- * @param {{ capo?: number, transpose?: number, bpm?: number, melody?: import('../melody/melody.js').MelodyPart | null }} options
+ * @param {{ capo?: number, transpose?: number, bpm?: number, melody?: import('../melody/melody.js').MelodyPart | null, strum?: import('../instruments/strumPatterns.js').StrumChoice }} options
  *   transpose: semitones on top of the capo, for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo, played on
  *   the guitar samples through the Melody channel, locked to the band

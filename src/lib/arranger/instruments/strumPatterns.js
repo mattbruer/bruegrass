@@ -10,9 +10,13 @@
  * A pattern without a group size falls back to boom-chuck's.
  */
 export const STRUM_PATTERNS = {
-	boomChuck: { steps: 2, groups: { 1: 'B.', 2: 'B.x.', 3: 'B.x.x.' } },
-	bumTitty: { steps: 2, groups: { 2: 'B.xg', 3: 'B.x.xg' } },
-	boomChuckaChucka: { steps: 4, groups: { 2: 'B...xgxg', 3: 'B...x...xgxg' } }
+	boomChuck: { label: 'Boom-chuck', steps: 2, groups: { 1: 'B.', 2: 'B.x.', 3: 'B.x.x.' } },
+	bumTitty: { label: 'Bum-titty', steps: 2, groups: { 2: 'B.xg', 3: 'B.x.xg' } },
+	boomChuckaChucka: {
+		label: 'Boom-chuck-a-chuck-a',
+		steps: 4,
+		groups: { 2: 'B...xgxg', 3: 'B...x...xgxg' }
+	}
 };
 
 /** How often each pattern is played: mostly boom-chuck, the others sprinkled in. */
@@ -27,11 +31,26 @@ const HITS = /** @type {const} */ ({ B: 'bass', x: 'strum', g: 'graze' });
  */
 
 /**
+ * @typedef {keyof typeof STRUM_PATTERNS} PatternName
+ * @typedef {PatternName | 'mix'} StrumChoice 'mix': mostly boom-chuck, the others sprinkled in
+ */
+
+/**
+ * The pattern for the next beat group.
+ * @param {StrumChoice} choice
+ * @param {() => number} random floats in [0, 1)
+ * @returns {PatternName}
+ */
+export function nextPattern(choice, random) {
+	return choice in STRUM_PATTERNS ? /** @type {PatternName} */ (choice) : pickPattern(random);
+}
+
+/**
  * A pattern from the mix.
  * @param {() => number} random floats in [0, 1)
  * @returns {keyof typeof STRUM_PATTERNS}
  */
-export function pickPattern(random) {
+function pickPattern(random) {
 	let roll = random();
 	for (const [name, share] of Object.entries(STRUM_MIX)) {
 		roll -= share;

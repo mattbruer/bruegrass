@@ -5,6 +5,7 @@
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import VaryNotesButton from './VaryNotesButton.svelte';
 	import VaryAmountSlider from './VaryAmountSlider.svelte';
+	import StrumPatternSelect from './StrumPatternSelect.svelte';
 
 	const { player } = useArranger();
 </script>
@@ -29,4 +30,5 @@
 	</button>
 	<VaryNotesButton />
 	<VaryAmountSlider />
+	<StrumPatternSelect />
 </div>

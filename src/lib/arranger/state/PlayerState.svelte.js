@@ -6,6 +6,7 @@ import { playArrangement } from '../playback/livePlayback.js';
 import { audioTaps } from '../playback/mixerGraph.svelte.js';
 import { melodyEvents } from '../melody/melody.js';
 import { melodyTime } from '../melody/follow.js';
+import { settings } from '$lib/settings/settings.svelte.js';
 
 /** @typedef {Awaited<ReturnType<typeof playArrangement>>} Playback */
 
@@ -51,7 +52,8 @@ export class PlayerState {
 				capo: this.#arrangement.capoFret,
 				transpose: this.#arrangement.transpose,
 				bpm: this.#arrangement.bpm,
-				melody: this.#melodyForThisPass()
+				melody: this.#melodyForThisPass(),
+				strum: settings.strumPattern
 			});
 			// Each play is measured afresh, so the loudness reading is this song as it is now
 			audioTaps.current?.output.resetLoudness();

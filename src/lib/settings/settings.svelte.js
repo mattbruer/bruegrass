@@ -33,6 +33,11 @@ export const settings = $state({
 	/** Nudge every sample a tiny random amount as it plays (instruments/roundRobin.js); the Vary button by Play. */
 	varyNotes: true,
 
+	/** Which strum pattern the guitar plays: 'mix', or one pattern to audition (the Strum menu by Play). */
+	strumPattern: /** @type {import('$lib/arranger/instruments/strumPatterns.js').StrumChoice} */ (
+		'mix'
+	),
+
 	/** How much the notes vary: 1 = roundRobin.js's amounts as written, 0 = none. */
 	varyAmount: 1,
 

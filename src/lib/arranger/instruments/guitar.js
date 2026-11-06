@@ -1,6 +1,6 @@
 import chords from './guitar-chords.json';
 import { rhythm, slotPositions } from '../chart/timeline.js';
-import { patternStrokes, pickPattern } from './strumPatterns.js';
+import { nextPattern, patternStrokes } from './strumPatterns.js';
 import { createRng } from './seededRandom.js';
 
 /** @typedef {import('../chart/timeline.js').SlotPosition} SlotPosition */
@@ -20,7 +20,7 @@ export const MAX_FRET = 12;
  * a real graze sample.
  */
 const STROKE_STRINGS = { strum: [3, 4, 5], graze: [4, 5] };
-const STROKE_DB = { strum: 0, graze: -12 };
+const STROKE_DB = { strum: 0, graze: -8 };
 
 /** Seed for the strum pattern choices, so a song always plays (and exports) the same. */
 const STRUM_SEED = 11;
@@ -202,10 +202,11 @@ export function guitarTuning(sections, shift) {
  * extra half note.
  *
  * @param {import('../chart/timeline.js').Section[]} sections
- * @param {{ capo?: number, bpm?: number, loop?: boolean }} options
+ * @param {{ capo?: number, bpm?: number, loop?: boolean, strum?: import('./strumPatterns.js').StrumChoice }} options
+ *   strum: one pattern throughout, or 'mix' (the default)
  * @returns {{ events: NoteEvent[], duration: number }} duration: how long until the notes repeat (or end)
  */
-export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}) {
+export function buildEvents(sections, { capo = 0, bpm = 120, loop = false, strum = 'mix' } = {}) {
 	const { beats, quarters, slots } = rhythm(sections);
 	if (beats.length === 0) throw new Error('Nothing to play');
 
@@ -240,7 +241,7 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 		let lastBoom = null; // each pass starts on the root
 		beats.forEach((boom, b) => {
 			if (boom.role !== 'boom') return;
-			for (const stroke of patternStrokes(pickPattern(random), boom.length)) {
+			for (const stroke of patternStrokes(nextPattern(strum, random), boom.length)) {
 				const k = p * slots.length + beats[b + Math.floor(stroke.at)].slot;
 				const chord = sequence[k].name;
 				const time = (boom.time + stroke.at + p * quarters) * quarter;

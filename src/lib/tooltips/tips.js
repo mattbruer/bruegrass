@@ -85,6 +85,8 @@ export const TIPS = Object.freeze({
 	player: {
 		play: 'Play the arrangement from the start, looping. Changes you make while it plays are picked up.',
 		stop: 'Stop playing.',
+		strumPattern:
+			'Which strum the guitar plays: the usual mix, or one pattern on its own so you can hear it.',
 		varyAmount:
 			'How much each note varies, in pitch (cents) and level (dB). Find where it starts to sound out of tune or uneven.',
 		varyNotes:

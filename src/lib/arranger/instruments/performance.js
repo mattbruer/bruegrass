@@ -25,7 +25,8 @@ import { rhythm } from '../chart/timeline.js';
  * @param {import('../chart/timeline.js').Section[]} sections
  * @param {{
  *   bpm?: number, capo?: number, transpose?: number, loop?: boolean,
- *   melody?: import('../melody/melody.js').MelodyPart | null
+ *   melody?: import('../melody/melody.js').MelodyPart | null,
+ *   strum?: import('./strumPatterns.js').StrumChoice
  * }} options
  *   transpose: semitones on top of the capo, for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo (looping
@@ -33,7 +34,7 @@ import { rhythm } from '../chart/timeline.js';
  */
 export function preparePerformance(
 	sections,
-	{ bpm = 120, capo = 0, transpose = 0, loop = true, melody = null } = {}
+	{ bpm = 120, capo = 0, transpose = 0, loop = true, melody = null, strum = 'mix' } = {}
 ) {
 	const quarter = 60 / bpm;
 	const passLength = rhythm(sections).quarters * quarter;
@@ -41,7 +42,7 @@ export function preparePerformance(
 
 	// Guitar: the capo where it reaches, resampling for the rest
 	const tuning = guitarTuning(sections, shift);
-	const { events, duration } = buildEvents(sections, { bpm, capo: tuning.capo, loop });
+	const { events, duration } = buildEvents(sections, { bpm, capo: tuning.capo, loop, strum });
 
 	// Bass and mandolin work in concert pitch and pick their own register
 	const concert = { bpm, capo: mod12(shift) };
