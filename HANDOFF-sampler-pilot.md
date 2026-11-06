@@ -46,6 +46,8 @@ Also in `CLAUDE.md` ("How the user thinks") and the memory files `feedback-desig
 
 How to play the grazed notes: a real strum motion across the strings, with the fretting hand muting every string except the target. (User may try removing strings or mounting the guitar; I advised against both for the pilot: play it held, tape-mark the mic distance, and let the sampler's loudness/brightness checks catch drift.) Keep the other strings on at first; sympathetic ringing is a later layer.
 
+**Changed 2026-11-06 (built):** grazed notes are 6 passes per string at the normal strum, to pick the best 4 by ear later (measured loudness sorts them into a touch louder and a touch lighter); firm grazes can come in a later attempt if the loop sounds flat. The 12 single real strums became 3 takes of the real boom-chuck to a click (100 BPM, 1-bar count-in, 8 bars), so the Hear-it loop can play at the same tempo and A/B in time, lined up on the first boom. Pilot total: 51 clips.
+
 **Later attempts add one detail at a time, each judged at a distance:**
 1. Release thuds (damping a ringing string), D G B e × 2 takes: about 8 clips. Needed for chord changes.
 2. Sympathetic resonance test: 4 notes recorded twice, others muted and others free in the real G shape; subtract to hear the sympathetic part. Test whether it's audible in a mix before modelling it.

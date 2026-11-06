@@ -6,6 +6,7 @@
  * Counts come from `listTargets`, the same list the session walks, so the
  * summary can never disagree with what the session asks for.
  */
+import { describeClick } from './groupClick.js';
 import { groupNotes, listTargets } from './targets.js';
 
 /** A rough guess at one take's time: play, listen, keep. Only for the estimate. */
@@ -18,7 +19,14 @@ export function summariseChecklist(checklist) {
 	const targets = listTargets(checklist);
 	const groups = checklist.groups.map((group) => {
 		const count = targets.filter((target) => target.groupId === group.id).length;
-		return { id: group.id, name: group.name, how: group.how, count, sum: groupSum(group, count) };
+		return {
+			id: group.id,
+			name: group.name,
+			how: group.how,
+			click: describeClick(group),
+			count,
+			sum: groupSum(group, count)
+		};
 	});
 	return {
 		total: targets.length,
@@ -33,7 +41,7 @@ export function summariseChecklist(checklist) {
  */
 function groupSum(group, count) {
 	const factors = !group.pitched
-		? [plural(group.directions?.length ?? 0, 'direction')]
+		? [plural(group.directions?.length ?? 0, group.click ? 'pattern' : 'direction')]
 		: group.notes
 			? [plural(groupNotes(group).length, 'note')]
 			: [plural(group.strings?.length ?? 0, 'string'), plural(group.frets?.length ?? 0, 'fret')];

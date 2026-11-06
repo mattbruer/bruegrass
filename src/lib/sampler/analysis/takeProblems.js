@@ -32,7 +32,8 @@ const BRIGHTNESS_SPREAD = 0.25;
 
 /**
  * @param {import('./analyseTake.js').TakeAnalysis} analysis
- * @param {{ pitched: boolean, stringName: string | null, fretted: boolean }} target
+ * @param {{ pitched: boolean, stringName: string | null, fretted: boolean, pattern: boolean }} target
+ *   pattern: many hits on purpose (a strum pattern to a click), so no second-hit check
  * @param {import('./analyseTake.js').TakeAnalysis[]} others kept takes of the same note and intensity
  * @returns {TakeProblem[]}
  */
@@ -54,7 +55,7 @@ export function takeProblems(analysis, target, others) {
 		check(`Quiet (loudest ${formatDb(analysis.peakDb)}): turn the gain up.`);
 	}
 
-	if (analysis.secondHitSeconds !== null) {
+	if (analysis.secondHitSeconds !== null && !target.pattern) {
 		redo(`A second hit ${analysis.secondHitSeconds.toFixed(2)} s after the first.`);
 	}
 

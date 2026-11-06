@@ -16,6 +16,7 @@
 import { analyseTake } from '../analysis/analyseTake.js';
 import { takeProblems } from '../analysis/takeProblems.js';
 import { findChecklist, isSameLayer, listTargets } from '../checklists/targets.js';
+import { clickRun } from '../checklists/groupClick.js';
 import { checkDetails } from './describeTarget.js';
 import { ProjectCopy } from './ProjectCopy.svelte.js';
 import {
@@ -158,7 +159,7 @@ export class RecordingSession {
 		if (!this.recording) {
 			this.stopPlaying();
 			this.problem = '';
-			this.input.startRecording();
+			this.input.startRecording(clickRun(this.checklist, this.target));
 			return;
 		}
 		const take = await this.input.stopRecording();

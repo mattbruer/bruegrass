@@ -45,7 +45,10 @@
 					{group.name} <span class="font-normal text-ink-soft">· {group.count}</span>
 				</h3>
 				<p class="text-sm font-semibold text-ink-soft tabular-nums">{group.sum}</p>
-				<p class="mb-2 text-sm text-ink-soft">{group.how}</p>
+				<p class="mb-2 text-sm text-ink-soft">
+					{group.how}
+					{#if group.click}<strong class="text-ink">{group.click}</strong>{/if}
+				</p>
 				<div class="overflow-x-auto">
 					<table class="text-xs">
 						<thead>

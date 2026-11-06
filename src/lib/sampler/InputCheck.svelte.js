@@ -8,6 +8,7 @@
  * and does the steps in order.
  */
 import { openInputChain } from '$lib/recording/inputChain.js';
+import { playClicks } from '$lib/recording/clickTrack.js';
 import { listInputs, watchInputs } from '$lib/recording/micInput.js';
 import { playTake } from '$lib/recording/playTake.js';
 /** @typedef {import('$lib/recording/takeRecorder.js').Take} Take */
@@ -35,6 +36,8 @@ export class InputCheck {
 
 	/** @type {import('$lib/recording/inputChain.js').InputChain | null} */
 	#chain = null;
+	/** @type {(() => void) | null} */
+	#stopClicks = null;
 	/** Stops whatever is playing (only one take plays at a time). */
 	/** @type {(() => void) | null} */
 	#stopPlaying = null;
@@ -80,6 +83,7 @@ export class InputCheck {
 
 	async turnOff() {
 		this.stopPlaying();
+		this.#endClicks();
 		const chain = this.#chain;
 		this.#chain = null;
 		this.status = 'off';
@@ -97,16 +101,25 @@ export class InputCheck {
 		if (wasOn) await this.turnOn();
 	}
 
+	#endClicks() {
+		this.#stopClicks?.();
+		this.#stopClicks = null;
+	}
+
 	/** The latest samples of each input channel, for the meters (empty when off). */
 	readLevels() {
 		return this.#chain?.read() ?? [];
 	}
 
-	/** Start recording (does nothing unless the input is on and idle). */
-	startRecording() {
+	/**
+	 * Start recording (does nothing unless the input is on and idle).
+	 * @param {import('$lib/recording/clickTrack.js').ClickRun | null} [click] a click to play along to
+	 */
+	startRecording(click = null) {
 		if (this.status !== 'on' || !this.#chain) return false;
 		this.stopPlaying();
 		this.#chain.recorder.start();
+		if (click) this.#stopClicks = playClicks(this.#chain.context, click);
 		this.status = 'recording';
 		return true;
 	}
@@ -114,6 +127,7 @@ export class InputCheck {
 	/** @returns {Promise<Take | null>} everything since startRecording (null if not recording) */
 	async stopRecording() {
 		if (this.status !== 'recording' || !this.#chain) return null;
+		this.#endClicks();
 		const take = await this.#chain.recorder.stop();
 		this.status = 'on';
 		return take;

@@ -64,6 +64,13 @@
 	{/if}
 </div>
 
+{#if input.status === 'off' && !input.inputs.some((device) => device.named)}
+	<p class="mt-3 text-sm text-ink-soft">
+		Your interface isn’t listed by name yet: the browser hides names until you allow the microphone.
+		Press Turn on input and allow it, then choose your interface here.
+	</p>
+{/if}
+
 {#if input.problem}
 	<p class="mt-3 text-sm text-danger" role="alert">{input.problem}</p>
 {/if}

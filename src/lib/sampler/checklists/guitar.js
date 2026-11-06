@@ -25,13 +25,16 @@
  *   frets?: number[],
  *   notes?: Note[],
  *   directions?: string[],
+ *   click?: GroupClick,
  *   layers: Layer[]
  * }} TargetGroup
  *   pitched: single notes (checked against their pitch); otherwise a
  *   strum across strings (directions instead of strings and frets).
  *   A pitched group gives either every fret on every string (strings ×
  *   frets) or its own list of notes (e.g. one chord's, from a voicing).
+ *   click: a metronome to play along to while recording (patterns at a tempo)
  * @typedef {{ stringId: string, fret: number }} Note
+ * @typedef {{ tempo: number, beatsPerBar: number, countInBars: number, bars: number }} GroupClick
  * @typedef {{ id: string, name: string, strings: InstrumentString[], groups: TargetGroup[] }} Checklist
  */
 

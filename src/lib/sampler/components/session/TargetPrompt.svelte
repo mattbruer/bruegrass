@@ -41,6 +41,9 @@
 		</p>
 		{#if words.note}<p class="mt-1 text-sm text-ink-soft">Should sound {words.note}</p>{/if}
 		<p class="mt-2 text-sm text-ink-soft">{words.how}</p>
+		{#if words.click}
+			<p class="mt-1 text-sm font-semibold">{words.click}</p>
+		{/if}
 	</div>
 
 	<button

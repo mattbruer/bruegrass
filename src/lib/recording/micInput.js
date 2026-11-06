@@ -21,7 +21,7 @@ const RAW_INPUT = Object.freeze({
  */
 const WANTED_CHANNELS = 2;
 
-/** @typedef {{ id: string, label: string }} InputDevice */
+/** @typedef {{ id: string, label: string, named: boolean }} InputDevice */
 
 /**
  * The audio inputs on this computer. Their names stay blank until you've
@@ -32,7 +32,11 @@ export async function listInputs() {
 	const devices = await navigator.mediaDevices.enumerateDevices();
 	return devices
 		.filter((device) => device.kind === 'audioinput')
-		.map((device, index) => ({ id: device.deviceId, label: device.label || `Input ${index + 1}` }));
+		.map((device, index) => ({
+			id: device.deviceId,
+			label: device.label || `Input ${index + 1}`,
+			named: device.label !== ''
+		}));
 }
 
 /**
