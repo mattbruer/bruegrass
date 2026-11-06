@@ -1,5 +1,5 @@
 /**
- * Dev tools (like the /todo page) only exist while you run the dev server
+ * Dev tools (the /todo and /sampler pages) only exist while you run the dev server
  * on your own machine: not in a real build, and not when the dev server is
  * reached from another device on the network.
  */

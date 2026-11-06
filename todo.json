@@ -41,7 +41,7 @@
 		{
 			"id": "input-meter",
 			"text": "Mic input level meter (groundwork for recording)",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{

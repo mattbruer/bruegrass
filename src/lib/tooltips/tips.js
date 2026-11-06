@@ -28,6 +28,19 @@ export const TIPS = Object.freeze({
 		remove: 'Delete this from the list.'
 	},
 
+	sampler: {
+		open: 'Record instrument samples for the band (only shown while developing on this computer).',
+		input: 'The audio interface or microphone to record from. This computer remembers your choice.',
+		turnOn:
+			'Start listening to the input, so you can see its levels. The browser asks the first time.',
+		turnOff: 'Stop listening and let go of the input.',
+		meter:
+			'How loud each input is. Aim for your hardest hits to peak around -6 dB. Click to clear the red clip light.',
+		record: 'Record a test take (R). Press again to stop.',
+		play: 'Listen to the take (Space). With two mics, one plays on each side.',
+		download: 'Save the take as a 24-bit WAV file, to check it in Logic.'
+	},
+
 	songs: {
 		playAll: 'Play every song in the list, one after another.',
 		song: 'Play this song.'

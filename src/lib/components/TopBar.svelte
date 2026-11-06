@@ -3,9 +3,11 @@
 	 * The bar across the top of every page: the app's name, a link to each
 	 * section (the one you're on is pressed in and lit), the tips on/off
 	 * button, and the Settings button. While developing on this machine,
-	 * a dashed Todo button too (it never appears in the real app). It stays at the top while you scroll.
+	 * dashed buttons for the dev tools too (Todo, and the Sampler on a
+	 * computer); they never appear in the real app. It stays at the top while you scroll.
 	 *
-	 * To add a section: add it to PAGES below.
+	 * To add a section: add it to PAGES below. A dev tool goes in DEV_PAGES
+	 * (its page must 404 outside local dev too: see $lib/devOnly.js).
 	 */
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -21,6 +23,16 @@
 	const PAGES = /** @type {const} */ ([
 		{ path: '/', name: 'Songs' },
 		{ path: '/arranger', name: 'Arranger' }
+	]);
+
+	/**
+	 * Dev tools. `short` is shown on a narrow screen so the bar still fits;
+	 * `computerOnly` hides it on a touch screen (the sampler records through
+	 * an audio interface).
+	 */
+	const DEV_PAGES = /** @type {const} */ ([
+		{ path: '/todo', name: 'Todo', short: '✓', tip: TIPS.todo.open },
+		{ path: '/sampler', name: 'Sampler', short: 'Rec', tip: TIPS.sampler.open, computerOnly: true }
 	]);
 
 	/**
@@ -57,17 +69,23 @@
 		{/each}
 
 		{#if isLocalDev(page.url)}
-			<a
-				href={resolve('/todo')}
-				class="dev-link ui-button px-3 py-1.5 text-sm"
-				class:ui-button-on={isCurrentSection('/todo')}
-				aria-current={isCurrentSection('/todo') ? 'page' : undefined}
-				aria-label="Todo"
-				use:tooltip={TIPS.todo.open}
-			>
-				<!-- Just a tick on a narrow screen, so the top bar still fits -->
-				<span class="max-sm:hidden">Todo</span><span class="sm:hidden" aria-hidden="true">✓</span>
-			</a>
+			{#each DEV_PAGES as tool (tool.path)}
+				<a
+					href={resolve(tool.path)}
+					class={[
+						'dev-link ui-button px-3 py-1.5 text-sm',
+						isCurrentSection(tool.path) && 'ui-button-on',
+						'computerOnly' in tool && 'pointer-coarse:hidden'
+					]}
+					aria-current={isCurrentSection(tool.path) ? 'page' : undefined}
+					aria-label={tool.name}
+					use:tooltip={tool.tip}
+				>
+					<span class="max-sm:hidden">{tool.name}</span><span class="sm:hidden" aria-hidden="true"
+						>{tool.short}</span
+					>
+				</a>
+			{/each}
 		{/if}
 
 		<TipsToggle />
