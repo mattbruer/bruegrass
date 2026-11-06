@@ -33,6 +33,9 @@ export const settings = $state({
 	/** Nudge every sample a tiny random amount as it plays (instruments/roundRobin.js); the Vary button by Play. */
 	varyNotes: true,
 
+	/** How much the notes vary: 1 = roundRobin.js's amounts as written, 0 = none. */
+	varyAmount: 1,
+
 	/** Which view the mixer's master visualiser shows. */
 	scopeView: /** @type {'waveform' | 'spectrum' | 'stereo'} */ ('spectrum'),
 

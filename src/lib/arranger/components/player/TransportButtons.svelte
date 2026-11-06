@@ -4,11 +4,12 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import VaryNotesButton from './VaryNotesButton.svelte';
+	import VaryAmountSlider from './VaryAmountSlider.svelte';
 
 	const { player } = useArranger();
 </script>
 
-<div class="flex gap-2">
+<div class="flex flex-wrap items-center gap-2">
 	<button
 		type="button"
 		class="ui-button px-5 py-2 ui-button-primary"
@@ -27,4 +28,5 @@
 		Stop
 	</button>
 	<VaryNotesButton />
+	<VaryAmountSlider />
 </div>

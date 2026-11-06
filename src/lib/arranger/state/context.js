@@ -7,7 +7,8 @@
 import { getContext, setContext } from 'svelte';
 import { Arranger } from './Arranger.svelte.js';
 
-const ARRANGER_KEY = Symbol('arranger');
+// Symbol.for: the same key even when a hot reload in dev runs this file again
+const ARRANGER_KEY = Symbol.for('bruegrass.arranger');
 
 /** Create the page's Arranger and make it available to every component inside the page. */
 export function provideArranger() {

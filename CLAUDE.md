@@ -132,7 +132,7 @@ The core of the arranger.
   - A strum is strings 3–5; a graze is an upstroke on the top two, 12 dB lighter until there's a real graze sample. Upstrokes play the strings high to low.
   - A note rings until its string is reused or the chord changes. Looping, the guitar's notes span 4 passes (`LOOP_PASSES`), so the sprinkle varies.
 - **Strum spread** uses a pendulum model of the right hand (string spacing and swing amplitude vs. tempo; faster strokes swing smaller). Hypothesis to test: bluegrass is more a bounce (the hand speeds up and slows down through the stroke) than a pendulum; Irish keeps the pendulum.
-- **Fake round robin** (`roundRobin.js`): every sample play (guitar, melody, mandolin) is nudged at random by a few cents, up to 1 dB, and a start up to 1.5 ms into the sample, so repeats don't sound like a machine gun. The Vary button next to Play/Stop turns it off (checked per note, so it A/Bs while playing).
+- **Fake round robin** (`roundRobin.js`): every sample play (guitar, melody, mandolin) is nudged at random by a few cents, up to 1 dB, and a start up to 1.5 ms into the sample, so repeats don't sound like a machine gun. The Vary button next to Play/Stop turns it off, and its Amount slider scales all three (1× = the constants, up to 5×) for ear tests (checked per note, so it A/Bs while playing).
 - **Lighter touch** above 120 BPM: lower level, low-pass filter and softer attack.
 - **`playArrangement`** (now in `playback/livePlayback.js`) places every note at an absolute audio-clock time (`start + pass × duration + offset`).
   - A Tone context timer queues passes within a lookahead, catches up if it's late, and skips past-due notes.

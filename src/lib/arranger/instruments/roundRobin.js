@@ -9,8 +9,9 @@
  */
 import { settings } from '$lib/settings/settings.svelte.js';
 
-const PITCH_CENTS = 5; // up to this much sharp or flat
-const LEVEL_DB = 1; // up to this much louder or softer
+// At an amount of 1 (the Amount slider by Play scales all three)
+export const PITCH_CENTS = 5; // up to this much sharp or flat
+export const LEVEL_DB = 1; // up to this much louder or softer
 const MAX_SKIP_SECONDS = 0.0015; // how far into the sample a note may start
 
 /** @param {number} range */
@@ -18,10 +19,10 @@ const either = (range) => (Math.random() * 2 - 1) * range;
 
 /** @returns {{ rate: number, db: number, skip: number }} rate: multiply the playback rate; skip: seconds into the sample */
 export function roundRobin() {
-	if (!settings.varyNotes) return { rate: 1, db: 0, skip: 0 };
+	const amount = settings.varyNotes ? settings.varyAmount : 0;
 	return {
-		rate: 2 ** (either(PITCH_CENTS) / 1200),
-		db: either(LEVEL_DB),
-		skip: Math.random() * MAX_SKIP_SECONDS
+		rate: 2 ** (either(PITCH_CENTS * amount) / 1200),
+		db: either(LEVEL_DB * amount),
+		skip: Math.random() * MAX_SKIP_SECONDS * amount
 	};
 }

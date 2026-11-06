@@ -85,6 +85,8 @@ export const TIPS = Object.freeze({
 	player: {
 		play: 'Play the arrangement from the start, looping. Changes you make while it plays are picked up.',
 		stop: 'Stop playing.',
+		varyAmount:
+			'How much each note varies, in pitch (cents) and level (dB). Find where it starts to sound out of tune or uneven.',
 		varyNotes:
 			'Make every note sound a touch different, like a real player. Flip it while playing to compare.',
 		tempo: 'Speed, in beats per minute.',
