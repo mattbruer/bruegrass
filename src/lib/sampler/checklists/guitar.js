@@ -23,30 +23,39 @@
  *   pitched: boolean,
  *   strings?: string[],
  *   frets?: number[],
+ *   notes?: Note[],
  *   directions?: string[],
  *   layers: Layer[]
  * }} TargetGroup
  *   pitched: single notes (checked against their pitch); otherwise a
- *   strum across strings (directions instead of strings and frets)
+ *   strum across strings (directions instead of strings and frets).
+ *   A pitched group gives either every fret on every string (strings ×
+ *   frets) or its own list of notes (e.g. one chord's, from a voicing).
+ * @typedef {{ stringId: string, fret: number }} Note
  * @typedef {{ id: string, name: string, strings: InstrumentString[], groups: TargetGroup[] }} Checklist
  */
 
 /** The frets recorded on every string. */
 const RECORDED_FRETS = [0, 2, 5, 8, 11];
 
+/**
+ * Standard tuning, low to high (ids match the sample files: E, A, D, G, B, ee).
+ * @type {InstrumentString[]}
+ */
+export const STANDARD_TUNING = [
+	{ id: 'E', name: 'Low E', midi: 40 },
+	{ id: 'A', name: 'A', midi: 45 },
+	{ id: 'D', name: 'D', midi: 50 },
+	{ id: 'G', name: 'G', midi: 55 },
+	{ id: 'B', name: 'B', midi: 59 },
+	{ id: 'ee', name: 'High e', midi: 64 }
+];
+
 /** @type {Checklist} */
 export const GUITAR = {
 	id: 'guitar',
 	name: 'Guitar',
-	// Standard tuning, low to high (ids match the sample files: E, A, D, G, B, ee)
-	strings: [
-		{ id: 'E', name: 'Low E', midi: 40 },
-		{ id: 'A', name: 'A', midi: 45 },
-		{ id: 'D', name: 'D', midi: 50 },
-		{ id: 'G', name: 'G', midi: 55 },
-		{ id: 'B', name: 'B', midi: 59 },
-		{ id: 'ee', name: 'High e', midi: 64 }
-	],
+	strings: STANDARD_TUNING,
 	groups: [
 		{
 			id: 'note',

@@ -9,12 +9,6 @@
 	],
 	"suggestions": [
 		{
-			"id": "export-audio",
-			"text": "Export the backing track as an audio file",
-			"done": true,
-			"addedAt": "2026-11-06T00:00:00.000Z"
-		},
-		{
 			"id": "metronome",
 			"text": "Optional metronome click track",
 			"done": false,
@@ -39,12 +33,6 @@
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
-			"id": "input-meter",
-			"text": "Mic input level meter (groundwork for recording)",
-			"done": true,
-			"addedAt": "2026-11-06T00:00:00.000Z"
-		},
-		{
 			"id": "tuner",
 			"text": "Tuner using the microphone",
 			"done": false,
@@ -57,10 +45,22 @@
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
-			"id": "sample-ear-tests",
-			"text": "Ear-test a few recorded samples (repitch, derived soft, dead strum)",
+			"id": "pilot-attempt-log",
+			"text": "Sampler pilot: attempt log (numbered G chord tries)",
 			"done": false,
-			"addedAt": "2026-11-06T00:00:00.000Z"
+			"addedAt": "2026-11-06T12:00:00.000Z"
+		},
+		{
+			"id": "pilot-hear-it",
+			"text": "Hear-it loop: G boom-chuck from an attempt, blind A/B",
+			"done": false,
+			"addedAt": "2026-11-06T12:00:00.000Z"
+		},
+		{
+			"id": "humanizer",
+			"text": "Humanizer: vary each hit from one hidden force",
+			"done": false,
+			"addedAt": "2026-11-06T12:00:00.000Z"
 		},
 		{
 			"id": "play-own-samples",

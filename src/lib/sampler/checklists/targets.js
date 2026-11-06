@@ -10,9 +10,10 @@
  * takes stay matched to their target when a checklist gains frets or takes.
  */
 import { GUITAR } from './guitar.js';
+import { GUITAR_PILOT } from './guitarPilot.js';
 
 /** Every instrument there's a checklist for (one line per new instrument). */
-export const CHECKLISTS = [GUITAR];
+export const CHECKLISTS = [GUITAR_PILOT, GUITAR];
 
 /** @param {string} id */
 export function findChecklist(id) {
@@ -46,11 +47,13 @@ export function listTargets(checklist) {
 	const targets = [];
 	for (const group of checklist.groups) {
 		if (group.pitched) {
-			for (const stringId of group.strings ?? []) {
+			const notes = groupNotes(group);
+			for (const stringId of new Set(notes.map((note) => note.stringId))) {
 				const string = checklist.strings.find((each) => each.id === stringId);
 				if (!string) continue;
+				const frets = notes.filter((note) => note.stringId === stringId).map((note) => note.fret);
 				for (const layer of group.layers) {
-					for (const fret of group.frets ?? []) {
+					for (const fret of frets) {
 						for (let take = 1; take <= layer.takes; take++) {
 							targets.push({
 								id: `${group.id}:${stringId}:f${fret}:${layer.intensity}:t${take}`,
@@ -92,6 +95,17 @@ export function listTargets(checklist) {
 		}
 	}
 	return targets;
+}
+
+/**
+ * A pitched group's notes: its own list, or every fret on every string.
+ * @param {import('./guitar.js').TargetGroup} group
+ * @returns {import('./guitar.js').Note[]}
+ */
+export function groupNotes(group) {
+	if (group.notes) return group.notes;
+	const frets = group.frets ?? [];
+	return (group.strings ?? []).flatMap((stringId) => frets.map((fret) => ({ stringId, fret })));
 }
 
 /**

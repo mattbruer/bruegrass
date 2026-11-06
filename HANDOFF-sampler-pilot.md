@@ -80,6 +80,17 @@ Strum Machine's bar: it assembles individual notes, chords and strums recorded o
 
 About 330 clips if the pilot passes and nothing is cut: grazed notes 6 strings × 5 frets × 4 takes (120); plucked notes 6 × 5 × 3 (90, serving booms and melody notes); dead strums with damping levels (60); release thuds (24); sympathetic calibration (30); fret noise and slides (12, optional). Never choose these numbers before the pilot's experiments (repitch ±1 / ±2, take count, attack/body split). About 100 clips per song, so about 20 MB decoded and a few MB to download.
 
+## Alternate tunings (user, 2026-11-06): plan for them in the full set, not the pilot
+
+Irish players often use Drop D (low E down to D) and DADGAD (E→D, B→A, high e→D), and there are other tunings. The pilot stays in standard tuning with one or two chords; the full recording plan must allow for tunings.
+
+- **Why it matters for samples:** a string tuned down is slacker, so its open note sounds different (looser, longer, buzzier) from the same pitch fretted or repitched. Open strings carry Irish drones, so they matter most.
+- **The seam already exists:** a checklist names its tuning (`strings` with each open pitch; `STANDARD_TUNING` in `checklists/guitar.js`), and a target's pitch is `string.midi + fret`. A Drop D or DADGAD checklist is the same strings with different `midi` values.
+- **The rule to keep:** a hit asks for a string, a sounding pitch and an articulation (low string, D2, pluck), not a fret, and the sampler finds the nearest recorded take on that string, at that tuning if one exists. The manifest should record the tuning (or each string's open pitch) per sample so takes from different tunings don't mix by accident.
+- **Probably enough to record:** the retuned strings' open notes and a couple of low frets in each tuning, with fretted notes higher up repitched from standard-tuning takes, if the pilot's ±2 repitch test passes. Don't fix these numbers before the pilot.
+- **Sympathetic resonance changes too:** the free strings ring at different pitches in each tuning (DADGAD drones a lot), so a resonance model needs its settings per tuning.
+- **A cheap test any time:** tune the low E down to D, record open D 3 times, and blind A/B it against the standard low E repitched −2. That shows whether a retuned string needs its own recordings.
+
 ## Research notes (what is and isn't established)
 
 - Sample libraries commonly record strums per direction, add dead strums and mutes, release samples, noises, and velocity layers with up to 7 round robins ([Acoustic Guitar Strums](https://soybean-carillon-kam6.squarespace.com/acoustic-guitar-strums), [Spitfire MG Soft Guitar](https://www.soundonsound.com/news/spitfire-audio-launch-mg-soft-acoustic-guitar)). Some drop strings in soft strums (a style-layer behaviour for us) and overlap strum ends to avoid a re-triggered sound.

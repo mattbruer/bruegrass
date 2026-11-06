@@ -1,6 +1,7 @@
 <!--
 	How far the session has got: one grid per group (strings × frets, or
-	direction × intensity), each cell filling as its takes are kept. The
+	direction × intensity), each cell filling as its takes are kept. A chord's
+	notes leave gaps (no open B in G), shown as empty cells. The
 	cell you're on is outlined; click a cell to go to its first missing take.
 -->
 <script>
@@ -56,19 +57,22 @@
 									{@const kept = keptIn(cell.targets)}
 									{@const here = cell.targets.includes(session.target)}
 									<td class="p-0.5">
-										<button
-											type="button"
-											class="cell"
-											class:here
-											class:done={kept === cell.targets.length}
-											style:--filled="{(kept / cell.targets.length) * 100}%"
-											disabled={session.recording || session.busy}
-											onclick={() => goTo(cell.targets)}
-											use:tooltip={TIPS.sampler.gridCell}
-											aria-label="{row.label}, {cell.column}: {kept} of {cell.targets.length} kept"
-										>
-											{kept}/{cell.targets.length}
-										</button>
+										{#if cell.targets.length > 0}
+											<button
+												type="button"
+												class="cell"
+												class:here
+												class:done={kept === cell.targets.length}
+												style:--filled="{(kept / cell.targets.length) * 100}%"
+												disabled={session.recording || session.busy}
+												onclick={() => goTo(cell.targets)}
+												use:tooltip={TIPS.sampler.gridCell}
+												aria-label="{row.label}, {cell.column}: {kept} of {cell.targets
+													.length} kept"
+											>
+												{kept}/{cell.targets.length}
+											</button>
+										{/if}
 									</td>
 								{/each}
 							</tr>
