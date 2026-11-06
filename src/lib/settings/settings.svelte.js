@@ -30,22 +30,11 @@ export const settings = $state({
 	/** How the arranger shows chords: guitar shapes, concert, roman or nashville (see key.js). */
 	chordDisplay: /** @type {import('$lib/arranger/chart/key.js').ChordDisplay} */ ('shapes'),
 
-	/** Nudge every sample a tiny random amount as it plays (instruments/roundRobin.js); the Vary button by Play. */
-	varyNotes: true,
-
 	/** Play the strumming hand's feel (instruments/hand.js); the Feel button by Play. */
 	feelOn: true,
 
 	/** How much feel: 1 = hand.js's amounts as written, 0 = none. */
 	feelAmount: 1,
-
-	/** Which strum pattern the guitar plays: 'mix', or one pattern to audition (the Strum menu by Play). */
-	strumPattern: /** @type {import('$lib/arranger/instruments/strumPatterns.js').StrumChoice} */ (
-		'mix'
-	),
-
-	/** How much the notes vary: 1 = roundRobin.js's amounts as written, 0 = none. */
-	varyAmount: 1,
 
 	/** Which view the mixer's master visualiser shows. */
 	scopeView: /** @type {'waveform' | 'spectrum' | 'stereo'} */ ('spectrum'),

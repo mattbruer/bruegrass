@@ -90,12 +90,6 @@ export const TIPS = Object.freeze({
 			'Play the strumming hand’s feel: each stroke a touch harder or softer, brighter or duller, early or late.',
 		feelAmount:
 			'How much feel. Find where it starts to sound sloppy, and where you stop hearing it.',
-		strumPattern:
-			'Which strum the guitar plays: the usual mix, or one pattern on its own so you can hear it.',
-		varyAmount:
-			'How much each note varies, in pitch (cents) and level (dB). Find where it starts to sound out of tune or uneven.',
-		varyNotes:
-			'Make every note sound a touch different, like a real player. Flip it while playing to compare.',
 		tempo: 'Speed, in beats per minute.',
 		capo: 'Where the guitar’s capo sits. The chord shapes stay the same; everything sounds higher.',
 		key: 'Move the whole song to another key. The guitar keeps its shapes and moves the capo to get there.',

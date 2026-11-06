@@ -1,6 +1,6 @@
 import chords from './guitar-chords.json';
 import { rhythm, slotPositions } from '../chart/timeline.js';
-import { nextPattern, patternStrokes } from './strumPatterns.js';
+import { pickPattern, patternStrokes } from './strumPatterns.js';
 import { createRng } from './seededRandom.js';
 import { createHand } from './hand.js';
 
@@ -209,20 +209,19 @@ export function guitarTuning(sections, shift) {
  * Turn parsed sections into scheduled notes (seconds from 0).
  *
  * Each beat group of the rhythm grid from timeline.js (boom-chuck, or
- * boom-chuck-chuck in 3/4) gets a strum pattern (strumPatterns.js): mostly
- * boom-chuck, with the odd bum-titty. Bass notes on
- * the same chord alternate root/fifth; a new chord (or a new pass) starts on
+ * boom-chuck-chuck in 3/4) gets a strum pattern (strumPatterns.js),
+ * boom-chuck or bum-titty, chosen at random. Bass notes on the same chord
+ * alternate root/fifth; a new chord (or a new pass) starts on
  * its root. A note rings until its string is played again or the chord
  * changes. When looping, the notes span LOOP_PASSES passes and that rule
  * wraps into the next; otherwise it's one pass and the last chord rings one
  * extra half note.
  *
  * @param {import('../chart/timeline.js').Section[]} sections
- * @param {{ capo?: number, bpm?: number, loop?: boolean, strum?: import('./strumPatterns.js').StrumChoice }} options
- *   strum: one pattern throughout, or 'mix' (the default)
+ * @param {{ capo?: number, bpm?: number, loop?: boolean }} options
  * @returns {{ events: NoteEvent[], duration: number }} duration: how long until the notes repeat (or end)
  */
-export function buildEvents(sections, { capo = 0, bpm = 120, loop = false, strum = 'mix' } = {}) {
+export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}) {
 	const { beats, quarters, slots } = rhythm(sections);
 	if (beats.length === 0) throw new Error('Nothing to play');
 
@@ -258,7 +257,7 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false, strum
 		let lastBoom = null; // each pass starts on the root
 		beats.forEach((boom, b) => {
 			if (boom.role !== 'boom') return;
-			for (const stroke of patternStrokes(nextPattern(strum, random), boom.length)) {
+			for (const stroke of patternStrokes(pickPattern(random), boom.length)) {
 				const k = p * slots.length + beats[b + Math.floor(stroke.at)].slot;
 				const chord = sequence[k].name;
 				const time = (boom.time + stroke.at + p * quarters) * quarter;

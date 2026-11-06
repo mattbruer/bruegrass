@@ -6,7 +6,6 @@
  * (export/renderSong.js). Both get the same sound from here.
  */
 import { createUpright } from './upright.js';
-import { roundRobin } from './roundRobin.js';
 import { brightness } from './hand.js';
 import { settings } from '$lib/settings/settings.svelte.js';
 
@@ -117,19 +116,17 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 	 * @param {import('tone').ToneAudioBuffer} buffer
 	 * @param {number} at
 	 */
-	const playMelody = (note, buffer, at) => {
-		const each = roundRobin();
+	const playMelody = (note, buffer, at) =>
 		track(
 			new Tone.Player({
 				url: buffer,
-				volume: note.levelDb + each.db,
+				volume: note.levelDb,
 				fadeOut: FADE_OUT,
-				playbackRate: note.rate * each.rate
+				playbackRate: note.rate
 			}).connect(/** @type {import('tone').ToneAudioNode} */ (melodyOut))
 		)
-			.start(at, each.skip)
+			.start(at)
 			.stop(at + note.stop - note.time);
-	};
 
 	/** @type {Stream[]} */
 	const streams = [
@@ -138,7 +135,6 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 			period: guitar.period,
 			/** @param {import('./guitar.js').NoteEvent} event @param {number} i @param {number} at */
 			play: (event, i, at) => {
-				const each = roundRobin();
 				const feel = feelAmount();
 				const forceDb = event.force * feel;
 				const start = at + event.nudge * feel;
@@ -147,14 +143,14 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 				track(
 					new Tone.Player({
 						url: guitarSounds[i],
-						volume: event.levelDb + forceDb + each.db,
+						volume: event.levelDb + forceDb,
 						fadeIn: guitar.feel.fadeIn[event.part],
 						fadeOut: event.fadeOut,
-						playbackRate: guitar.rate * each.rate
+						playbackRate: guitar.rate
 					}).connect(filter),
 					() => filter.disconnect()
 				)
-					.start(start, each.skip)
+					.start(start)
 					.stop(stop);
 			}
 		},
@@ -163,16 +159,10 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 			period: performance.passLength,
 			// Mandolin chops play to the end of each sample (the choke is recorded)
 			/** @param {import('./mandolin.js').MandoNote} chop @param {number} i @param {number} at */
-			play: (chop, i, at) => {
-				const each = roundRobin();
+			play: (chop, i, at) =>
 				track(
-					new Tone.Player({
-						url: chopSounds[i],
-						volume: chop.levelDb + each.db,
-						playbackRate: each.rate
-					}).connect(mandolinOut)
-				).start(at, each.skip);
-			}
+					new Tone.Player({ url: chopSounds[i], volume: chop.levelDb }).connect(mandolinOut)
+				).start(at)
 		},
 		{
 			notes: bass.notes,

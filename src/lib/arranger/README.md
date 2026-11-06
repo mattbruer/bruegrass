@@ -24,7 +24,6 @@ timeline
    │  instruments/band.js         those notes as sound: samples and the upright's synth
    │  instruments/strumPatterns.js  the guitar's strum patterns, as data
    │  instruments/hand.js         the strumming hand's feel, one force per stroke
-   │  instruments/roundRobin.js   tiny random nudge on every sample played
    │  instruments/seededRandom.js the repeatable random choices
    │  instruments/mandolin.js     off-beat chops
    │  instruments/bassline.js     the bass part (instruments/upright.js plays it)
