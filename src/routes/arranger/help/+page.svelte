@@ -6,7 +6,7 @@
 	 */
 	import { parseArrangement } from '$lib/arranger/chart/parseArrangement.js';
 	import { barQuarters, meterText, slotPositions } from '$lib/arranger/chart/timeline.js';
-	import chords from '$lib/arranger/instruments/guitar-chords.json';
+	import { BUILT_IN_CHORDS } from '$lib/arranger/instruments/chordBook.js';
 
 	const QUALITIES = [
 		{ suffix: '', label: 'Major' },
@@ -14,7 +14,7 @@
 		{ suffix: '7', label: 'Seventh' },
 		{ suffix: 'dim', label: 'Diminished' }
 	];
-	const roots = Object.keys(chords).filter((name) => /^[A-G][#b]?$/.test(name));
+	const roots = BUILT_IN_CHORDS.filter((name) => /^[A-G][#b]?$/.test(name));
 
 	/**
 	 * Bars of an example, for drawing it as a little chart.
@@ -93,6 +93,7 @@
 			<li><a href="#waltz" class="hover:underline">Waltzes (3 beats)</a></li>
 			<li><a href="#crooked" class="hover:underline">Crooked tunes (odd bars)</a></li>
 			<li><a href="#chords" class="hover:underline">Which chords can I use?</a></li>
+			<li><a href="#my-chords" class="hover:underline">Your own chord shapes</a></li>
 			<li><a href="#phone" class="hover:underline">Writing on a phone</a></li>
 			<li><a href="#mistakes" class="hover:underline">If something goes wrong</a></li>
 			<li><a href="#everything" class="hover:underline">Putting it all together</a></li>
@@ -222,8 +223,37 @@
 		{@render example(`"Walk"|G,G/F#|Em,Em/D|C|D|`)}
 	</section>
 
+	<section id="my-chords">
+		<h2>8. Your own chord shapes</h2>
+		<p>
+			Want a chord the guitar doesn't know, or a different way to play one? Press <b>My chords</b>
+			above the box, give the shape a name, and type its six frets from the low E string to the high e.
+			Use <code>x</code> for a string you don't play. G is <code>3,x,0,0,3,3</code>; when every fret
+			is one digit you can leave out the commas: <code>3x0033</code>.
+		</p>
+		<p>Then write the name in the chart like any other chord:</p>
+		<ul class="mb-4 list-disc space-y-2 pl-6">
+			<li>
+				<b>A new chord</b>, like <code>Cadd9</code>, plays your shape.
+			</li>
+			<li>
+				<b>A second shape</b> of a chord you already have: put a colon and a word after it, like
+				<code>G:high</code>. Plain <code>G</code> still plays the usual G.
+			</li>
+			<li>
+				<b>Your own G</b>: name it just <code>G</code>, and it plays instead of the usual one in
+				every song.
+			</li>
+		</ul>
+		{@render example(`"High G"|G|G:high|C|G:high/B|`)}
+		<p class="tip">
+			Your shapes are kept on this device, for every song. A song that uses one won't play on
+			another device until you add the shape there too.
+		</p>
+	</section>
+
 	<section id="phone">
-		<h2>8. Writing on a phone</h2>
+		<h2>9. Writing on a phone</h2>
 		<p>
 			On a phone, tapping the box opens a <b>music keypad</b> instead of the normal keyboard. It has
 			only the keys you need, so no hunting for <code>|</code>.
@@ -242,6 +272,7 @@
 			</li>
 			<li><b>Time</b>: waltz and crooked-bar settings, one tap each.</li>
 			<li><b>as</b>: to play a part again.</li>
+			<li><b>Mine</b>: your own chord shapes (when you have some), one tap each.</li>
 			<li><b>abc</b>: the normal keyboard, for anything else. <b>Done</b> closes the keypad.</li>
 		</ul>
 		<p class="tip">
@@ -250,12 +281,12 @@
 	</section>
 
 	<section id="mistakes">
-		<h2>9. If something goes wrong</h2>
+		<h2>10. If something goes wrong</h2>
 		<p>A red message appears under the box. The usual causes:</p>
 		<ul class="mb-4 list-disc space-y-2 pl-6">
 			<li>
-				<b>Unknown chord</b>: a chord the guitar doesn't know yet, or a small letter (<code>g</code>
-				instead of <code>G</code>).
+				<b>No guitar shape</b>: a chord the guitar doesn't know yet (add it under <b>My chords</b>),
+				or a small letter (<code>g</code> instead of <code>G</code>).
 			</li>
 			<li>
 				<b>Unknown section</b>: the name after <code>as</code> doesn't match a part above. Check the spelling
@@ -272,7 +303,7 @@
 	</section>
 
 	<section id="everything">
-		<h2>10. Putting it all together</h2>
+		<h2>11. Putting it all together</h2>
 		{@render example(
 			`"Verse"|G|G|C|G|\n"Chorus"|C|G|D,C|G|\n"Banjo Break" as Verse\n"Waltz Tag" [M:3/4] |C|G|[2/4]D|G|`
 		)}

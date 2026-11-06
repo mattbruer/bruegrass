@@ -9,6 +9,7 @@
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { watchTouchScreen } from '$lib/utils/touchScreen.js';
 	import HelpLink from './HelpLink.svelte';
+	import MyChordsButton from '../voicings/MyChordsButton.svelte';
 	import ArrangementKeypad from '../keypad/ArrangementKeypad.svelte';
 
 	/* Timing that smooths over the phone keyboard opening and switching */
@@ -57,6 +58,7 @@
 <div class="mb-2 flex items-center gap-2">
 	<label for="arrangement" class="font-semibold">Song Arrangement</label>
 	<HelpLink />
+	<MyChordsButton />
 </div>
 
 <textarea

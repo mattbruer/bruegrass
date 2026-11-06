@@ -29,6 +29,7 @@ Code is grouped by feature under `src/lib/`. `src/lib/README.md` and `src/lib/ar
   - `playback/`: scheduler and mixer
   - `melody/`: ABC, sheet music drawing and following
   - `export/`: MIDI
+  - `voicings/`: My chords, your own guitar shapes (the chord book is `instruments/chordBook.js`)
   - `theory/`: music theory in a key, kept for the planned jazz style and its richer harmony (not used by playback yet). `musicInKey.js`: Roman numerals (`bII7`, `#iv°`, `I/3`), notes as scale steps, correct spelling (`chordName`, `plainestNote`). `chordScales.js`: chord-scale theory, the user's way of understanding music: the key's mode for diatonic chords, Lydian/Dorian/Mixolydian/Phrygian dominant/Lydian dominant/whole-half for the rest, bebop notes, tensions minus avoid notes (a half step above a chord tone, except on dominants).
   - `state/`: small state classes combined in `Arranger.svelte.js`; components get them via `useArranger()`
   - `components/` (by area)
@@ -126,6 +127,8 @@ The single source of musical time. All times are in quarter notes.
 The core of the arranger.
 
 - **Chord shapes** come from `guitar-chords.json`. Each shape is 6 frets from low E to high e, with `null` for a muted string. The capo adds to every fret.
+- **The chord book** (`instruments/chordBook.js`) is the one place a chord name becomes a shape: `chordShape`/`hasShape`, used by `guitar.js`, the capo choice in `abcChords.js` and the help page. It looks in your own shapes first, then `guitar-chords.json`. Voicings built from theory should plug in here.
+- **My chords** (`voicings/`, UI `components/voicings/`, button beside the editor's ?): your own shapes, typed as frets (`3,x,0,0,3,3` or `3x0033`), saved on this device for every song (`storage/chordVoicings.js`, a `collection.js` document: `name`, `frets`). `myChords.svelte.js` loads them on page start and hands them to the chord book (`useYourShapes`), so playback, export and MIDI all use them. A name can be a new chord (`Cadd9`), a variant (`G:high`: the part before the colon says what the chord is; `withoutVariant` drops it, e.g. when writing chords into ABC), or a built-in name, which then replaces the built-in shape. `checkVoicing.js` refuses a shape without a root and fifth for the boom or without a strum string. The form keeps a draft (`ChordForm.svelte.js`). On a phone, the keypad's Mine key types your chord names. A song using one of your shapes won't play on a device that doesn't have it (the error says so).
 - `guitar-chords.json` has major, minor, 7 and dim in every key (both sharp and flat names), lowest position, open strings where they fit. **Slash chords** (`G/B`) strum the chord's shape and boom the slash note, the lowest one on the bottom three strings up to fret 4; the alternating boom is the chord's fifth, or its root when the fifth is already the bass (`alternatingPitchClass`). The MIDI bass follows the same rule. abcjs writes chord flats as ♭; `plainChordName` in `abcChords.js` turns them back.
 - **Samples** are in `static/samples/guitar/{E,A,D,G,B,ee}{0..12}.mp3`.
 - **`buildEvents`** turns sections into timed note events:

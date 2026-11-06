@@ -107,6 +107,17 @@ export const TIPS = Object.freeze({
 		help: 'How to write an arrangement: bars, chords, sections, repeats and time signatures.'
 	},
 
+	myChords: {
+		open: 'Your own guitar shapes: a chord the guitar doesn’t know yet, or a second shape like G:high.',
+		pick: 'Change or delete this shape.',
+		name: 'The chord name, as you’ll write it in the chart: like Cadd9, or G:high for a second G.',
+		frets: 'Six frets, low E to high e, x for a muted string: 3,x,0,0,3,3 (or 3x0033).',
+		save: 'Save this shape on this device. Every song that uses the name plays it.',
+		new: 'Start a new shape.',
+		delete:
+			'Delete this shape from this device. Songs that use its name won’t play until it’s back.'
+	},
+
 	export: {
 		mix: 'One WAV of the whole song as you hear it, ready to listen to or share.',
 		stems: 'One WAV per instrument, in a zip, all lined up, to mix in a DAW like Logic.',

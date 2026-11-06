@@ -1,4 +1,4 @@
-import chords from './guitar-chords.json';
+import { chordShape } from './chordBook.js';
 import { rhythm, slotPositions } from '../chart/timeline.js';
 import { pickPattern, patternStrokes } from './strumPatterns.js';
 import { createRng } from './seededRandom.js';
@@ -15,7 +15,7 @@ const OPEN_MIDI = [40, 45, 50, 55, 59, 64];
 export const MAX_FRET = 12;
 
 /** Strings a strum plays, low first (an upstroke plays them high to low). */
-const STRUM_STRINGS = [3, 4, 5];
+export const STRUM_STRINGS = [3, 4, 5];
 /*
  * How a note ends. A string can only sound one note: striking it again
  * damps the old note as the new one starts, so the old one fades very
@@ -64,25 +64,6 @@ const SLASH_BASS_STRINGS = [0, 1, 2];
 const SLASH_BASS_MAX_FRET = 4;
 
 const PITCH_CLASS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-
-/**
- * Chord shape as written (no capo), low E to high e.
- * @param {string} name
- * @returns {(number | null)[]}
- */
-export function chordShape(name) {
-	const shape = chords[withoutBass(name)];
-	if (!shape) throw new Error(`Unknown chord: ${name}`);
-	return shape;
-}
-
-/**
- * The chord without a slash bass: "G/B" → "G".
- * @param {string} name
- */
-export function withoutBass(name) {
-	return name.split('/')[0];
-}
 
 /**
  * Pitch class (0–11) of the chord's root, from its name (or of a note name like "Bb").
@@ -139,17 +120,27 @@ function lowestOpenNote(pc) {
 }
 
 /**
- * Where the bass note lives in the chord shape: the lowest-sounding played
- * string whose note is the root (or fifth). Frets are without capo.
+ * Where the bass note lives in the chord's shape: the lowest-sounding
+ * played string whose note is the root (or fifth). Frets are without capo.
  * @param {string} name
  * @param {'root' | 'fifth'} which
  * @returns {{ string: number, fret: number }}
  */
 export function bassNote(name, which) {
+	return bassNoteIn(chordShape(name), name, which);
+}
+
+/**
+ * The same, in a given shape (so a new shape can be checked before it's saved).
+ * @param {(number | null)[]} shape
+ * @param {string} name
+ * @param {'root' | 'fifth'} which
+ * @returns {{ string: number, fret: number }}
+ */
+export function bassNoteIn(shape, name, which) {
 	const slashBass = slashBassPitchClass(name);
 	if (which === 'root' && slashBass !== null) return lowestOpenNote(slashBass);
 
-	const shape = chordShape(name);
 	const pc = which === 'root' ? rootPitchClass(name) : alternatingPitchClass(name);
 	let best = null;
 

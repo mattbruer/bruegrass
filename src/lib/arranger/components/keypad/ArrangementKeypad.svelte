@@ -5,7 +5,8 @@
 	 * for typing part names. Text rules live in keypad.js.
 	 */
 	import { onMount } from 'svelte';
-	import { KEYS, TIME_KEYS, applyKey } from './keypad.js';
+	import { KEYS, TIME_KEYS, applyKey, yourChordKey } from './keypad.js';
+	import { myChords } from '../../voicings/myChords.svelte.js';
 
 	/**
 	 * @type {{
@@ -17,6 +18,8 @@
 	let { textarea, mode = $bindable('music'), height = $bindable(0) } = $props();
 
 	let timeOpen = $state(false);
+	/** The row of your own chord names (My chords). */
+	let mineOpen = $state(false);
 	/** Distance from the bottom of the layout to the top of the system keyboard. */
 	let keyboardOffset = $state(0);
 	/**
@@ -126,6 +129,22 @@
 				</div>
 			{/if}
 
+			{#if mineOpen}
+				<div class="row mine-row">
+					{#each myChords.all as voicing (voicing.id)}
+						<button
+							type="button"
+							tabindex="-1"
+							class="key chord mine-key"
+							onpointerdown={keepFocus}
+							onclick={() => apply(yourChordKey(voicing.name))}
+						>
+							{voicing.name}
+						</button>
+					{/each}
+				</div>
+			{/if}
+
 			{#each KEYS as row, r (r)}
 				<div class="row">
 					{#each row as key (key.id)}
@@ -162,6 +181,18 @@
 				>
 					abc
 				</button>
+				{#if myChords.all.length}
+					<button
+						type="button"
+						tabindex="-1"
+						class="key wide"
+						class:active={mineOpen}
+						onpointerdown={keepFocus}
+						onclick={() => (mineOpen = !mineOpen)}
+					>
+						Mine
+					</button>
+				{/if}
 				<span class="spacer"></span>
 				<button
 					type="button"
@@ -240,6 +271,17 @@
 
 	.spacer {
 		flex: 3 1 0;
+	}
+
+	/* As many of your chords as you have: the row scrolls sideways */
+	.mine-row {
+		overflow-x: auto;
+		padding-block: 0.2rem;
+	}
+
+	.mine-key {
+		flex: 0 0 auto;
+		padding-inline: 0.9rem;
 	}
 
 	.time-row .time-key {

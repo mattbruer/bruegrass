@@ -14,7 +14,7 @@
  *   into a tune that has none, on the note where each change lands. Repeated
  *   bars share one place in the score, so they can only show one chord.
  */
-import shapes from '../instruments/guitar-chords.json';
+import { hasShape, withoutVariant } from '../instruments/chordBook.js';
 import { chordLabel, songKey } from '../chart/key.js';
 import { barQuarters, slotPositions } from '../chart/timeline.js';
 import { MAX_CAPO } from '../chart/capo.js';
@@ -249,7 +249,7 @@ function fitShapes(names, capo) {
 			root + (minor ? 'm' : '') + (/^m?7$/.test(rest) ? '7' : ''),
 			root + (minor ? 'm' : '')
 		];
-		const shape = candidates.find((candidate) => candidate in shapes);
+		const shape = candidates.find(hasShape);
 		const slash = bass && /^[A-G][#b]?$/.test(bass) ? `/${bass}` : '';
 		fitted.set(name, {
 			shape: shape ? shape + slash : written,
@@ -439,7 +439,7 @@ export function abcWithChords(abc, voices, sections, { capo = 0 } = {}) {
 		.map((item) => ({ ...item, t: item.t - pickup }))
 		.filter((item) => item.t >= -EPSILON && item.t < end - EPSILON && item.startChar !== undefined);
 	const concert = (/** @type {string} */ name) =>
-		chordLabel(name, { key, shift: capo, mode: 'concert' });
+		chordLabel(withoutVariant(name), { key, shift: capo, mode: 'concert' });
 	const chordAt = (/** @type {number} */ time) =>
 		slots.filter((slot) => slot.start <= time + EPSILON).at(-1)?.name ?? slots[0].name;
 	/** @param {number} time */
