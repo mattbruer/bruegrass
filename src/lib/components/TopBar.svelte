@@ -1,14 +1,15 @@
 <script>
 	/**
 	 * The bar across the top of every page: the app's name, a link to each
-	 * section (the one you're on is pressed in and lit), and the Settings
-	 * button. It stays at the top while you scroll.
+	 * section (the one you're on is pressed in and lit), the tips on/off
+	 * button, and the Settings button. It stays at the top while you scroll.
 	 *
 	 * To add a section: add it to PAGES below.
 	 */
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import GearIcon from './GearIcon.svelte';
+	import TipsToggle from '$lib/tooltips/TipsToggle.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -52,6 +53,8 @@
 				{section.name}
 			</a>
 		{/each}
+
+		<TipsToggle />
 
 		<button
 			type="button"

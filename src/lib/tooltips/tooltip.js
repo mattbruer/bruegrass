@@ -7,16 +7,16 @@
  * (The wording lives in tips.js, so all of it can be read and edited in one place.)
  *
  * How it behaves (the timings are constants below):
- *   - Mouse: appears after a short rest, so it doesn't flicker as you move
- *     across the page. Once one has shown, the next appear at once while you
- *     keep exploring nearby, until you've been off them for a moment.
+ *   - Mouse: appears once you rest on a control (1.5 s), so moving around
+ *     the page doesn't set them off. Once one has shown, moving straight to
+ *     the next control shows its tip at once.
  *   - Keyboard: appears when you tab to a control.
  *   - Touch: press and hold. Letting go then doesn't press the button, so
  *     reading a tip never does anything by accident. It hides after a few
  *     seconds or at the next touch.
  *   - Clicking, Escape, or scrolling hides it.
- *   - Settings → General → Tips turns them all off (screen readers still get
- *     the text, as the control's description).
+ *   - The ? button in the top bar (or Settings → General → Tips) turns them
+ *     all off; screen readers still get the text, as the control's description.
  *
  * There's one bubble for the whole app. It's a native popover, so it sits in
  * the browser's top layer, above dialogs and the floating EQ and reverb windows.
@@ -24,10 +24,13 @@
 import { settings } from '$lib/settings/settings.svelte.js';
 import './tooltip.css';
 
-/** Resting the mouse this long shows a tip. */
-const SHOW_DELAY_MS = 700;
+/**
+ * Resting the mouse this long shows a tip. Long on purpose: tips should
+ * come when you stop and wonder, not every time the pointer passes by.
+ */
+const SHOW_DELAY_MS = 1500;
 /** After a tip hides, others show at once for this long (you're exploring). */
-const WARM_MS = 600;
+const WARM_MS = 300;
 /** Holding a finger this long shows a tip on a touch screen. */
 const LONG_PRESS_MS = 500;
 /** A finger moving this far isn't a hold (it's a scroll or a drag). */

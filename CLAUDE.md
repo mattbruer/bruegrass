@@ -62,7 +62,7 @@ The user wants code they can read and change without help, and that makes the ne
 
 - Every control gets a tooltip: `use:tooltip={TIPS.area.thing}` (`src/lib/tooltips/tooltip.js`). Shared controls take a `tip` prop instead (`Slider`, `ChannelFader`, `ToggleSwitch`). **When adding a control, add its tip.**
 - All the wording is in `src/lib/tooltips/tips.js`, grouped by area: one or two plain sentences on what it does, for a non-technical user. Lists keyed by id (EQ bands, reverb controls, chord displays, visualiser views) follow the ids in the code that defines them.
-- Behaviour (timings are constants at the top of `tooltip.js`): mouse after 0.7 s, then instant for neighbours for 0.6 s; keyboard focus; touch press-and-hold 0.5 s, which swallows the lift-off click so reading a tip never presses the button. One shared bubble, a native `popover`, so it sits above dialogs. Settings → General → Tips turns them off; the text stays on the control as `aria-description` for screen readers.
+- Behaviour (timings are constants at the top of `tooltip.js`): mouse after 1.5 s (the user found shorter annoying), then instant when moving straight to the next control (0.3 s); keyboard focus; touch press-and-hold 0.5 s, which swallows the lift-off click so reading a tip never presses the button. One shared bubble, a native `popover`, so it sits above dialogs. The ? button in the top bar (`tooltips/TipsToggle.svelte`) and Settings → General → Tips both turn them off (same setting, `settings.showTips`); the text stays on the control as `aria-description` for screen readers.
 - Deliberately without tips: the phone music keypad (holding would fight fast typing), text areas, plain Cancel/Close, and Settings rows that already show a description.
 
 ### Look and theming
