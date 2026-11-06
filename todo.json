@@ -63,12 +63,6 @@
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
-			"id": "humanizer",
-			"text": "Humanizer: vary each hit from one hidden force",
-			"done": false,
-			"addedAt": "2026-11-06T12:00:00.000Z"
-		},
-		{
 			"id": "play-own-samples",
 			"text": "Band plays my recorded samples from the manifest",
 			"done": false,

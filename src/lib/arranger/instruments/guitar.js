@@ -2,6 +2,7 @@ import chords from './guitar-chords.json';
 import { rhythm, slotPositions } from '../chart/timeline.js';
 import { nextPattern, patternStrokes } from './strumPatterns.js';
 import { createRng } from './seededRandom.js';
+import { createHand } from './hand.js';
 
 /** @typedef {import('../chart/timeline.js').SlotPosition} SlotPosition */
 
@@ -24,6 +25,7 @@ const STROKE_DB = { strum: 0, graze: -8 };
 
 /** Seed for the strum pattern choices, so a song always plays (and exports) the same. */
 const STRUM_SEED = 11;
+const HAND_SEED = 23;
 
 /** When looping, the guitar's notes span this many passes, so the sprinkled patterns vary. */
 const LOOP_PASSES = 4;
@@ -186,7 +188,12 @@ export function guitarTuning(sections, shift) {
 }
 
 /**
- * @typedef {{ time: number, stop: number, string: number, fret: number, chord: string, part: 'bass' | 'strum', levelDb: number }} NoteEvent
+ * @typedef {{
+ *   time: number, stop: number, string: number, fret: number, chord: string,
+ *   part: 'bass' | 'strum', levelDb: number, force: number, nudge: number
+ * }} NoteEvent
+ *   force: dB the hand's feel adds; nudge: seconds it moves the note (hand.js).
+ *   Both are applied as the note plays, scaled by the Feel amount.
  */
 
 /**
@@ -231,6 +238,7 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false, strum
 
 	const { levelDb } = touch(bpm);
 	const random = createRng(STRUM_SEED);
+	const hand = createHand(createRng(HAND_SEED));
 
 	/** @type {NoteEvent[]} */
 	let events = [];
@@ -246,6 +254,7 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false, strum
 				const chord = sequence[k].name;
 				const time = (boom.time + stroke.at + p * quarters) * quarter;
 				const stop = chordEnds[k];
+				const feel = hand();
 
 				if (stroke.hit === 'bass') {
 					repeat = lastBoom === chord ? repeat + 1 : 0;
@@ -258,7 +267,9 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false, strum
 						fret: bass.fret + capo,
 						chord,
 						part: 'bass',
-						levelDb: levelDb.bass
+						levelDb: levelDb.bass,
+						force: feel.forceDb,
+						nudge: feel.delay
 					});
 					continue;
 				}
@@ -274,7 +285,9 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false, strum
 						fret: /** @type {number} */ (shape[string]) + capo,
 						chord,
 						part: 'strum',
-						levelDb: levelDb.strum + STROKE_DB[stroke.hit]
+						levelDb: levelDb.strum + STROKE_DB[stroke.hit],
+						force: feel.forceDb,
+						nudge: feel.delay + offsets[i] * (feel.spread - 1)
 					});
 				});
 			}

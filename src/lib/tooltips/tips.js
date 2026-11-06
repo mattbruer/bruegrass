@@ -85,6 +85,10 @@ export const TIPS = Object.freeze({
 	player: {
 		play: 'Play the arrangement from the start, looping. Changes you make while it plays are picked up.',
 		stop: 'Stop playing.',
+		feelOn:
+			'Play the strumming hand’s feel: each stroke a touch harder or softer, brighter or duller, early or late.',
+		feelAmount:
+			'How much feel. Find where it starts to sound sloppy, and where you stop hearing it.',
 		strumPattern:
 			'Which strum the guitar plays: the usual mix, or one pattern on its own so you can hear it.',
 		varyAmount:

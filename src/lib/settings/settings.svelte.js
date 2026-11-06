@@ -33,6 +33,12 @@ export const settings = $state({
 	/** Nudge every sample a tiny random amount as it plays (instruments/roundRobin.js); the Vary button by Play. */
 	varyNotes: true,
 
+	/** Play the strumming hand's feel (instruments/hand.js); the Feel button by Play. */
+	feelOn: true,
+
+	/** How much feel: 1 = hand.js's amounts as written, 0 = none. */
+	feelAmount: 1,
+
 	/** Which strum pattern the guitar plays: 'mix', or one pattern to audition (the Strum menu by Play). */
 	strumPattern: /** @type {import('$lib/arranger/instruments/strumPatterns.js').StrumChoice} */ (
 		'mix'

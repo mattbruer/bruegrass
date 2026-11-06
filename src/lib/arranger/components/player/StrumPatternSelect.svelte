@@ -18,6 +18,7 @@
 		bind:value={settings.strumPattern}
 		onchange={() => player.restartIfPlaying()}
 		class="ui-field px-2 py-1"
+		style="width: auto"
 	>
 		<option value="mix">Mix</option>
 		{#each Object.entries(STRUM_PATTERNS) as [name, pattern] (name)}

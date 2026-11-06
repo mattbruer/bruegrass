@@ -6,11 +6,12 @@
 	import VaryNotesButton from './VaryNotesButton.svelte';
 	import VaryAmountSlider from './VaryAmountSlider.svelte';
 	import StrumPatternSelect from './StrumPatternSelect.svelte';
+	import FeelControls from './FeelControls.svelte';
 
 	const { player } = useArranger();
 </script>
 
-<div class="flex flex-wrap items-center gap-2">
+<div class="flex gap-2">
 	<button
 		type="button"
 		class="ui-button px-5 py-2 ui-button-primary"
@@ -28,7 +29,11 @@
 	>
 		Stop
 	</button>
-	<VaryNotesButton />
-	<VaryAmountSlider />
+</div>
+
+<!-- Listening tests: A/B the hand's feel, the note variation and each strum pattern -->
+<div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+	<div class="flex items-center gap-2"><FeelControls /></div>
+	<div class="flex items-center gap-2"><VaryNotesButton /><VaryAmountSlider /></div>
 	<StrumPatternSelect />
 </div>
