@@ -47,12 +47,15 @@ export const TIPS = Object.freeze({
 			'Everything this session asks you to record, counted up: every note, how many takes, and the total.',
 		closeSession: 'Go back to the session list. Everything is already saved.',
 		recordTarget:
-			'Record this target (R), and press again to stop. The take is checked and saved straight away.',
+			'Record this target (R), and press again to stop. Play it as many times as you like: each hit is found, checked, and saved straight away.',
 		playSample: 'Listen to the sample as it will be cut (Space).',
 		keep: 'Keep this take and go on to the next thing to record (K).',
 		discard: 'Throw away this new take (X). To redo it, just record again.',
 		previous: 'The previous target (←).',
 		next: 'The next target (→).',
+		chooseHit:
+			'Keep this hit as one of the note’s takes. Keep (K) cuts the ticked hits out and throws the rest of the recording away.',
+		playHit: 'Listen to this hit as it would be cut.',
 		gridCell: 'Go to the first take still to record here. The bar fills as takes are kept.',
 		exportSamples:
 			'Download every kept sample as a WAV, cut and faded, with a manifest listing them, in one zip.',

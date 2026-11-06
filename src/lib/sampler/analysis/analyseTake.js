@@ -5,6 +5,7 @@
  */
 import { peakLevel, toDecibels } from '$lib/arranger/playback/analysis/levels.js';
 import { findHit, LEAD_IN_MS } from './findHit.js';
+import { smoothEnvelope } from './envelope.js';
 import { detectPitch, centsOff, midiToHz } from './detectPitch.js';
 
 /** Brightness is measured over this much of the hit (ms): the pick's attack, what the ear notices most. */
@@ -44,11 +45,12 @@ const ENDING_MS = 50;
 /**
  * @param {import('$lib/recording/takeRecorder.js').Take} take
  * @param {number | null} midi the note asked for (null: a strum)
+ * @param {number | null} [hitAfter] frames: the hit comes after this (see findHit)
  * @returns {TakeAnalysis}
  */
-export function analyseTake(take, midi) {
+export function analyseTake(take, midi, hitAfter = null) {
 	const { channels, sampleRate } = take;
-	const hit = findHit(channels, sampleRate);
+	const hit = findHit(channels, sampleRate, hitAfter);
 	const { db, frames } = hit.envelope;
 	const ms = (/** @type {number} */ value) => Math.round((sampleRate * value) / 1000);
 	const onsetWindow = hit.onset === null ? 0 : Math.floor(hit.onset / frames);
@@ -68,7 +70,7 @@ export function analyseTake(take, midi) {
 		hit.onset === null
 			? null
 			: findSecondHit(
-					smooth(db, Math.round(ms(SECOND_HIT_SMOOTHING_MS) / frames)),
+					smoothEnvelope(db, Math.round(ms(SECOND_HIT_SMOOTHING_MS) / frames)),
 					hit.peakDb,
 					onsetWindow,
 					ms(SECOND_HIT_AFTER_MS) / frames
@@ -130,23 +132,6 @@ function findSecondHit(db, peakDb, onsetWindow, minWindows) {
 		if (level >= loudEnough && level - quietest >= SECOND_HIT_RISE_DB) return window - onsetWindow;
 	}
 	return null;
-}
-
-/**
- * The envelope averaged (as power) over `span` windows, each value the
- * average of the windows ending there, so a rise shows where it happens.
- * @param {Float32Array} db
- * @param {number} span
- */
-function smooth(db, span) {
-	const power = Array.from(db, (level) => 10 ** (level / 10));
-	const smoothed = new Float32Array(db.length);
-	let sum = 0;
-	for (let i = 0; i < db.length; i++) {
-		sum += power[i] - (i >= span ? power[i - span] : 0);
-		smoothed[i] = 10 * Math.log10(Math.max(sum, 0) / Math.min(i + 1, span));
-	}
-	return smoothed;
 }
 
 /**

@@ -1,6 +1,21 @@
 # Handoff: sampler pilot — get one G chord sounding right before recording anything else
 
-Written 2026-11-06 at the end of a long brainstorming chat (no code was written in it). Read this first; `HANDOFF-sampling-session.md` is the earlier plan and is partly superseded (see the bottom).
+Written 2026-11-06 at the end of a long brainstorming chat, updated after the build chat that followed. Read this first; `HANDOFF-sampling-session.md` is the earlier plan and is partly superseded (see the bottom).
+
+## Where it stands (updated 2026-11-06, end of the build chat)
+
+**Built and committed** (branch `feature/sampler`), nothing recorded yet; the user is pausing the sampler for other features and isn't set up to record right now:
+
+- **Pilot checklist** (`checklists/guitarPilot.js`, 51 clips) from the G voicing via `checklists/voicing.js`: 6 graze passes per string (D G B e) to choose from, plucked low E 3 and open D, dead strums, and the real boom-chuck as the A/B target.
+- **Metronome click** while recording (`recording/clickTrack.js`; a group with `click` gets it): the real boom-chuck is 3 takes at 100 BPM, a 1-bar count-in, then 8 bars, lined up later on the first boom.
+- **Many hits per recording** (`analysis/findHits.js`, UI `components/session/RunHits.svelte`): press R once, play the note as often as you like, R to stop. Every hit is found and checked; you tick the ones to keep (up to the takes still missing) and K cuts each out as a take of its own, then throws the rest of the recording away. Until then the whole recording is saved, so closing the page loses nothing. Single-hit recordings work as before. Checked in Node (onsets exact to the ms on synthetic plucks) and end to end in the browser pane with a fake mic.
+  - Known limit: a hit only ~3 dB louder than the note still ringing (a soft hit right after a loud one) is missed (`RISE_DB` 6 in `findHits.js`). Leave a moment between hits; the numbered markers on the waveform show any miss.
+
+**Ideas from the user to build next (not built):**
+
+1. **Record in motion, to a click.** Tempo sets how fast the hand crosses the strings, so play the real strum motion to the click with only the target string unmuted, instead of slow, posed single strokes. The click grid could then guide the slicer (expect a hit near each beat). Ringing: at 100 BPM chucks on 2 and 4 are 1.2 s apart, so each graze is cut by the next; real chucks are damped short anyway, but long rings are needed for held chords and endings (play, rest a bar, play).
+2. **Bite.** The faster the tempo, the less the pick bites the string. Bite is a continuum (pluck = full grab, graze = a little, dead strum = none) and tempo is one of the things that sets it, which the later motion model (grab vs graze contact) should take as an input. Pilot test: grazes at two tempos (say 80 and 140 BPM), compared blind and by measured brightness/attack/low end. Key question: can a slow graze through the arranger's existing "lighter touch" filter pass for a real fast one? If yes, one tempo of samples plus the filter covers the range; if not, tempo becomes a recorded layer (the click moves from the group to each layer).
+3. Then the build order below continues: attempt log, Hear-it loop, humanizer, knobs.
 
 ## What changed, in one paragraph
 
@@ -18,11 +33,11 @@ Also in `CLAUDE.md` ("How the user thinks") and the memory files `feedback-desig
 
 ## The design, in three layers
 
-| Layer | Holds | Changes when |
-|---|---|---|
-| Samples | single-string recordings labelled by **articulation** (pluck, graze, dead strum, later release), string, fret, intensity, direction | recording sessions |
-| Voicing | which strings and frets sound (from the voicing engine; `guitar-chords.json` is temporary) | the voicing engine |
-| Style | when each hit lands, which strings, down or up, how hard, which articulation; plain data plus an optional generator. Bluegrass is the only style now. Every style: voicing + meter + tempo in, timed hits out | new styles, custom patterns later |
+| Layer   | Holds                                                                                                                                                                                                         | Changes when                      |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Samples | single-string recordings labelled by **articulation** (pluck, graze, dead strum, later release), string, fret, intensity, direction                                                                           | recording sessions                |
+| Voicing | which strings and frets sound (from the voicing engine; `guitar-chords.json` is temporary)                                                                                                                    | the voicing engine                |
+| Style   | when each hit lands, which strings, down or up, how hard, which articulation; plain data plus an optional generator. Bluegrass is the only style now. Every style: voicing + meter + tempo in, timed hits out | new styles, custom patterns later |
 
 - Name things by what they physically are ("grazed note", "plucked note"), never by role ("chuck", "boom"), so another style can reuse the clips. Checklist groups should use articulation words.
 - **Chord function (user, 2026-11-06).** In bluegrass the third is often left out of a tonic chord (the chord stays ambiguous major/minor, gives the soloist space, sounds cleaner); on a dominant chord the third and seventh make the tritone that gives tension. So the voicing engine should take the chord's **function** (tonic, dominant, ...) as well as its name. The sampler is unaffected: samples are single strings at frets, and a voicing is just a list of them. Leave the seam; build nothing now. Dominants will often use fretted thirds and sevenths that open tonic shapes avoid, which is another reason to test repitching (±1, ±2) and the recorded frets (0, 2, 5, 8, 11) in the pilot. G `[3, null, 0, 0, 3, 3]` (no third) is a good first voicing; a dominant such as D7 is a good later test.
@@ -33,22 +48,23 @@ Also in `CLAUDE.md` ("How the user thinks") and the memory files `feedback-desig
 
 ## The pilot
 
-**The voicing.** G = `[3, null, 0, 0, 3, 3]` (low E fret 3, A muted, D open, G open, B fret 3, high e fret 3). *Correction:* earlier in the chat I said B was open; it's fret 3. The bluegrass chuck strums the top strings (G, B, e, sometimes D); the user almost never strums all six, but the option stays open, so don't assume four. Record the real frets of the voicing, with no repitching in the pilot.
+**The voicing.** G = `[3, null, 0, 0, 3, 3]` (low E fret 3, A muted, D open, G open, B fret 3, high e fret 3). _Correction:_ earlier in the chat I said B was open; it's fret 3. The bluegrass chuck strums the top strings (G, B, e, sometimes D); the user almost never strums all six, but the option stays open, so don't assume four. Record the real frets of the voicing, with no repitching in the pilot.
 
 **Attempt 1 is the foundation (painter's order), about 52 clips, about 20 minutes:**
 
-| Group | Clips | Notes |
-|---|---|---|
-| Grazed notes on D (0), G (0), B (3), e (3), down-stroke | 16 | 2 firm + 2 light each. The user's call: a graze is a different way of meeting the string, not just a quieter pluck, so light is recorded, not derived from firm. |
-| Plucked booms: low E fret 3, open D | 6 | 3 takes each. Pluck = the pick grabs the string. Booms and melody notes are the same articulation. |
-| Dead strums (all strings muted), down and up | 18 | 3 intensities × 3 takes |
-| Real G strums, for comparison only | 12 | never used as samples; they are the A/B target |
+| Group                                                   | Clips | Notes                                                                                                                                                            |
+| ------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Grazed notes on D (0), G (0), B (3), e (3), down-stroke | 16    | 2 firm + 2 light each. The user's call: a graze is a different way of meeting the string, not just a quieter pluck, so light is recorded, not derived from firm. |
+| Plucked booms: low E fret 3, open D                     | 6     | 3 takes each. Pluck = the pick grabs the string. Booms and melody notes are the same articulation.                                                               |
+| Dead strums (all strings muted), down and up            | 18    | 3 intensities × 3 takes                                                                                                                                          |
+| Real G strums, for comparison only                      | 12    | never used as samples; they are the A/B target                                                                                                                   |
 
 How to play the grazed notes: a real strum motion across the strings, with the fretting hand muting every string except the target. (User may try removing strings or mounting the guitar; I advised against both for the pilot: play it held, tape-mark the mic distance, and let the sampler's loudness/brightness checks catch drift.) Keep the other strings on at first; sympathetic ringing is a later layer.
 
 **Changed 2026-11-06 (built):** grazed notes are 6 passes per string at the normal strum, to pick the best 4 by ear later (measured loudness sorts them into a touch louder and a touch lighter); firm grazes can come in a later attempt if the loop sounds flat. The 12 single real strums became 3 takes of the real boom-chuck to a click (100 BPM, 1-bar count-in, 8 bars), so the Hear-it loop can play at the same tempo and A/B in time, lined up on the first boom. Pilot total: 51 clips.
 
 **Later attempts add one detail at a time, each judged at a distance:**
+
 1. Release thuds (damping a ringing string), D G B e × 2 takes: about 8 clips. Needed for chord changes.
 2. Sympathetic resonance test: 4 notes recorded twice, others muted and others free in the real G shape; subtract to hear the sympathetic part. Test whether it's audible in a mix before modelling it.
 3. Take-count experiment: 5 takes at one intensity for the four strings, then compare 1, 2, 3 and 5 takes, humanizer on and off, blind.
@@ -57,7 +73,7 @@ How to play the grazed notes: a real strum motion across the strings, with the f
 
 ## What to build, in order (each piece usable alone)
 
-1. **Pilot checklist** (small): a new file in `src/lib/sampler/checklists/` plus one line in `CHECKLISTS`, built from a voicing (strings plus frets), groups named by articulation, no dependence on `guitar-chords.json`. This lets the user record. Keep the full guitar checklist.
+1. **Pilot checklist** (built): a new file in `src/lib/sampler/checklists/` plus one line in `CHECKLISTS`, built from a voicing (strings plus frets), groups named by articulation, no dependence on `guitar-chords.json`. This lets the user record. Keep the full guitar checklist.
 2. **Attempt log.** An attempt is a numbered pass with: a note on what's different (mic, pick, how hard they played), the settings it was heard with, and answers to the ear tests (yes / no / not sure, plus notes). Starting a new attempt lets the user choose which clips to redo and which to carry over. It's a session with a link to the attempt it came from plus the carried targets, in the style of `storage/samplingSessions.js`. Everything saves as it happens (the existing rule against losing work).
 3. **Hear-it loop.** Plays a G boom-chuck loop from only that attempt's kept takes, through the same "ask for sounds" path any style will use:
    - tempo control; the existing pendulum strum spread; never the same take twice in a row
@@ -72,6 +88,7 @@ How to play the grazed notes: a real strum motion across the strings, with the f
 ## Finish line for the pilot
 
 All three must hold:
+
 1. Blind A/B against the user's own real G strums at the same tempo, over about 12 rounds or more, in the mix and at a distance: they can't pick the real one more often than chance (roughly 6 of 12).
 2. Blind A/B against Strum Machine at the same chord and tempo, same conditions.
 3. Stopping rule: each attempt changes one thing. If two attempts in a row don't improve the score, stop and decide whether the approach needs to change. A gap that belongs to the strum motion model doesn't block finishing.

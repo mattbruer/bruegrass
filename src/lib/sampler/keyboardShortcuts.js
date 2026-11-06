@@ -42,10 +42,14 @@ export function listenForShortcuts(actions) {
 	return () => window.removeEventListener('keydown', onKey);
 }
 
+/** Inputs that take no typing, so the keys still work after clicking one. */
+const UNTYPED_INPUTS = ['checkbox', 'radio', 'button'];
+
 /** @param {EventTarget | null} target */
 function isTypingIn(target) {
+	if (target instanceof HTMLInputElement) return !UNTYPED_INPUTS.includes(target.type);
 	return (
 		target instanceof HTMLElement &&
-		(target.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName))
+		(target.isContentEditable || ['SELECT', 'TEXTAREA'].includes(target.tagName))
 	);
 }

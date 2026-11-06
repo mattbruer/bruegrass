@@ -5,6 +5,11 @@
  *
  *   R  record / stop: the take is analysed and saved on this computer at once
  *   K  keep it, and move to the next target still missing
+ *
+ * A recording can hold many hits (play the note as often as you like, then
+ * stop). Then each hit is found and checked, you tick the ones to keep, and
+ * Keep cuts those out as takes of that note (filling its missing takes);
+ * the rest of the recording is thrown away.
  *   R  again instead: record over it (Redo)
  *   Space  listen (the trimmed sample)   ← →  previous / next target
  *
@@ -14,6 +19,7 @@
  * the shown take is in memory at a time.
  */
 import { analyseTake } from '../analysis/analyseTake.js';
+import { analyseHits, cutOut } from '../analysis/findHits.js';
 import { takeProblems } from '../analysis/takeProblems.js';
 import { findChecklist, isSameLayer, listTargets } from '../checklists/targets.js';
 import { clickRun } from '../checklists/groupClick.js';
@@ -30,6 +36,8 @@ import {
 /** @typedef {import('$lib/storage/samplingSessions.js').TakeRecord} TakeRecord */
 /** @typedef {import('$lib/recording/takeRecorder.js').Take} Take */
 /** @typedef {{ kept: TakeRecord | null, fresh: TakeRecord | null }} TargetTakes */
+/** @typedef {ReturnType<typeof analyseHits>[number]} Hit */
+/** @typedef {{ hits: Hit[], chosen: number[] }} Run */
 
 export class RecordingSession {
 	/** Which target is shown (an index into `targets`). */
@@ -40,7 +48,13 @@ export class RecordingSession {
 	/** The shown take's audio (whichever of its takes is shown). */
 	/** @type {{ record: TakeRecord, take: Take } | null} */
 	shown = $state.raw(null);
+	/** The hits in the shown new recording, when it has several, and which are ticked to keep. */
+	/** @type {Run | null} */
+	run = $state.raw(null);
 	playing = $state(false);
+	/** Which hit is playing (null: none, or the whole take). */
+	/** @type {number | null} */
+	playingHit = $state(null);
 	/** Saving or loading: buttons wait. */
 	busy = $state(false);
 	/** What went wrong last, in plain words. */
@@ -115,11 +129,11 @@ export class RecordingSession {
 	get problems() {
 		if (!this.shown) return [];
 		const target = this.target;
-		const others = this.targets
-			.filter((other) => other.id !== target.id && isSameLayer(other, target))
-			.map((other) => this.takesFor(other.id).kept?.analysis)
-			.filter((analysis) => analysis !== undefined);
-		return takeProblems(this.shown.record.analysis, checkDetails(target, this.checklist), others);
+		return takeProblems(
+			this.shown.record.analysis,
+			checkDetails(target, this.checklist),
+			this.#keptOfLayer(target)
+		);
 	}
 
 	/**
@@ -177,11 +191,13 @@ export class RecordingSession {
 			this.#setTakes(target.id, { ...this.takesFor(target.id), fresh: record });
 			this.#loadNumber++;
 			this.shown = { record, take };
+			this.run = this.#findRun(record, take);
 		});
 	}
 
-	/** Keep the new take, then go to the next target still missing. */
+	/** Keep the new take (or the ticked hits), then go to the next target still missing. */
 	async keep() {
+		if (this.run) return this.#keepChosenHits(this.run);
 		const target = this.target;
 		const { kept, fresh } = this.takesFor(target.id);
 		if (!fresh || this.busy || this.recording) return;
@@ -215,15 +231,145 @@ export class RecordingSession {
 			return;
 		}
 		if (!this.shown || this.recording) return;
-		this.playing = this.input.play(
-			this.shown.take,
-			() => (this.playing = false),
-			this.shown.record.analysis.trim
-		);
+		// A recording of many hits plays whole; a single take as it will be cut
+		this.#play(this.run ? undefined : this.shown.record.analysis.trim, null);
+	}
+
+	/**
+	 * Listen to one hit, as it would be cut (again: stop).
+	 * @param {number} index
+	 */
+	playHit(index) {
+		const hit = this.run?.hits[index];
+		if (!hit || !this.shown || this.recording) return;
+		const wasThis = this.playing && this.playingHit === index;
+		this.stopPlaying();
+		if (wasThis) return;
+		const { start, end } = hit.analysis.trim;
+		this.#play({ start: hit.range.start + start, end: hit.range.start + end }, index);
+	}
+
+	/**
+	 * Tick or untick a hit to keep (no more than there are takes to fill).
+	 * @param {number} index
+	 */
+	toggleChosen(index) {
+		const run = this.run;
+		if (!run) return;
+		const chosen = run.chosen.includes(index)
+			? run.chosen.filter((each) => each !== index)
+			: run.chosen.length < this.slots.length
+				? [...run.chosen, index].sort((a, b) => a - b)
+				: run.chosen;
+		this.run = { ...run, chosen };
+	}
+
+	/** The takes the ticked hits fill, in order: this note's missing takes, or all of them to redo. */
+	get slots() {
+		const layer = this.targets.filter((other) => isSameLayer(other, this.target));
+		const missing = layer.filter((other) => !this.takesFor(other.id).kept);
+		return missing.length > 0 ? missing : layer;
+	}
+
+	/**
+	 * One hit's problems: the take checks, worded for a hit inside a recording.
+	 * @param {number} index
+	 */
+	hitProblems(index) {
+		return this.run ? this.#problemsOfHit(this.run.hits, index) : [];
+	}
+
+	/**
+	 * @param {Hit[]} hits
+	 * @param {number} index
+	 */
+	#problemsOfHit(hits, index) {
+		const details = {
+			...checkDetails(this.target, this.checklist),
+			afterAnotherHit: index > 0,
+			endsAtNextHit: index < hits.length - 1
+		};
+		return takeProblems(hits[index].analysis, details, this.#keptOfLayer(this.target));
 	}
 
 	stopPlaying() {
 		if (this.playing) this.input.stopPlaying();
+	}
+
+	/**
+	 * @param {{ start: number, end: number } | undefined} range
+	 * @param {number | null} hit
+	 */
+	#play(range, hit) {
+		if (!this.shown) return;
+		this.playing = this.input.play(
+			this.shown.take,
+			() => {
+				this.playing = false;
+				this.playingHit = null;
+			},
+			range
+		);
+		this.playingHit = this.playing ? hit : null;
+	}
+
+	/**
+	 * The hits in a new recording, when there's more than one to choose from.
+	 * @param {TakeRecord} record
+	 * @param {Take} take
+	 * @returns {Run | null}
+	 */
+	#findRun(record, take) {
+		if (record.kept || checkDetails(this.target, this.checklist).pattern) return null;
+		const hits = analyseHits(take, this.target.midi);
+		if (hits.length < 2) return null;
+		// Ticked to start with: the first hits without a reason to redo, as many as there are takes to fill
+		const clean = hits
+			.map((_, index) => index)
+			.filter(
+				(index) => !this.#problemsOfHit(hits, index).some((problem) => problem.severity === 'redo')
+			);
+		return { hits, chosen: clean.slice(0, this.slots.length) };
+	}
+
+	/**
+	 * Cut each ticked hit out as a kept take, then throw the recording away.
+	 * @param {Run} run
+	 */
+	async #keepChosenHits(run) {
+		const shown = this.shown;
+		if (!shown || run.chosen.length === 0 || this.busy || this.recording) return;
+		this.stopPlaying();
+		const recording = shown.record;
+		const slots = this.slots;
+		await this.#work(async () => {
+			for (const [order, index] of run.chosen.entries()) {
+				const target = slots[order];
+				const hit = run.hits[index];
+				const { kept, fresh } = this.takesFor(target.id);
+				const replacing = fresh && fresh.id !== recording.id ? fresh : null;
+				const take = cutOut(shown.take, hit.range);
+				const record = await saveNewTake(this.session.id, target.id, take, hit.analysis, replacing);
+				const nowKept = await keepTake(record, kept);
+				this.#setTakes(target.id, { kept: nowKept, fresh: null });
+				this.projectCopy.saveKept({ target, record: nowKept }, this.keptSamples());
+			}
+			await discardTake(recording);
+			const own = this.takesFor(recording.targetId);
+			if (own.fresh?.id === recording.id)
+				this.#setTakes(recording.targetId, { ...own, fresh: null });
+			this.run = null;
+		});
+		const next = this.nextMissingFrom(this.index);
+		if (next >= 0) await this.go(next);
+	}
+
+	/** @param {import('../checklists/targets.js').Target} target */
+	#keptOfLayer(target) {
+		return this.targets
+			.filter((other) => other.id !== target.id && isSameLayer(other, target))
+			.map((other) => this.takesFor(other.id).kept?.analysis)
+			.filter((analysis) => analysis !== undefined);
 	}
 
 	/** @param {TakeRecord | null} record */
@@ -231,11 +377,14 @@ export class RecordingSession {
 		const loadNumber = ++this.#loadNumber;
 		if (!record) {
 			this.shown = null;
+			this.run = null;
 			return;
 		}
 		const channels = await readTakeAudio(record.id);
 		if (loadNumber !== this.#loadNumber) return; // moved on meanwhile
-		this.shown = channels ? { record, take: { channels, sampleRate: record.sampleRate } } : null;
+		const take = channels ? { channels, sampleRate: record.sampleRate } : null;
+		this.shown = take ? { record, take } : null;
+		this.run = take ? this.#findRun(record, take) : null;
 	}
 
 	/**

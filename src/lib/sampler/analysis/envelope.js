@@ -30,3 +30,20 @@ export function loudnessEnvelope(channels, sampleRate) {
 	}
 	return { db, frames };
 }
+
+/**
+ * The envelope averaged (as power) over `span` windows, each value the
+ * average of the windows ending there, so a rise shows where it happens.
+ * @param {Float32Array} db
+ * @param {number} span
+ */
+export function smoothEnvelope(db, span) {
+	const power = Array.from(db, (level) => 10 ** (level / 10));
+	const smoothed = new Float32Array(db.length);
+	let sum = 0;
+	for (let i = 0; i < db.length; i++) {
+		sum += power[i] - (i >= span ? power[i - span] : 0);
+		smoothed[i] = 10 * Math.log10(Math.max(sum, 0) / Math.min(i + 1, span));
+	}
+	return smoothed;
+}

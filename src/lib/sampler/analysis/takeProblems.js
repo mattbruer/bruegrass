@@ -32,8 +32,17 @@ const BRIGHTNESS_SPREAD = 0.25;
 
 /**
  * @param {import('./analyseTake.js').TakeAnalysis} analysis
- * @param {{ pitched: boolean, stringName: string | null, fretted: boolean, pattern: boolean }} target
- *   pattern: many hits on purpose (a strum pattern to a click), so no second-hit check
+ * @param {{
+ *   pitched: boolean,
+ *   stringName: string | null,
+ *   fretted: boolean,
+ *   pattern: boolean,
+ *   afterAnotherHit?: boolean,
+ *   endsAtNextHit?: boolean
+ * }} target
+ *   pattern: many hits on purpose (a strum pattern to a click), so no second-hit check.
+ *   afterAnotherHit / endsAtNextHit: one hit of a longer recording, so the
+ *   last note's ring before it isn't noise, and it may be cut by the next
  * @param {import('./analyseTake.js').TakeAnalysis[]} others kept takes of the same note and intensity
  * @returns {TakeProblem[]}
  */
@@ -71,11 +80,17 @@ export function takeProblems(analysis, target, others) {
 			check(`${cents} cents ${which}: retune the ${target.stringName} string${fix}.`);
 		}
 		if (analysis.endingDb > CUT_OFF_DB) {
-			check('Still ringing when the recording stopped: let it fade first.');
+			check(
+				target.endsAtNextHit
+					? 'Still ringing when the next hit came: leave longer between them.'
+					: 'Still ringing when the recording stopped: let it fade first.'
+			);
 		}
 	}
 
-	if (analysis.startedLate || analysis.noiseDb === null) {
+	if (target.afterAnotherHit) {
+		// What's before this hit is the last one ringing, not the room
+	} else if (analysis.startedLate || analysis.noiseDb === null) {
 		check('The hit comes right at the start: press R a moment before you play.');
 	} else {
 		const noiseDb = analysis.noiseDb - analysis.peakDb;

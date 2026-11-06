@@ -28,6 +28,9 @@ const NOISE_NEEDS_MS = 50;
 /**
  * @param {Float32Array[]} channels
  * @param {number} sampleRate
+ * @param {number | null} [hitAfter] frames: when known, the hit comes after
+ *   this point, and what's before it (silence or the last note ringing)
+ *   is the floor it rises from
  * @returns {{
  *   onset: number | null,
  *   trim: { start: number, end: number },
@@ -36,25 +39,33 @@ const NOISE_NEEDS_MS = 50;
  *   envelope: { db: Float32Array, frames: number }
  * }} frames (onset, trim) and dBFS levels
  */
-export function findHit(channels, sampleRate) {
+export function findHit(channels, sampleRate, hitAfter = null) {
 	const envelope = loudnessEnvelope(channels, sampleRate);
 	const { db, frames } = envelope;
 	const length = channels[0]?.length ?? 0;
-	const peakDb = db.reduce((loudest, level) => Math.max(loudest, level), -Infinity);
 	// First find the hit by the peak alone, then measure the noise before it, then refine
-	const firstGuess = db.findIndex((level) => level >= peakDb - ONSET_BELOW_PEAK_DB);
-	const quietWindows = Math.max(
-		0,
-		firstGuess - Math.ceil((sampleRate * LEAD_IN_MS) / 1000 / frames)
-	);
+	const searchFrom = hitAfter === null ? 0 : Math.floor(hitAfter / frames);
+	const peakDb = db
+		.subarray(searchFrom)
+		.reduce((loudest, level) => Math.max(loudest, level), -Infinity);
+	const quietWindows =
+		hitAfter === null
+			? Math.max(
+					0,
+					db.findIndex((level) => level >= peakDb - ONSET_BELOW_PEAK_DB) -
+						Math.ceil((sampleRate * LEAD_IN_MS) / 1000 / frames)
+				)
+			: searchFrom;
 	const noiseDb =
 		quietWindows * frames >= (sampleRate * NOISE_NEEDS_MS) / 1000
 			? median(db.subarray(0, quietWindows))
 			: null;
 	const floorDb = noiseDb ?? -Infinity;
 
-	const onsetLevel = Math.max(peakDb - ONSET_BELOW_PEAK_DB, floorDb + ONSET_ABOVE_NOISE_DB);
-	const onsetWindow = db.findIndex((level) => level >= onsetLevel);
+	// Halfway up from the floor, when the floor is close to the peak (a note still ringing)
+	const aboveFloor = Math.min(floorDb + ONSET_ABOVE_NOISE_DB, (floorDb + peakDb) / 2);
+	const onsetLevel = Math.max(peakDb - ONSET_BELOW_PEAK_DB, aboveFloor);
+	const onsetWindow = db.findIndex((level, window) => window >= searchFrom && level >= onsetLevel);
 	if (onsetWindow < 0 || !Number.isFinite(peakDb)) {
 		return { onset: null, trim: { start: 0, end: length }, peakDb, noiseDb, envelope };
 	}
