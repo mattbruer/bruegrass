@@ -17,6 +17,15 @@ export const MAX_FRET = 12;
 
 /** Strings a strum plays, low first (an upstroke plays them high to low). */
 const STRUM_STRINGS = [3, 4, 5];
+/*
+ * How a note ends. A string can only sound one note: striking it again
+ * damps the old note as the new one starts, so the old one fades very
+ * quickly from that moment (a hard cut sounds abrupt). At a chord change
+ * the fretting hand lifts off, a little gentler.
+ */
+const RESTRIKE_FADE = 0.015; // seconds
+const CHORD_CHANGE_FADE = 0.05; // seconds
+
 /** An upstroke is a little lighter than a downstroke. */
 const STROKE_DB = { down: 0, up: -3 };
 
@@ -187,10 +196,13 @@ export function guitarTuning(sections, shift) {
 /**
  * @typedef {{
  *   time: number, stop: number, string: number, fret: number, chord: string,
- *   part: 'bass' | 'strum', levelDb: number, force: number, nudge: number
+ *   part: 'bass' | 'strum', levelDb: number, force: number, nudge: number,
+ *   stopNudge: number, fadeOut: number
  * }} NoteEvent
- *   force: dB the hand's feel adds; nudge: seconds it moves the note (hand.js).
- *   Both are applied as the note plays, scaled by the Feel amount.
+ *   force: dB the hand's feel adds; nudge: seconds it moves the note (hand.js);
+ *   stopNudge: the nudge of the note that strikes this string next, so this
+ *   one ends exactly as that one starts. All three are applied as the note
+ *   plays, scaled by the Feel amount. fadeOut: seconds, from `stop`.
  */
 
 /**
@@ -266,7 +278,9 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false, strum
 						part: 'bass',
 						levelDb: levelDb.bass,
 						force: feel.forceDb,
-						nudge: feel.delay
+						nudge: feel.delay,
+						stopNudge: 0,
+						fadeOut: CHORD_CHANGE_FADE
 					});
 					continue;
 				}
@@ -284,18 +298,24 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false, strum
 						part: 'strum',
 						levelDb: levelDb.strum + STROKE_DB[stroke.direction],
 						force: feel.forceDb,
-						nudge: feel.delay + offsets[i] * (feel.spread - 1)
+						nudge: feel.delay + offsets[i] * (feel.spread - 1),
+						stopNudge: 0,
+						fadeOut: CHORD_CHANGE_FADE
 					});
 				});
 			}
 		});
 	}
 
-	// A string playing again cuts off its previous note
+	// A string struck again damps its previous note
 	events.sort((a, b) => a.time - b.time);
 	events.forEach((event, i) => {
 		const next = events.slice(i + 1).find((other) => other.string === event.string);
-		if (next) event.stop = Math.min(event.stop, next.time);
+		if (next && next.time <= event.stop) {
+			event.stop = next.time;
+			event.stopNudge = next.nudge;
+			event.fadeOut = RESTRIKE_FADE;
+		}
 	});
 
 	if (loop) events = events.filter((event) => event.time < kept * passLength);

@@ -85,7 +85,7 @@ export function arrangementToMidi(
 	/** @type {MidiNote[]} */
 	const guitar = events.map((event) => ({
 		tick: toTicks(event.time + event.nudge),
-		end: toTicks(event.stop),
+		end: toTicks(event.stop + event.stopNudge),
 		note: midiNote(event.string, event.fret) + GUITAR_OFFSET + tuning.detune,
 		velocity: velocityFromDb(partDb[event.part] + event.levelDb + event.force) // touch and the hand's feel
 	}));

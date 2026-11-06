@@ -142,19 +142,20 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 				const feel = feelAmount();
 				const forceDb = event.force * feel;
 				const start = at + event.nudge * feel;
+				const stop = at + event.stop - event.time + event.stopNudge * feel;
 				const filter = touchFilter(event.part, forceDb);
 				track(
 					new Tone.Player({
 						url: guitarSounds[i],
 						volume: event.levelDb + forceDb + each.db,
 						fadeIn: guitar.feel.fadeIn[event.part],
-						fadeOut: FADE_OUT,
+						fadeOut: event.fadeOut,
 						playbackRate: guitar.rate * each.rate
 					}).connect(filter),
 					() => filter.disconnect()
 				)
 					.start(start, each.skip)
-					.stop(start + event.stop - event.time);
+					.stop(stop);
 			}
 		},
 		{
