@@ -71,6 +71,7 @@ export const TIPS = Object.freeze({
 
 	song: {
 		new: 'Start a new song from the starter tune. Asks first if you have unsaved changes.',
+		examples: 'Start a new song from an example. Asks first if you have unsaved changes.',
 		open: 'Open one of your saved songs.',
 		save: 'Save this song on this device (⌘S / Ctrl+S). The first save asks for a name.',
 		openSaved: 'Open this song.',

@@ -94,6 +94,7 @@ song between the page and a saved document, and
   strip's EQ can also be saved as a preset (`playback/eq/eqPresets.svelte.js`).
 
 - **The starter song** (what a new visitor sees) is in `starterSong.js`: a chord chart and its ABC melody. Swap both to change it.
+- **Example songs** (the Examples menu in the song bar, `components/song/ExampleSongSelect.svelte`) are listed in `exampleSongs.js`; a new one is one entry.
 
 - **All musical time is in quarter notes** from bar 1, so every part lines up.
   `chart/timeline.js` is the single source of truth; never assume a fixed bar length.

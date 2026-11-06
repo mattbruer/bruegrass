@@ -46,9 +46,12 @@ export class SongState {
 		return this.#arranger.title || 'My song';
 	}
 
-	/** Start a new song from the starter song. (Ask about unsaved changes first.) */
-	startNew() {
-		loadSongIntoPage(this.#arranger, STARTER_SONG);
+	/**
+	 * Start a new song from the starter song or an example. (Ask about unsaved changes first.)
+	 * @param {import('./songFields.js').SongFields} [from]
+	 */
+	startNew(from = STARTER_SONG) {
+		loadSongIntoPage(this.#arranger, from);
 		this.savedId = null;
 		this.name = '';
 		this.#rememberFieldsAsSaved();

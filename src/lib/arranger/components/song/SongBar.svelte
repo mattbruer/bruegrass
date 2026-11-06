@@ -7,6 +7,7 @@
 	import { okToDiscardChanges } from '../../state/guardUnsavedChanges.svelte.js';
 	import SaveSongDialog from './SaveSongDialog.svelte';
 	import OpenSongDialog from './OpenSongDialog.svelte';
+	import ExampleSongSelect from './ExampleSongSelect.svelte';
 	import UnsavedDot from '$lib/components/UnsavedDot.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -55,6 +56,7 @@
 		<p class="text-sm text-ink-soft" aria-live="polite">{status}</p>
 	</div>
 
+	<ExampleSongSelect />
 	<button
 		type="button"
 		class="ui-button px-4 py-2"
