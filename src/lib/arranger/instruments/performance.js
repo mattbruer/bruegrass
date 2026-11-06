@@ -4,8 +4,9 @@
  * sound (band.js does that), so the same notes feed live playback
  * (playback/livePlayback.js) and an exported file (export/renderSong.js).
  *
- * Looping (live): notes are one pass that repeats; the guitar's ringing notes
- * wrap into the next pass, and the bass line spans two passes so it varies.
+ * Looping (live): notes repeat; the guitar's ringing notes wrap into the
+ * next repeat, and the guitar and bass line each span several passes so
+ * they vary.
  * Not looping (export): exactly one pass, the last chord ringing on, like the
  * MIDI file.
  */
@@ -40,7 +41,7 @@ export function preparePerformance(
 
 	// Guitar: the capo where it reaches, resampling for the rest
 	const tuning = guitarTuning(sections, shift);
-	const { events } = buildEvents(sections, { bpm, capo: tuning.capo, loop });
+	const { events, duration } = buildEvents(sections, { bpm, capo: tuning.capo, loop });
 
 	// Bass and mandolin work in concert pitch and pick their own register
 	const concert = { bpm, capo: mod12(shift) };
@@ -61,6 +62,8 @@ export function preparePerformance(
 		guitar: {
 			events,
 			urls: events.map((event) => sampleUrl(event.string, event.fret)),
+			/** When looping, the guitar repeats every this many seconds (it spans several passes). */
+			period: loop ? duration : passLength,
 			/** Any transposition the capo can't reach is made by resampling. */
 			rate: 2 ** (tuning.detune / 12),
 			/** A lighter pick stroke at faster tempos (level, filter, attack). */

@@ -26,6 +26,7 @@
  */
 import { bassNote, midiNote, rootPitchClass } from './guitar.js';
 import { rhythm } from '../chart/timeline.js';
+import { createRng } from './seededRandom.js';
 
 /** Bass range in this file's numbering: open E (40) up to the open G string (55). */
 const LOW = 40;
@@ -341,21 +342,6 @@ function contraryFifth(name, root) {
 function isStep(a, b) {
 	const distance = Math.abs(a - b);
 	return distance >= 1 && distance <= 2;
-}
-
-/**
- * Seeded PRNG (mulberry32): floats in [0, 1).
- * @param {number} seed
- */
-export function createRng(seed) {
-	let state = seed >>> 0;
-	return () => {
-		state = (state + 0x6d2b79f5) >>> 0;
-		let t = state;
-		t = Math.imul(t ^ (t >>> 15), t | 1);
-		t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-	};
 }
 
 /** @param {string} text */

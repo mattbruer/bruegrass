@@ -57,6 +57,12 @@
 			"addedAt": "2026-11-06T12:00:00.000Z"
 		},
 		{
+			"id": "strum-bounce",
+			"text": "Strum motion: bluegrass bounce vs pendulum A/B, then Irish on six strings",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
 			"id": "humanizer",
 			"text": "Humanizer: vary each hit from one hidden force",
 			"done": false,

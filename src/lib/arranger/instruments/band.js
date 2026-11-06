@@ -6,6 +6,7 @@
  * (export/renderSong.js). Both get the same sound from here.
  */
 import { createUpright } from './upright.js';
+import { roundRobin } from './roundRobin.js';
 
 /** Seconds; avoids clicks when a note is cut off. */
 const FADE_OUT = 0.03;
@@ -92,46 +93,56 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 	 * @param {import('tone').ToneAudioBuffer} buffer
 	 * @param {number} at
 	 */
-	const playMelody = (note, buffer, at) =>
+	const playMelody = (note, buffer, at) => {
+		const each = roundRobin();
 		track(
 			new Tone.Player({
 				url: buffer,
-				volume: note.levelDb,
+				volume: note.levelDb + each.db,
 				fadeOut: FADE_OUT,
-				playbackRate: note.rate
+				playbackRate: note.rate * each.rate
 			}).connect(/** @type {import('tone').ToneAudioNode} */ (melodyOut))
 		)
-			.start(at)
+			.start(at, each.skip)
 			.stop(at + note.stop - note.time);
+	};
 
 	/** @type {Stream[]} */
 	const streams = [
 		{
 			notes: guitar.events,
-			period: performance.passLength,
+			period: guitar.period,
 			/** @param {import('./guitar.js').NoteEvent} event @param {number} i @param {number} at */
-			play: (event, i, at) =>
+			play: (event, i, at) => {
+				const each = roundRobin();
 				track(
 					new Tone.Player({
 						url: guitarSounds[i],
-						volume: event.levelDb,
+						volume: event.levelDb + each.db,
 						fadeIn: guitar.feel.fadeIn[event.part],
 						fadeOut: FADE_OUT,
-						playbackRate: guitar.rate
+						playbackRate: guitar.rate * each.rate
 					}).connect(guitarOut[event.part])
 				)
-					.start(at)
-					.stop(at + event.stop - event.time)
+					.start(at, each.skip)
+					.stop(at + event.stop - event.time);
+			}
 		},
 		{
 			notes: mandolin.chops,
 			period: performance.passLength,
 			// Mandolin chops play to the end of each sample (the choke is recorded)
 			/** @param {import('./mandolin.js').MandoNote} chop @param {number} i @param {number} at */
-			play: (chop, i, at) =>
+			play: (chop, i, at) => {
+				const each = roundRobin();
 				track(
-					new Tone.Player({ url: chopSounds[i], volume: chop.levelDb }).connect(mandolinOut)
-				).start(at)
+					new Tone.Player({
+						url: chopSounds[i],
+						volume: chop.levelDb + each.db,
+						playbackRate: each.rate
+					}).connect(mandolinOut)
+				).start(at, each.skip);
+			}
 		},
 		{
 			notes: bass.notes,

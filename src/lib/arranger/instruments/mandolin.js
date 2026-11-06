@@ -8,7 +8,7 @@
  */
 import { rootPitchClass } from './guitar.js';
 import { rhythm } from '../chart/timeline.js';
-import { createRng } from './bassline.js';
+import { createRng } from './seededRandom.js';
 
 /** Course sample prefixes, G D A E. */
 export const COURSES = ['G', 'D', 'A', 'E'];

@@ -1,5 +1,7 @@
 import chords from './guitar-chords.json';
 import { rhythm, slotPositions } from '../chart/timeline.js';
+import { patternStrokes, pickPattern } from './strumPatterns.js';
+import { createRng } from './seededRandom.js';
 
 /** @typedef {import('../chart/timeline.js').SlotPosition} SlotPosition */
 
@@ -12,12 +14,23 @@ const OPEN_MIDI = [40, 45, 50, 55, 59, 64];
 /** Highest fret with a sample. */
 export const MAX_FRET = 12;
 
-/** Strings used for the chuck (G, B, high e). */
-const STRUM_STRINGS = [3, 4, 5];
+/**
+ * What each kind of stroke plays, low string first (an upstroke plays them
+ * in reverse). A graze is the top two strings, much lighter, until there's
+ * a real graze sample.
+ */
+const STROKE_STRINGS = { strum: [3, 4, 5], graze: [4, 5] };
+const STROKE_DB = { strum: 0, graze: -12 };
+
+/** Seed for the strum pattern choices, so a song always plays (and exports) the same. */
+const STRUM_SEED = 11;
+
+/** When looping, the guitar's notes span this many passes, so the sprinkled patterns vary. */
+const LOOP_PASSES = 4;
 
 /*
- * Right-hand pendulum. The strumming hand swings down and up once per quarter
- * note; boom and chuck are both downstrokes. The pick's position across the
+ * Right-hand pendulum. The strumming hand swings down and up once per two
+ * strokes of the pattern (once per quarter note for boom-chuck). The pick's position across the
  * strings is x(t) = center + A·sin(2πt / quarter), so it moves fastest
  * mid-guitar and slows toward the ends of the swing. Each string sounds when
  * the pick reaches it.
@@ -109,19 +122,28 @@ export function sampleUrl(string, fret) {
 }
 
 /**
- * When each string of a downstroke sounds, in seconds after the first one,
- * following the right hand's pendulum swing.
- * @param {number[]} strings string indices in stroke order
+ * When each string of a stroke sounds, in seconds after the first one,
+ * following the right hand's pendulum swing. An upstroke reaches the high
+ * strings first.
+ * @param {number[]} strings string indices, low to high
  * @param {number} bpm
+ * @param {{ direction?: 'down' | 'up', steps?: number }} [stroke]
+ *   steps: the hand's strokes per quarter note (more = a faster, smaller swing)
  */
-export function strumOffsets(strings, bpm) {
-	const quarter = 60 / bpm;
-	const omega = (2 * Math.PI) / quarter;
-	const amplitude = Math.max(SWING_MIN_MM, SWING_MM_AT_120 * (120 / bpm) ** SWING_TEMPO_EXPONENT);
-	const crossing = strings.map(
-		(string) => Math.asin(((string - SWING_CENTER) * STRING_SPACING_MM) / amplitude) / omega
+export function strumOffsets(strings, bpm, { direction = 'down', steps = 2 } = {}) {
+	const handBpm = (bpm * steps) / 2;
+	const omega = (2 * Math.PI * handBpm) / 60;
+	const amplitude = Math.max(
+		SWING_MIN_MM,
+		SWING_MM_AT_120 * (120 / handBpm) ** SWING_TEMPO_EXPONENT
 	);
-	return crossing.map((t) => t - crossing[0]);
+	const sign = direction === 'up' ? -1 : 1;
+	const crossing = strings.map(
+		(string) =>
+			(sign * Math.asin(((string - SWING_CENTER) * STRING_SPACING_MM) / amplitude)) / omega
+	);
+	const first = Math.min(...crossing);
+	return crossing.map((t) => t - first);
 }
 
 /**
@@ -168,18 +190,20 @@ export function guitarTuning(sections, shift) {
  */
 
 /**
- * Turn parsed sections into scheduled notes for one pass (seconds from 0).
+ * Turn parsed sections into scheduled notes (seconds from 0).
  *
- * Plays the rhythm grid from timeline.js: a bass note on each boom and a
- * strum of the top three strings on each chuck (boom-chuck in 4/4 and 2/4,
- * boom-chuck-chuck in 3/4). Booms on the same chord alternate root/fifth; a
- * new chord (or a new pass) starts on its root. A note rings until its
- * string is played again or the chord changes. When looping, that rule wraps
- * into the next pass; otherwise the last chord rings one extra half note.
+ * Each beat group of the rhythm grid from timeline.js (boom-chuck, or
+ * boom-chuck-chuck in 3/4) gets a strum pattern (strumPatterns.js): mostly
+ * boom-chuck, with the odd bum-titty or boom-chuck-a-chuck-a. Bass notes on
+ * the same chord alternate root/fifth; a new chord (or a new pass) starts on
+ * its root. A note rings until its string is played again or the chord
+ * changes. When looping, the notes span LOOP_PASSES passes and that rule
+ * wraps into the next; otherwise it's one pass and the last chord rings one
+ * extra half note.
  *
  * @param {import('../chart/timeline.js').Section[]} sections
  * @param {{ capo?: number, bpm?: number, loop?: boolean }} options
- * @returns {{ events: NoteEvent[], duration: number }} duration = one pass
+ * @returns {{ events: NoteEvent[], duration: number }} duration: how long until the notes repeat (or end)
  */
 export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}) {
 	const { beats, quarters, slots } = rhythm(sections);
@@ -187,9 +211,10 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 
 	const quarter = 60 / bpm;
 	const passLength = quarters * quarter;
+	const kept = loop ? LOOP_PASSES : 1;
 
-	// Build two passes when looping so stop times can see into the next one
-	const passes = loop ? 2 : 1;
+	// One extra pass when looping so stop times can see into the next one
+	const passes = loop ? kept + 1 : 1;
 	const end = loop ? passes * passLength : passLength + 2 * quarter;
 	const sequence = Array.from({ length: passes }, (_, p) =>
 		slots.map((slot) => ({ name: slot.name, start: (slot.start + p * quarters) * quarter }))
@@ -204,6 +229,7 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 	}
 
 	const { levelDb } = touch(bpm);
+	const random = createRng(STRUM_SEED);
 
 	/** @type {NoteEvent[]} */
 	let events = [];
@@ -212,43 +238,46 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 	for (let p = 0; p < passes; p++) {
 		/** @type {string | null} */
 		let lastBoom = null; // each pass starts on the root
-		for (const beat of beats) {
-			const k = p * slots.length + beat.slot;
-			const chord = sequence[k].name;
-			const time = (beat.time + p * quarters) * quarter;
-			const stop = chordEnds[k];
+		beats.forEach((boom, b) => {
+			if (boom.role !== 'boom') return;
+			for (const stroke of patternStrokes(pickPattern(random), boom.length)) {
+				const k = p * slots.length + beats[b + Math.floor(stroke.at)].slot;
+				const chord = sequence[k].name;
+				const time = (boom.time + stroke.at + p * quarters) * quarter;
+				const stop = chordEnds[k];
 
-			if (beat.role === 'boom') {
-				repeat = lastBoom === chord ? repeat + 1 : 0;
-				lastBoom = chord;
-				const bass = bassNote(chord, repeat % 2 === 0 ? 'root' : 'fifth');
-				events.push({
-					time,
-					stop,
-					string: bass.string,
-					fret: bass.fret + capo,
-					chord,
-					part: 'bass',
-					levelDb: levelDb.bass
+				if (stroke.hit === 'bass') {
+					repeat = lastBoom === chord ? repeat + 1 : 0;
+					lastBoom = chord;
+					const bass = bassNote(chord, repeat % 2 === 0 ? 'root' : 'fifth');
+					events.push({
+						time,
+						stop,
+						string: bass.string,
+						fret: bass.fret + capo,
+						chord,
+						part: 'bass',
+						levelDb: levelDb.bass
+					});
+					continue;
+				}
+
+				const shape = chordShape(chord);
+				const strings = STROKE_STRINGS[stroke.hit].filter((string) => shape[string] !== null);
+				const offsets = strumOffsets(strings, bpm, stroke);
+				strings.forEach((string, i) => {
+					events.push({
+						time: time + offsets[i],
+						stop,
+						string,
+						fret: /** @type {number} */ (shape[string]) + capo,
+						chord,
+						part: 'strum',
+						levelDb: levelDb.strum + STROKE_DB[stroke.hit]
+					});
 				});
-				continue;
 			}
-
-			const shape = chordShape(chord);
-			const strings = STRUM_STRINGS.filter((string) => shape[string] !== null);
-			const offsets = strumOffsets(strings, bpm);
-			strings.forEach((string, i) => {
-				events.push({
-					time: time + offsets[i],
-					stop,
-					string,
-					fret: /** @type {number} */ (shape[string]) + capo,
-					chord,
-					part: 'strum',
-					levelDb: levelDb.strum
-				});
-			});
-		}
+		});
 	}
 
 	// A string playing again cuts off its previous note
@@ -258,7 +287,7 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 		if (next) event.stop = Math.min(event.stop, next.time);
 	});
 
-	if (loop) events = events.filter((event) => event.time < passLength);
+	if (loop) events = events.filter((event) => event.time < kept * passLength);
 
-	return { events, duration: loop ? passLength : end };
+	return { events, duration: loop ? kept * passLength : end };
 }

@@ -127,10 +127,12 @@ The core of the arranger.
 - **Chord shapes** come from `guitar-chords.json`. Each shape is 6 frets from low E to high e, with `null` for a muted string. The capo adds to every fret.
 - **Samples** are in `static/samples/guitar/{E,A,D,G,B,ee}{0..12}.mp3`.
 - **`buildEvents`** turns sections into timed note events:
-  - A bass note plays on each boom of the rhythm grid. Root and fifth alternate within a run of the same chord; both are found as the lowest note in the shape with the right pitch class.
-  - Strings 3–5 are strummed on each chuck.
-  - A note rings until its string is reused or the chord changes.
-- **Strum spread** uses a pendulum model of the right hand (string spacing and swing amplitude vs. tempo).
+  - Each beat group of the rhythm grid gets a **strum pattern** (`strumPatterns.js`, plain data): one character per stroke of a hand that keeps moving down and up (even = down, odd = up), `B` bass, `x` strum, `g` graze, `.` miss, at `steps` strokes per quarter. Boom-chuck most of the time, with bum-titty and boom-chuck-a-chuck-a sprinkled in (`STRUM_MIX`, seeded so export and MIDI match live's first pass). A new pattern is one entry.
+  - Root and fifth alternate on the `B`s within a run of the same chord; both are found as the lowest note in the shape with the right pitch class.
+  - A strum is strings 3–5; a graze is an upstroke on the top two, 12 dB lighter until there's a real graze sample. Upstrokes play the strings high to low.
+  - A note rings until its string is reused or the chord changes. Looping, the guitar's notes span 4 passes (`LOOP_PASSES`), so the sprinkle varies.
+- **Strum spread** uses a pendulum model of the right hand (string spacing and swing amplitude vs. tempo; faster strokes swing smaller). Hypothesis to test: bluegrass is more a bounce (the hand speeds up and slows down through the stroke) than a pendulum; Irish keeps the pendulum.
+- **Fake round robin** (`roundRobin.js`): every sample play (guitar, melody, mandolin) is nudged at random by a few cents, up to 1 dB, and a start up to 1.5 ms into the sample, so repeats don't sound like a machine gun.
 - **Lighter touch** above 120 BPM: lower level, low-pass filter and softer attack.
 - **`playArrangement`** (now in `playback/livePlayback.js`) places every note at an absolute audio-clock time (`start + pass × duration + offset`).
   - A Tone context timer queues passes within a lookahead, catches up if it's late, and skips past-due notes.
