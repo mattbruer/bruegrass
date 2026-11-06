@@ -15,7 +15,7 @@ export const TIPS = Object.freeze({
 			'/': 'Your recorded songs: play one, or play them all.',
 			'/arranger': 'Write a chord chart and hear a bluegrass band play it.'
 		},
-		settings: 'Settings: tips, the music keypad, note variation, colours and shape.',
+		settings: 'Settings: tips, the music keypad, colours and shape.',
 		tipsToggle: 'Tips are on: rest on any control to see what it does. Tap to turn them off.'
 	},
 
@@ -85,6 +85,8 @@ export const TIPS = Object.freeze({
 	player: {
 		play: 'Play the arrangement from the start, looping. Changes you make while it plays are picked up.',
 		stop: 'Stop playing.',
+		varyNotes:
+			'Make every note sound a touch different, like a real player. Flip it while playing to compare.',
 		tempo: 'Speed, in beats per minute.',
 		capo: 'Where the guitar’s capo sits. The chord shapes stay the same; everything sounds higher.',
 		key: 'Move the whole song to another key. The guitar keeps its shapes and moves the capo to get there.',

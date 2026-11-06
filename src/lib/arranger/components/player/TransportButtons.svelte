@@ -1,8 +1,9 @@
 <script>
-	/** Play and Stop. */
+	/** Play, Stop, and the note-variation switch to A/B while playing. */
 	import { useArranger } from '../../state/context.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import VaryNotesButton from './VaryNotesButton.svelte';
 
 	const { player } = useArranger();
 </script>
@@ -25,4 +26,5 @@
 	>
 		Stop
 	</button>
+	<VaryNotesButton />
 </div>

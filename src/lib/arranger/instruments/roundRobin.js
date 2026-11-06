@@ -4,7 +4,7 @@
  * a slightly different pitch and level, and starts a hair into the sample,
  * which moves the attack's waveform a little.
  * Random on every play (not seeded), so no two passes or renders are the same.
- * Settings → Vary each note turns it off, checked on every note so it can be
+ * The Vary button by Play turns it off, checked on every note so it can be
  * compared while playing.
  */
 import { settings } from '$lib/settings/settings.svelte.js';
