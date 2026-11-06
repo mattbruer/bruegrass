@@ -86,10 +86,6 @@ export const TIPS = Object.freeze({
 	player: {
 		play: 'Play the arrangement from the start, looping. Changes you make while it plays are picked up.',
 		stop: 'Stop playing.',
-		feelOn:
-			'Play the strumming hand’s feel: each stroke a touch harder or softer, brighter or duller, early or late.',
-		feelAmount:
-			'How much feel. Find where it starts to sound sloppy, and where you stop hearing it.',
 		tempo: 'Speed, in beats per minute.',
 		capo: 'Where the guitar’s capo sits. The chord shapes stay the same; everything sounds higher.',
 		key: 'Move the whole song to another key. The guitar keeps its shapes and moves the capo to get there.',

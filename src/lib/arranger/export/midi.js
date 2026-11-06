@@ -84,10 +84,10 @@ export function arrangementToMidi(
 
 	/** @type {MidiNote[]} */
 	const guitar = events.map((event) => ({
-		tick: toTicks(event.time + event.nudge),
-		end: toTicks(event.stop + event.stopNudge),
+		tick: toTicks(event.time),
+		end: toTicks(event.stop),
 		note: midiNote(event.string, event.fret) + GUITAR_OFFSET + tuning.detune,
-		velocity: velocityFromDb(partDb[event.part] + event.levelDb + event.force) // touch and the hand's feel
+		velocity: velocityFromDb(partDb[event.part] + event.levelDb) // includes the player's touch
 	}));
 
 	// Bass player: its own root-fifth line with walks into chord changes

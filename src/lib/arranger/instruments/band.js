@@ -6,8 +6,6 @@
  * (export/renderSong.js). Both get the same sound from here.
  */
 import { createUpright } from './upright.js';
-import { brightness } from './hand.js';
-import { settings } from '$lib/settings/settings.svelte.js';
 
 /** Seconds; avoids clicks when a note is cut off. */
 const FADE_OUT = 0.03;
@@ -56,32 +54,15 @@ function loadBuffer(Tone, url) {
 export async function createBand(Tone, performance, channelInput, { live = true } = {}) {
 	const { guitar, mandolin, bass, melody } = performance;
 
-	const audio = Tone.getContext().rawContext;
-	const guitarOut = {
-		bass: await channelInput('guitar', 'bass'),
-		strum: await channelInput('guitar', 'strum')
-	};
-
-	/**
-	 * Each guitar note's own low-pass: a lighter touch (faster tempo, softer
-	 * stroke) is duller.
-	 * @param {'bass' | 'strum'} part
-	 * @param {number} forceDb the stroke's force (hand.js)
-	 */
-	const touchFilter = (part, forceDb) => {
-		const filter = audio.createBiquadFilter();
-		filter.type = 'lowpass';
-		filter.Q.value = Math.SQRT1_2;
-		filter.frequency.value = Math.min(
-			guitar.feel.cutoff[part] * brightness(forceDb),
-			audio.sampleRate / 2
-		);
-		Tone.connect(filter, guitarOut[part]);
-		return filter;
-	};
-
-	/** How much of the hand's feel to play: the Feel button and slider by Play, read per note. */
-	const feelAmount = () => (settings.feelOn ? settings.feelAmount : 0);
+	// Touch filters: a lighter pick stroke is duller
+	/** @param {'bass' | 'strum'} part */
+	const touchFilter = async (part) =>
+		new Tone.Filter({
+			type: 'lowpass',
+			frequency: guitar.feel.cutoff[part],
+			Q: Math.SQRT1_2
+		}).connect(await channelInput('guitar', part));
+	const guitarOut = { bass: await touchFilter('bass'), strum: await touchFilter('strum') };
 	const upright = createUpright(Tone, await channelInput('bass'));
 	const mandolinOut = await channelInput('mandolin');
 	const melodyOut = melody ? await channelInput('melody') : null;
@@ -92,21 +73,16 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 		)
 	);
 
-	/** Every sounding player, with what to let go of when it ends. */
-	/** @type {Map<import('tone').Player, (() => void) | undefined>} */
-	const players = new Map();
-	/**
-	 * @param {import('tone').Player} player
-	 * @param {() => void} [release] lets go of anything else the note made
-	 */
-	const track = (player, release) => {
+	/** @type {Set<import('tone').Player>} */
+	const players = new Set();
+	/** @param {import('tone').Player} player */
+	const track = (player) => {
 		if (!live) return player;
 		player.onstop = () => {
 			players.delete(player);
 			player.dispose();
-			release?.();
 		};
-		players.set(player, release);
+		players.add(player);
 		return player;
 	};
 
@@ -134,25 +110,18 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 			notes: guitar.events,
 			period: guitar.period,
 			/** @param {import('./guitar.js').NoteEvent} event @param {number} i @param {number} at */
-			play: (event, i, at) => {
-				const feel = feelAmount();
-				const forceDb = event.force * feel;
-				const start = at + event.nudge * feel;
-				const stop = at + event.stop - event.time + event.stopNudge * feel;
-				const filter = touchFilter(event.part, forceDb);
+			play: (event, i, at) =>
 				track(
 					new Tone.Player({
 						url: guitarSounds[i],
-						volume: event.levelDb + forceDb,
+						volume: event.levelDb,
 						fadeIn: guitar.feel.fadeIn[event.part],
 						fadeOut: event.fadeOut,
 						playbackRate: guitar.rate
-					}).connect(filter),
-					() => filter.disconnect()
+					}).connect(guitarOut[event.part])
 				)
-					.start(start)
-					.stop(stop);
-			}
+					.start(at)
+					.stop(at + event.stop - event.time)
 		},
 		{
 			notes: mandolin.chops,
@@ -195,18 +164,21 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 
 		/** Stop everything at once and let go of the players, synth and filters. */
 		stop() {
-			for (const [player, release] of players) {
-				player.onstop = () => {};
+			for (const player of players) {
 				try {
 					player.stop();
 				} catch {
 					// already stopped
 				}
 				player.dispose();
-				release?.();
 			}
 			players.clear();
 			upright.stop();
+			// Let any fade-outs finish before removing the touch filters
+			setTimeout(() => {
+				guitarOut.bass.dispose();
+				guitarOut.strum.dispose();
+			}, 200);
 		}
 	};
 }

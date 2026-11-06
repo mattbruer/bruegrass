@@ -1,9 +1,8 @@
 <script>
-	/** Play, Stop, and the note-variation switch to A/B while playing. */
+	/** Play and Stop. */
 	import { useArranger } from '../../state/context.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
-	import FeelControls from './FeelControls.svelte';
 
 	const { player } = useArranger();
 </script>
@@ -26,9 +25,4 @@
 	>
 		Stop
 	</button>
-</div>
-
-<!-- Listening tests: A/B the hand's feel, the note variation and each strum pattern -->
-<div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-	<div class="flex items-center gap-2"><FeelControls /></div>
 </div>
