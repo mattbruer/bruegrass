@@ -124,4 +124,11 @@
 		box-shadow: var(--shadow-inset-small);
 		touch-action: none; /* drags on the graph move bands, not the page */
 	}
+
+	/* Short screens (phones): a shorter graph, so the whole EQ window fits */
+	@media (max-height: 900px) {
+		.graph {
+			height: 9rem;
+		}
+	}
 </style>

@@ -32,6 +32,11 @@ export const TIPS = Object.freeze({
 		deleteSaved: 'Delete this song for good.'
 	},
 
+	drafts: {
+		restore: 'Put last time’s unsaved changes back, so you can keep working and Save.',
+		discard: 'Throw last time’s unsaved changes away.'
+	},
+
 	player: {
 		play: 'Play the arrangement from the start, looping. Changes you make while it plays are picked up.',
 		stop: 'Stop playing.',

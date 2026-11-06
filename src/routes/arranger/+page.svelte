@@ -6,7 +6,9 @@
 	 *
 	 * It always opens on the starter song; your own songs open from the song
 	 * bar. Leaving with unsaved changes asks first. If this device has a
-	 * listening setup, its EQs go on as the page starts.
+	 * listening setup, its EQs go on as the page starts. Unsaved changes are
+	 * kept as drafts (an iPhone never asks before leaving), and offered back
+	 * the next time the page opens.
 	 */
 	import { onMount } from 'svelte';
 	import { provideArranger } from '$lib/arranger/state/context.js';
@@ -17,12 +19,19 @@
 	import MelodyPanel from '$lib/arranger/components/melody/MelodyPanel.svelte';
 	import SheetMusic from '$lib/arranger/components/melody/SheetMusic.svelte';
 	import MixerDrawer from '$lib/arranger/components/mixer/MixerDrawer.svelte';
+	import RestoreDraftsDialog from '$lib/arranger/components/song/RestoreDraftsDialog.svelte';
 	import { startThisDevicesSetup } from '$lib/arranger/playback/eq/listeningSetup.svelte.js';
+	import { keepDrafts, offerDraftsFromLastTime } from '$lib/arranger/state/drafts.svelte.js';
 
 	const arranger = provideArranger();
 	guardUnsavedChanges(arranger.song);
-	// The EQs this device's speakers or headphones were tuned for (saved in this browser, so only once it's running)
-	onMount(startThisDevicesSetup);
+	keepDrafts(arranger);
+	// Both need this browser's storage, so they wait until the page is running:
+	// the EQs this device's speakers or headphones were tuned for, then any drafts from last time
+	onMount(() => {
+		startThisDevicesSetup();
+		offerDraftsFromLastTime();
+	});
 </script>
 
 <svelte:head>
@@ -44,3 +53,4 @@
 </main>
 
 <MixerDrawer />
+<RestoreDraftsDialog />

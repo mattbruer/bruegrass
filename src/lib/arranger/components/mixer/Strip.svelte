@@ -65,6 +65,51 @@
 		gap: 0.6rem;
 	}
 
+	/*
+	 * A phone on its side is too short for controls stacked over the fader,
+	 * so they sit beside it instead, two to a row: wider strips (the console
+	 * scrolls sideways anyway), half the height. The fader is always a strip's
+	 * last control, so it takes the right-hand column.
+	 */
+	@media (max-height: 600px) {
+		.strip-controls {
+			display: grid;
+			grid-template-columns: auto auto auto;
+			align-content: end;
+			align-items: end;
+			gap: 0.5rem 0.6rem;
+		}
+
+		.strip-controls > :global(:last-child) {
+			grid-column: 3;
+			grid-row: 1 / span 8;
+		}
+
+		/* The strip is wide now: name and EQ side by side, and a little less padding */
+		.strip {
+			gap: 0.5rem;
+			padding: 0.6rem 0.7rem 0.7rem;
+		}
+
+		.strip-top {
+			flex-direction: row;
+			align-items: center;
+			gap: 0.6rem;
+		}
+
+		.strip-top > :global(button) {
+			flex: 1;
+			flex-direction: row;
+			justify-content: center;
+			gap: 0.4rem;
+		}
+
+		.strip-top .strip-name {
+			width: auto;
+			text-align: left;
+		}
+	}
+
 	.strip-name {
 		width: 100%;
 		text-align: center;

@@ -5,13 +5,14 @@
 	import ToggleSwitch from '../controls/ToggleSwitch.svelte';
 </script>
 
-<section class="mb-4 ui-well p-4">
+<!-- Tips need hover, so phones and touch-only tablets don't get the option -->
+<section class="mb-4 ui-hover-only ui-well p-4">
 	<h3 class="mb-1 text-xs font-bold tracking-wider text-ink-faint uppercase">Help</h3>
 
 	<SettingRow
 		id="setting-show-tips"
 		label="Tips"
-		description="Rest the pointer on a control (or press and hold it on a phone) to see what it does."
+		description="Rest the pointer on a control to see what it does."
 	>
 		<ToggleSwitch bind:on={settings.showTips} labelledBy="setting-show-tips" />
 	</SettingRow>

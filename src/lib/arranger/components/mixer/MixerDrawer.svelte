@@ -49,7 +49,7 @@
 	aria-label="Mixer"
 	inert={!layout.mixerOpen}
 >
-	<div class="mx-auto max-w-5xl px-4 pt-3 pb-5 sm:px-8">
+	<div class="drawer-content mx-auto max-w-5xl px-4 pt-3 pb-5 sm:px-8">
 		<div class="mb-2 flex items-center gap-3">
 			<h2 class="font-semibold">Mixer</h2>
 			<!-- What you're listening on: this device's EQs for its speakers or headphones -->
@@ -89,8 +89,11 @@
 			4px -2px 10px var(--shadow-dark-edge);
 	}
 
-	.handle:hover {
-		color: var(--color-accent);
+	/* Only with a real hover: on a touch screen a tapped :hover sticks until the next tap */
+	@media (hover: hover) {
+		.handle:hover {
+			color: var(--color-accent);
+		}
 	}
 
 	.drawer {
@@ -118,5 +121,17 @@
 		transform: none;
 		visibility: visible;
 		transition: transform 0.25s ease;
+	}
+
+	/* A phone on its side: the mixer needs all the height below the top bar */
+	@media (max-height: 600px) {
+		.drawer {
+			max-height: calc(100dvh - 3.5rem); /* the top bar's height */
+		}
+
+		.drawer-content {
+			padding-top: 0.5rem;
+			padding-bottom: 0.5rem;
+		}
 	}
 </style>

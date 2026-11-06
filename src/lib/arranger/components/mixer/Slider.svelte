@@ -194,8 +194,13 @@
 	.track {
 		position: relative;
 		flex-shrink: 0;
-		/* Off the cap, a touch is left to the page: sideways swipes scroll the mixer */
-		touch-action: pan-x;
+		/*
+		 * Off the cap, a touch is left to the page: swipes scroll whatever the
+		 * slider sits in. In the mixer that's only sideways (the console allows
+		 * only pan-x, so up/down stays the faders'); in a window like the EQ,
+		 * up/down scrolls the window too.
+		 */
+		touch-action: pan-x pan-y;
 		outline: none;
 	}
 

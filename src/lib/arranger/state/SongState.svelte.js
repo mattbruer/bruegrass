@@ -68,6 +68,18 @@ export class SongState {
 	}
 
 	/**
+	 * Put back unsaved changes from a draft (see drafts.svelte.js): the saved
+	 * song (or a new one) as it was saved, then the changes on top, so it
+	 * shows as having unsaved changes, just as when you left.
+	 * @param {{ savedId: string | null, name: string, fields: import('./songFields.js').SongFields }} draft
+	 */
+	restoreDraft(draft) {
+		if (draft.savedId) this.open(draft.savedId);
+		else this.startNew();
+		loadSongIntoPage(this.#arranger, draft.fields);
+	}
+
+	/**
 	 * Save the song. A new song needs a name; a saved one keeps its own
 	 * unless a new name is given.
 	 * @param {string} [name]

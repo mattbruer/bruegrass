@@ -85,3 +85,13 @@
 		opacity: 0.45;
 	}
 }
+
+/*
+ * Only on devices that can hover (a mouse or trackpad): hidden on phones and
+ * touch-only tablets. For things that only make sense with hover, like tooltips.
+ */
+@utility ui-hover-only {
+	@media (hover: none) {
+		display: none;
+	}
+}

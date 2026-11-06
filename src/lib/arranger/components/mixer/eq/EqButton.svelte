@@ -70,9 +70,15 @@
 		color: var(--color-ink-soft);
 	}
 
-	.eq-button.open,
-	.eq-button:hover {
+	.eq-button.open {
 		color: var(--color-accent);
+	}
+
+	/* Only with a real hover: on a touch screen a tapped :hover sticks until the next tap */
+	@media (hover: hover) {
+		.eq-button:hover {
+			color: var(--color-accent);
+		}
 	}
 
 	svg {

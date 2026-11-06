@@ -69,8 +69,14 @@
 		color: var(--color-ink);
 	}
 
-	.name:hover,
 	.name.open {
 		color: var(--color-accent);
+	}
+
+	/* Only with a real hover: on a touch screen a tapped :hover sticks until the next tap */
+	@media (hover: hover) {
+		.name:hover {
+			color: var(--color-accent);
+		}
 	}
 </style>

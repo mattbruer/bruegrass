@@ -98,6 +98,14 @@
 		max-height: calc(100dvh - 6rem);
 	}
 
+	/* Short screens (phones): start just under the top bar, to use the height */
+	@media (max-height: 900px) {
+		.panel.floating {
+			inset: 3.75rem 0 auto;
+			max-height: calc(100dvh - 4.25rem);
+		}
+	}
+
 	/* The page behind is dimmed (in the text colour, so it suits any theme) and blurred */
 	.panel::backdrop {
 		background: color-mix(in oklab, var(--color-ink) 35%, transparent);

@@ -40,6 +40,8 @@ The user wants code they can read and change without help, and that makes the ne
 
 - Very modular: small functions in their own modules, imported by thin components; small components composed together.
 - Build for the next feature, not just this one. A new feature should mostly be new small modules plugged into existing seams (a list entry, a shared helper, a document collection), not edits spread across many files. When adding something, leave a seam the following feature can use (e.g. `storage/collection.js` made a second saved-document type a few lines; `TABS` makes a new Settings tab one line).
+- **Design every change for both phone and desktop.** The user uses the app on an iPhone and a MacBook. For everything (features, controls, layout, wording), decide how it works on each: touch vs mouse/keyboard, hover (none on touch; use `ui-hover-only` for hover-only things), screen size (the mixer must fit a phone without vertical scrolling), and the iPhone's quirks. If something only makes sense on one, hide or adapt it on the other, and say what you decided. Check both sizes in the browser (the pane's mobile preset emulates touch).
+- **Never let unsaved work vanish, especially on iPhone.** iPhone Safari never asks before leaving (switching apps can unload the page; a swipe closes the tab), so a "leave without saving?" prompt alone isn't enough. Anything the user can change and lose keeps a draft on the device while it has unsaved changes and offers it back next visit, using `storage/drafts.js` (`writeDraft`/`readDraft`/`clearDraft`; see `arranger/state/drafts.svelte.js` for the pattern). The user asked for this to be applied every time it comes up, without asking.
 - One place per decision.
 - Descriptive names, and comments that explain the _why_.
 - Refactor toward this whenever touching code. Next candidates: `instruments/guitar.js` (where playback starts lives there) and `melody/abcChords.js`.
@@ -47,7 +49,7 @@ The user wants code they can read and change without help, and that makes the ne
 ## Saved data and settings
 
 - `src/lib/storage/arrangements.js`: an arrangement is a plain document (`id`, `version`, `title`, `arrangement`, `abc`, `tempo`, `capo`, `transpose`, `mix`, `createdAt`, `updatedAt`). Pages only go through this module, never storage directly. Today it's localStorage, a per-device copy that works offline. A database is planned (social features, realtime, PWA), so keep data serializable and in this shape, and bump `ARRANGEMENT_VERSION` and migrate in `upgrade` when the shape changes.
-- Songs are saved only when the user presses Save; there is no autosave and nothing auto-loads.
+- Songs are saved only when the user presses Save; there is no autosave and nothing auto-loads. The one safety net is drafts: while the song or the listening setup has unsaved changes, `state/drafts.svelte.js` keeps a draft (1 s after a change, and at once when the page is hidden), and the next visit asks "Pick up where you left off?" (`components/song/RestoreDraftsDialog.svelte`; closing it restores, so nothing is lost). Drafts aren't written until that's answered, the restored song shows as unsaved on top of its saved version, and choosing to discard on leaving forgets them. Drafts are per device and never sync.
   - The song bar is `components/song/`, and the logic is `state/SongState.svelte.js`.
   - The first save asks for a name; after that, Save (or Cmd/Ctrl+S) saves under it.
   - A dot shows unsaved changes, judged by comparing `readSongFields` with the fields as last saved.
@@ -62,8 +64,8 @@ The user wants code they can read and change without help, and that makes the ne
 
 - Every control gets a tooltip: `use:tooltip={TIPS.area.thing}` (`src/lib/tooltips/tooltip.js`). Shared controls take a `tip` prop instead (`Slider`, `ChannelFader`, `ToggleSwitch`). **When adding a control, add its tip.**
 - All the wording is in `src/lib/tooltips/tips.js`, grouped by area: one or two plain sentences on what it does, for a non-technical user. Lists keyed by id (EQ bands, reverb controls, chord displays, visualiser views) follow the ids in the code that defines them.
-- Behaviour (timings are constants at the top of `tooltip.js`): mouse after 1.5 s (the user found shorter annoying), then instant when moving straight to the next control (0.3 s); keyboard focus; touch press-and-hold 0.5 s, which swallows the lift-off click so reading a tip never presses the button. One shared bubble, a native `popover`, so it sits above dialogs. The ? button in the top bar (`tooltips/TipsToggle.svelte`) and Settings → General → Tips both turn them off (same setting, `settings.showTips`); the text stays on the control as `aria-description` for screen readers.
-- Deliberately without tips: the phone music keypad (holding would fight fast typing), text areas, plain Cancel/Close, and Settings rows that already show a description.
+- Behaviour (timings are constants at the top of `tooltip.js`): mouse after 1.5 s (the user found shorter annoying), then instant when moving straight to the next control (0.3 s); keyboard focus. **No tips on touch-only devices** (the user's call: hover isn't a thing on a phone or tablet), so the ? button and the Settings row carry `ui-hover-only` (in `theme/ui.css`, hidden under `@media (hover: none)`); an iPad with a trackpad can hover, so it keeps them. One shared bubble, a native `popover`, so it sits above dialogs. The ? button in the top bar (`tooltips/TipsToggle.svelte`) and Settings → General → Tips both turn them off (same setting, `settings.showTips`); the text stays on the control as `aria-description` for screen readers.
+- Deliberately without tips: the phone music keypad (touch only anyway), text areas, plain Cancel/Close, and Settings rows that already show a description.
 
 ### Look and theming
 
@@ -155,7 +157,11 @@ The core of the arranger.
   - Older songs' `reverb.decay` maps to `plugin.decay` in `applyMix`.
 - New instruments should add a channel to `mixer.channels` rather than connect to the destination directly.
 - Every mixer control is a `Slider.svelte`, the same on desktop and touch. Only the cap drags, and it moves relative to where it is, so the track never jumps. Off the cap, touches are left to the page (`touch-action: pan-x`). Tapping the readout resets; arrow keys step past detents.
-- The console is one row that scrolls sideways on narrow screens, so in the mixer up/down only ever means a fader. Keep strips short enough that the drawer fits a phone without vertical scrolling.
+- The console is one row that scrolls sideways on narrow screens, so in the mixer up/down only ever means a fader. Keep strips short enough that the drawer fits a phone without vertical scrolling, upright and on its side.
+  - On its side (`max-height: 600px`, the one breakpoint for it), each strip lays its controls out two to a row beside the fader (the fader is always a strip's last control), name beside EQ; the drawer goes up to the top bar and the hint line hides. Measured at 812×375: the drawer fits exactly.
+  - Slider tracks use `touch-action: pan-x pan-y`: the console's own `pan-x` still limits the mixer to sideways swipes, while a window like the EQ can scroll up/down over its sliders.
+  - Floating windows start just under the top bar on short screens, and the EQ graph is shorter there (9rem), so the EQ window fits a phone.
+  - `:hover` styles go inside `@media (hover: hover)`: on a touch screen a tapped hover sticks.
 
 ### `midi.js`
 

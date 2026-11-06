@@ -150,6 +150,31 @@
 		background: var(--band);
 	}
 
+	/*
+	 * Touch screens: fingers need bigger targets than a mouse. The chips get
+	 * taller, and the on/off dot gets a larger invisible hit area around it
+	 * (the dot itself stays small, so the chips don't spread out).
+	 */
+	@media (pointer: coarse) {
+		.chip {
+			gap: 0.5rem;
+			padding: 0.45rem 0.6rem;
+			font-size: 0.75rem;
+		}
+
+		.power {
+			position: relative;
+			width: 0.9rem;
+			height: 0.9rem;
+		}
+
+		.power::after {
+			content: '';
+			position: absolute;
+			inset: -0.6rem;
+		}
+	}
+
 	.controls {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));

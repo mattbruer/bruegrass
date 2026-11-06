@@ -7,6 +7,7 @@ import {
 	setupDiscardQuestion,
 	setupHasUnsavedChanges
 } from '../playback/eq/listeningSetup.svelte.js';
+import { forgetDraftsOnLeaving } from './drafts.svelte.js';
 
 /**
  * Call once while the arranger page is being set up.
@@ -27,6 +28,7 @@ export function guardUnsavedChanges(song) {
 
 		const question = songChanged ? discardQuestion(song) : setupDiscardQuestion();
 		if (!confirm(question)) navigation.cancel();
+		else forgetDraftsOnLeaving(); // you chose to discard: don't offer it back next time
 	});
 }
 

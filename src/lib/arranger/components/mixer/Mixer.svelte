@@ -26,7 +26,8 @@
 		<MasterScope />
 	</div>
 
-	<p class="mt-2 text-xs text-ink-soft">
+	<!-- (hidden on a phone on its side, to make room) -->
+	<p class="hint mt-2 text-xs text-ink-soft">
 		Drag a control by its cap. Tap a value, or double-click a cap, to reset it.
 	</p>
 </section>
@@ -57,6 +58,11 @@
 	@media (max-height: 600px) {
 		.console {
 			--fader-length: 7rem;
+			padding: 0.5rem;
+		}
+
+		.hint {
+			display: none;
 		}
 	}
 </style>

@@ -31,7 +31,7 @@
 </script>
 
 <Strip id="output" name="Loudness" kind="master" hasEq={false}>
-	<div class="flex w-28 flex-col items-center gap-3">
+	<div class="output-controls">
 		<LoudnessReadout />
 		<LimiterMeter />
 
@@ -59,3 +59,26 @@
 		<CompareButtons />
 	</div>
 </Strip>
+
+<style>
+	.output-controls {
+		display: flex;
+		width: 7rem;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	/* A phone on its side: readings in one column, controls in the next */
+	@media (max-height: 600px) {
+		.output-controls {
+			display: grid;
+			width: 14rem;
+			grid-template-columns: 1fr 1fr;
+			grid-auto-flow: column;
+			grid-template-rows: repeat(3, auto);
+			align-items: start;
+			gap: 0.5rem 0.75rem;
+		}
+	}
+</style>

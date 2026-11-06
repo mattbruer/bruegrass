@@ -52,14 +52,7 @@ const SUGGESTED_SETUP_NAMES = Object.freeze([
  * already used.
  */
 export function suggestedSetupNames() {
-	const agent = globalThis.navigator?.userAgent ?? '';
-	const ownSpeaker = /iPhone/.test(agent)
-		? 'iPhone speaker'
-		: /iPad/.test(agent)
-			? 'iPad speakers'
-			: /Macintosh/.test(agent)
-				? 'MacBook speakers'
-				: null;
+	const ownSpeaker = thisDevicesSpeaker();
 	const ordered = ownSpeaker
 		? [ownSpeaker, ...SUGGESTED_SETUP_NAMES.filter((name) => name !== ownSpeaker)]
 		: [...SUGGESTED_SETUP_NAMES];
@@ -81,6 +74,20 @@ export function setupHasUnsavedChanges() {
 	// Compare against the setup as it lands on the strips, so a setup saved
 	// before a band or strip existed doesn't look changed
 	return JSON.stringify(eqsSnapshot()) !== JSON.stringify(eqsAfterApplying(listening.setup.eqs));
+}
+
+/**
+ * This device's own speaker, as a setup name, or null if we can't tell.
+ * An iPad's Safari claims to be a Mac ("Macintosh" in its user agent), but
+ * unlike a Mac it has a touch screen, which tells them apart.
+ */
+function thisDevicesSpeaker() {
+	const agent = globalThis.navigator?.userAgent ?? '';
+	const touchPoints = globalThis.navigator?.maxTouchPoints ?? 0;
+	if (/iPhone/.test(agent)) return 'iPhone speaker';
+	if (/iPad/.test(agent) || (/Macintosh/.test(agent) && touchPoints > 1)) return 'iPad speakers';
+	if (/Macintosh/.test(agent)) return 'MacBook speakers';
+	return null;
 }
 
 /** The question to ask before the setup's unsaved EQ changes are lost. */
