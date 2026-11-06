@@ -3,15 +3,26 @@
 	 * The melody drawn as sheet music. It redraws once you pause typing, and
 	 * while the band plays it follows along: the sounding note lights up, a
 	 * cursor glides across the staff, and a new line scrolls into view.
+	 *
+	 * The notation is at concert pitch before the Key menu. It's drawn as the
+	 * song sounds, or, with a capo or a key change, in the key of the
+	 * guitar's shapes, for reading with the capo on.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { drawSheetMusic } from '../../melody/drawSheetMusic.js';
 	import { followSheetMusic } from '../../melody/followSheetMusic.js';
+	import SheetViewToggle from './SheetViewToggle.svelte';
 
 	/** Redraw this long after the last keystroke, not on every one. */
 	const REDRAW_DELAY_MS = 200;
 
-	const { melody, player } = useArranger();
+	const { arrangement, melody, player } = useArranger();
+
+	/** Both views are the same with no capo or key change, so the tabs only show when they differ. */
+	let canTranspose = $derived(arrangement.key !== null && arrangement.pitchShift !== 0);
+	let drawnTranspose = $derived(
+		canTranspose && melody.sheetView === 'shapes' ? -arrangement.capoFret : arrangement.transpose
+	);
 
 	/** @type {HTMLDivElement | undefined} */
 	let page = $state();
@@ -19,6 +30,7 @@
 	// Draw the notation (after a pause in typing)
 	$effect(() => {
 		const notation = melody.notation;
+		const transpose = drawnTranspose;
 		const target = page;
 		if (!melody.hasNotation) {
 			melody.clearDrawing();
@@ -28,7 +40,7 @@
 
 		let replaced = false;
 		const timer = setTimeout(async () => {
-			const drawn = await drawSheetMusic(target, notation);
+			const drawn = await drawSheetMusic(target, notation, { transpose });
 			if (!replaced) melody.drawn = drawn;
 		}, REDRAW_DELAY_MS);
 
@@ -78,7 +90,12 @@
 
 {#if melody.hasNotation}
 	<section class="mt-10" aria-label="Sheet music">
-		<h2 class="mb-3 text-xl font-semibold">Sheet music</h2>
+		<div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+			<h2 class="text-xl font-semibold">Sheet music</h2>
+			{#if canTranspose}
+				<SheetViewToggle />
+			{/if}
+		</div>
 
 		<div bind:this={page} class="paper overflow-x-auto p-2"></div>
 	</section>

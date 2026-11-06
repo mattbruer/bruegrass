@@ -87,7 +87,7 @@ export const TIPS = Object.freeze({
 		play: 'Play the arrangement from the start, looping. Changes you make while it plays are picked up.',
 		stop: 'Stop playing.',
 		tempo: 'Speed, in beats per minute.',
-		capo: 'Where the guitar’s capo sits. The chord shapes stay the same; everything sounds higher.',
+		capo: 'Where the guitar’s capo sits. With a melody, it asks whether the song moves up or keeps its key.',
 		key: 'Move the whole song to another key. The guitar keeps its shapes and moves the capo to get there.',
 		mixer: 'Open the mixer: levels, pan, EQ, reverb and loudness for each instrument.',
 		export: 'Download the song: the full mix or stems as WAV files, or a MIDI file.',
@@ -132,7 +132,16 @@ export const TIPS = Object.freeze({
 		arrangementFromChords:
 			'Replace the arrangement with one written from the melody’s chord symbols.',
 		chordsIntoMelody:
-			'Write the arrangement’s chords into the melody, as chord symbols above the notes.'
+			'Write the arrangement’s chords into the melody, as chord symbols above the notes.',
+		sheetView: {
+			concert: 'The sheet music as the song sounds, for anyone without a capo.',
+			shapes: 'The sheet music in the key of the guitar’s chord shapes, to read with the capo on.'
+		}
+	},
+
+	capoChoice: {
+		raise: 'Keep the chord shapes and move the whole song, melody too.',
+		keep: 'Keep the song where it sounds: the chart changes to new chord shapes for this capo.'
 	},
 
 	mixer: {

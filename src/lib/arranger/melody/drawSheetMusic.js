@@ -29,17 +29,26 @@ export const NOTHING_DRAWN = Object.freeze({
 /**
  * @param {HTMLElement} target where the music is drawn (its contents are replaced)
  * @param {string} notation ABC notation
+ * @param {{ transpose?: number }} [options] semitones to move the drawing by
+ *   (display only: the notes played and the chords read stay as written)
  * @returns {Promise<DrawnTune>}
  */
-export async function drawSheetMusic(target, notation) {
+export async function drawSheetMusic(target, notation, { transpose = 0 } = {}) {
 	const { default: abcjs } = await import('abcjs');
 
-	const [tune] = abcjs.renderAbc(target, notation, { responsive: 'resize', add_classes: true });
+	const [tune] = abcjs.renderAbc(target, notation, {
+		responsive: 'resize',
+		add_classes: true,
+		visualTranspose: transpose
+	});
 	if (!tune) return NOTHING_DRAWN;
+
+	// A moved drawing moves its chord symbols too, so chords are read from the tune as written
+	const asWritten = transpose === 0 ? tune : abcjs.parseOnly(notation)[0];
 
 	return {
 		tune,
-		sequence: tryOrNull(() => abcjs.synth.sequence(tune, {})),
+		sequence: tryOrNull(() => abcjs.synth.sequence(asWritten, {})),
 		timings: tryOrNull(() => new abcjs.TimingCallbacks(tune, {}).noteTimings),
 		warnings: (tune.warnings ?? []).map(withoutHtml)
 	};

@@ -40,7 +40,8 @@
 		band: the tune's first full bar starts with the arrangement's first bar, at the tempo above. The
 		band always plays the arrangement: if the tune has chord symbols (like <code>"G"</code>), the
 		arrangement can be written from them, and if it has none, the arrangement's chords can be added
-		to it. Write the tune at its real (concert) pitch; the capo doesn't move it.
+		to it. Write the tune at its real (concert) pitch. With a capo on, the sheet music can also be
+		shown in the key of the guitar's shapes.
 	</p>
 
 	<textarea

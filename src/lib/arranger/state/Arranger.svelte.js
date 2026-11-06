@@ -11,6 +11,7 @@
  *   arranger.layout        mixer drawer and phone keypad (what covers the screen)
  *   arranger.song          which song is open; New, Open, Save
  *   arranger.chordReport   what the last chord conversion wants you to know
+ *   arranger.capoAsked     a capo change waiting for "raise the song or keep its key?"
  */
 import { ArrangementState } from './ArrangementState.svelte.js';
 import { LoopState } from './LoopState.svelte.js';
@@ -19,6 +20,9 @@ import { PlayerState } from './PlayerState.svelte.js';
 import { PageLayoutState } from './PageLayoutState.svelte.js';
 import { SongState } from './SongState.svelte.js';
 import { abcWithChords, arrangementFromAbc } from '../melody/abcChords.js';
+import { transposeAbc } from '../melody/transposeAbc.js';
+import { transposeChart } from '../chart/transposeChart.js';
+import { validCapo } from '../chart/capo.js';
 
 export class Arranger {
 	arrangement = new ArrangementState();
@@ -31,6 +35,9 @@ export class Arranger {
 
 	/** @type {{ title: string, notes: string[] } | null} */
 	chordReport = $state(null);
+
+	/** The capo fret asked for, while the page asks what the melody should do (else null). */
+	capoAsked = $state(/** @type {number | null} */ (null));
 
 	/** A name for the work: the tune's title, else the first section's name. */
 	title = $derived(this.melody.title || this.arrangement.sections[0]?.name || '');
@@ -75,5 +82,43 @@ export class Arranger {
 			title: "The arrangement's chords are written into the melody.",
 			notes: result.notes
 		};
+	}
+
+	/**
+	 * Move the capo. With no melody it just moves (the song sounds higher or
+	 * lower). With one, the melody would no longer match the band, so the page
+	 * asks first: raise the song with the capo, or keep its key.
+	 * @param {number} fret
+	 */
+	setCapo(fret) {
+		const capo = validCapo(fret);
+		if (capo === this.arrangement.capoFret) return;
+		if (this.melody.hasNotation) this.capoAsked = capo;
+		else this.arrangement.capo = capo;
+	}
+
+	/** Same shapes, everything sounds higher or lower: the melody moves with the band. */
+	async raiseSongWithCapo() {
+		const capo = this.capoAsked;
+		if (capo === null) return;
+		const semitones = capo - this.arrangement.capoFret;
+		this.melody.notation = await transposeAbc(this.melody.notation, semitones);
+		this.arrangement.capo = capo;
+		this.capoAsked = null;
+	}
+
+	/** The song sounds the same: the chart's chords change to the shapes that reach it. */
+	keepKeyWithCapo() {
+		const capo = this.capoAsked;
+		if (capo === null) return;
+		const semitones = capo - this.arrangement.capoFret;
+		this.arrangement.text = transposeChart(this.arrangement.text, -semitones);
+		this.arrangement.capo = capo;
+		this.capoAsked = null;
+	}
+
+	/** Leave the capo where it was. */
+	cancelCapo() {
+		this.capoAsked = null;
 	}
 }

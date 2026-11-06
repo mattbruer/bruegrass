@@ -19,6 +19,9 @@ export class MelodyState {
 	 */
 	drawn = $state.raw(NOTHING_DRAWN);
 
+	/** How the sheet music is drawn: as it sounds, or in the key of the guitar's shapes (for reading with a capo). */
+	sheetView = $state(/** @type {'concert' | 'shapes'} */ ('concert'));
+
 	hasNotation = $derived(this.notation.trim() !== '');
 
 	/** The melody's notes, timed from bar 1, or why it can't be played. */
