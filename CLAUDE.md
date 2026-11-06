@@ -51,7 +51,7 @@ The user wants code they can read and change without help, and that makes the ne
 - **Never let unsaved work vanish, especially on iPhone.** iPhone Safari never asks before leaving (switching apps can unload the page; a swipe closes the tab), so a "leave without saving?" prompt alone isn't enough. Anything the user can change and lose keeps a draft on the device while it has unsaved changes and offers it back next visit, using `storage/drafts.js` (`writeDraft`/`readDraft`/`clearDraft`; see `arranger/state/drafts.svelte.js` for the pattern). The user asked for this to be applied every time it comes up, without asking.
 - **Clean up whatever you start**: event listeners, timers, frame loops (`onEveryFrame` returns its stop), observers, `$effect`s, audio nodes and contexts (an offline render disposes its context; see `renderOffline` in `export/renderSong.js`). In a component, return the cleanup from `onMount`/`$effect`; in an action, from `destroy`. Something deliberately kept for the life of the page (the live mixer graph and its watchers, the tooltip bubble) says so in a comment.
 - One place per decision.
-- Descriptive names, and comments that explain the _why_.
+- Descriptive names; few comments (only where something non-obvious needs saying).
 - Refactor toward this whenever touching code. Next candidate: `melody/abcChords.js`.
 
 ## The todo list (`todo.json`)
@@ -238,6 +238,13 @@ The core of the arranger.
 - Repeated sections (same chords) are guaranteed to differ from their previous pass.
 - Gates and velocities shape articulation.
 - Tuning constants sit at the top of the file.
+
+## How the user thinks
+
+- They change direction and add ideas often, and don't always have a clear vision up front. Make every design cheap to change: layers, plain data and seams, so a big change touches one place. Motto: make everything extendable. Build as if big code changes were expensive for a human.
+- Painter's approach (Sargent): get what reads from a distance right first, then build detail on that foundation. Start with a thin end-to-end version, then refine; no speculative options or abstractions. Judge audio at a distance (in the mix, quiet, on a phone speaker).
+- Code for a reader with about a year of full-stack experience: short, well-named functions with clear inputs and outputs, few comments (they dislike clutter; comment only where truly needed). Physics and DSP maths may be abstracted or come from a library.
+- Build for one case first (e.g. bluegrass), leave seams for the next (Irish, custom patterns), and don't build UI for the others yet.
 
 ## Working with the user
 

@@ -1,5 +1,7 @@
 # Handoff: sampling-session tool and a richer, human-sounding sample set
 
+> **Partly superseded 2026-11-06 by `HANDOFF-sampler-pilot.md`** (one-chord pilot first, attempt log, articulation names, 2 firm + 2 light grazes). Read that first; this file's gear, analysis and memory notes still stand.
+
 Written 2026-11-05 at the end of a brainstorming chat. **Built so far:** the `/sampler` input check (2026-11-06) and the guided recording session (2026-11-06; described in `CLAUDE.md`). **Not built:** everything in "The sound plan" and "Loading and memory" (the app doesn't play recorded samples yet), the pilot ear tests, the phone memory test and the compressed format. Delete this file once its contents are in the code, `CLAUDE.md` and the READMEs.
 
 ## Goal
