@@ -115,6 +115,9 @@
  * user's choices too.
  */
 @theme static {
+	/* The typeface for the whole app (Tailwind's default body font). Loaded in app.html. */
+	--font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+
 	--color-surface: var(--theme-background);
 	--color-surface-deep: oklch(from var(--theme-background) calc(l - 0.04) c h);
 	--color-raised: oklch(from var(--theme-background) calc(l + 0.06) c h); /* cards and buttons: lighter than the page */
