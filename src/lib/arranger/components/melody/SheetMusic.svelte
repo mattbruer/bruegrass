@@ -89,7 +89,7 @@
 </script>
 
 {#if melody.hasNotation}
-	<section class="mt-10" aria-label="Sheet music">
+	<section aria-label="Sheet music">
 		<div class="mb-3 flex flex-wrap items-center justify-between gap-2">
 			<h2 class="text-xl font-semibold">Sheet music</h2>
 			{#if canTranspose}

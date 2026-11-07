@@ -90,6 +90,7 @@ export const TIPS = Object.freeze({
 		capo: 'Where the guitar’s capo sits. With a melody, it asks whether the song moves up or keeps its key.',
 		key: 'Move the whole song to another key. The guitar keeps its shapes and moves the capo to get there.',
 		mixer: 'Open the mixer: levels, pan, EQ, reverb and loudness for each instrument.',
+		edit: 'Open the editor to write the chords and the melody. The chart changes as you type.',
 		export: 'Download the song: the full mix or stems as WAV files, or a MIDI file.',
 		loopSection: 'Choose which part of the song repeats while it plays.',
 		loopFrom: 'The first bar of the loop.',
@@ -104,7 +105,12 @@ export const TIPS = Object.freeze({
 	},
 
 	editor: {
-		help: 'How to write an arrangement: bars, chords, sections, repeats and time signatures.'
+		help: 'How to write an arrangement: bars, chords, sections, repeats and time signatures.',
+		close: 'Close the editor. Your changes stay.',
+		tabs: {
+			chords: 'Write the arrangement: sections, bars and chords.',
+			melody: 'Write the tune in ABC notation, drawn as sheet music under the chart.'
+		}
 	},
 
 	myChords: {
@@ -154,7 +160,6 @@ export const TIPS = Object.freeze({
 	},
 
 	mixer: {
-		openHandle: 'Open the mixer.',
 		close: 'Close the mixer. Playback carries on.',
 		listening:
 			'What you’re listening on. Save the EQs for each speaker or pair of headphones, and this device uses them on every song.',

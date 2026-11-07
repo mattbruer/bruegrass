@@ -33,6 +33,7 @@
 	// The page leaves room at the bottom while the keypad covers it
 	$effect(() => {
 		layout.keypadVisible = keypadVisible;
+		return () => (layout.keypadVisible = false);
 	});
 
 	// Turning the keypad back on (in Settings) starts it on the music keys
@@ -56,7 +57,7 @@
 </script>
 
 <div class="mb-2 flex items-center gap-2">
-	<label for="arrangement" class="font-semibold">Song Arrangement</label>
+	<label for="arrangement" class="sr-only">Song arrangement</label>
 	<HelpLink />
 	<MyChordsButton />
 </div>
@@ -65,7 +66,7 @@
 	id="arrangement"
 	bind:this={textarea}
 	bind:value={arrangement.text}
-	class="min-h-96 w-full ui-field p-4 font-mono text-sm pointer-coarse:text-base"
+	class="h-56 w-full ui-field p-4 font-mono text-sm pointer-coarse:text-base"
 	spellcheck="false"
 	autocapitalize="off"
 	autocomplete="off"

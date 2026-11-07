@@ -10,7 +10,7 @@
 <div class="flex gap-2">
 	<button
 		type="button"
-		class="ui-button px-5 py-2 ui-button-primary"
+		class="ui-button px-4 py-2 ui-button-primary sm:px-5"
 		onclick={() => player.play()}
 		use:tooltip={TIPS.player.play}
 	>
@@ -18,7 +18,7 @@
 	</button>
 	<button
 		type="button"
-		class="ui-button px-4 py-2"
+		class="ui-button px-3 py-2 sm:px-4"
 		disabled={!player.isPlaying}
 		onclick={() => player.stop()}
 		use:tooltip={TIPS.player.stop}

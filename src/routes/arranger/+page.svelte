@@ -4,6 +4,10 @@
 	 * in $lib/arranger/state (see Arranger.svelte.js), and each part is a
 	 * component in $lib/arranger/components.
 	 *
+	 * The music (chart, then sheet music) fills the page. Playback sits in a
+	 * bar fixed to the bottom of the screen, and the editor and mixer slide up
+	 * above it, one at a time, the same on phone and desktop.
+	 *
 	 * It always opens on the starter song; your own songs open from the song
 	 * bar. Leaving with unsaved changes asks first. If this device has a
 	 * listening setup, its EQs go on as the page starts. Unsaved changes are
@@ -16,9 +20,9 @@
 	import { guardUnsavedChanges } from '$lib/arranger/state/guardUnsavedChanges.svelte.js';
 	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
 	import PlayerCard from '$lib/arranger/components/player/PlayerCard.svelte';
-	import ArrangementEditor from '$lib/arranger/components/editor/ArrangementEditor.svelte';
-	import MelodyPanel from '$lib/arranger/components/melody/MelodyPanel.svelte';
 	import SheetMusic from '$lib/arranger/components/melody/SheetMusic.svelte';
+	import PlayerBar from '$lib/arranger/components/page/PlayerBar.svelte';
+	import EditDrawer from '$lib/arranger/components/editor/EditDrawer.svelte';
 	import MixerDrawer from '$lib/arranger/components/mixer/MixerDrawer.svelte';
 	import RestoreDraftsDialog from '$lib/arranger/components/song/RestoreDraftsDialog.svelte';
 	import { startThisDevicesSetup } from '$lib/arranger/playback/eq/listeningSetup.svelte.js';
@@ -41,7 +45,7 @@
 	<title>Bluegrass Arranger</title>
 </svelte:head>
 
-<!-- Leaves room at the bottom while the mixer or keypad covers it -->
+<!-- Leaves room at the bottom for the player bar and whatever drawer or keypad is over it -->
 <main
 	class="mx-auto max-w-5xl px-4 py-8 sm:px-8"
 	style:padding-bottom={arranger.layout.bottomSpace}
@@ -50,10 +54,10 @@
 
 	<SongBar />
 	<PlayerCard />
-	<ArrangementEditor />
-	<MelodyPanel />
 	<SheetMusic />
 </main>
 
+<PlayerBar />
+<EditDrawer />
 <MixerDrawer />
 <RestoreDraftsDialog />

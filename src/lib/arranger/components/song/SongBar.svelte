@@ -8,6 +8,7 @@
 	import SaveSongDialog from './SaveSongDialog.svelte';
 	import OpenSongDialog from './OpenSongDialog.svelte';
 	import ExampleSongSelect from './ExampleSongSelect.svelte';
+	import ExportButton from '../export/ExportButton.svelte';
 	import UnsavedDot from '$lib/components/UnsavedDot.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -57,6 +58,7 @@
 	</div>
 
 	<ExampleSongSelect />
+	<ExportButton />
 	<button
 		type="button"
 		class="ui-button px-4 py-2"

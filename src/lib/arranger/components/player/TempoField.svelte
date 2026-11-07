@@ -12,7 +12,7 @@
 	class="flex items-center gap-2 font-semibold whitespace-nowrap"
 	use:tooltip={TIPS.player.tempo}
 >
-	Tempo
+	<span class="max-sm:sr-only">Tempo</span>
 	<input
 		type="number"
 		inputmode="numeric"
