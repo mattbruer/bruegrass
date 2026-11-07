@@ -18,9 +18,9 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 
-			// Svelte Inspector (dev only): hold Option+X and click an element to open its source in the editor
+			// Svelte Inspector (dev only): hold Option (Mac) / Alt (Windows) and click an element to open its source in the editor
 			vitePlugin: {
-				inspector: true
+				inspector: { toggleKeyCombo: 'alt' }
 			},
 
 			// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
