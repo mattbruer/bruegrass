@@ -119,13 +119,21 @@
 </div>
 
 <style>
+	/*
+	 * Always black and white, whatever the theme: the chart reads like a printed
+	 * lead sheet. These are the only colours in this file that aren't theme tokens.
+	 */
 	.chart {
+		--strip-paper: #ffffff;
+		--strip-ink: #000000;
+		--strip-ink-faint: #6b6b6b;
+
 		position: relative;
 		overflow: hidden;
 		/* A well sunk into the player card, the music sliding through it */
 		border-radius: var(--corner-card);
-		background: var(--color-surface);
-		box-shadow: var(--shadow-inset);
+		background: var(--strip-paper);
+		box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.25);
 		padding: 1.75rem 0 0.75rem;
 	}
 
@@ -141,7 +149,7 @@
 		bottom: 0;
 		z-index: 1;
 		width: 2px;
-		background: var(--color-accent);
+		background: var(--strip-ink);
 		pointer-events: none;
 	}
 
@@ -150,13 +158,13 @@
 		display: flex;
 		flex-shrink: 0;
 		/* Barline at the start of every measure, like the pipes in the arrangement */
-		border-left: 2px solid var(--color-ink);
+		border-left: 2px solid var(--strip-ink);
 		height: 4.5rem;
 	}
 
 	/* Double barline where a new section starts */
 	.measure.section-start {
-		border-left: 6px double var(--color-ink);
+		border-left: 6px double var(--strip-ink);
 	}
 
 	.bar-label {
@@ -174,16 +182,16 @@
 	.section-name {
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
-		color: var(--color-accent);
+		color: var(--strip-ink);
 	}
 
 	/* Time signature, shown at the top and wherever it changes */
 	.meter {
 		border-radius: var(--corner-small);
-		background: var(--color-ink);
+		background: var(--strip-ink);
 		padding: 0 0.3rem;
 		font-family: ui-monospace, monospace;
-		color: var(--color-surface);
+		color: var(--strip-paper);
 	}
 
 	.slot {
@@ -199,14 +207,14 @@
 		white-space: nowrap;
 		font-size: 1.25rem;
 		font-weight: 600;
-		color: var(--color-ink);
+		color: var(--strip-ink);
 	}
 
 	.beats {
 		display: flex;
 		font-family: ui-monospace, monospace;
 		font-weight: 700;
-		color: var(--color-ink-faint);
+		color: var(--strip-ink-faint);
 	}
 
 	/* One slash per beat, each in its own beat-wide cell */
