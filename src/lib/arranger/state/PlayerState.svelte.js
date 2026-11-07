@@ -6,6 +6,7 @@ import { playArrangement } from '../playback/livePlayback.js';
 import { audioTaps } from '../playback/mixerGraph.svelte.js';
 import { melodyEvents } from '../melody/melody.js';
 import { melodyTime } from '../melody/follow.js';
+import { MetronomeState } from './MetronomeState.svelte.js';
 
 /** @typedef {Awaited<ReturnType<typeof playArrangement>>} Playback */
 
@@ -24,6 +25,9 @@ export class PlayerState {
 
 	isPlaying = $derived(this.playback !== null);
 
+	/** The click; it follows the playback's bars while the song plays. */
+	metronome;
+
 	/** Which bars of the melody this playback covers, for following the sheet music. */
 	#melodyTiming = { offset: 0, pickup: 0 };
 
@@ -36,6 +40,7 @@ export class PlayerState {
 		this.#arrangement = arrangement;
 		this.#loop = loop;
 		this.#melody = melody;
+		this.metronome = new MetronomeState(this, arrangement);
 	}
 
 	async play() {
@@ -55,6 +60,7 @@ export class PlayerState {
 			});
 			// Each play is measured afresh, so the loudness reading is this song as it is now
 			audioTaps.current?.output.resetLoudness();
+			this.metronome.sync();
 		} catch (problem) {
 			this.showProblem(problem);
 		}
@@ -63,6 +69,7 @@ export class PlayerState {
 	stop() {
 		this.playback?.stop();
 		this.playback = null;
+		this.metronome.sync();
 	}
 
 	/** After a change that affects what's playing (like the loop): start again with it. */

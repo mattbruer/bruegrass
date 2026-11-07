@@ -5,12 +5,9 @@
  * for what a thing *is* (a card, a button), not how it looks, so changing
  * the visual style later means editing this file, not every component.
  *
- * The current look is Soft UI (neumorphism): everything is the background
- * colour, and shape comes from light and shadow.
- *   raised = you can press it, or it sits on top (cards, buttons)
- *   inset  = you type into it, it holds content, or it's pressed/selected
- * Shadows alone are too faint to show state, so "on" also turns the accent
- * colour.
+ * The current look is soft but with contrast: cards and buttons are a lighter
+ * tone than the page with a hairline border and a gentle drop shadow; wells
+ * and fields are a slightly darker tone. "On" is a pale accent tint.
  *
  * All values come from tokens.css.
  */
@@ -18,22 +15,25 @@
 /* A card or panel, raised off the page */
 @utility ui-card {
 	border-radius: var(--corner-card);
-	background: var(--color-surface);
-	box-shadow: var(--shadow-raised);
+	background: var(--color-raised);
+	border: 1px solid var(--color-line);
+	box-shadow: 0 2px 8px var(--shadow-dark-edge);
 }
 
 /* A well sunk into the page, holding content (the chord chart, sheet music) */
 @utility ui-well {
 	border-radius: var(--corner-card);
-	background: var(--color-surface);
-	box-shadow: var(--shadow-inset);
+	background: var(--color-surface-deep);
+	border: 1px solid var(--color-line);
+	box-shadow: var(--shadow-inset-small);
 }
 
 /* A button: raised, and it presses in while tapped */
 @utility ui-button {
 	border-radius: var(--corner-control);
-	background: var(--color-surface);
-	box-shadow: var(--shadow-raised-small);
+	background: var(--color-raised);
+	border: 1px solid var(--color-line);
+	box-shadow: 0 1px 3px var(--shadow-dark-edge);
 	font-weight: 600;
 	color: var(--color-ink);
 	transition:
@@ -45,6 +45,7 @@
 	}
 
 	&:active:not(:disabled) {
+		background: var(--color-surface-deep);
 		box-shadow: var(--shadow-inset-small);
 	}
 
@@ -65,15 +66,17 @@
 
 /* A toggle that's on, or the chosen option in a group: pressed in and lit */
 @utility ui-button-on {
-	box-shadow: var(--shadow-inset-small);
+	background: color-mix(in oklab, var(--color-accent) 16%, var(--color-raised));
+	border-color: var(--color-accent);
+	box-shadow: none;
 	color: var(--color-accent);
 }
 
 /* Something to type into or choose from (inputs, selects, text areas) */
 @utility ui-field {
 	border-radius: var(--corner-control);
-	background: var(--color-surface);
-	box-shadow: var(--shadow-inset-small);
+	background: var(--color-surface-deep);
+	border: 1px solid var(--color-line);
 	color: var(--color-ink);
 
 	&:focus-visible {

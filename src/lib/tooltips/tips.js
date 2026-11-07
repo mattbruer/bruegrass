@@ -86,7 +86,17 @@ export const TIPS = Object.freeze({
 	player: {
 		play: 'Play the arrangement from the start, looping. Changes you make while it plays are picked up.',
 		stop: 'Stop playing.',
-		tempo: 'Speed, in beats per minute.',
+		metronome:
+			'Start or stop a steady click to play along with, with or without the music. While the song plays, it follows the song’s bars.',
+		metronomeSound: 'The sound of the click: woodblock, cowbell, beep or tick.',
+		metronomeMeter:
+			'Beats in a bar, and the note that gets one beat (4 = quarters, 8 = eighths). Used when the click plays on its own.',
+		metronomeLevel: 'How loud the click is.',
+		tempo:
+			'The speed, and a metronome to play along with. Tap to change the speed or start the click.',
+		slower: 'Slower. Hold it down to keep going.',
+		faster: 'Faster. Hold it down to keep going.',
+		tempoNumber: 'The speed, in beats per minute. Tap to type a number.',
 		capo: 'Where the guitar’s capo sits. With a melody, it asks whether the song moves up or keeps its key.',
 		key: 'Move the whole song to another key. The guitar keeps its shapes and moves the capo to get there.',
 		mixer: 'Open the mixer: levels, pan, EQ, reverb and loudness for each instrument.',

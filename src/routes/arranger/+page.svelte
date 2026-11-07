@@ -38,6 +38,11 @@
 		loadMyChords();
 		startThisDevicesSetup();
 		offerDraftsFromLastTime();
+		// Leaving the page: the music and the click stop with it
+		return () => {
+			arranger.player.metronome.turnOff();
+			arranger.player.stop();
+		};
 	});
 </script>
 

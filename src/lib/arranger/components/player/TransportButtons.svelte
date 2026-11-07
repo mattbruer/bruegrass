@@ -1,28 +1,29 @@
 <script>
-	/** Play and Stop. */
+	/** One tile for Play and Stop: it plays when stopped and stops when playing. */
 	import { useArranger } from '../../state/context.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import PlayIcon from '../icons/PlayIcon.svelte';
+	import StopIcon from '../icons/StopIcon.svelte';
 
 	const { player } = useArranger();
+
+	function toggle() {
+		if (player.isPlaying) player.stop();
+		else player.play();
+	}
 </script>
 
-<div class="flex gap-2">
-	<button
-		type="button"
-		class="ui-button px-4 py-2 ui-button-primary sm:px-5"
-		onclick={() => player.play()}
-		use:tooltip={TIPS.player.play}
-	>
-		Play
-	</button>
-	<button
-		type="button"
-		class="ui-button px-3 py-2 sm:px-4"
-		disabled={!player.isPlaying}
-		onclick={() => player.stop()}
-		use:tooltip={TIPS.player.stop}
-	>
-		Stop
-	</button>
-</div>
+<button
+	type="button"
+	class="bar-tile ui-button"
+	class:ui-button-primary={!player.isPlaying}
+	onclick={toggle}
+	use:tooltip={player.isPlaying ? TIPS.player.stop : TIPS.player.play}
+>
+	{#if player.isPlaying}
+		<StopIcon /><span class="tile-label">Stop</span>
+	{:else}
+		<PlayIcon /><span class="tile-label">Play</span>
+	{/if}
+</button>

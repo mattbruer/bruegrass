@@ -1,7 +1,7 @@
 <script>
 	/**
-	 * A player-bar button that opens and closes one drawer. Same label either
-	 * way (pressed in = open), so its width never changes.
+	 * A player-bar tile that opens and closes one drawer. Same label either
+	 * way (lit = open), so its size never changes.
 	 *
 	 * @type {{
 	 *   id: import('../../state/PageLayoutState.svelte.js').DrawerId,
@@ -20,7 +20,7 @@
 
 <button
 	type="button"
-	class="flex items-center gap-2 ui-button px-3 py-2 sm:px-4"
+	class="bar-tile ui-button"
 	class:ui-button-on={layout.isOpen(id)}
 	aria-expanded={layout.isOpen(id)}
 	aria-controls="{id}-drawer"
@@ -28,5 +28,5 @@
 	use:tooltip={tip}
 >
 	{@render icon()}
-	<span class="max-sm:sr-only">{label}</span>
+	<span class="tile-label">{label}</span>
 </button>

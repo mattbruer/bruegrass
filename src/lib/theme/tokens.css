@@ -87,6 +87,8 @@
 	 */
 	--mixer-tray: oklch(from var(--theme-background) calc(l - 0.08) c h);
 	--mixer-strip: oklch(from var(--theme-background) calc(l + 0.045) c h);
+	/* The player bar: the page's hue, darker and more saturated, so it reads as a base the controls sit on (and the amber accent pops on it) */
+	--player-bar: oklch(from var(--theme-background) calc(l - 0.14) calc(c + 0.05) h);
 	/* Lit mute and solo buttons, in the colours most DAWs use */
 	--mixer-mute-on: #3b82f6;
 	--mixer-solo-on: #facc15;
@@ -115,6 +117,8 @@
 @theme static {
 	--color-surface: var(--theme-background);
 	--color-surface-deep: oklch(from var(--theme-background) calc(l - 0.04) c h);
+	--color-raised: oklch(from var(--theme-background) calc(l + 0.06) c h); /* cards and buttons: lighter than the page */
+	--color-line: oklch(from var(--theme-background) calc(l - 0.1) c h); /* hairline borders */
 	--color-ink: var(--theme-text);
 	--color-ink-soft: color-mix(in oklab, var(--theme-text), var(--theme-background) 30%);
 	--color-ink-faint: color-mix(in oklab, var(--theme-text), var(--theme-background) 50%);

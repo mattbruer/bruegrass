@@ -60,6 +60,10 @@ export async function buildMixerGraph(Tone, settings) {
 	masterEq.output.connect(master);
 	const mixBus = masterEq.input;
 
+	// Metronome: past the mix, straight to the output stage, so the limiter covers it
+	const metronome = new Tone.Gain({ channelCount: 2 }); // its level is set by the metronome's menu
+	Tone.connect(metronome, output.input);
+
 	// Reverb aux: every channel's send → the plugin → its EQ → the aux fader → mix bus
 	const reverbAux = new Tone.Channel(STEREO).connect(mixBus);
 	const reverbEq = createEq(Tone, settings.reverb.eq);
@@ -82,6 +86,8 @@ export async function buildMixerGraph(Tone, settings) {
 		reverbAux,
 		reverbEq,
 		reverb,
+		/** Where the metronome's clicks go (not a mixer channel: it has no strip). */
+		metronome,
 		/** The output stage (gain and limiter); `output.output` is what goes to the speakers. */
 		output,
 

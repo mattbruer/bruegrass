@@ -33,6 +33,16 @@ export const settings = $state({
 	/** Which view the mixer's master visualiser shows. */
 	scopeView: /** @type {'waveform' | 'spectrum' | 'stereo'} */ ('spectrum'),
 
+	// Metronome: set from the menu beside its button on the arranger's bar
+
+	/** The metronome: its sound, level (dB, before the output) and meter when playing alone. */
+	metronome: {
+		sound: 'woodblock',
+		level: -14,
+		beats: 4,
+		unit: 4
+	},
+
 	// Appearance tab
 
 	/** Colours, shadow depth and corner roundness (see $lib/theme). */

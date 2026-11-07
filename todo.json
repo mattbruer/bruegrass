@@ -9,12 +9,6 @@
 	],
 	"suggestions": [
 		{
-			"id": "metronome",
-			"text": "Optional metronome click track",
-			"done": false,
-			"addedAt": "2026-11-06T00:00:00.000Z"
-		},
-		{
 			"id": "count-in",
 			"text": "Count-in clicks before the band starts",
 			"done": false,
@@ -45,10 +39,10 @@
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
-			"id": "pilot-attempt-log",
-			"text": "Sampler pilot: attempt log (numbered G chord tries)",
+			"id": "take-model",
+			"text": "Takes: a recorded part on the timeline, with its player and offset",
 			"done": false,
-			"addedAt": "2026-11-06T12:00:00.000Z"
+			"addedAt": "2026-11-07T00:00:00.000Z"
 		},
 		{
 			"id": "pilot-hear-it",
@@ -69,16 +63,16 @@
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
-			"id": "counterpoint",
-			"text": "Counterpoint lines against the melody",
-			"done": false,
-			"addedAt": "2026-11-06T00:00:00.000Z"
-		},
-		{
 			"id": "melody-tab",
 			"text": "Guitar or mandolin tab under the melody (with capo)",
 			"done": false,
 			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
+			"id": "melody-entry",
+			"text": "Simple form-based melody entry, plus MIDI import for DAW users",
+			"done": false,
+			"addedAt": "2026-11-07T00:00:00.000Z"
 		}
 	]
 }

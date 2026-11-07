@@ -47,6 +47,15 @@ export async function getChannel(id, part) {
 	return (await graph).channelInput(id, part);
 }
 
+/**
+ * The node the metronome's clicks play into (see graph.metronome).
+ * @returns {Promise<import('tone').ToneAudioNode>}
+ */
+export async function getMetronomeInput() {
+	graph ??= buildLiveGraph();
+	return (await graph).metronome;
+}
+
 async function buildLiveGraph() {
 	const Tone = await import('tone');
 	const built = await buildMixerGraph(Tone, mixSnapshot());

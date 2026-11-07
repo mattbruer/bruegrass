@@ -7,6 +7,7 @@ import { createBand } from '../instruments/band.js';
 import { getChannel } from './mixerGraph.svelte.js';
 import { createStream } from './scheduler.js';
 import { rhythm } from '../chart/timeline.js';
+import { songClickGrid } from './metronome/clickGrid.js';
 
 /** Lead before the first note, so nothing is clipped (seconds). */
 const START_DELAY = 0.1;
@@ -26,6 +27,7 @@ const TICK = 0.1;
  * @returns {Promise<{
  *   stop: () => void,
  *   beats: () => { elapsed: number, length: number } | null,
+ *   clicks: { origin: number, quarterSeconds: number, grid: import('./metronome/clickGrid.js').ClickGrid },
  *   position: () => (import('../chart/timeline.js').SlotPosition & { beat: number, role: 'boom' | 'chuck', progress: number }) | null
  * }>}
  */
@@ -113,6 +115,8 @@ export async function playArrangement(sections, options = {}) {
 				progress: inPass / duration
 			};
 		},
+		/** The song's clicks, on this playback's clock (for a metronome that follows the bars). */
+		clicks: { origin: start, quarterSeconds: quarter, grid: songClickGrid(sections) },
 		stop() {
 			stopped = true;
 			if (timer !== undefined) context.clearTimeout(timer);
