@@ -117,7 +117,7 @@
 		z-index: 25;
 		padding-block: 0.6rem;
 		padding-top: max(0.6rem, env(safe-area-inset-top)); /* clear the iPhone notch */
-		background: var(--color-surface);
+		background: var(--player-bar);
 		box-shadow: 0 6px 14px var(--shadow-dark-edge);
 	}
 </style>
