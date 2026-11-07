@@ -7,6 +7,7 @@
 	import MelodyFitNote from './MelodyFitNote.svelte';
 	import MelodyWarnings from './MelodyWarnings.svelte';
 	import ChordConversion from './ChordConversion.svelte';
+	import HarmonyParts from './HarmonyParts.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -57,4 +58,5 @@
 	<MelodyWarnings />
 	<MelodyFitNote />
 	<ChordConversion />
+	<HarmonyParts />
 </details>

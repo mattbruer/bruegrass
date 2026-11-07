@@ -235,6 +235,14 @@ The core of the arranger.
 - `abcWithChords`: writes the arrangement's concert-pitch chords into ABC that has none, on the note where each change lands. It reports changes during held notes, and repeated bars the arrangement chords differently on another pass.
 - Chord shapes are bluegrass voicings with a low fifth, so `bassNote` can alternate root and fifth. Keep that when adding shapes.
 
+### Harmony parts (`melody/harmony/`)
+
+- Up to four parts (`harmonyParts.js`, data: tenor, high baritone, baritone, low tenor), each counting chord tones from the lead (+1 = next chord tone up). The toggles are `components/melody/HarmonyParts.svelte`; `Arranger.writeHarmonies` writes them.
+- `harmonyNote.js`: on a chord tone (root/3rd/5th of the band's concert chord, `chart/concertChords.js`), count along the triad; on any other note, along a close triad built on the melody note from the chord's scale (`theory/chordScales.js`), so parts move in parallel. Sixths come out of this naturally (high baritone over the 3rd).
+- `writeHarmonies.js`: each part is the melody's own ABC text with pitches swapped (rhythm, ties, repeats kept; chord symbols, grace notes and lyrics dropped), appended as `V:<id> name="…"` after the melody, which gets a `V:1` line (abcjs plays voices together only then). Rewriting replaces the parts; removing all of them gives back the original ABC. Spelling and accidentals through `abcPitch.js` (`musicInKey.js`). Single-voice melodies only. Repeated bars take the first pass's chord.
+- Each part has its own mixer channel (id = part id, added to `mixer.channels` from `HARMONY_PARTS`, saved with the mix like any strip). `partChannels.js` is the one place that maps voices to channels: abcjs keeps only a voice's name (`staff.title`), so a voice named like a part plays on that part's channel, anything else on Melody. Every `MelodyNote`/`MelodyEvent` carries its `channel`; `band.js` connects by it, stems include a part's channel only when the song has it, and the MIDI file gets one track per voice (channels 4–8). The mixer shows a part's strip only while the song has it; removing a part clears its solo. The pickup is read from the first voice only.
+- Ideas not built: a passing note held against a chord tone (oblique motion) instead of parallel; parts above the lead drawn above it (`%%score`); counterpoint.
+
 ### `follow.js`
 
 - While playing, the sheet music follows the band: the sounding note gets the `abcjs-playing` class, an `abcjs-cursor` rect glides across the staff, and the page scrolls to a new line if it's out of view (only while the sheet music is on screen).

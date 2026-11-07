@@ -69,6 +69,12 @@
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
+			"id": "counterpoint",
+			"text": "Counterpoint lines against the melody",
+			"done": false,
+			"addedAt": "2026-11-06T00:00:00.000Z"
+		},
+		{
 			"id": "melody-tab",
 			"text": "Guitar or mandolin tab under the melody (with capo)",
 			"done": false,

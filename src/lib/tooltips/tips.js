@@ -133,6 +133,15 @@ export const TIPS = Object.freeze({
 			'Replace the arrangement with one written from the melody’s chord symbols.',
 		chordsIntoMelody:
 			'Write the arrangement’s chords into the melody, as chord symbols above the notes.',
+		harmony: {
+			tenor: 'Add or remove a harmony line just above the melody: the next note of the chord up.',
+			'high-baritone': 'Add or remove a high harmony line, two chord notes above the melody.',
+			baritone:
+				'Add or remove a harmony line just below the melody: the next note of the chord down.',
+			'low-tenor': 'Add or remove a low harmony line, two chord notes below the melody.',
+			rewrite:
+				'Write the harmony lines again from the melody as it is now. Changes made to them by hand are replaced.'
+		},
 		sheetView: {
 			concert: 'The sheet music as the song sounds, for anyone without a capo.',
 			shapes: 'The sheet music in the key of the guitar’s chord shapes, to read with the capo on.'

@@ -6,6 +6,7 @@ import { mixer } from '../playback/mixer.svelte.js';
 import { faderGain } from '../playback/faderTaper.js';
 import { downloadFile } from '$lib/utils/downloadFile.js';
 import { slugify } from '$lib/utils/slugify.js';
+import { channelsInUse } from '../melody/harmony/partChannels.js';
 
 /**
  * @param {{
@@ -25,7 +26,7 @@ export function downloadArrangementMidi({ sections, capo, transpose, bpm, melody
 		bassDb: guitarPartLevel('bass'),
 		strumDb: guitarPartLevel('strum'),
 		melody,
-		melodyDb: channelLevel('melody')
+		tuneDb: Object.fromEntries([...channelsInUse(melody)].map((id) => [id, channelLevel(id)]))
 	});
 
 	const name = slugify(sections[0]?.name ?? '') || 'arrangement';

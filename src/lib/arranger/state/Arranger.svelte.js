@@ -21,6 +21,11 @@ import { PageLayoutState } from './PageLayoutState.svelte.js';
 import { SongState } from './SongState.svelte.js';
 import { abcWithChords, arrangementFromAbc } from '../melody/abcChords.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
+import { harmonizeAbc } from '../melody/harmony/harmonizeAbc.js';
+import { harmonyPartsIn } from '../melody/harmony/writeHarmonies.js';
+import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
+import { concertChordAt } from '../chart/concertChords.js';
+import { mixer } from '../playback/mixer.svelte.js';
 import { transposeChart } from '../chart/transposeChart.js';
 import { validCapo } from '../chart/capo.js';
 
@@ -35,6 +40,12 @@ export class Arranger {
 
 	/** @type {{ title: string, notes: string[] } | null} */
 	chordReport = $state(null);
+
+	/** The harmony parts the melody has (their ids, as in HARMONY_PARTS). */
+	harmonyParts = $derived(harmonyPartsIn(this.melody.notation));
+
+	/** Why the harmony parts couldn't be written, if they couldn't. */
+	harmonyProblem = $state('');
 
 	/** The capo fret asked for, while the page asks what the melody should do (else null). */
 	capoAsked = $state(/** @type {number | null} */ (null));
@@ -82,6 +93,27 @@ export class Arranger {
 			title: "The arrangement's chords are written into the melody.",
 			notes: result.notes
 		};
+	}
+
+	/**
+	 * Write these harmony parts into the melody, fresh from its notes and the
+	 * arrangement's chords (any others are taken out).
+	 * @param {string[]} partIds
+	 */
+	async writeHarmonies(partIds) {
+		if (!this.arrangement.isPlayable) return;
+		const chordAt = concertChordAt(this.arrangement.sections, this.arrangement.capoFret);
+		const result = await harmonizeAbc(this.melody.notation, chordAt, partIds);
+		this.melody.notation = result.abc;
+		this.harmonyProblem = result.problem;
+		// A removed part's strip is hidden, so it mustn't stay soloed and silence the rest
+		const kept = harmonyPartsIn(result.abc);
+		for (const channel of mixer.channels) {
+			const removed = HARMONY_PARTS.some(
+				(part) => part.id === channel.id && !kept.includes(part.id)
+			);
+			if (removed) channel.solo = false;
+		}
 	}
 
 	/**

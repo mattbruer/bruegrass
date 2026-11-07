@@ -1,6 +1,7 @@
 import { buildEvents, guitarTuning, midiNote } from '../instruments/guitar.js';
 import { DEFAULT_METER, barQuarters, slotPositions } from '../chart/timeline.js';
 import { melodyEvents, melodyPitch } from '../melody/melody.js';
+import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { bassLine } from '../instruments/bassline.js';
 import { mod12 } from '../chart/key.js';
 import { chopNotes } from '../instruments/mandolin.js';
@@ -36,6 +37,8 @@ const GUITAR_TRACK = { name: 'Bluegrass Guitar', program: 25 }; // GM 26: Acoust
 const BASS_TRACK = { name: 'Roots Upright', program: 32 }; // GM 33: Acoustic Bass
 const MANDO_TRACK = { name: 'Mandolin Chop', program: 25 }; // no GM mandolin; steel guitar is closest
 const MELODY_TRACK = { name: 'Melody', program: 25 }; // played on the guitar samples, like Bluegrass Guitar
+/* The melody and harmony parts, by mixer channel id, on MIDI channels from MELODY_CHANNEL up */
+const TUNE_TRACKS = [{ id: 'melody', name: MELODY_TRACK.name }, ...HARMONY_PARTS];
 
 /**
  * @typedef {{ tick: number, end: number, note: number, velocity: number }} MidiNote
@@ -55,7 +58,8 @@ export function velocityFromDb(db) {
  * a tempo track, the guitar (bass notes + strums, channel 1), a
  * bluegrass bass part (channel 2, see bassline.js), the mandolin chop
  * (channel 3, see mandolin.js) and, when there is one, the ABC melody
- * (channel 4, see melody.js), on the same guitar-sampler mapping.
+ * (channel 4, see melody.js) and each harmony part (channels 5–8), on the
+ * same guitar-sampler mapping.
  *
  * A file can't start before its first tick, so when the melody has a
  * pickup, everything moves one bar later: the pickup ends that bar and the
@@ -64,13 +68,14 @@ export function velocityFromDb(db) {
  * @param {import('../chart/timeline.js').Section[]} sections
  * @param {{
  *   capo?: number, transpose?: number, bpm?: number, bassDb?: number, strumDb?: number,
- *   melody?: import('../melody/melody.js').Melody | null, melodyDb?: number
- * }} options melodyDb: the Melody fader, like bassDb/strumDb for the guitar's parts
+ *   melody?: import('../melody/melody.js').Melody | null, tuneDb?: Record<string, number>
+ * }} options tuneDb: the Melody's and each harmony part's fader, by channel id,
+ *   like bassDb/strumDb for the guitar's parts
  * @returns {Uint8Array}
  */
 export function arrangementToMidi(
 	sections,
-	{ capo = 0, transpose = 0, bpm = 120, bassDb = 0, strumDb = 0, melody = null, melodyDb = 0 } = {}
+	{ capo = 0, transpose = 0, bpm = 120, bassDb = 0, strumDb = 0, melody = null, tuneDb = {} } = {}
 ) {
 	const shift = capo + transpose;
 	// Same split as playback: capo where it reaches, plain transposition beyond
@@ -112,15 +117,21 @@ export function arrangementToMidi(
 	const tune = melody
 		? melodyEvents(melody, { sections, bpm, shift: transpose, loop: false })
 		: null;
-	/** @type {MidiNote[]} */
-	const melodyNotes = tune
-		? [...tune.intro, ...tune.events].map((event) => ({
+	// One track per voice: the melody, then each harmony part it has
+	const tuneEvents = tune ? [...tune.intro, ...tune.events] : [];
+	const voiceTracks = TUNE_TRACKS.map((voice, index) => ({
+		track: { name: voice.name, program: MELODY_TRACK.program },
+		channel: MELODY_CHANNEL + index,
+		/** @type {MidiNote[]} */
+		notes: tuneEvents
+			.filter((event) => event.channel === voice.id)
+			.map((event) => ({
 				tick: toTicks(event.time),
 				end: toTicks(event.stop),
 				note: melodyPitch(event) + GUITAR_OFFSET,
-				velocity: velocityFromDb(melodyDb + event.levelDb)
+				velocity: velocityFromDb((tuneDb[voice.id] ?? 0) + event.levelDb)
 			}))
-		: [];
+	})).filter((voice) => voice.notes.length > 0);
 
 	// A bar of lead-in for the pickup
 	const firstMeter = slotPositions(sections)[0]?.meter ?? DEFAULT_METER;
@@ -144,7 +155,7 @@ export function arrangementToMidi(
 		noteTrack(GUITAR_TRACK, GUITAR_CHANNEL, later(guitar)),
 		noteTrack(BASS_TRACK, BASS_CHANNEL, later(bass)),
 		noteTrack(MANDO_TRACK, MANDO_CHANNEL, later(mando)),
-		...(tune ? [noteTrack(MELODY_TRACK, MELODY_CHANNEL, later(melodyNotes))] : [])
+		...voiceTracks.map((voice) => noteTrack(voice.track, voice.channel, later(voice.notes)))
 	]);
 }
 

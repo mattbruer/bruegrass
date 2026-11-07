@@ -12,13 +12,14 @@ import { REVERB_DEFAULTS } from './reverb/reverbSettings.js';
 import { FADER_MIN } from './faderTaper.js';
 import { flatEq } from './eq/eqBands.js';
 import { DEFAULT_OUTPUT_GAIN_DB } from './output/outputSettings.js';
+import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 
 /*
  * The default mix: a loose, natural bluegrass balance. Change it here.
  *
  *   - Guitar and mandolin sit a little apart in the stereo field (not
- *     hard-panned); bass and melody stay in the centre.
- *   - The reverb is subtle: guitar, mandolin and melody send fully to it,
+ *     hard-panned); bass, melody and harmony parts stay in the centre.
+ *   - The reverb is subtle: guitar, mandolin, melody and harmony send fully to it,
  *     the bass not at all (reverb on bass muddies the low end), and the
  *     reverb's own fader sits well down, so you only notice it if you
  *     listen for it.
@@ -64,7 +65,9 @@ export const mixer = $state({
 		}),
 		channelStrip({ id: 'mandolin', name: 'Mandolin', pan: -PAN_SPREAD }),
 		channelStrip({ id: 'bass', name: 'Bass', send: SEND_NONE }),
-		channelStrip({ id: 'melody', name: 'Melody' })
+		channelStrip({ id: 'melody', name: 'Melody' }),
+		// One per harmony part; the mixer shows them only while the song has the part
+		...HARMONY_PARTS.map((part) => channelStrip({ id: part.id, name: part.name }))
 	],
 	/** The reverb aux: its fader sets the overall reverb level; the plugin shapes the sound. */
 	reverb: {

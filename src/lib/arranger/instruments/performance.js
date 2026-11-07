@@ -29,7 +29,8 @@ import { rhythm } from '../chart/timeline.js';
  * }} options
  *   transpose: semitones on top of the capo, for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo (looping
- *   to match), played on the guitar samples through the Melody channel
+ *   to match), played on the guitar samples, each voice through its own
+ *   channel (Melody, or a harmony part's)
  */
 export function preparePerformance(
 	sections,

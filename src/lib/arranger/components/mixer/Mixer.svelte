@@ -1,7 +1,8 @@
 <script>
 	/**
 	 * The mixer: a tray of channel strips in one row (swipe sideways on a
-	 * narrow screen). An instrument strip each, then the reverb aux, the
+	 * narrow screen). An instrument strip each (and one per harmony part the
+	 * song has), then the reverb aux, the
 	 * master, the output stage (loudness and limiter), and a small
 	 * visualiser of what reaches the speakers.
 	 */
@@ -13,11 +14,23 @@
 	import MasterScope from './scope/MasterScope.svelte';
 	import EqWindow from './eq/EqWindow.svelte';
 	import ListeningSetupsDialog from './listening/ListeningSetupsDialog.svelte';
+	import { useArranger } from '../../state/context.js';
+	import { channelsInUse, isTuneChannel } from '../../melody/harmony/partChannels.js';
+
+	const { melody } = useArranger();
+	const tuneChannels = $derived(channelsInUse(melody.line));
+	/** Melody always; a harmony part's strip only while the song has that part. */
+	const shown = $derived(
+		mixer.channels.filter(
+			(channel) =>
+				channel.id === 'melody' || !isTuneChannel(channel.id) || tuneChannels.has(channel.id)
+		)
+	);
 </script>
 
 <section aria-label="Mixer">
 	<div class="console">
-		{#each mixer.channels as channel (channel.id)}
+		{#each shown as channel (channel.id)}
 			<ChannelStrip {channel} />
 		{/each}
 		<ReverbStrip />

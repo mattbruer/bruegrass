@@ -24,6 +24,7 @@ import { preparePerformance } from '../instruments/performance.js';
 import { createBand } from '../instruments/band.js';
 import { buildMixerGraph } from '../playback/graph/buildMixerGraph.js';
 import { melodyEvents } from '../melody/melody.js';
+import { channelsInUse, isTuneChannel } from '../melody/harmony/partChannels.js';
 import { DEFAULT_METER, barQuarters, slotPositions } from '../chart/timeline.js';
 
 /** Exported files' sample rate: the usual rate for music made with video or a DAW. */
@@ -74,7 +75,10 @@ export async function renderStems(song, mix, { processed }) {
 	const Tone = await import('tone');
 	const stemMix = processed ? withoutMutes(mix) : dry(mix);
 	const plan = planRender(song, stemMix);
-	const instruments = mix.channels.filter((channel) => channel.id !== 'melody' || song.melody);
+	const tuneChannels = channelsInUse(song.melody);
+	const instruments = mix.channels.filter(
+		(channel) => !isTuneChannel(channel.id) || tuneChannels.has(channel.id)
+	);
 	const stems = [
 		...instruments.map((channel) => ({ id: channel.id, name: channel.name })),
 		...(processed ? [{ id: 'reverb', name: 'Reverb' }] : [])

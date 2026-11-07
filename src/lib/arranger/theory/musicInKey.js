@@ -27,10 +27,10 @@ const RESPELL = { 'E#': 'F', 'B#': 'C', Cb: 'B', Fb: 'E' };
 /** @param {number} n */
 const mod = (n, m = 12) => ((n % m) + m) % m;
 
-/** @param {string} tonic a major key's tonic: "G", "D", "A", "C" */
+/** @param {string} tonic a major key's tonic: "G", "D", "Bb", "F#" */
 export function majorKey(tonic) {
-	const letter = LETTERS.indexOf(tonic);
-	return { tonic, letter, pc: NATURAL_PC[letter] };
+	const letter = LETTERS.indexOf(tonic[0]);
+	return { tonic, letter, pc: NATURAL_PC[letter] + altOf(tonic.slice(1)) };
 }
 
 /**
@@ -94,7 +94,36 @@ export function readNumeral(numeral) {
 }
 
 /** @param {string} accidental "", "b" or "#" */
-const altOf = (accidental) => (accidental === '#' ? 1 : accidental === 'b' ? -1 : 0);
+function altOf(accidental) {
+	return accidental === '#' ? 1 : accidental === 'b' ? -1 : 0;
+}
+
+/**
+ * A chord symbol as a chord of this key: "D7" in G is V7, "Bb" in G is bIII.
+ * Extensions fold into the four qualities (Am7 is minor, Gmaj7 major); a
+ * slash chord's bass is left out.
+ * @param {Key} key
+ * @param {string} name
+ * @returns {Chord | null}
+ */
+export function chordFromName(key, name) {
+	const match = name.match(/^([A-G])([#b]?)([^/]*)/);
+	if (!match) return null;
+	const [, letterName, accidental, rest] = match;
+	const letter = LETTERS.indexOf(letterName);
+	const step = mod(letter - key.letter, 7);
+	const pc = NATURAL_PC[letter] + altOf(accidental);
+	const alt = mod(pc - key.pc - MAJOR_SCALE[step] + 6) - 6;
+	return { root: { step, alt }, quality: qualityOf(rest), bass: null };
+}
+
+/** @param {string} rest what follows a chord's root: "m7", "maj7", "dim", "9" */
+function qualityOf(rest) {
+	if (/^(dim|°)/.test(rest)) return 'dim';
+	if (/^(m(?!aj)|min)/.test(rest)) return 'm';
+	if (/^(maj|M)/.test(rest)) return '';
+	return /^(7|9|11|13)/.test(rest) ? '7' : '';
+}
 
 /**
  * The chord symbol in this key: "G", "Em", "Ab7", "G#dim", "G/F#".

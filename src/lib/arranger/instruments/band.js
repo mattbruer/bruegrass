@@ -65,7 +65,12 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 	const guitarOut = { bass: await touchFilter('bass'), strum: await touchFilter('strum') };
 	const upright = createUpright(Tone, await channelInput('bass'));
 	const mandolinOut = await channelInput('mandolin');
-	const melodyOut = melody ? await channelInput('melody') : null;
+	/** @type {Map<string, import('tone').ToneAudioNode>} the melody's and each harmony part's channel */
+	const melodyOuts = new Map();
+	for (const note of [...(melody?.events ?? []), ...(melody?.intro ?? [])]) {
+		if (!melodyOuts.has(note.channel))
+			melodyOuts.set(note.channel, await channelInput(note.channel));
+	}
 
 	const [guitarSounds, chopSounds, melodySounds, introSounds] = await Promise.all(
 		[guitar.urls, mandolin.urls, melody?.urls ?? [], melody?.introUrls ?? []].map((urls) =>
@@ -99,7 +104,7 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 				volume: note.levelDb,
 				fadeOut: FADE_OUT,
 				playbackRate: note.rate
-			}).connect(/** @type {import('tone').ToneAudioNode} */ (melodyOut))
+			}).connect(/** @type {import('tone').ToneAudioNode} */ (melodyOuts.get(note.channel)))
 		)
 			.start(at)
 			.stop(at + note.stop - note.time);

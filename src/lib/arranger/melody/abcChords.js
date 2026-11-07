@@ -14,8 +14,9 @@
  *   into a tune that has none, on the note where each change lands. Repeated
  *   bars share one place in the score, so they can only show one chord.
  */
-import { hasShape, withoutVariant } from '../instruments/chordBook.js';
+import { hasShape } from '../instruments/chordBook.js';
 import { chordLabel, songKey } from '../chart/key.js';
+import { concertChord } from '../chart/concertChords.js';
 import { barQuarters, slotPositions } from '../chart/timeline.js';
 import { MAX_CAPO } from '../chart/capo.js';
 
@@ -438,8 +439,7 @@ export function abcWithChords(abc, voices, sections, { capo = 0 } = {}) {
 	const played = items
 		.map((item) => ({ ...item, t: item.t - pickup }))
 		.filter((item) => item.t >= -EPSILON && item.t < end - EPSILON && item.startChar !== undefined);
-	const concert = (/** @type {string} */ name) =>
-		chordLabel(withoutVariant(name), { key, shift: capo, mode: 'concert' });
+	const concert = (/** @type {string} */ name) => concertChord(name, key, capo);
 	const chordAt = (/** @type {number} */ time) =>
 		slots.filter((slot) => slot.start <= time + EPSILON).at(-1)?.name ?? slots[0].name;
 	/** @param {number} time */

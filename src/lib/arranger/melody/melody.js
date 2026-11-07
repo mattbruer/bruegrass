@@ -12,6 +12,7 @@
  */
 import { MAX_FRET, midiNote } from '../instruments/guitar.js';
 import { rhythm } from '../chart/timeline.js';
+import { MELODY_CHANNEL, voiceChannels } from './harmony/partChannels.js';
 
 /*
  * Register. Guitar music is written an octave above where it sounds, so a
@@ -42,12 +43,13 @@ const VELOCITY_DEPTH = 1; // 1 = follow abcjs's accents as written, 0 = all even
 const GATE = 0.95; // fraction of its written length a note rings (unless its string is needed)
 
 /**
- * @typedef {{ time: number, length: number, pitch: number, volume: number }} MelodyNote
+ * @typedef {{ time: number, length: number, pitch: number, volume: number, channel: string }} MelodyNote
  *   time/length in quarter notes from bar 1's downbeat (pickup notes are
- *   negative); pitch is MIDI as written (60 = middle C); volume 0–127
+ *   negative); pitch is MIDI as written (60 = middle C); volume 0–127;
+ *   channel: the mixer channel its voice plays through (see harmony/partChannels.js)
  * @typedef {{ notes: MelodyNote[], pickup: number, length: number }} Melody
  *   pickup: quarters before bar 1; length: quarters from bar 1 to the last note's end
- * @typedef {{ time: number, stop: number, string: number, fret: number, rate: number, levelDb: number }} MelodyEvent
+ * @typedef {{ time: number, stop: number, string: number, fret: number, rate: number, levelDb: number, channel: string }} MelodyEvent
  *   seconds; rate: playback rate for notes above the highest sample
  * @typedef {{ events: MelodyEvent[], intro: MelodyEvent[], leadIn: number, period: number }} MelodyPart
  *   events: one pass, 0 ≤ time < period, sorted; intro: the pickup before
@@ -56,15 +58,17 @@ const GATE = 0.95; // fraction of its written length a note rings (unless its st
 
 /**
  * The melody of a tune parsed by abcjs (renderAbc or parseOnly), with
- * repeats and endings played out. Every voice is included, so harmony
- * lines play too; chord symbols are left to the arrangement.
+ * repeats and endings played out. Every voice is included, each on its
+ * own channel, so harmony parts play too; chord symbols are left to the
+ * arrangement.
  * @param {import('abcjs').TuneObject} tune
  * @returns {Melody}
  */
 export function melodyFromTune(tune) {
 	const audio = tune.setUpAudio({ chordsOff: true });
-	/** @type {(MelodyNote & { startChar: number })[]} */
-	const raw = audio.tracks.flatMap((track) =>
+	const channels = voiceChannels(tune);
+	/** @type {(MelodyNote & { startChar: number })[][]} */
+	const voices = audio.tracks.map((track, index) =>
 		track.flatMap((item) =>
 			item.cmd === 'note'
 				? [
@@ -73,15 +77,24 @@ export function melodyFromTune(tune) {
 							length: item.duration * 4,
 							pitch: item.pitch,
 							volume: item.volume,
+							channel: channels[index] ?? MELODY_CHANNEL,
 							startChar: item.startChar
 						}
 					]
 				: []
 		)
 	);
-	const pickup = pickupLength(tune, raw);
+	const raw = voices.flat();
+	// The first voice is the melody: harmony parts may start differently
+	const pickup = pickupLength(tune, voices[0] ?? []);
 	const notes = raw
-		.map(({ time, length, pitch, volume }) => ({ time: time - pickup, length, pitch, volume }))
+		.map(({ time, length, pitch, volume, channel }) => ({
+			time: time - pickup,
+			length,
+			pitch,
+			volume,
+			channel
+		}))
 		.sort((a, b) => a.time - b.time || a.pitch - b.pitch);
 	const length = Math.max(0, ...notes.map((note) => note.time + note.length));
 	return { notes, pickup, length };
@@ -154,6 +167,7 @@ export function melodyEvents(melody, { sections, offset = 0, bpm = 120, shift = 
 		time: note.time * quarter,
 		stop: (note.time + note.length * GATE) * quarter,
 		...fingered[i],
+		channel: note.channel,
 		levelDb:
 			MELODY_LEVEL_DB + VELOCITY_DEPTH * 20 * Math.log10(Math.max(1, note.volume) / ACCENT_VELOCITY)
 	}));
