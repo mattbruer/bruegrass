@@ -173,7 +173,9 @@
 	/* Phones upright: narrower keys, still big to tap */
 	@media (max-width: 639px) {
 		.bar-content {
+			--tile-height: 4.25rem;
 			--tile-width: 4.5rem;
+			--tile-art: 3.4rem;
 			gap: 0.5rem;
 		}
 
