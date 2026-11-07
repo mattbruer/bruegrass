@@ -260,7 +260,6 @@ The core of the arranger.
 ## How the user thinks
 
 - They change direction and add ideas often, and don't always have a clear vision up front. Make every design cheap to change: layers, plain data and seams, so a big change touches one place. Motto: make everything extendable. Build as if big code changes were expensive for a human.
-- Painter's approach (Sargent): get what reads from a distance right first, then build detail on that foundation. Start with a thin end-to-end version, then refine; no speculative options or abstractions. Judge audio at a distance (in the mix, quiet, on a phone speaker).
 - Code for a reader with about a year of full-stack experience: short, well-named functions with clear inputs and outputs, few comments (they dislike clutter; comment only where truly needed). Physics and DSP maths may be abstracted or come from a library.
 - Build for one case first (e.g. bluegrass), leave seams for the next (Irish, custom patterns), and don't build UI for the others yet.
 
