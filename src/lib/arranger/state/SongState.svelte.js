@@ -14,6 +14,7 @@ import {
 } from '$lib/storage/arrangements.js';
 import { STARTER_SONG } from '../starterSong.js';
 import { loadSongIntoPage, readSongFields } from './songFields.js';
+import { applyRememberedMix, forgetSongMix } from './songMixMemory.svelte.js';
 
 export class SongState {
 	/** @type {import('./Arranger.svelte.js').Arranger} */
@@ -68,6 +69,7 @@ export class SongState {
 		this.savedId = song.id;
 		this.name = song.title;
 		this.#rememberFieldsAsSaved();
+		applyRememberedMix(id); // after the above, so a mix changed since the last Save shows as unsaved
 	}
 
 	/**
@@ -94,6 +96,7 @@ export class SongState {
 		const document = existing ?? createArrangement();
 
 		const saved = saveArrangement({ ...document, ...fields, title });
+		if (!this.savedId) forgetSongMix(null); // it has an id of its own now
 		this.savedId = saved.id;
 		this.name = saved.title;
 		this.#rememberFieldsAsSaved();
@@ -107,6 +110,7 @@ export class SongState {
 	 */
 	delete(id) {
 		deleteArrangement(id);
+		forgetSongMix(id);
 		if (id === this.savedId) {
 			this.savedId = null;
 			this.name = '';

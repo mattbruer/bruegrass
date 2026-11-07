@@ -13,6 +13,7 @@
 import { clearDraft, readDraft, writeDraft } from '$lib/storage/drafts.js';
 import { getArrangement } from '$lib/storage/arrangements.js';
 import { readSongFields } from './songFields.js';
+import { forgetSongMix } from './songMixMemory.svelte.js';
 import { applyEqs, eqsSnapshot } from '../playback/mixer.svelte.js';
 import { listening, setupHasUnsavedChanges } from '../playback/eq/listeningSetup.svelte.js';
 
@@ -78,8 +79,16 @@ export function restoreDrafts(arranger) {
 	drafts.keeping = true;
 }
 
-/** Throw last time's unsaved changes away. */
-export function discardDrafts() {
+/**
+ * Throw last time's unsaved changes away: the page goes back to a fresh
+ * starter song, and the mix remembered for the draft's song is forgotten.
+ * @param {import('./Arranger.svelte.js').Arranger} arranger
+ */
+export function discardDrafts(arranger) {
+	if (drafts.offer?.song) {
+		forgetSongMix(drafts.offer.song.savedId);
+		arranger.song.startNew();
+	}
 	clearDraft(SONG);
 	clearDraft(SETUP);
 	drafts.offer = null;

@@ -55,7 +55,7 @@
 				<button
 					type="button"
 					class="ui-button px-4 py-2"
-					onclick={discardDrafts}
+					onclick={() => discardDrafts(arranger)}
 					use:tooltip={TIPS.drafts.discard}
 				>
 					Discard

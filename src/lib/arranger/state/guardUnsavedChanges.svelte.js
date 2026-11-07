@@ -8,6 +8,7 @@ import {
 	setupHasUnsavedChanges
 } from '../playback/eq/listeningSetup.svelte.js';
 import { forgetDraftsOnLeaving } from './drafts.svelte.js';
+import { forgetSongMix } from './songMixMemory.svelte.js';
 
 /**
  * Call once while the arranger page is being set up.
@@ -28,7 +29,10 @@ export function guardUnsavedChanges(song) {
 
 		const question = songChanged ? discardQuestion(song) : setupDiscardQuestion();
 		if (!confirm(question)) navigation.cancel();
-		else forgetDraftsOnLeaving(); // you chose to discard: don't offer it back next time
+		else {
+			forgetDraftsOnLeaving(); // you chose to discard: don't offer it back next time
+			forgetSongMix(song.savedId);
+		}
 	});
 }
 
@@ -48,5 +52,8 @@ export function discardQuestion(song) {
  * @param {import('./SongState.svelte.js').SongState} song
  */
 export function okToDiscardChanges(song) {
-	return !song.hasUnsavedChanges || confirm(discardQuestion(song));
+	if (!song.hasUnsavedChanges) return true;
+	if (!confirm(discardQuestion(song))) return false;
+	forgetSongMix(song.savedId);
+	return true;
 }
