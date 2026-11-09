@@ -24,6 +24,8 @@ export class SongState {
 	savedId = /** @type {string | null} */ ($state(null));
 	/** The open song's name ('' until it's saved). */
 	name = $state('');
+	/** The example this song started from, until it has a name of its own: it titles a new tune. */
+	exampleName = $state('');
 
 	/** The song's fields as last saved or opened, to tell whether anything has changed since. */
 	#fieldsWhenSaved = $state('');
@@ -50,11 +52,13 @@ export class SongState {
 	/**
 	 * Start a new song from the starter song or an example. (Ask about unsaved changes first.)
 	 * @param {import('./songFields.js').SongFields} [from]
+	 * @param {string} [exampleName]
 	 */
-	startNew(from = STARTER_SONG) {
+	startNew(from = STARTER_SONG, exampleName = '') {
 		loadSongIntoPage(this.#arranger, from);
 		this.savedId = null;
 		this.name = '';
+		this.exampleName = exampleName;
 		this.#rememberFieldsAsSaved();
 	}
 
@@ -68,6 +72,7 @@ export class SongState {
 		loadSongIntoPage(this.#arranger, song);
 		this.savedId = song.id;
 		this.name = song.title;
+		this.exampleName = '';
 		this.#rememberFieldsAsSaved();
 		applyRememberedMix(id); // after the above, so a mix changed since the last Save shows as unsaved
 	}

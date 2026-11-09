@@ -62,8 +62,14 @@ export class Arranger {
 	/** The capo fret asked for, while the page asks what the melody should do (else null). */
 	capoAsked = $state(/** @type {number | null} */ (null));
 
-	/** A name for the work: the tune's title, else the first section's name. */
-	title = $derived(this.melody.title || this.arrangement.sections[0]?.name || '');
+	/** A name for the work: the tune's title, the song's name, else the first section's name. */
+	title = $derived(
+		this.melody.title ||
+			this.song.name ||
+			this.song.exampleName ||
+			this.arrangement.sections[0]?.name ||
+			''
+	);
 
 	/**
 	 * Replace the arrangement with one written from the melody's chord

@@ -12,7 +12,7 @@
 	function startFromExample(event) {
 		const example = EXAMPLE_SONGS.find(({ id }) => id === event.currentTarget.value);
 		event.currentTarget.value = ''; // the menu always shows "Examples"
-		if (example && okToDiscardChanges(song)) song.startNew(example.song);
+		if (example && okToDiscardChanges(song)) song.startNew(example.song, example.name);
 	}
 </script>
 

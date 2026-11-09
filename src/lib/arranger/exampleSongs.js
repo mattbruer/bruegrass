@@ -73,12 +73,23 @@ const THE_LONESOME_RIVER = Object.freeze({
 });
 
 export const EXAMPLE_SONGS = [
-	{ id: 'amazingGrace', title: 'Amazing Grace (3/4)', song: STARTER_SONG },
-	{ id: 'sunnySide', title: 'Keep on the Sunny Side (4/4)', song: KEEP_ON_THE_SUNNY_SIDE },
+	{ id: 'amazingGrace', name: 'Amazing Grace', title: 'Amazing Grace (3/4)', song: STARTER_SONG },
+	{
+		id: 'sunnySide',
+		name: 'Keep on the Sunny Side',
+		title: 'Keep on the Sunny Side (4/4)',
+		song: KEEP_ON_THE_SUNNY_SIDE
+	},
 	{
 		id: 'boilThemCabbageDown',
+		name: 'Boil Them Cabbage Down',
 		title: 'Boil Them Cabbage Down (4/4)',
 		song: BOIL_THEM_CABBAGE_DOWN
 	},
-	{ id: 'lonesomeRiver', title: 'The Lonesome River (3/4)', song: THE_LONESOME_RIVER }
+	{
+		id: 'lonesomeRiver',
+		name: 'The Lonesome River',
+		title: 'The Lonesome River (3/4)',
+		song: THE_LONESOME_RIVER
+	}
 ];
