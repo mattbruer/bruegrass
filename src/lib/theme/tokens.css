@@ -120,7 +120,9 @@
 
 	--color-surface: var(--theme-background);
 	--color-surface-deep: oklch(from var(--theme-background) calc(l - 0.04) c h);
-	--color-raised: oklch(from var(--theme-background) calc(l + 0.06) c h); /* cards and buttons: lighter than the page */
+	--color-raised: oklch(
+		from var(--theme-background) calc(l + 0.06) c h
+	); /* cards and buttons: lighter than the page */
 	--color-line: oklch(from var(--theme-background) calc(l - 0.1) c h); /* hairline borders */
 	--color-ink: var(--theme-text);
 	--color-ink-soft: color-mix(in oklab, var(--theme-text), var(--theme-background) 30%);
