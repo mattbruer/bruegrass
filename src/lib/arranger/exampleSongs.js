@@ -59,8 +59,26 @@ const BOIL_THEM_CABBAGE_DOWN = Object.freeze({
 	mix: null
 });
 
+/** The Lonesome River: a verse in 3/4 with the chorus the same as the verse. Chords only. */
+const THE_LONESOME_RIVER = Object.freeze({
+	arrangement: `
+"Verse"[M:3/4]|G|G|G|G|G|G|G|G7|C|C|C|C|G|G|G|G7|C|C|C|C|G|G|G|G|D|D|D7|D7|G|G|G|G|
+"Chorus" as Verse
+`,
+	abc: '',
+	tempo: TEMPO_DEFAULT,
+	capo: 0,
+	transpose: 0,
+	mix: null
+});
+
 export const EXAMPLE_SONGS = [
 	{ id: 'amazingGrace', title: 'Amazing Grace (3/4)', song: STARTER_SONG },
 	{ id: 'sunnySide', title: 'Keep on the Sunny Side (4/4)', song: KEEP_ON_THE_SUNNY_SIDE },
-	{ id: 'boilThemCabbageDown', title: 'Boil Them Cabbage Down (4/4)', song: BOIL_THEM_CABBAGE_DOWN }
+	{
+		id: 'boilThemCabbageDown',
+		title: 'Boil Them Cabbage Down (4/4)',
+		song: BOIL_THEM_CABBAGE_DOWN
+	},
+	{ id: 'lonesomeRiver', title: 'The Lonesome River (3/4)', song: THE_LONESOME_RIVER }
 ];
