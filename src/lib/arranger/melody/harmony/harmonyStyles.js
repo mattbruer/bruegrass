@@ -55,11 +55,8 @@ export const HARMONY_STYLES = Object.freeze([
 	{
 		id: 'parallel',
 		name: 'Parallel thirds and sixths',
-		/** Twin-fiddle style: a third (or sixth) from the lead in the key, whatever the chord. */
-		pick: (/** @type {Moment} */ { lead, count }) => ({
-			step: lead.step + Math.sign(count) * (Math.abs(count) === 1 ? 2 : 5),
-			alt: 0
-		})
+		/** Twin-fiddle style: a third, or a sixth when the third isn't a chord tone. */
+		pick: (/** @type {Moment} */ moment) => parallelTone(moment)
 	}
 ]);
 
@@ -68,6 +65,24 @@ export const HARMONY_STYLES = Object.freeze([
 /** @param {string} id */
 export function harmonyStyle(id) {
 	return HARMONY_STYLES.find((style) => style.id === id) ?? HARMONY_STYLES[0];
+}
+
+/**
+ * A third from the lead, or a sixth when the third isn't a chord tone (a 7th
+ * or tension is not sung): twin-fiddle thirds and sixths. Over a passing
+ * note it stays a plain third, parallel with the tune. The outer part counts
+ * a sixth, then a tenth.
+ * @param {Moment} moment
+ */
+function parallelTone({ lead, chord, count }) {
+	const direction = Math.sign(count);
+	const intervals = Math.abs(count) === 1 ? [2, 5] : [5, 9];
+	const candidates = intervals.map((interval) => ({
+		step: lead.step + direction * interval,
+		alt: 0
+	}));
+	if (!isChordTone(lead, chord)) return candidates[0];
+	return candidates.find((note) => isChordTone(note, chord)) ?? candidates[0];
 }
 
 /** @param {Moment} moment */

@@ -63,7 +63,7 @@ export function withHarmonies(abc, tune, chordAt, partIds, styles = {}) {
 			count: part.chordTones,
 			style: harmonyStyle(styles[part.id] ?? 'stack')
 		});
-		return `V:${part.id} name="${part.name}"\n${text}`;
+		return `V:${part.id} name="${part.label}"\n${text}`;
 	});
 	return { abc: [`${header}${LEAD_VOICE}`, body, ...written].join('\n') + '\n', problem: '' };
 }

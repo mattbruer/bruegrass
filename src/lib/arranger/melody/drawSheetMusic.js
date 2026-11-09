@@ -26,6 +26,33 @@ export const NOTHING_DRAWN = Object.freeze({
 	warnings: []
 });
 
+const PAGE_MARGIN = 15;
+
+/**
+ * Voice names (the harmony parts') push the staves right by the width of
+ * their label, which abcjs doesn't count in the drawing's width, so the staff
+ * ran past the edge. Widen the drawing to take them in; it scales down to fit.
+ * @param {HTMLElement} target
+ */
+function widenToFitStaves(target) {
+	const svg = target.querySelector('svg');
+	const box = svg?.viewBox.baseVal;
+	if (!svg || !box?.width) return;
+	const shown = svg.getBoundingClientRect();
+	const staffRight = Math.max(
+		0,
+		...[...svg.querySelectorAll('.abcjs-staff path')].map(
+			(line) => line.getBoundingClientRect().right
+		)
+	);
+	const needed = ((staffRight - shown.left) * box.width) / shown.width + PAGE_MARGIN;
+	if (needed <= box.width) return;
+
+	const heightPerWidth = box.height / needed;
+	svg.setAttribute('viewBox', `${box.x} ${box.y} ${needed} ${box.height}`);
+	if (svg.parentElement) svg.parentElement.style.paddingBottom = `${heightPerWidth * 100}%`;
+}
+
 /**
  * @param {HTMLElement} target where the music is drawn (its contents are replaced)
  * @param {string} notation ABC notation
@@ -41,6 +68,7 @@ export async function drawSheetMusic(target, notation, { transpose = 0 } = {}) {
 		add_classes: true,
 		visualTranspose: transpose
 	});
+	widenToFitStaves(target);
 	if (!tune) return NOTHING_DRAWN;
 
 	// A moved drawing moves its chord symbols too, so chords are read from the tune as written

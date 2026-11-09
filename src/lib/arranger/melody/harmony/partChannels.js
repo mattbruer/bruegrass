@@ -16,7 +16,7 @@ export function voiceChannels(tune) {
 	const staves = tune.lines.find((line) => line.staff)?.staff ?? [];
 	return staves.map((staff, index) => {
 		const name = /** @type {any} */ (staff).title?.[0];
-		const part = index > 0 ? HARMONY_PARTS.find((each) => each.name === name) : null;
+		const part = index > 0 ? HARMONY_PARTS.find((each) => each.label === name) : null;
 		return part?.id ?? MELODY_CHANNEL;
 	});
 }
