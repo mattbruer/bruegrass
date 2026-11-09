@@ -29,8 +29,18 @@
 		{ id: 'abc', name: 'ABC' }
 	];
 
-	const { melody } = useArranger();
+	/** The short bar before bar 1 a new tune can start with, in quarter notes. */
+	const PICKUP_CHOICES = [
+		{ quarters: 0, name: 'None' },
+		{ quarters: 1, name: '1 beat' },
+		{ quarters: 2, name: '2 beats' },
+		{ quarters: 3, name: '3 beats' }
+	];
+
+	const arranger = useArranger();
+	const { melody, arrangement } = arranger;
 	let view = $state('draw');
+	let pickupQuarters = $state(0);
 </script>
 
 <div>
@@ -63,6 +73,31 @@
 			added to it. Write the tune at its real (concert) pitch. With a capo on, the sheet music can
 			also be shown in the key of the guitar's shapes.
 		</p>
+
+		{#if !melody.hasNotation && arrangement.isPlayable}
+			<div class="mb-2 flex flex-wrap items-center gap-3">
+				<button
+					type="button"
+					class="ui-button px-3 py-1.5 text-sm"
+					onclick={() => arranger.startMelodyFromChart(pickupQuarters)}
+					use:tooltip={TIPS.melody.startFromChart}
+				>
+					Start the tune from the chart
+				</button>
+				<label class="flex items-center gap-2 text-sm text-ink-soft">
+					Pickup
+					<select
+						bind:value={pickupQuarters}
+						class="ui-field px-2 py-1"
+						use:tooltip={TIPS.melody.pickupLength}
+					>
+						{#each PICKUP_CHOICES as choice (choice.quarters)}
+							<option value={choice.quarters}>{choice.name}</option>
+						{/each}
+					</select>
+				</label>
+			</div>
+		{/if}
 
 		<textarea
 			id="abc-notation"

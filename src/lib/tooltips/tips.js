@@ -210,6 +210,10 @@ export const TIPS = Object.freeze({
 			delete: 'Delete the picked note (or press Delete).'
 		},
 		abcLink: 'Learn ABC notation, a simple way to write a tune as text.',
+		startFromChart:
+			'Write the tune’s header (title, key, time) and a rest for every bar of the chart, with its chords above, ready for notes.',
+		pickupLength:
+			'Notes sung or played before the first full bar. The tune starts with a short bar this long.',
 		arrangementFromChords:
 			'Replace the arrangement with one written from the melody’s chord symbols.',
 		chordsIntoMelody:

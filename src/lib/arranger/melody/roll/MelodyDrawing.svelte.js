@@ -10,7 +10,7 @@ import { concertChord } from '../../chart/concertChords.js';
 import { MELODY_CHANNEL } from '../harmony/partChannels.js';
 import { HARMONY_PARTS } from '../harmony/harmonyParts.js';
 import { readDrawnMelody, writeDrawnMelody } from './drawnMelody.js';
-import { scoreFromChart } from './scoreFromChart.js';
+import { blankScoreForSong } from './scoreFromChart.js';
 import { chordsUnderBars } from './chordsUnderBars.js';
 import { chordToneOptions } from './chordToneOptions.js';
 import { gridTicks } from './ticks.js';
@@ -159,14 +159,7 @@ export class MelodyDrawing {
 
 	/** @returns {Read} */
 	#fromChart() {
-		const { arrangement, melodyKey } = this.arranger;
-		const bars = barsInPlayOrder(arrangement.sections);
-		const { score, lineStarts } = scoreFromChart(
-			bars,
-			arrangement.key,
-			arrangement.capoFret,
-			melodyKey.spelling
-		);
+		const { score, lineStarts } = blankScoreForSong(this.arranger);
 		const melodyVoice = { id: MELODY_CHANNEL, name: 'Melody', score, problem: '' };
 		return { voices: [melodyVoice], sequence: null, lineStarts };
 	}

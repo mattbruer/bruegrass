@@ -36,6 +36,8 @@ import { validCapo } from '../chart/capo.js';
 import { withKeyField } from '../chart/keyField.js';
 import { readDrawnMelody, respellDrawnMelody } from '../melody/roll/drawnMelody.js';
 import { melodyKey } from '../melody/roll/melodyKey.js';
+import { blankScoreForSong } from '../melody/roll/scoreFromChart.js';
+import { newAbc } from '../melody/roll/scoreToAbc.js';
 
 export class Arranger {
 	arrangement = new ArrangementState();
@@ -116,6 +118,20 @@ export class Arranger {
 		const read = await readDrawnMelody(abc);
 		if (!read || read.voices.some((voice) => voice.problem) || this.melody.notation !== abc) return;
 		this.melody.notation = respellDrawnMelody(abc, read.voices, this.melodyKey);
+	}
+
+	/**
+	 * Start a tune from the chart: header, then every bar resting, with its chords.
+	 * @param {number} [pickupQuarters] a short first bar this long (0: none)
+	 */
+	startMelodyFromChart(pickupQuarters = 0) {
+		if (this.melody.hasNotation || !this.arrangement.isPlayable) return;
+		const { score, lineStarts } = blankScoreForSong(this, pickupQuarters);
+		this.melody.notation = newAbc(score, [], {
+			title: this.title,
+			keyText: this.melodyKey.keyText,
+			lineStarts
+		});
 	}
 
 	/** Write the arrangement's chords (at concert pitch) into a melody that has none. */
