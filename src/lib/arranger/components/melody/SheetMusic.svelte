@@ -9,12 +9,9 @@
 	 * guitar's shapes, for reading with the capo on.
 	 */
 	import { useArranger } from '../../state/context.js';
-	import { drawSheetMusic } from '../../melody/drawSheetMusic.js';
+	import { keepMelodyRead } from '../../melody/keepMelodyRead.svelte.js';
 	import { followSheetMusic } from '../../melody/followSheetMusic.js';
 	import SheetViewToggle from './SheetViewToggle.svelte';
-
-	/** Redraw this long after the last keystroke, not on every one. */
-	const REDRAW_DELAY_MS = 200;
 
 	const { arrangement, melody, player } = useArranger();
 
@@ -27,28 +24,11 @@
 	/** @type {HTMLDivElement | undefined} */
 	let page = $state();
 
-	// Draw the notation (after a pause in typing)
-	$effect(() => {
-		const notation = melody.notation;
-		const transpose = drawnTranspose;
-		const target = page;
-		if (!melody.hasNotation) {
-			melody.clearDrawing();
-			return;
-		}
-		if (!target) return;
-
-		let replaced = false;
-		const timer = setTimeout(async () => {
-			const drawn = await drawSheetMusic(target, notation, { transpose });
-			if (!replaced) melody.drawn = drawn;
-		}, REDRAW_DELAY_MS);
-
-		return () => {
-			replaced = true; // newer typing wins
-			clearTimeout(timer);
-		};
-	});
+	keepMelodyRead(
+		melody,
+		() => page,
+		() => drawnTranspose
+	);
 
 	// Follow along while playing
 	$effect(() => {

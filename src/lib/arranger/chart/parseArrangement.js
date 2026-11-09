@@ -1,4 +1,6 @@
 import { DEFAULT_METER } from './timeline.js';
+import { parseMeterField } from './meterField.js';
+import { sectionBlocks } from './sectionBlocks.js';
 
 /**
  * Parse the arrangement text.
@@ -16,6 +18,8 @@ import { DEFAULT_METER } from './timeline.js';
  * - `[2/4]` (no `M:`) sets the time signature for that one bar only, for
  *   the extra or missing beats of a crooked tune.
  * - Default is 4/4.
+ * - Lines under a section line are its lyrics (see sectionLyrics.js);
+ *   the chord chart ignores them.
  *
  * @returns {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[] }[]}
  */
@@ -24,13 +28,7 @@ export function parseArrangement(source) {
 	const sections = [];
 	let meter = DEFAULT_METER;
 
-	for (const line of source.split('\n')) {
-		const match = line.trim().match(/^"([^"]+)"\s*(.*)$/);
-
-		if (!match) continue;
-
-		const [, name, content] = match;
-
+	for (const { name, content } of sectionBlocks(source)) {
 		if (content.startsWith('as ')) {
 			sections.push({
 				name,
@@ -61,7 +59,7 @@ export function parseArrangement(source) {
 		for (const token of content.match(/\[[^\]]*\]|\||[^|[]+/g) ?? []) {
 			if (token === '|') endBar();
 			else if (token.startsWith('[')) {
-				const field = parseField(token, name);
+				const field = parseMeterField(token, name);
 				if (field.persistent) meter = field.meter;
 				else barOnly = field.meter;
 			} else text += token;
@@ -89,30 +87,4 @@ export function parseArrangement(source) {
 	return /** @type {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[] }[]} */ (
 		sections
 	);
-}
-
-/**
- * @param {string} token e.g. "[M:3/4]", "[2/4]", "[M:C|]"
- * @param {string} section for error messages
- */
-function parseField(token, section) {
-	const body = token.slice(1, -1).trim();
-	const persistent = /^M:/i.test(body);
-	const value = persistent ? body.slice(2).trim() : body;
-
-	if (value === 'C') return { persistent, meter: { beats: 4, unit: 4 } };
-	if (value === 'C|') return { persistent, meter: { beats: 2, unit: 2 } };
-
-	const fraction = value.match(/^(\d+)\s*\/\s*(\d+)$/);
-	if (!fraction)
-		throw new Error(
-			`Can't read ${token} in ${section}: use a time signature like [M:3/4] or [2/4]`
-		);
-	const beats = Number(fraction[1]);
-	const unit = Number(fraction[2]);
-	if (unit !== 2 && unit !== 4) {
-		throw new Error(`${token} in ${section}: only time signatures over 4 or 2 are supported`);
-	}
-	if (beats < 1 || beats > 12) throw new Error(`${token} in ${section}: 1 to 12 beats per bar`);
-	return { persistent, meter: { beats, unit } };
 }

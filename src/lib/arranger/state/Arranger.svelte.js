@@ -10,7 +10,7 @@
  *   arranger.player        play/stop, and problems to show
  *   arranger.layout        mixer drawer and phone keypad (what covers the screen)
  *   arranger.song          which song is open; New, Open, Save
- *   arranger.chordReport   what the last chord conversion wants you to know
+ *   arranger.conversionReport  what the last conversion between chart and melody (chords, words) wants you to know
  *   arranger.capoAsked     a capo change waiting for "raise the song or keep its key?"
  */
 import { ArrangementState } from './ArrangementState.svelte.js';
@@ -21,6 +21,8 @@ import { PageLayoutState } from './PageLayoutState.svelte.js';
 import { SongState } from './SongState.svelte.js';
 import { abcWithChords, arrangementFromAbc } from '../melody/abcChords.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
+import { abcWithWords } from '../melody/words/abcWithWords.js';
+import { readLyrics } from '../chart/sectionLyrics.js';
 import { harmonizeAbc } from '../melody/harmony/harmonizeAbc.js';
 import { harmonyPartsIn } from '../melody/harmony/writeHarmonies.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
@@ -39,7 +41,7 @@ export class Arranger {
 	song = new SongState(this);
 
 	/** @type {{ title: string, notes: string[] } | null} */
-	chordReport = $state(null);
+	conversionReport = $state(null);
 
 	/** The harmony parts the melody has (their ids, as in HARMONY_PARTS). */
 	harmonyParts = $derived(harmonyPartsIn(this.melody.notation));
@@ -74,7 +76,7 @@ export class Arranger {
 		this.loop.loopEverything();
 
 		const withCapo = written.capo ? `, with capo ${written.capo}` : '';
-		this.chordReport = {
+		this.conversionReport = {
 			title: `Arrangement written from the melody's chords${withCapo}.`,
 			notes: written.notes
 		};
@@ -89,8 +91,30 @@ export class Arranger {
 			capo: this.arrangement.capoFret
 		});
 		this.melody.notation = result.abc;
-		this.chordReport = {
+		this.conversionReport = {
 			title: "The arrangement's chords are written into the melody.",
+			notes: result.notes
+		};
+	}
+
+	/**
+	 * Write the chart's words under the melody's notes (ABC `w:` lines),
+	 * replacing any words it had.
+	 */
+	writeWordsIntoMelody() {
+		const { tune, sequence } = this.melody.drawn;
+		if (!tune || !sequence || !this.arrangement.isPlayable) return;
+
+		const result = abcWithWords(
+			this.melody.notation,
+			tune,
+			sequence,
+			this.arrangement.sections,
+			readLyrics(this.arrangement.text)
+		);
+		this.melody.notation = result.abc;
+		this.conversionReport = {
+			title: "The chart's words are written under the melody.",
 			notes: result.notes
 		};
 	}

@@ -46,5 +46,5 @@ export function loadSongIntoPage(arranger, song) {
 	applySongMix(song.mix); // keeps this device's listening setup on, if it has one
 
 	arranger.loop.loopEverything();
-	arranger.chordReport = null;
+	arranger.conversionReport = null;
 }

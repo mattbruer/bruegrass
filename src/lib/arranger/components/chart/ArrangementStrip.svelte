@@ -16,7 +16,7 @@
 	 */
 	let { sections, playback, label = (chord) => chord } = $props();
 
-	import { barQuarters, meterText, slotPositions } from '../../chart/timeline.js';
+	import { barsInPlayOrder } from '../../chart/chartBars.js';
 
 	/** Width of one beat (quarter note); chords and bars are sized by their beats. */
 	const BEAT_PX = 40;
@@ -27,38 +27,8 @@
 	/** @type {HTMLDivElement | undefined} */
 	let track = $state();
 
-	/**
-	 * Bars in play order, each with its chords and their lengths in beats.
-	 * @type {{ section: number, measure: number, sectionName: string, sectionStart: boolean,
-	 *   meter: string | null, beats: number, chords: { name: string, chord: number, length: number }[] }[]}
-	 */
-	let measures = $derived.by(() => {
-		/** @type {typeof measures} */
-		const bars = [];
-		let previousMeter = '';
-		let previousSection = -1;
-		for (const slot of slotPositions(sections)) {
-			let bar = bars.at(-1);
-			if (!bar || bar.section !== slot.section || bar.measure !== slot.measure) {
-				const meter = meterText(slot.meter);
-				bar = {
-					section: slot.section,
-					measure: slot.measure,
-					sectionName: slot.sectionName,
-					sectionStart: slot.section !== previousSection,
-					// Shown at the top and wherever it changes
-					meter: bars.length === 0 || meter !== previousMeter ? meter : null,
-					beats: barQuarters(slot.meter),
-					chords: []
-				};
-				bars.push(bar);
-				previousMeter = meter;
-				previousSection = slot.section;
-			}
-			bar.chords.push({ name: slot.name, chord: slot.chord, length: slot.length });
-		}
-		return bars;
-	});
+	/** Bars in play order, each with its chords and their lengths in beats. */
+	let measures = $derived(barsInPlayOrder(sections));
 	let passWidth = $derived(measures.reduce((sum, measure) => sum + measure.beats, 0) * BEAT_PX);
 	let playheadX = $derived(Math.min(PLAYHEAD_PX, width / 4));
 	// Enough copies to fill the view on both sides of the playhead

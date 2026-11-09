@@ -46,7 +46,7 @@
 	}
 </script>
 
-<header class="topbar">
+<header class="topbar print:hidden">
 	<nav class="mx-auto flex max-w-5xl items-center gap-3 px-4 sm:px-8" aria-label="Main">
 		<a
 			href={resolve('/')}

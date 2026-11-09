@@ -73,6 +73,24 @@
 			"text": "Simple form-based melody entry, plus MIDI import for DAW users",
 			"done": false,
 			"addedAt": "2026-11-07T00:00:00.000Z"
+		},
+		{
+			"id": "chart-entry",
+			"text": "Lyric chart: tap the word where each bar starts, instead of typing |",
+			"done": false,
+			"addedAt": "2026-11-08T00:00:00.000Z"
+		},
+		{
+			"id": "sung-syllable",
+			"text": "Light up each syllable as it's sung, on the chart and the sheet music",
+			"done": false,
+			"addedAt": "2026-11-08T00:00:00.000Z"
+		},
+		{
+			"id": "words-from-abc",
+			"text": "Read an ABC tune's own words (w: lines) into the chart",
+			"done": false,
+			"addedAt": "2026-11-08T00:00:00.000Z"
 		}
 	]
 }

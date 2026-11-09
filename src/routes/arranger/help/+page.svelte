@@ -5,7 +5,11 @@
 	 * When the syntax grows, add a section to TOPICS.
 	 */
 	import { parseArrangement } from '$lib/arranger/chart/parseArrangement.js';
-	import { barQuarters, meterText, slotPositions } from '$lib/arranger/chart/timeline.js';
+	import { barsInPlayOrder } from '$lib/arranger/chart/chartBars.js';
+	import { readLyrics } from '$lib/arranger/chart/sectionLyrics.js';
+	import { chartSections } from '$lib/arranger/lyricChart/chartRows.js';
+	import { chartBlocks } from '$lib/arranger/lyricChart/chartBlocks.js';
+	import LyricChart from '$lib/arranger/components/lyricChart/LyricChart.svelte';
 	import { BUILT_IN_CHORDS } from '$lib/arranger/instruments/chordBook.js';
 
 	const QUALITIES = [
@@ -21,35 +25,35 @@
 	 * @param {string} text
 	 */
 	function chart(text) {
-		/** @type {{ key: string, name: string | null, meter: string | null, beats: number, chords: { name: string, length: number }[] }[]} */
-		const bars = [];
-		let previousMeter = '';
-		let previousSection = -1;
-		for (const slot of slotPositions(parseArrangement(text))) {
-			let bar = bars.at(-1);
-			const key = `${slot.section}:${slot.measure}`;
-			if (!bar || bar.key !== key) {
-				const meter = meterText(slot.meter);
-				bar = {
-					key,
-					name: slot.section !== previousSection ? slot.sectionName : null,
-					meter: meter !== previousMeter ? meter : null,
-					beats: barQuarters(slot.meter),
-					chords: []
-				};
-				bars.push(bar);
-				previousMeter = meter;
-				previousSection = slot.section;
-			}
-			bar.chords.push({ name: slot.name, length: slot.length });
-		}
-		return bars;
+		return barsInPlayOrder(parseArrangement(text)).map((bar) => ({
+			...bar,
+			key: `${bar.section}:${bar.measure}`,
+			name: bar.sectionStart ? bar.sectionName : null
+		}));
+	}
+
+	/**
+	 * An example with words, as its lyric chart.
+	 * @param {string} text
+	 */
+	function lyricBlocks(text) {
+		const { sections } = chartSections(parseArrangement(text), readLyrics(text));
+		return chartBlocks(sections);
 	}
 </script>
 
 <svelte:head>
 	<title>How to write an arrangement · Bluegrass Arranger</title>
 </svelte:head>
+
+{#snippet wordsExample(/** @type {string} */ text)}
+	<div class="example">
+		<pre class="code">{text}</pre>
+		<div class="words-chart" aria-label="How it looks on the chart">
+			<LyricChart blocks={lyricBlocks(text)} />
+		</div>
+	</div>
+{/snippet}
 
 {#snippet example(/** @type {string} */ text)}
 	<div class="example">
@@ -92,6 +96,7 @@
 			<li><a href="#repeat" class="hover:underline">Playing a part again</a></li>
 			<li><a href="#waltz" class="hover:underline">Waltzes (3 beats)</a></li>
 			<li><a href="#crooked" class="hover:underline">Crooked tunes (odd bars)</a></li>
+			<li><a href="#words" class="hover:underline">Words, for a chart the band can read</a></li>
 			<li><a href="#chords" class="hover:underline">Which chords can I use?</a></li>
 			<li><a href="#my-chords" class="hover:underline">Your own chord shapes</a></li>
 			<li><a href="#phone" class="hover:underline">Writing on a phone</a></li>
@@ -192,8 +197,39 @@
 		</p>
 	</section>
 
+	<section id="words">
+		<h2>7. Words, for a chart the band can read</h2>
+		<p>
+			Write the words on the lines under a part. Type <code>|</code> where each bar starts, so the
+			words line up with the chords bar by bar. The band doesn't play the words; they're for the
+			<b>Chart</b> page, which you can print.
+		</p>
+		{@render wordsExample(`"Verse"|G|G|C|G|\n|Down by the |river where the |willows |grow`)}
+		<p class="tip">
+			Each line of words becomes a line on the chart. Split a word sung on two notes with a hyphen:
+			<code>sun-ny</code>. With a melody, <b>Add the chart's words to the melody</b> (on the Melody tab)
+			puts the words under its notes.
+		</p>
+
+		<h3>Words before the first bar</h3>
+		<p>
+			Words sung before bar 1 (a pickup) go before the first <code>|</code>. A bar with no words is
+			just <code>| |</code>.
+		</p>
+		{@render wordsExample(`"Verse"|G|C|G|\nI'm |going |home | |`)}
+
+		<h3>Each verse its own words</h3>
+		<p>
+			A part played again with <code>as</code> can have its own words under it. With no words, the chart
+			shows just its chords.
+		</p>
+		{@render wordsExample(
+			`"Verse 1"|G|C|\n|Sun is |rising\n"Verse 2" as Verse 1\n|Moon is |falling`
+		)}
+	</section>
+
 	<section id="chords">
-		<h2>7. Which chords can I use?</h2>
+		<h2>8. Which chords can I use?</h2>
 		<p>
 			Major, minor, seventh and diminished chords in every key. Put the letter first, then # or b if
 			it has one, then the kind of chord:
@@ -224,7 +260,7 @@
 	</section>
 
 	<section id="my-chords">
-		<h2>8. Your own chord shapes</h2>
+		<h2>9. Your own chord shapes</h2>
 		<p>
 			Want a chord the guitar doesn't know, or a different way to play one? Press <b>My chords</b>
 			above the box, give the shape a name, and type its six frets from the low E string to the high e.
@@ -253,7 +289,7 @@
 	</section>
 
 	<section id="phone">
-		<h2>9. Writing on a phone</h2>
+		<h2>10. Writing on a phone</h2>
 		<p>
 			On a phone, tapping the box opens a <b>music keypad</b> instead of the normal keyboard. It has
 			only the keys you need, so no hunting for <code>|</code>.
@@ -281,7 +317,7 @@
 	</section>
 
 	<section id="mistakes">
-		<h2>10. If something goes wrong</h2>
+		<h2>11. If something goes wrong</h2>
 		<p>A red message appears under the box. The usual causes:</p>
 		<ul class="mb-4 list-disc space-y-2 pl-6">
 			<li>
@@ -303,7 +339,7 @@
 	</section>
 
 	<section id="everything">
-		<h2>11. Putting it all together</h2>
+		<h2>12. Putting it all together</h2>
 		{@render example(
 			`"Verse"|G|G|C|G|\n"Chorus"|C|G|D,C|G|\n"Banjo Break" as Verse\n"Waltz Tag" [M:3/4] |C|G|[2/4]D|G|`
 		)}
@@ -366,6 +402,11 @@
 		padding: 0.75rem 1rem;
 		font-family: ui-monospace, monospace;
 		color: var(--color-surface);
+	}
+
+	.words-chart {
+		padding: 1rem;
+		border-top: 1px solid var(--color-line);
 	}
 
 	.chart {

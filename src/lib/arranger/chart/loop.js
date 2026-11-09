@@ -9,9 +9,10 @@
 import { DEFAULT_METER, barQuarters } from './timeline.js';
 
 /**
- * @typedef {import('./timeline.js').Section & { barOffset?: number }} LoopSection
+ * @typedef {import('./timeline.js').Section & { barOffset?: number, source?: number }} LoopSection
  *   barOffset: index of the section's first bar in the original section,
- *   so bar numbers can still be shown as in the full arrangement
+ *   so bar numbers can still be shown as in the full arrangement;
+ *   source: the original section's index (to find its words)
  * @typedef {{ section: number, from: number, to: number }} LoopChoice
  *   section: index, or -1 for the whole arrangement; from/to: 1-based bars
  *   within that scope, inclusive
@@ -46,7 +47,7 @@ export function loopRegion(sections, { section, from, to }) {
 	for (const { section: s, measure: m } of scope.slice(first - 1, last)) {
 		const source = sections[s];
 		if (s !== lastSource) {
-			region.push({ name: source.name, measures: [], meters: [], barOffset: m });
+			region.push({ name: source.name, measures: [], meters: [], barOffset: m, source: s });
 			lastSource = s;
 		}
 		const current = /** @type {LoopSection} */ (region.at(-1));

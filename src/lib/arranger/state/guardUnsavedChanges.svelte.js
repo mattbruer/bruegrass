@@ -1,6 +1,6 @@
 /**
  * Ask before leaving the arranger with unsaved changes: going to another
- * page in the app, reloading, or closing the tab.
+ * page in the app (not the chart, which shares the song), reloading, or closing the tab.
  */
 import { beforeNavigate } from '$app/navigation';
 import {
@@ -10,12 +10,16 @@ import {
 import { forgetDraftsOnLeaving } from './drafts.svelte.js';
 import { forgetSongMix } from './songMixMemory.svelte.js';
 
+/** The pages that share the open song (their layout keeps it), so moving between them loses nothing. */
+const SAME_SONG_ROUTES = '/arranger/(band)';
+
 /**
  * Call once while the arranger page is being set up.
  * @param {import('./SongState.svelte.js').SongState} song
  */
 export function guardUnsavedChanges(song) {
 	beforeNavigate((navigation) => {
+		if (navigation.to?.route.id?.startsWith(SAME_SONG_ROUTES)) return;
 		const songChanged = song.hasUnsavedChanges;
 		// A listening setup isn't part of the song (New and Open keep it), but leaving loses its changes
 		const setupChanged = setupHasUnsavedChanges();

@@ -5,11 +5,17 @@
 	 * show anything the conversion couldn't do exactly.
 	 */
 	import { useArranger } from '../../state/context.js';
+	import { readLyrics } from '../../chart/sectionLyrics.js';
+	import ConversionReport from './ConversionReport.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const arranger = useArranger();
 	const { arrangement, melody } = arranger;
+
+	let hasWords = $derived(
+		readLyrics(arrangement.text).some((section) => section.bars.length > 0 || section.pickup)
+	);
 </script>
 
 {#if melody.drawn.sequence}
@@ -33,18 +39,17 @@
 				Add the arrangement's chords to the melody
 			</button>
 		{/if}
-	</div>
-{/if}
-
-{#if arranger.chordReport}
-	<div class="mt-3 ui-well p-3 text-sm">
-		<p class="font-semibold">{arranger.chordReport.title}</p>
-		{#if arranger.chordReport.notes.length > 0}
-			<ul class="mt-1 list-disc pl-5 text-accent">
-				{#each arranger.chordReport.notes as note, index (index)}
-					<li>{note}</li>
-				{/each}
-			</ul>
+		{#if arrangement.isPlayable && hasWords}
+			<button
+				type="button"
+				class="ui-button px-3 py-1.5 text-sm"
+				onclick={() => arranger.writeWordsIntoMelody()}
+				use:tooltip={TIPS.melody.wordsIntoMelody}
+			>
+				Add the chart's words to the melody
+			</button>
 		{/if}
 	</div>
 {/if}
+
+<ConversionReport />

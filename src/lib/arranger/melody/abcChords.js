@@ -41,7 +41,7 @@ const COST_PER_FRET = 1;
  * Walk one voice of abcjs's sequence.
  * @param {any[]} voice one entry of abcjs.synth.sequence(tune)
  */
-function walk(voice) {
+export function walk(voice) {
 	/** @type {Item[]} */
 	const items = [];
 	/** @type {number[]} */

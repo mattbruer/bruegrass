@@ -123,6 +123,23 @@ export const TIPS = Object.freeze({
 		}
 	},
 
+	chart: {
+		open: 'The song as a chart for the band: chords and words with barlines, on paper you can print.',
+		back: 'Back to the arranger. The song and the band come with you.'
+	},
+
+	fullScreen: {
+		open: 'Fill the screen with the chart, for reading on a stand. Tap the sides or use the arrow keys to turn pages.',
+		close: 'Leave full screen (or press Esc).',
+		play: 'Start or stop the band.'
+	},
+
+	paper: {
+		print: 'Print the chart, or save it as a PDF.',
+		previous: 'The page before.',
+		next: 'The next page. On a touch screen you can swipe.'
+	},
+
 	myChords: {
 		open: 'Your own guitar shapes: a chord the guitar doesn’t know yet, or a second shape like G:high.',
 		pick: 'Change or delete this shape.',
@@ -149,6 +166,8 @@ export const TIPS = Object.freeze({
 			'Replace the arrangement with one written from the melody’s chord symbols.',
 		chordsIntoMelody:
 			'Write the arrangement’s chords into the melody, as chord symbols above the notes.',
+		wordsIntoMelody:
+			'Write the chart’s words under the melody’s notes, bar by bar. Replaces any words the melody had.',
 		harmony: {
 			tenor: 'Add or remove a harmony line just above the melody: the next note of the chord up.',
 			'high-baritone': 'Add or remove a high harmony line, two chord notes above the melody.',
