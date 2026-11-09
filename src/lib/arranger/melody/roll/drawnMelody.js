@@ -50,7 +50,7 @@ export async function readDrawnMelody(abc) {
  * The ABC with one voice's notes as drawn.
  * @param {{
  *   abc: string, voice: string, score: Score, notes: DrawnNote[], song: Song,
- *   newTune?: { title: string, keyText: string, lineStarts: Set<number> } | null
+ *   newTune?: { title: string, keyText: string, lineStarts: Map<number, string> } | null
  * }} change voice: which one was drawn; newTune: write a whole tune (the
  *   score came from the chart)
  */

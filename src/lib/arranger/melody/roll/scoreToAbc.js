@@ -62,8 +62,8 @@ export function changedBars(score, notes) {
  * A whole tune: header, then every bar.
  * @param {Score} score bars not yet written (from scoreFromChart)
  * @param {DrawnNote[]} notes
- * @param {{ title: string, keyText: string, lineStarts: Set<number> }} header
- *   keyText: the K: field ("G", "Em"); lineStarts: bars that begin a section
+ * @param {{ title: string, keyText: string, lineStarts: Map<number, string> }} header
+ *   keyText: the K: field ("G", "Em"); lineStarts: bars that begin a section, with its name
  */
 export function newAbc(score, notes, { title, keyText, lineStarts }) {
 	const first = score.bars[0]?.meter ?? { num: 4, den: 4 };
@@ -73,12 +73,15 @@ export function newAbc(score, notes, { title, keyText, lineStarts }) {
 	let barsOnLine = 0;
 
 	score.bars.forEach((bar, index) => {
-		const breaks = index > 0 && (lineStarts.has(index) || barsOnLine === BARS_PER_LINE);
+		const sectionName = lineStarts.get(index);
+		const sectionStart = index > 0 && sectionName !== undefined;
+		const breaks = index > 0 && (sectionStart || barsOnLine === BARS_PER_LINE);
 		if (breaks) {
-			lines.push(`${line}|`);
+			lines.push(`${line}${sectionStart ? '||' : '|'}`);
 			line = '';
 			barsOnLine = 0;
 		}
+		if (sectionName) lines.push(`P:${sectionName}`);
 		const barMeter = `${bar.meter.num}/${bar.meter.den}`;
 		const change = barMeter !== meter ? `[M:${barMeter}] ` : '';
 		meter = barMeter;

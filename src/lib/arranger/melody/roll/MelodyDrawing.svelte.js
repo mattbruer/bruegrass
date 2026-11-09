@@ -25,8 +25,8 @@ const VOICE_ORDER = [MELODY_CHANNEL, ...HARMONY_PARTS.map((part) => part.id)];
  * @typedef {import('./drawnMelody.js').DrawnVoice} DrawnVoice
  * @typedef {{
  *   voices: DrawnVoice[], sequence: any[][] | null,
- *   lineStarts: Set<number> | null
- * }} Read lineStarts: set when the melody came from the chart (a new tune)
+ *   lineStarts: Map<number, string> | null
+ * }} Read lineStarts: map when the melody came from the chart (a new tune)
  */
 
 export class MelodyDrawing {

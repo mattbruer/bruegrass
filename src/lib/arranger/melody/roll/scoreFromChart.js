@@ -33,14 +33,14 @@ export function blankScoreForSong({ arrangement, melodyKey }, pickupQuarters = 0
  * @param {number} capo
  * @param {import('../../theory/musicInKey.js').Key} spelling
  * @param {number} [pickupQuarters] a short bar before bar 1; times then count from it
- * @returns {{ score: import('./readScore.js').Score, lineStarts: Set<number> }}
- *   lineStarts: bars that begin a section
+ * @returns {{ score: import('./readScore.js').Score, lineStarts: Map<number, string> }}
+ *   lineStarts: bars that begin a section, each with the section's name
  */
 export function scoreFromChart(chartBars, songKey, capo, spelling, pickupQuarters = 0) {
 	let meter = { num: 4, den: 4 };
 	const bars = [];
 	const chords = [];
-	const lineStarts = new Set();
+	const lineStarts = new Map();
 	const pickup = pickupQuarters * TICKS_PER_QUARTER;
 
 	if (pickup > 0) {
@@ -53,7 +53,9 @@ export function scoreFromChart(chartBars, songKey, capo, spelling, pickupQuarter
 		if (bar.meter) meter = meterOf(bar.meter);
 		const start = bar.start * TICKS_PER_QUARTER + pickup;
 		bars.push({ start, length: bar.beats * TICKS_PER_QUARTER, meter, from: null, to: null });
-		if (bar.sectionStart && !(barShift && bar.index === 0)) lineStarts.add(bar.index + barShift);
+		if (bar.sectionStart && !(barShift && bar.index === 0)) {
+			lineStarts.set(bar.index + barShift, bar.sectionName);
+		}
 
 		let at = start;
 		for (const chord of bar.chords) {
