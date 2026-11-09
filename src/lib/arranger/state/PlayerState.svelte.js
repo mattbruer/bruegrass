@@ -32,6 +32,15 @@ export class PlayerState {
 	#melodyTiming = { offset: 0, pickup: 0 };
 
 	/**
+	 * The recorded takes to play along (set by RecordingState).
+	 * @type {(leaveOutTrack: string | null) => Promise<import('../takes/playTakes.js').PlayableTake[]>}
+	 */
+	takesToPlay = async () => [];
+
+	/** Called once when this playback stops (recording saves its take then). */
+	#onStop = /** @type {(() => void) | null} */ (null);
+
+	/**
 	 * @param {import('./ArrangementState.svelte.js').ArrangementState} arrangement
 	 * @param {import('./LoopState.svelte.js').LoopState} loop
 	 * @param {import('./MelodyState.svelte.js').MelodyState} melody
@@ -43,7 +52,12 @@ export class PlayerState {
 		this.metronome = new MetronomeState(this, arrangement);
 	}
 
-	async play() {
+	/**
+	 * @param {{ countIn?: number, passes?: number, leaveOutTrack?: string, onStop?: () => void }} [options]
+	 *   for recording: countIn (seconds before bar 1), passes (stop after this many),
+	 *   leaveOutTrack (don't play the track being recorded on), onStop
+	 */
+	async play({ countIn, passes, leaveOutTrack, onStop } = {}) {
 		this.stop();
 		this.problem = '';
 		if (this.#arrangement.error) {
@@ -52,12 +66,18 @@ export class PlayerState {
 		}
 
 		try {
+			const bpm = this.#arrangement.bpm;
 			this.playback = await playArrangement(this.#loop.sectionsToPlay, {
 				capo: this.#arrangement.capoFret,
 				transpose: this.#arrangement.transpose,
-				bpm: this.#arrangement.bpm,
-				melody: this.#melodyForThisPass()
+				bpm,
+				melody: this.#melodyForThisPass(),
+				takes: await this.takesToPlay(leaveOutTrack ?? null),
+				regionStart: (this.#loop.startInSong * 60) / bpm,
+				countIn,
+				passes
 			});
+			this.#onStop = onStop ?? null;
 			// Each play is measured afresh, so the loudness reading is this song as it is now
 			audioTaps.current?.output.resetLoudness();
 			this.metronome.sync();
@@ -70,6 +90,9 @@ export class PlayerState {
 		this.playback?.stop();
 		this.playback = null;
 		this.metronome.sync();
+		const onStop = this.#onStop;
+		this.#onStop = null;
+		onStop?.();
 	}
 
 	/** After a change that affects what's playing (like the loop): start again with it. */

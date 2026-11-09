@@ -25,6 +25,7 @@ import { createBand } from '../instruments/band.js';
 import { buildMixerGraph } from '../playback/graph/buildMixerGraph.js';
 import { melodyEvents } from '../melody/melody.js';
 import { channelsInUse, isTuneChannel } from '../melody/harmony/partChannels.js';
+import { isRecordTrack } from '../takes/recordTracks.js';
 import { DEFAULT_METER, barQuarters, slotPositions } from '../chart/timeline.js';
 
 /** Exported files' sample rate: the usual rate for music made with video or a DAW. */
@@ -76,8 +77,10 @@ export async function renderStems(song, mix, { processed }) {
 	const stemMix = processed ? withoutMutes(mix) : dry(mix);
 	const plan = planRender(song, stemMix);
 	const tuneChannels = channelsInUse(song.melody);
+	// Recorded takes aren't rendered yet, so their tracks get no stem
 	const instruments = mix.channels.filter(
-		(channel) => !isTuneChannel(channel.id) || tuneChannels.has(channel.id)
+		(channel) =>
+			!isRecordTrack(channel.id) && (!isTuneChannel(channel.id) || tuneChannels.has(channel.id))
 	);
 	const stems = [
 		...instruments.map((channel) => ({ id: channel.id, name: channel.name })),

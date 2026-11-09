@@ -83,6 +83,20 @@ export const TIPS = Object.freeze({
 		discard: 'Throw last time’s unsaved changes away.'
 	},
 
+	recording: {
+		tile: 'Record yourself along with the band: a voice, or a real instrument in place of one of the band’s.',
+		track: 'The track to record on. Each track has its own strip in the mixer.',
+		record:
+			'Start recording: a bar of clicks, then the band plays the song once. Press again (or Stop) to finish early.',
+		use: 'Play this take on its track. The other takes on the track are kept, but not played.',
+		earlier: 'Move the take a little earlier, if it sounds behind the band.',
+		later: 'Move the take a little later, if it sounds ahead of the band.',
+		download:
+			'Save this take as a WAV file to send to someone. It starts one bar before bar 1, so it lines up when they add it to the same song.',
+		delete: 'Delete this take for good.',
+		addFile:
+			'Add a take from a WAV file someone sent you (one made with Download here), onto the chosen track.'
+	},
 	player: {
 		play: 'Play the arrangement from the start, looping. Changes you make while it plays are picked up.',
 		stop: 'Stop playing.',

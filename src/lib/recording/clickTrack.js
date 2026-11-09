@@ -22,17 +22,22 @@ const START_DELAY_SECONDS = 0.1;
  */
 
 /**
- * Click `run.bars` bars at `run.tempo`, starting now.
+ * Click `run.bars` bars at `run.tempo`, starting now (or at `start`).
  * @param {BaseAudioContext} context
  * @param {ClickRun} run
  * @param {AudioNode} [destination] default: the speakers
+ * @param {number} [start] the audio-clock time of the first click (default: just after now)
  * @returns {() => void} stop (also safe once it has finished)
  */
-export function playClicks(context, run, destination = context.destination) {
+export function playClicks(
+	context,
+	run,
+	destination = context.destination,
+	start = context.currentTime + START_DELAY_SECONDS
+) {
 	const accent = clickSound(context, CLICK.accentHz);
 	const beat = clickSound(context, CLICK.beatHz);
 	const secondsPerBeat = 60 / run.tempo;
-	const start = context.currentTime + START_DELAY_SECONDS;
 
 	const players = clickTimes(run).map(({ beat: index, downbeat }) => {
 		const player = context.createBufferSource();

@@ -2,7 +2,7 @@
 	/**
 	 * The mixer: a tray of channel strips in one row (swipe sideways on a
 	 * narrow screen). An instrument strip each (and one per harmony part the
-	 * song has), then the reverb aux, the
+	 * song has, and one per record track with a take), then the reverb aux, the
 	 * master, the output stage (loudness and limiter), and a small
 	 * visualiser of what reaches the speakers.
 	 */
@@ -16,15 +16,16 @@
 	import ListeningSetupsDialog from './listening/ListeningSetupsDialog.svelte';
 	import { useArranger } from '../../state/context.js';
 	import { channelsInUse, isTuneChannel } from '../../melody/harmony/partChannels.js';
+	import { isRecordTrack } from '../../takes/recordTracks.js';
 
-	const { melody } = useArranger();
+	const { melody, recording } = useArranger();
 	const tuneChannels = $derived(channelsInUse(melody.line));
-	/** Melody always; a harmony part's strip only while the song has that part. */
+	/** Melody always; a harmony part's strip only while the song has that part, a track's while it has a take. */
 	const shown = $derived(
-		mixer.channels.filter(
-			(channel) =>
-				channel.id === 'melody' || !isTuneChannel(channel.id) || tuneChannels.has(channel.id)
-		)
+		mixer.channels.filter((channel) => {
+			if (isRecordTrack(channel.id)) return recording.tracksInUse.has(channel.id);
+			return channel.id === 'melody' || !isTuneChannel(channel.id) || tuneChannels.has(channel.id);
+		})
 	);
 </script>
 

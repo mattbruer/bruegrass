@@ -45,10 +45,28 @@
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
-			"id": "take-model",
-			"text": "Takes: a recorded part on the timeline, with its player and offset",
+			"id": "share-song-link",
+			"text": "Send a song as a link, so a collaborator opens the same chart",
 			"done": false,
-			"addedAt": "2026-11-07T00:00:00.000Z"
+			"addedAt": "2026-11-08T00:00:00.000Z"
+		},
+		{
+			"id": "takes-in-export",
+			"text": "Recorded takes in the exported mix and stems",
+			"done": false,
+			"addedAt": "2026-11-08T00:00:00.000Z"
+		},
+		{
+			"id": "input-monitoring",
+			"text": "Hear yourself through the app while recording (try it, measure the delay)",
+			"done": false,
+			"addedAt": "2026-11-08T00:00:00.000Z"
+		},
+		{
+			"id": "shared-projects",
+			"text": "Shared projects: songs and takes sync between collaborators (backend)",
+			"done": false,
+			"addedAt": "2026-11-08T00:00:00.000Z"
 		},
 		{
 			"id": "pilot-hear-it",

@@ -7,10 +7,11 @@
  */
 import TransportButtons from '../player/TransportButtons.svelte';
 import TempoButton from '../player/TempoButton.svelte';
+import RecordTile from '../recording/RecordTile.svelte';
 import EditTile from './EditTile.svelte';
 import MixerTile from './MixerTile.svelte';
 
 export const PLAYER_BAR_TILES = Object.freeze({
-	start: [TransportButtons, TempoButton],
+	start: [TransportButtons, RecordTile, TempoButton],
 	end: [EditTile, MixerTile]
 });

@@ -3,8 +3,11 @@
  * sample sample-accurately (nothing a busy page can drop) and sends them to
  * the page in chunks.
  *
- * Messages in:  { type: 'start' } and { type: 'stop' }
- * Messages out: { type: 'chunk', channels: Float32Array[] } while recording,
+ * Messages in:  { type: 'start', at? } and { type: 'stop' }
+ *               at: the audio-clock time (seconds) to start on, to the sample;
+ *               left out (or already past), it starts straight away
+ * Messages out: { type: 'started', frame } on the frame the take begins,
+ *               { type: 'chunk', channels: Float32Array[] } while recording,
  *               then { type: 'stopped' } after the last chunk.
  *
  * Stands alone (no imports): see worklets.js.
@@ -19,11 +22,15 @@ class TakeRecorderProcessor extends AudioWorkletProcessor {
 		super();
 		this.channelCount = options.processorOptions.channelCount;
 		this.recording = false;
+		/** The audio-clock frame to start on (recording waits for it). */
+		this.startFrame = 0;
 		this.startChunk();
 
 		this.port.onmessage = ({ data }) => {
 			if (data.type === 'start') {
 				this.startChunk();
+				this.startFrame = Math.round((data.at ?? 0) * sampleRate);
+				this.waiting = true;
 				this.recording = true;
 			} else if (data.type === 'stop' && this.recording) {
 				this.recording = false;
@@ -56,6 +63,13 @@ class TakeRecorderProcessor extends AudioWorkletProcessor {
 		const input = inputs[0];
 		const frames = input[0]?.length ?? 128;
 		let done = 0;
+		if (this.waiting) {
+			// currentFrame: this block's first frame on the audio clock
+			if (currentFrame + frames <= this.startFrame) return true;
+			done = Math.max(0, this.startFrame - currentFrame);
+			this.waiting = false;
+			this.port.postMessage({ type: 'started', frame: currentFrame + done });
+		}
 		while (done < frames) {
 			const count = Math.min(frames - done, CHUNK_FRAMES - this.filled);
 			for (let channel = 0; channel < this.channelCount; channel++) {

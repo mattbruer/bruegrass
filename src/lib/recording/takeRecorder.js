@@ -5,15 +5,26 @@
  */
 import { createNativeWorkletNode } from '$lib/arranger/playback/worklets/worklets.js';
 
-/** @typedef {{ channels: Float32Array[], sampleRate: number }} Take */
+/**
+ * @typedef {{ channels: Float32Array[], sampleRate: number, startTime: number }} Take
+ *   startTime: the audio-clock time (seconds) of its first sample
+ * @typedef {(options: AudioWorkletNodeOptions) => Promise<AudioWorkletNode>} MakeRecorderNode
+ */
 
 /**
- * @param {AudioContext} context
+ * @param {BaseAudioContext} context
  * @param {AudioNode} source what to record
  * @param {number} channelCount how many of its channels
+ * @param {MakeRecorderNode} [makeNode] how to make the worklet node (default: a plain
+ *   Web Audio context's; the arranger passes Tone's, to record in the band's own context)
  */
-export async function createTakeRecorder(context, source, channelCount) {
-	const node = await createNativeWorkletNode(context, 'take-recorder', {
+export async function createTakeRecorder(
+	context,
+	source,
+	channelCount,
+	makeNode = (options) => createNativeWorkletNode(context, 'take-recorder', options)
+) {
+	const node = await makeNode({
 		numberOfInputs: 1,
 		numberOfOutputs: 0,
 		// Exactly the source's channels, kept apart (not mixed down or up)
@@ -28,20 +39,28 @@ export async function createTakeRecorder(context, source, channelCount) {
 	let chunks = [];
 	/** @type {((take: Take) => void) | null} */
 	let finish = null;
+	let startTime = 0;
 
 	node.port.onmessage = ({ data }) => {
+		if (data.type === 'started') startTime = data.frame / context.sampleRate;
 		if (data.type === 'chunk') chunks.push(data.channels);
 		if (data.type === 'stopped' && finish) {
-			finish({ channels: joinChunks(chunks, channelCount), sampleRate: context.sampleRate });
+			finish({
+				channels: joinChunks(chunks, channelCount),
+				sampleRate: context.sampleRate,
+				startTime
+			});
 			chunks = [];
 			finish = null;
 		}
 	};
 
 	return {
-		start() {
+		/** @param {number} [at] the audio-clock time to start on (default: now) */
+		start(at) {
 			chunks = [];
-			node.port.postMessage({ type: 'start' });
+			startTime = at ?? context.currentTime;
+			node.port.postMessage({ type: 'start', at });
 		},
 
 		/** @returns {Promise<Take>} everything since start() */

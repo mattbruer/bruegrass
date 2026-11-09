@@ -13,6 +13,7 @@ import { FADER_MIN } from './faderTaper.js';
 import { flatEq } from './eq/eqBands.js';
 import { DEFAULT_OUTPUT_GAIN_DB } from './output/outputSettings.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
+import { RECORD_TRACKS } from '../takes/recordTracks.js';
 
 /*
  * The default mix: a loose, natural bluegrass balance. Change it here.
@@ -67,7 +68,9 @@ export const mixer = $state({
 		channelStrip({ id: 'bass', name: 'Bass', send: SEND_NONE }),
 		channelStrip({ id: 'melody', name: 'Melody' }),
 		// One per harmony part; the mixer shows them only while the song has the part
-		...HARMONY_PARTS.map((part) => channelStrip({ id: part.id, name: part.name }))
+		...HARMONY_PARTS.map((part) => channelStrip({ id: part.id, name: part.name })),
+		// One per record track; the mixer shows them only while the track has a take
+		...RECORD_TRACKS.map((track) => channelStrip({ id: track.id, name: track.name }))
 	],
 	/** The reverb aux: its fader sets the overall reverb level; the plugin shapes the sound. */
 	reverb: {

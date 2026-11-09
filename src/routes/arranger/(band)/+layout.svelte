@@ -12,7 +12,7 @@
 	 * kept as drafts (an iPhone never asks before leaving), and offered back
 	 * the next time the page opens. Each song's mix is remembered on this
 	 * device between saves. Your own chord shapes (My chords) load at the
-	 * start too.
+	 * start too, and the open song's recorded takes whenever it changes.
 	 */
 	import { onMount } from 'svelte';
 	import { provideArranger } from '$lib/arranger/state/context.js';
@@ -35,6 +35,10 @@
 	guardUnsavedChanges(arranger.song);
 	keepDrafts(arranger);
 	keepSongMixes(arranger);
+	// The open song's recorded takes (from this device's storage)
+	$effect(() => {
+		arranger.recording.showSong(arranger.song.savedId);
+	});
 	// These need this browser's storage, so they wait until the page is running: your own
 	// chord shapes, the EQs this device's speakers or headphones were tuned for, the mix this
 	// song was left with, then any drafts

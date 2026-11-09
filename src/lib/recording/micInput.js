@@ -51,15 +51,16 @@ export function watchInputs(onChange) {
 
 /**
  * Open an input in `context`. Asks for microphone permission the first time.
- * @param {AudioContext} context
+ * @param {BaseAudioContext & { createMediaStreamSource: AudioContext['createMediaStreamSource'] }} context
  * @param {string | null} deviceId which input (null: the computer's default)
+ * @param {{ channels?: number }} [options] how many input channels to ask for
  */
-export async function openMicInput(context, deviceId) {
+export async function openMicInput(context, deviceId, { channels = WANTED_CHANNELS } = {}) {
 	const stream = await navigator.mediaDevices.getUserMedia({
 		audio: {
 			...RAW_INPUT,
 			...(deviceId ? { deviceId: { exact: deviceId } } : {}),
-			channelCount: { ideal: WANTED_CHANNELS },
+			channelCount: { ideal: channels },
 			sampleRate: { ideal: context.sampleRate },
 			sampleSize: { ideal: 24 }
 		}
@@ -73,6 +74,8 @@ export async function openMicInput(context, deviceId) {
 		/** The input actually opened (the default resolves to a real device). */
 		deviceId: settings.deviceId ?? deviceId,
 		label: track.label,
+		/** The browser's estimate of the input's delay, in seconds (0 when it doesn't say). */
+		latency: typeof settings.latency === 'number' ? settings.latency : 0,
 		channelCount: settings.channelCount ?? source.channelCount,
 		/** Call-style processing the browser left on despite being asked not to (names). */
 		processingLeftOn: Object.keys(RAW_INPUT).filter(

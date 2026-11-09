@@ -8,6 +8,7 @@ import { getChannel } from './mixerGraph.svelte.js';
 import { createStream } from './scheduler.js';
 import { rhythm } from '../chart/timeline.js';
 import { songClickGrid } from './metronome/clickGrid.js';
+import { createTakePlayback } from '../takes/playTakes.js';
 
 /** Lead before the first note, so nothing is clipped (seconds). */
 const START_DELAY = 0.1;
@@ -20,12 +21,23 @@ const TICK = 0.1;
  * Play the arrangement on a loop until stopped. Resolves once the first pass
  * is scheduled; later passes are scheduled shortly before they start.
  * @param {import('../chart/timeline.js').Section[]} sections
- * @param {{ capo?: number, transpose?: number, bpm?: number, melody?: import('../melody/melody.js').MelodyPart | null }} options
+ * @param {{
+ *   capo?: number, transpose?: number, bpm?: number,
+ *   melody?: import('../melody/melody.js').MelodyPart | null,
+ *   takes?: import('../takes/playTakes.js').PlayableTake[],
+ *   regionStart?: number, countIn?: number, passes?: number
+ * }} options
  *   transpose: semitones on top of the capo, for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo, played on
- *   the guitar samples through the Melody channel, locked to the band
+ *   the guitar samples through the Melody channel, locked to the band;
+ *   takes: recorded takes to play with it; regionStart: where these sections
+ *   start in the song (seconds), for the takes;
+ *   countIn: at least this long before bar 1 (seconds), e.g. a bar of clicks to record after;
+ *   passes: play only this many passes (default: loop until stopped)
  * @returns {Promise<{
  *   stop: () => void,
+ *   barOne: number,
+ *   passLength: number,
  *   beats: () => { elapsed: number, length: number } | null,
  *   clicks: { origin: number, quarterSeconds: number, grid: import('./metronome/clickGrid.js').ClickGrid },
  *   position: () => (import('../chart/timeline.js').SlotPosition & { beat: number, role: 'boom' | 'chuck', progress: number }) | null
@@ -38,7 +50,8 @@ export async function playArrangement(sections, options = {}) {
 	 * Set before anything is awaited, while we're still inside the tap.
 	 */
 	const audioSession = /** @type {any} */ (globalThis.navigator)?.audioSession;
-	if (audioSession) audioSession.type = 'playback';
+	// (Recording has set it to play-and-record: leave that, or the mic stops)
+	if (audioSession && audioSession.type !== 'play-and-record') audioSession.type = 'playback';
 
 	const performance = preparePerformance(sections, { ...options, loop: true });
 	const { passLength: duration, quarter } = performance;
@@ -59,13 +72,21 @@ export async function playArrangement(sections, options = {}) {
 	 * it was ever late, and never plays a note after its time has passed.
 	 */
 	const context = Tone.getContext();
-	// The band waits for the melody's pickup, so bar 1 lands together
-	const start = Tone.now() + START_DELAY + (performance.melody?.leadIn ?? 0);
+	// The band waits for the melody's pickup (or a count-in), so bar 1 lands together
+	const lead = Math.max(performance.melody?.leadIn ?? 0, options.countIn ?? 0);
+	const takes = await createTakePlayback(
+		Tone,
+		options.takes ?? [],
+		{ regionStart: options.regionStart ?? 0, passLength: duration, lead },
+		getChannel
+	);
+	const start = Tone.now() + START_DELAY + lead;
+	const end = options.passes ? options.passes * duration : Infinity;
 	/** @type {number | undefined} */
 	let timer;
 	let stopped = false;
 
-	const streams = band.streams.map(({ notes, period, play }) => ({
+	const streams = [...band.streams, takes.stream].map(({ notes, period, play }) => ({
 		stream: createStream(notes, period),
 		play
 	}));
@@ -82,7 +103,7 @@ export async function playArrangement(sections, options = {}) {
 		const now = Tone.now() - start;
 		for (const { stream, play } of streams) {
 			stream.skipBefore(now); // never play a note late
-			for (const { note, index, at } of stream.take(now + LOOKAHEAD)) {
+			for (const { note, index, at } of stream.take(Math.min(now + LOOKAHEAD, end))) {
 				play(note, index, start + at);
 			}
 		}
@@ -92,6 +113,10 @@ export async function playArrangement(sections, options = {}) {
 	tick();
 
 	return {
+		/** The audio-clock time of bar 1 of the first pass (seconds). */
+		barOne: start,
+		/** One pass, in seconds. */
+		passLength: duration,
 		/**
 		 * The audio clock in quarter notes: `elapsed` from bar 1 of the first
 		 * pass (negative during the melody's pickup), `length` of one pass.
@@ -121,6 +146,7 @@ export async function playArrangement(sections, options = {}) {
 			stopped = true;
 			if (timer !== undefined) context.clearTimeout(timer);
 			band.stop();
+			takes.stop();
 		}
 	};
 }
