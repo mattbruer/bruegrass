@@ -41,13 +41,35 @@
 		if (track) track.style.transform = `translateX(${playheadX - passWidth * (1 + progress)}px)`;
 	}
 
+	/** The chord names bar by bar, to find what an edit changed. */
+	let chordsByBar = $derived(
+		measures.map((bar) => bar.chords.map((chord) => chord.name).join(','))
+	);
+	/** Where the strip rests while stopped: the first bar the last edit changed. */
+	let restingBar = $state(0);
+	let previousChords = /** @type {string[]} */ ([]);
+
+	$effect(() => {
+		const changed = chordsByBar.findIndex((chords, index) => chords !== previousChords[index]);
+		const firstTime = previousChords.length === 0;
+		previousChords = chordsByBar;
+		if (changed >= 0 && !firstTime) restingBar = changed;
+	});
+
+	/** @param {number} bar */
+	function progressAtBar(bar) {
+		const beats = measures.slice(0, bar).reduce((sum, each) => sum + each.beats, 0);
+		return passWidth > 0 ? (beats * BEAT_PX) / passWidth : 0;
+	}
+
 	// The playhead marks where you are; the chart just slides under it
 	$effect(() => {
 		if (!playback) {
-			scrollTo(0);
+			scrollTo(progressAtBar(restingBar));
 			return;
 		}
 		const active = playback;
+		restingBar = 0;
 		let frame = requestAnimationFrame(function tick() {
 			scrollTo(active.position()?.progress ?? 0);
 			frame = requestAnimationFrame(tick);
