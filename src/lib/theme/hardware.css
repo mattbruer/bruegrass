@@ -1,0 +1,139 @@
+/*
+ * HARDWARE LOOKS
+ *
+ * The player card is dressed as a piece of vintage gear. Each look is one
+ * block below, chosen by `data-hardware` (the list is hardwareLooks.js).
+ * Like the player bar's pictures, these are real materials with their own
+ * colours, so they don't follow the theme; instead each look re-sets the
+ * theme's colour variables inside it, so the shared controls (ui-field,
+ * ui-button…) suit the material without knowing about it.
+ *
+ * A look sets:
+ *   --faceplate, --faceplate-edges  the metal face and its edges
+ *   --cheek                         wood (or anything) at the sides; none = hidden
+ *   --engraving                     text-shadow for labels on the face
+ *   --strip-*                       the window the music scrolls through
+ */
+
+/* ------------------------------------------------------------------ */
+/* Tape deck: brushed aluminium, glossy, screwed on                     */
+/* ------------------------------------------------------------------ */
+
+[data-hardware='tapeDeck'] {
+	color-scheme: light;
+	--color-ink: #23262b;
+	--color-ink-soft: #464a51;
+	--color-ink-faint: #6b7078;
+	--color-raised: #f6f7f9;
+	--color-surface-deep: #dfe2e6;
+	--color-line: #8c9199;
+	--color-accent: #c63a1c;
+	--color-accent-soft: #d9785f;
+	--shadow-dark-edge: rgb(0 0 0 / 0.3);
+	--shadow-inset-small: inset 0 1px 3px rgb(0 0 0 / 0.3), inset 0 -1px 0 rgb(255 255 255 / 0.6);
+
+	--faceplate:
+		/* glossy reflections: a bright band at the top, a softer one lower down */
+		linear-gradient(
+			180deg,
+			rgb(255 255 255 / 0.7) 0%,
+			rgb(255 255 255 / 0) 16%,
+			rgb(255 255 255 / 0) 52%,
+			rgb(255 255 255 / 0.32) 60%,
+			rgb(255 255 255 / 0) 72%
+		),
+		/* a sweep of light across, as from a window */
+		linear-gradient(
+				105deg,
+				rgb(255 255 255 / 0) 25%,
+				rgb(255 255 255 / 0.4) 42%,
+				rgb(255 255 255 / 0) 58%
+			),
+		/* the brushing */
+		repeating-linear-gradient(
+				0deg,
+				rgb(255 255 255 / 0.07) 0 1px,
+				rgb(0 0 0 / 0.045) 1px 2px,
+				rgb(255 255 255 / 0) 2px 3px
+			),
+		linear-gradient(180deg, #f1f3f6, #c8ccd2 60%, #b1b6bd);
+	--faceplate-edges:
+		inset 0 1px 0 #ffffff, inset 0 -2px 0 rgb(0 0 0 / 0.2), inset 1px 0 0 rgb(255 255 255 / 0.6),
+		inset -1px 0 0 rgb(0 0 0 / 0.12), 0 0 0 1px #8a8f97;
+	--cheek: none;
+	--engraving: 0 1px 0 rgb(255 255 255 / 0.7);
+
+	--strip-bezel: #18191c;
+	--strip-paper: #ffffff;
+	--strip-glow: transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/* Walnut receiver: matte black metal set back between walnut cheeks    */
+/* ------------------------------------------------------------------ */
+
+[data-hardware='walnut'] {
+	color-scheme: dark;
+	--color-ink: #ecc27a;
+	--color-ink-soft: #c9a46a;
+	--color-ink-faint: #9b8158;
+	--color-raised: #36383d;
+	--color-surface-deep: #0f1012;
+	--color-line: #050506;
+	--color-accent: #ffc35a;
+	--color-accent-soft: #b78c45;
+	--shadow-dark-edge: rgb(0 0 0 / 0.6);
+	--shadow-inset-small: inset 0 1px 3px rgb(0 0 0 / 0.9), inset 0 -1px 0 rgb(255 255 255 / 0.06);
+
+	--faceplate:
+		/* matte: light only falls off softly from the top */
+		linear-gradient(180deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0) 24%),
+		radial-gradient(120% 90% at 30% 0%, rgb(255 255 255 / 0.06), transparent 60%),
+		repeating-linear-gradient(0deg, rgb(255 255 255 / 0.018) 0 1px, rgb(0 0 0 / 0.05) 1px 2px),
+		linear-gradient(180deg, #2d2e32, #1a1b1e);
+	/* The face sits back between the cheeks: they shade its sides */
+	--faceplate-edges:
+		inset 16px 0 14px -10px rgb(0 0 0 / 0.85), inset -16px 0 14px -10px rgb(0 0 0 / 0.85),
+		inset 0 1px 0 rgb(255 255 255 / 0.13), inset 0 -1px 0 rgb(0 0 0 / 0.6);
+	--cheek:
+		/* varnish: a sheen at the top, darker underneath */
+		linear-gradient(
+			180deg,
+			rgb(255 225 180 / 0.2),
+			transparent 25%,
+			transparent 75%,
+			rgb(0 0 0 / 0.3)
+		),
+		/* the rounded front edge catching the light, then turning in towards the face */
+		linear-gradient(
+				90deg,
+				rgb(0 0 0 / 0.5) 0%,
+				rgb(255 235 200 / 0.08) 25%,
+				rgb(255 235 200 / 0.22) 42%,
+				rgb(0 0 0 / 0) 65%,
+				rgb(0 0 0 / 0.55) 92%,
+				rgb(0 0 0 / 0.8) 100%
+			),
+		/* grain, at three spacings so it doesn't look printed */
+		repeating-linear-gradient(91deg, rgb(40 18 6 / 0.55) 0 1px, transparent 1px 5px),
+		repeating-linear-gradient(89.3deg, rgb(120 70 30 / 0.35) 0 2px, transparent 2px 11px),
+		repeating-linear-gradient(90.6deg, rgb(25 10 3 / 0.4) 0 1px, transparent 1px 17px),
+		linear-gradient(180deg, #6b3f1f, #5a331a 40%, #6e4322 70%, #4f2c14);
+	--engraving: 0 -1px 0 rgb(0 0 0 / 0.8);
+
+	--strip-bezel: #0a0a0b;
+	--strip-paper: #fbf1d9;
+	--strip-glow: rgb(255 170 60 / 0.42);
+}
+
+/* A small sample of a look's face, for choosing one in Settings */
+.hardware-swatch {
+	display: inline-block;
+	width: 2.25rem;
+	height: 1.25rem;
+	border-radius: var(--corner-small);
+	background: var(--faceplate);
+	box-shadow: var(--faceplate-edges);
+	border-inline: 0.35rem solid transparent;
+	border-image: var(--cheek) 1;
+}

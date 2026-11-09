@@ -17,6 +17,7 @@
 	let { sections, playback, label = (chord) => chord } = $props();
 
 	import { barsInPlayOrder } from '../../chart/chartBars.js';
+	import GlassPlayhead from './GlassPlayhead.svelte';
 
 	/** Width of one beat (quarter note); chords and bars are sized by their beats. */
 	const BEAT_PX = 40;
@@ -55,72 +56,91 @@
 	});
 </script>
 
-<div class="chart" bind:clientWidth={width}>
-	<div class="playhead" style="left: {playheadX}px" aria-hidden="true"></div>
-
-	<div class="track" bind:this={track}>
-		{#each { length: copies }, copy (copy)}
-			{#each measures as bar (bar.section + ':' + bar.measure)}
-				<div
-					class="measure"
-					class:section-start={bar.sectionStart}
-					style="width: {bar.beats * BEAT_PX}px"
-				>
-					{#if bar.sectionStart || bar.meter}
-						<span class="bar-label">
-							{#if bar.sectionStart}<span class="section-name">{bar.sectionName}</span>{/if}
-							{#if bar.meter}<span class="meter">{bar.meter}</span>{/if}
-						</span>
-					{/if}
-					{#each bar.chords as chord (chord.chord)}
-						<div class="slot" style="width: {chord.length * BEAT_PX}px">
-							<span class="chord">{label(chord.name)}</span>
-							<span class="beats">
-								{#each { length: chord.length }, beat (beat)}
-									<span>/</span>
-								{/each}
-							</span>
+<div class="window">
+	<div class="stage">
+		<div class="chart" bind:clientWidth={width}>
+			<div class="track" bind:this={track}>
+				{#each { length: copies }, copy (copy)}
+					{#each measures as bar (bar.section + ':' + bar.measure)}
+						<div
+							class="measure"
+							class:section-start={bar.sectionStart}
+							style="width: {bar.beats * BEAT_PX}px"
+						>
+							{#if bar.sectionStart || bar.meter}
+								<span class="bar-label">
+									{#if bar.sectionStart}<span class="section-name">{bar.sectionName}</span>{/if}
+									{#if bar.meter}<span class="meter">{bar.meter}</span>{/if}
+								</span>
+							{/if}
+							{#each bar.chords as chord (chord.chord)}
+								<div class="slot" style="width: {chord.length * BEAT_PX}px">
+									<span class="chord">{label(chord.name)}</span>
+									<span class="beats">
+										{#each { length: chord.length }, beat (beat)}
+											<span>/</span>
+										{/each}
+									</span>
+								</div>
+							{/each}
 						</div>
 					{/each}
-				</div>
-			{/each}
-		{/each}
+				{/each}
+			</div>
+			<div class="sheen" aria-hidden="true"></div>
+		</div>
+		<GlassPlayhead x={playheadX} />
 	</div>
 </div>
 
 <style>
 	/*
-	 * Always black and white, whatever the theme: the chart reads like a printed
-	 * lead sheet. These are the only colours in this file that aren't theme tokens.
+	 * Black ink, whatever the theme: the chart reads like a printed lead sheet.
+	 * The paper, its glow and the bezel come from the hardware look around it
+	 * ($lib/theme/hardware.css); these are the fallbacks.
 	 */
-	.chart {
-		--strip-paper: #ffffff;
+	.window {
 		--strip-ink: #000000;
 		--strip-ink-faint: #6b6b6b;
 
+		/* A dark bezel, the music behind glass inside it */
+		border-radius: calc(var(--corner-card) * 0.7);
+		background: var(--strip-bezel, #18191c);
+		padding: 7px;
+		text-shadow: none;
+		box-shadow:
+			inset 0 2px 5px rgb(0 0 0 / 0.8),
+			0 1px 0 rgb(255 255 255 / 0.5);
+	}
+
+	.stage {
+		position: relative;
+	}
+
+	.chart {
 		position: relative;
 		overflow: hidden;
-		/* A well sunk into the player card, the music sliding through it */
-		border-radius: var(--corner-card);
-		background: var(--strip-paper);
-		box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.25);
+		border-radius: calc(var(--corner-card) * 0.4);
+		background: var(--strip-paper, #ffffff);
+		/* Set back behind the bezel's lip, lit from behind when the look glows */
+		box-shadow:
+			inset 0 0 28px var(--strip-glow, transparent),
+			inset 0 7px 10px -5px rgb(0 0 0 / 0.45);
 		padding: 1.75rem 0 0.75rem;
+	}
+
+	/* The window's glass, catching the light from above */
+	.sheen {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background: linear-gradient(172deg, rgb(255 255 255 / 0.32), rgb(255 255 255 / 0) 38%);
 	}
 
 	.track {
 		display: flex;
 		width: max-content;
 		will-change: transform;
-	}
-
-	.playhead {
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		z-index: 1;
-		width: 2px;
-		background: var(--strip-ink);
-		pointer-events: none;
 	}
 
 	.measure {
