@@ -17,9 +17,9 @@
 	/* 1. Choices                                                          */
 	/* ------------------------------------------------------------------ */
 
-	--theme-background: #e4e9f0; /* the soft surface everything sits on */
-	--theme-text: #283041;
-	--theme-accent: #d97706; /* "on", "selected", "playing" */
+	--theme-background: #2b2f37; /* the soft surface everything sits on (Night by default) */
+	--theme-text: #e7e9ee;
+	--theme-accent: #f5a524; /* "on", "selected", "playing" */
 	--theme-depth: 1; /* shadow strength: 0 = flat, 1 = normal, 2 = deep */
 	--theme-roundness: 1; /* corners: 0 = square, 1 = normal, 2 = extra round */
 

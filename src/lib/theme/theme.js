@@ -20,28 +20,28 @@
  * }} Appearance colours are #rrggbb; depth and roundness are 0–2 (1 = normal)
  */
 
-/** The look the app ships with (the same values as tokens.css). */
+/** The look the app ships with, Night (the same values as tokens.css). */
 export const DEFAULT_APPEARANCE = Object.freeze({
-	background: '#e4e9f0',
-	text: '#283041',
-	accent: '#d97706',
+	background: '#2b2f37',
+	text: '#e7e9ee',
+	accent: '#f5a524',
 	depth: 1,
 	roundness: 1
 });
 
 /** Ready-made looks, offered in Settings → Appearance. */
 export const APPEARANCE_PRESETS = Object.freeze([
-	{ name: 'Morning', appearance: DEFAULT_APPEARANCE },
 	{
-		name: 'Night',
+		name: 'Morning',
 		appearance: {
-			background: '#2b2f37',
-			text: '#e7e9ee',
-			accent: '#f5a524',
+			background: '#e4e9f0',
+			text: '#283041',
+			accent: '#d97706',
 			depth: 1,
 			roundness: 1
 		}
 	},
+	{ name: 'Night', appearance: DEFAULT_APPEARANCE },
 	{
 		name: 'Sage',
 		appearance: {
