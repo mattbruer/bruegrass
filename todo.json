@@ -27,6 +27,12 @@
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
+			"id": "slow-down",
+			"text": "Slow down or change key without changing the other (Amazing Slow Downer style)",
+			"done": false,
+			"addedAt": "2026-11-08T00:00:00.000Z"
+		},
+		{
 			"id": "tuner",
 			"text": "Tuner using the microphone",
 			"done": false,
@@ -70,9 +76,27 @@
 		},
 		{
 			"id": "melody-entry",
-			"text": "Simple form-based melody entry, plus MIDI import for DAW users",
-			"done": false,
+			"text": "Piano-roll melody editor: draw a tune, get ABC",
+			"done": true,
 			"addedAt": "2026-11-07T00:00:00.000Z"
+		},
+		{
+			"id": "midi-import",
+			"text": "Import a MIDI file as the melody, through the piano roll",
+			"done": false,
+			"addedAt": "2026-11-08T00:00:00.000Z"
+		},
+		{
+			"id": "harmony-hot-swap",
+			"text": "Swap harmony options without restarting the band",
+			"done": false,
+			"addedAt": "2026-11-08T00:00:00.000Z"
+		},
+		{
+			"id": "hum-to-abc",
+			"text": "Hum or sing a tune into the mic and get it written as ABC",
+			"done": false,
+			"addedAt": "2026-11-08T00:00:00.000Z"
 		},
 		{
 			"id": "chart-entry",

@@ -187,3 +187,30 @@ export function plainestNote(key, target, direction) {
 	options.sort((a, b) => a.cost - b.cost);
 	return options[0].note;
 }
+
+/**
+ * How a melody writes a pitch (semitones above the tonic) in this key: the
+ * key's own note when it has one; otherwise raised going up and lowered
+ * coming down (G G# A, A Ab G), never E#, B#, Cb or Fb.
+ * @param {Key} key
+ * @param {number} target
+ * @param {number} direction 1 rising, -1 falling
+ * @returns {Note}
+ */
+export function melodyNote(key, target, direction) {
+	const near = Math.round((target * 7) / 12);
+	/** @type {Note[]} */
+	const options = [];
+	for (let step = near - 1; step <= near + 1; step++) {
+		const alt = target - semitones({ step, alt: 0 });
+		if (Math.abs(alt) <= 1) options.push({ step, alt });
+	}
+	const inKey = options.find((note) => note.alt === 0);
+	if (inKey) return inKey;
+	const plain = options.filter((note) => {
+		const { letter, accidental } = spell(key, note);
+		return !RESPELL[letter + (accidental > 0 ? '#' : accidental < 0 ? 'b' : '')];
+	});
+	const choices = plain.length ? plain : options;
+	return choices.find((note) => Math.sign(note.alt) === direction) ?? choices[0];
+}

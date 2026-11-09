@@ -18,7 +18,7 @@ const buffers = new Map();
  * @param {typeof import('tone')} Tone
  * @param {string} url
  */
-function loadBuffer(Tone, url) {
+export function loadBuffer(Tone, url) {
 	let buffer = buffers.get(url);
 	if (!buffer) {
 		buffer = new Tone.ToneAudioBuffer().load(url);

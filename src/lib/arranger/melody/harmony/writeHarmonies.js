@@ -9,7 +9,7 @@
  * the end of the tune; writing them again replaces them.
  */
 import { HARMONY_PARTS } from './harmonyParts.js';
-import { harmonyNote } from './harmonyNote.js';
+import { harmonyStyle } from './harmonyStyles.js';
 import { abcPitch, noteInKey, tuneKey } from './abcPitch.js';
 import { chordFromName } from '../../theory/musicInKey.js';
 import { melodyFromTune } from '../melody.js';
@@ -40,9 +40,10 @@ export function harmonyPartsIn(abc) {
  * @param {import('abcjs').TuneObject} tune parsed from this ABC, as written (not visually transposed)
  * @param {ChordAt} chordAt
  * @param {string[]} partIds
+ * @param {Record<string, string>} [styles] a harmony style (harmonyStyles.js) by part id; the stack when not given
  * @returns {{ abc: string, problem: string }}
  */
-export function withHarmonies(abc, tune, chordAt, partIds) {
+export function withHarmonies(abc, tune, chordAt, partIds, styles = {}) {
 	const melodyEnd = PART_LINE.exec(abc)?.index ?? abc.length;
 	PART_LINE.lastIndex = 0;
 	const { headerEnd, bodyStart } = findBody(abc);
@@ -59,7 +60,8 @@ export function withHarmonies(abc, tune, chordAt, partIds) {
 	const written = parts.map((part) => {
 		const text = partText(abc, bodyStart, melodyEnd, notes, tuneKey(tune.getKeySignature()), {
 			chordAt,
-			chordTones: part.chordTones
+			count: part.chordTones,
+			style: harmonyStyle(styles[part.id] ?? 'stack')
 		});
 		return `V:${part.id} name="${part.name}"\n${text}`;
 	});
@@ -128,14 +130,16 @@ function ownPitch(element, pickup) {
  * @param {number} to
  * @param {ReturnType<typeof leadNotes>} notes
  * @param {import('../../theory/musicInKey.js').Key} key
- * @param {{ chordAt: ChordAt, chordTones: number }} part
+ * @param {{ chordAt: ChordAt, count: number, style: (typeof import('./harmonyStyles.js').HARMONY_STYLES)[number] }} part
  */
-function partText(abc, from, to, notes, key, { chordAt, chordTones }) {
+function partText(abc, from, to, notes, key, { chordAt, count, style }) {
 	const tonicChord = /** @type {const} */ ({ root: { step: 0, alt: 0 }, quality: '', bass: null });
 	/** @type {Map<number, number>} */
 	let bar = new Map();
 	/** @type {Note | null} */
 	let held = null;
+	/** @type {Note | null} */
+	let previous = null;
 	/** @type {{ start: number, end: number, text: string }[]} */
 	const swaps = [];
 
@@ -154,10 +158,11 @@ function partText(abc, from, to, notes, key, { chordAt, chordTones }) {
 			const lead = noteInKey(key, top, sounding.midi);
 			const name = chordAt(sounding.time);
 			const chord = (name && chordFromName(key, name)) || tonicChord;
-			note = harmonyNote(lead, chord, chordTones);
+			note = style.pick({ lead, chord, count, previous });
 		}
 		if (!note) continue;
 		held = note;
+		previous = note;
 		swaps.push({
 			start: element.startChar,
 			end: element.endChar,

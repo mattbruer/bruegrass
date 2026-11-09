@@ -32,7 +32,7 @@ export class ArrangementState {
 	/** How far the sound is from the chords as written: capo plus key change. */
 	pitchShift = $derived(this.capoFret + this.transpose);
 
-	/** The song's key, from its first chord (null while there are no chords). */
+	/** The song's key: the chart's [K:], else its first chord (null while there are no chords). */
 	key = $derived(songKey(this.sections));
 	keyChoices = $derived(keyChoicesFor(this.key, this.capoFret));
 

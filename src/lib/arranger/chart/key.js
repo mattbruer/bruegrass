@@ -5,8 +5,9 @@
  * each chord on the same letter step from the tonic, so G–C–D in G becomes
  * Bb–Eb–F in Bb (never A#–D#–F), and an F (bVII) in G becomes G in A.
  *
- * The song's key is taken from its first chord (bluegrass songs almost
- * always start on the I chord). A minor first chord makes it a minor key.
+ * The song's key is the chart's `[K:G]` field when it has one (see
+ * keyField.js). Otherwise it's taken from the first chord (bluegrass songs
+ * almost always start on the I chord); a minor first chord makes it minor.
  */
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -74,14 +75,34 @@ function isMinor(rest) {
 }
 
 /**
- * The song's key, from its first chord.
- * @param {{ measures: string[][] }[]} sections
+ * The song's key: as the chart names it, else guessed from its first chord.
+ * @param {{ measures: string[][], key?: Key | null }[]} sections
  * @returns {Key | null}
  */
 export function songKey(sections) {
+	return sections[0]?.key ?? guessedKey(sections);
+}
+
+/**
+ * The key a song's first chord suggests.
+ * @param {{ measures: string[][] }[]} sections
+ * @returns {Key | null}
+ */
+export function guessedKey(sections) {
 	const first = sections.flatMap((section) => section.measures.flat()).find(Boolean);
 	const chord = first ? parseChord(first) : null;
 	return chord ? { tonic: chord.root, minor: isMinor(chord.rest) } : null;
+}
+
+/**
+ * A key as written: "G", "Bb", "F#m", "Em", "Amin", "Dmaj".
+ * @param {string} text
+ * @returns {Key | null}
+ */
+export function parseKeyName(text) {
+	const match = text.trim().match(/^([A-G][#b]?)\s*(maj|min|m)?$/);
+	if (!match) return null;
+	return { tonic: parseNote(match[1]), minor: match[2] === 'm' || match[2] === 'min' };
 }
 
 /**

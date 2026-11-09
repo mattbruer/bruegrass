@@ -1,8 +1,10 @@
 /**
  * Rewrite a chord chart's chords in another key, leaving everything else
- * (section names, bar lines, time signatures, spacing) as typed.
+ * (section names, bar lines, time signatures, spacing) as typed. A `[K:]`
+ * field moves with the chords.
  */
-import { chordLabel, songKey } from './key.js';
+import { chordLabel, keyName, songKey } from './key.js';
+import { isKeyField } from './keyField.js';
 import { parseArrangement } from './parseArrangement.js';
 
 /**
@@ -24,9 +26,11 @@ export function transposeChart(text, semitones) {
 			const [, name, content] = match;
 			// Same tokens as the parser: inline fields, bar lines, then chords
 			const tokens = content.match(/\[[^\]]*\]|\||[^|[]+/g) ?? [];
-			const rewritten = tokens.map((token) =>
-				token === '|' || token.startsWith('[') ? token : token.replace(/[^,\s]+/g, moved)
-			);
+			const rewritten = tokens.map((token) => {
+				if (isKeyField(token)) return `[K:${keyName(key, semitones)}]`;
+				if (token === '|' || token.startsWith('[')) return token;
+				return token.replace(/[^,\s]+/g, moved);
+			});
 			return name + rewritten.join('');
 		})
 		.join('\n');

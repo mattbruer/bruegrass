@@ -161,6 +161,37 @@ export const TIPS = Object.freeze({
 	},
 
 	melody: {
+		views: {
+			draw: 'Draw the tune and its harmony lines on a grid of notes.',
+			abc: 'The same tune as ABC notation, to read, paste or type.'
+		},
+		harmonyOptions: {
+			styles: {
+				stack:
+					'The classic bluegrass sound: the next note of the chord up or down from the melody.',
+				smooth: 'Moves as little as it can from note to note, staying on notes of the chord.',
+				holds:
+					'Like the classic sound, but holds its note while the melody passes between chord notes.',
+				fewest: 'Stays on one note as long as it still fits the chord: the easiest line to sing.',
+				parallel: 'A third or a sixth from the melody all the way, like twin fiddles.'
+			},
+			line: 'Options change the whole harmony line.',
+			bar: 'Options change only the bar of the picked note, so you can mix styles bar by bar.',
+			singers:
+				'Hear only the melody and the harmony parts (solos them in the mixer). Tap again for the whole band.',
+			putBack: 'Go back to the harmony line as it was before you tried any options.'
+		},
+		voices:
+			'Pick which line to change: the melody or a harmony part. The others show faintly behind it.',
+		roll: {
+			grids: {
+				eighth: 'Notes snap to eighth notes: two to a beat.',
+				sixteenth: 'Notes snap to sixteenth notes: four to a beat, for fast fiddle runs.',
+				triplet: 'Notes snap to triplets: three to a beat, as in Irish tunes.'
+			},
+			key: 'The key the song is in. It’s guessed from the first chord; pick it here if the guess is wrong. With a capo, it says which shapes you play.',
+			delete: 'Delete the picked note (or press Delete).'
+		},
 		abcLink: 'Learn ABC notation, a simple way to write a tune as text.',
 		arrangementFromChords:
 			'Replace the arrangement with one written from the melody’s chord symbols.',

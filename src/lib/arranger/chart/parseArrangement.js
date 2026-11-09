@@ -1,6 +1,7 @@
 import { DEFAULT_METER } from './timeline.js';
 import { parseMeterField } from './meterField.js';
 import { sectionBlocks } from './sectionBlocks.js';
+import { isKeyField, parseKeyField } from './keyField.js';
 
 /**
  * Parse the arrangement text.
@@ -18,15 +19,19 @@ import { sectionBlocks } from './sectionBlocks.js';
  * - `[2/4]` (no `M:`) sets the time signature for that one bar only, for
  *   the extra or missing beats of a crooked tune.
  * - Default is 4/4.
+ * - `[K:G]` names the song's key (keyField.js), when the first chord
+ *   doesn't give it. Every section carries it as `key` (null if not named).
  * - Lines under a section line are its lyrics (see sectionLyrics.js);
  *   the chord chart ignores them.
  *
- * @returns {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[] }[]}
+ * @returns {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], key: import('./key.js').Key | null }[]}
  */
 export function parseArrangement(source) {
-	/** @type {{ name: string, measures?: string[][], meters?: import('./timeline.js').Meter[], reference?: string }[]} */
+	/** @type {{ name: string, measures?: string[][], meters?: import('./timeline.js').Meter[], reference?: string, key?: import('./key.js').Key | null }[]} */
 	const sections = [];
 	let meter = DEFAULT_METER;
+	/** @type {import('./key.js').Key | null} */
+	let key = null;
 
 	for (const { name, content } of sectionBlocks(source)) {
 		if (content.startsWith('as ')) {
@@ -58,6 +63,7 @@ export function parseArrangement(source) {
 		// Inline fields first, so the | in [M:C|] isn't read as a barline
 		for (const token of content.match(/\[[^\]]*\]|\||[^|[]+/g) ?? []) {
 			if (token === '|') endBar();
+			else if (isKeyField(token)) key ??= parseKeyField(token, name);
 			else if (token.startsWith('[')) {
 				const field = parseMeterField(token, name);
 				if (field.persistent) meter = field.meter;
@@ -84,7 +90,9 @@ export function parseArrangement(source) {
 		delete section.reference;
 	}
 
-	return /** @type {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[] }[]} */ (
+	for (const section of sections) section.key = key;
+
+	return /** @type {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], key: import('./key.js').Key | null }[]} */ (
 		sections
 	);
 }

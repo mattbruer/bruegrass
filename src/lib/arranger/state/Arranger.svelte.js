@@ -25,11 +25,15 @@ import { abcWithWords } from '../melody/words/abcWithWords.js';
 import { readLyrics } from '../chart/sectionLyrics.js';
 import { harmonizeAbc } from '../melody/harmony/harmonizeAbc.js';
 import { harmonyPartsIn } from '../melody/harmony/writeHarmonies.js';
+import { withPartsKept } from '../melody/harmony/keepParts.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { concertChordAt } from '../chart/concertChords.js';
 import { mixer } from '../playback/mixer.svelte.js';
 import { transposeChart } from '../chart/transposeChart.js';
 import { validCapo } from '../chart/capo.js';
+import { withKeyField } from '../chart/keyField.js';
+import { readDrawnMelody, respellDrawnMelody } from '../melody/roll/drawnMelody.js';
+import { melodyKey } from '../melody/roll/melodyKey.js';
 
 export class Arranger {
 	arrangement = new ArrangementState();
@@ -82,6 +86,34 @@ export class Arranger {
 		};
 	}
 
+	/** What the melody's words and harmony parts are written from. */
+	songForMelody() {
+		return {
+			sections: this.arrangement.isPlayable ? this.arrangement.sections : [],
+			lyrics: readLyrics(this.arrangement.text),
+			capo: this.arrangement.capoFret
+		};
+	}
+
+	/** The melody's key (concert: the song's key moved by the capo). */
+	melodyKey = $derived(melodyKey(this.arrangement.key, this.arrangement.capoFret));
+
+	/**
+	 * Name the song's key (the chart's [K:]), or go back to the first chord's
+	 * guess with null. The melody and its harmony parts keep their pitches,
+	 * spelled in the new key,
+	 * so the strip, the chord names and the sheet music all agree.
+	 * @param {string | null} name the key of the guitar's shapes, e.g. "G", "Em"
+	 */
+	async nameSongKey(name) {
+		this.arrangement.text = withKeyField(this.arrangement.text, name);
+		const abc = this.melody.notation;
+		if (!this.melody.hasNotation) return;
+		const read = await readDrawnMelody(abc);
+		if (!read || read.voices.some((voice) => voice.problem) || this.melody.notation !== abc) return;
+		this.melody.notation = respellDrawnMelody(abc, read.voices, this.melodyKey);
+	}
+
 	/** Write the arrangement's chords (at concert pitch) into a melody that has none. */
 	writeChordsIntoMelody() {
 		const sequence = this.melody.drawn.sequence;
@@ -120,15 +152,19 @@ export class Arranger {
 	}
 
 	/**
-	 * Write these harmony parts into the melody, fresh from its notes and the
-	 * arrangement's chords (any others are taken out).
+	 * Have exactly these harmony parts. A part the melody already has stays
+	 * as it is (hand edits and all); a new one is written from the melody
+	 * and the arrangement's chords. `fresh` writes every part again.
 	 * @param {string[]} partIds
+	 * @param {{ fresh?: boolean }} [options]
 	 */
-	async writeHarmonies(partIds) {
+	async writeHarmonies(partIds, { fresh = false } = {}) {
 		if (!this.arrangement.isPlayable) return;
+		const before = this.melody.notation;
 		const chordAt = concertChordAt(this.arrangement.sections, this.arrangement.capoFret);
-		const result = await harmonizeAbc(this.melody.notation, chordAt, partIds);
-		this.melody.notation = result.abc;
+		const result = await harmonizeAbc(before, chordAt, partIds);
+		const unchanged = fresh ? [] : harmonyPartsIn(before).filter((id) => partIds.includes(id));
+		this.melody.notation = withPartsKept(result.abc, before, unchanged);
 		this.harmonyProblem = result.problem;
 		// A removed part's strip is hidden, so it mustn't stay soloed and silence the rest
 		const kept = harmonyPartsIn(result.abc);

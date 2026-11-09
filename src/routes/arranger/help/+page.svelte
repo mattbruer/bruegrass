@@ -96,6 +96,7 @@
 			<li><a href="#repeat" class="hover:underline">Playing a part again</a></li>
 			<li><a href="#waltz" class="hover:underline">Waltzes (3 beats)</a></li>
 			<li><a href="#crooked" class="hover:underline">Crooked tunes (odd bars)</a></li>
+			<li><a href="#key" class="hover:underline">The song's key</a></li>
 			<li><a href="#words" class="hover:underline">Words, for a chart the band can read</a></li>
 			<li><a href="#chords" class="hover:underline">Which chords can I use?</a></li>
 			<li><a href="#my-chords" class="hover:underline">Your own chord shapes</a></li>
@@ -197,8 +198,22 @@
 		</p>
 	</section>
 
+	<section id="key">
+		<h2>7. The song's key</h2>
+		<p>
+			The app works out the key from the <b>first chord</b>, because most songs start on their home
+			chord. If yours starts somewhere else, say the key in square brackets after the first part's
+			name, with <code>K:</code>.
+		</p>
+		{@render example(`"Verse" [K:G] |D|D|G|G|`)}
+		<p class="tip">
+			Name the key of the chord shapes you play, before any capo: with G shapes and the capo on 2,
+			write <code>[K:G]</code>. A minor key has an <b>m</b>: <code>[K:Em]</code>.
+		</p>
+	</section>
+
 	<section id="words">
-		<h2>7. Words, for a chart the band can read</h2>
+		<h2>8. Words, for a chart the band can read</h2>
 		<p>
 			Write the words on the lines under a part. Type <code>|</code> where each bar starts, so the
 			words line up with the chords bar by bar. The band doesn't play the words; they're for the
@@ -229,7 +244,7 @@
 	</section>
 
 	<section id="chords">
-		<h2>8. Which chords can I use?</h2>
+		<h2>9. Which chords can I use?</h2>
 		<p>
 			Major, minor, seventh and diminished chords in every key. Put the letter first, then # or b if
 			it has one, then the kind of chord:
@@ -260,7 +275,7 @@
 	</section>
 
 	<section id="my-chords">
-		<h2>9. Your own chord shapes</h2>
+		<h2>10. Your own chord shapes</h2>
 		<p>
 			Want a chord the guitar doesn't know, or a different way to play one? Press <b>My chords</b>
 			above the box, give the shape a name, and type its six frets from the low E string to the high e.
@@ -289,7 +304,7 @@
 	</section>
 
 	<section id="phone">
-		<h2>10. Writing on a phone</h2>
+		<h2>11. Writing on a phone</h2>
 		<p>
 			On a phone, tapping the box opens a <b>music keypad</b> instead of the normal keyboard. It has
 			only the keys you need, so no hunting for <code>|</code>.
@@ -317,7 +332,7 @@
 	</section>
 
 	<section id="mistakes">
-		<h2>11. If something goes wrong</h2>
+		<h2>12. If something goes wrong</h2>
 		<p>A red message appears under the box. The usual causes:</p>
 		<ul class="mb-4 list-disc space-y-2 pl-6">
 			<li>
@@ -339,7 +354,7 @@
 	</section>
 
 	<section id="everything">
-		<h2>12. Putting it all together</h2>
+		<h2>13. Putting it all together</h2>
 		{@render example(
 			`"Verse"|G|G|C|G|\n"Chorus"|C|G|D,C|G|\n"Banjo Break" as Verse\n"Waltz Tag" [M:3/4] |C|G|[2/4]D|G|`
 		)}
