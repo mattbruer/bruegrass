@@ -114,4 +114,4 @@ Today the strip's key is `songKey` (`chart/key.js`), guessed from the first chor
 
 ## Status (2026-11-08): first version built
 
-Decisions 1–7 are built, with the key coordination settled as `[K:]` in the chart (CLAUDE.md, "The song's key" and "Piano roll"). Not built yet: a pickup bar when drawing a new tune, the playhead on the roll, MIDI import (in todo.json). Not checked by hand: the drawn note's sound, and the touch gestures on a real iPhone (the browser pane sends mouse clicks).
+Decisions 1–7 are built, with the key coordination settled as `[K:]` in the chart (CLAUDE.md, "The song's key" and "Piano roll"). Since built: the playhead on the roll, editable harmony parts and harmony options (CLAUDE.md, "Piano roll"). Not built yet: a pickup bar when drawing a new tune, MIDI import (in todo.json). Not checked by hand: the drawn note's sound, and the touch gestures on a real iPhone (the browser pane sends mouse clicks).

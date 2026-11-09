@@ -5,21 +5,34 @@
 	 * Pages sit side by side as many as fit; the rest are a swipe away on a
 	 * touch screen, or the arrows. Printing gives one sheet per page.
 	 *
-	 * The blocks are first drawn off screen at full size to measure them,
-	 * so pages break the same on every screen and on paper.
+	 * The blocks are first drawn off screen to measure them, so pages break
+	 * the same on every screen and on paper. The text is drawn as large as
+	 * it can be while the whole song still fits one page, in columns if that
+	 * helps (or, for a very long song, over several pages); `size` overrides that.
+	 * Spare room on a page goes between the blocks.
 	 * Each page is marked `data-sheet`, so a follower can bring it into view.
 	 */
 	import { onMount, tick } from 'svelte';
-	import { PAPER, CONTENT_WIDTH, CONTENT_HEIGHT } from './paper.js';
+	import { PAPER, CONTENT_HEIGHT } from './paper.js';
 	import { paginate } from './paginate.js';
+	import { columnWidth, pagesOfColumns, extraGap, COLUMN_GAP_PX } from './columnLayout.js';
+	import { chooseTextScale } from './chooseTextScale.js';
 	import { pageScale, pagesSideBySide, PAGE_GAP_PX, NAV_ROOM_PX } from './fitPages.js';
 	import PageNav from './PageNav.svelte';
 
 	/**
-	 * @type {{ blocks: any[], block: import('svelte').Snippet<[any]>, coveredBelow?: number }}
+	 * @type {{
+	 *   blocks: any[],
+	 *   block: import('svelte').Snippet<[any]>,
+	 *   coveredBelow?: number,
+	 *   size?: number,
+	 *   textScale?: number
+	 * }}
 	 *   coveredBelow: pixels at the bottom of the window hidden under something fixed (a player bar)
+	 *   size: a text scale to use (1 = the blocks' own size), or 0 to pick the largest that fits
+	 *   textScale: the scale in use, for a size control to step from
 	 */
-	let { blocks, block, coveredBelow = 0 } = $props();
+	let { blocks, block, coveredBelow = 0, size = 0, textScale = $bindable(1) } = $props();
 
 	/** @type {HTMLDivElement | undefined} */
 	let measurer = $state();
@@ -31,35 +44,77 @@
 	/** Where the pages start, from the top of the document. */
 	let pagesTop = $state(0);
 	let current = $state(0);
+	/** The columns on each page, and the scale and columns the off-screen copy is drawn at. */
+	let columns = $state(1);
 
-	let pages = $derived(
-		paginate(
-			blocks.map((_, i) => heights[i] ?? 0),
-			CONTENT_HEIGHT
-		)
-	);
+	let blockHeights = $derived(blocks.map((_, i) => heights[i] ?? 0));
+	let columnBlocks = $derived(paginate(blockHeights, CONTENT_HEIGHT));
+	let pages = $derived(pagesOfColumns(columnBlocks, columns));
+	let gap = $derived(extraGap(columnBlocks, blockHeights));
 	let scale = $derived(pageScale(width, windowHeight - pagesTop - coveredBelow - NAV_ROOM_PX));
 	let step = $derived(PAPER.width * scale + PAGE_GAP_PX);
 	let showing = $derived(pagesSideBySide(width, scale));
 
-	function measure() {
-		if (!measurer) return;
-		heights = [...measurer.children].map(
-			(child) => /** @type {HTMLElement} */ (child).offsetHeight
-		);
+	/** The scale the off-screen copy is drawn at while searching for the one to use. */
+	let probe = $state(1);
+	let probeColumns = $state(1);
+	let settledHeight = 0;
+	let busy = false;
+	let again = false;
+
+	/** @type {import('./chooseTextScale.js').MeasureAt} */
+	async function measureAt(scale, columnCount) {
+		probe = scale;
+		probeColumns = columnCount;
+		await tick();
+		const children = measurer ? [...measurer.children] : [];
+		return {
+			heights: children.map((child) => /** @type {HTMLElement} */ (child).offsetHeight * scale),
+			overflows: children.some((child) => child.scrollWidth > child.clientWidth + 1)
+		};
+	}
+
+	/** Pick the text scale, then measure at it. Overlapping calls run one after the other. */
+	async function layOut() {
+		if (busy) {
+			again = true;
+			return;
+		}
+		busy = true;
+		try {
+			do {
+				again = false;
+				const layout = await chooseTextScale(measureAt, size);
+				heights = (await measureAt(layout.scale, layout.columns)).heights;
+				textScale = layout.scale;
+				columns = layout.columns;
+				settledHeight = measurer?.offsetHeight ?? 0;
+			} while (again);
+		} finally {
+			busy = false;
+		}
 	}
 
 	$effect(() => {
 		void blocks;
-		tick().then(measure);
+		void size;
+		tick().then(layOut);
 	});
 
 	// Fonts arriving, or a setting changing how chords read, change the heights
 	onMount(() => {
 		if (!measurer) return;
-		const observer = new ResizeObserver(measure);
+		const observer = new ResizeObserver(() => {
+			const settled = !busy && probe === textScale && probeColumns === columns;
+			if (settled && measurer && measurer.offsetHeight !== settledHeight) layOut();
+		});
 		observer.observe(measurer);
-		return () => observer.disconnect();
+		document.fonts.ready.then(layOut);
+		document.fonts.addEventListener('loadingdone', layOut);
+		return () => {
+			observer.disconnect();
+			document.fonts.removeEventListener('loadingdone', layOut);
+		};
 	});
 
 	/** For page-turn keys and taps (see turnPages.js). */
@@ -97,7 +152,12 @@
 
 <svelte:window bind:innerHeight={windowHeight} onresize={notePagesTop} />
 
-<div class="measurer" bind:this={measurer} style:width="{CONTENT_WIDTH}px" aria-hidden="true">
+<div
+	class="measurer"
+	bind:this={measurer}
+	style:width="{columnWidth(probeColumns) / probe}px"
+	aria-hidden="true"
+>
 	{#each blocks as item, index (index)}
 		<div class="block">{@render block(item)}</div>
 	{/each}
@@ -124,9 +184,27 @@
 				style:padding="{PAPER.margin}px"
 				style:transform="scale({scale})"
 			>
-				{#each page as index (index)}
-					<div class="block">{@render block(blocks[index])}</div>
-				{/each}
+				<div class="columns" style:gap="{COLUMN_GAP_PX}px">
+					{#each page as column, c (c)}
+						<div class="column" style:width="{columnWidth(columns)}px">
+							{#each column as index, i (index)}
+								<div
+									class="block"
+									style:height={heights[index] ? `${heights[index]}px` : undefined}
+									style:margin-top={i > 0 ? `${gap}px` : undefined}
+								>
+									<div
+										class="scaled"
+										style:width="{columnWidth(columns) / textScale}px"
+										style:transform="scale({textScale})"
+									>
+										{@render block(blocks[index])}
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/each}
+				</div>
 			</div>
 		</div>
 	{/each}
@@ -137,6 +215,12 @@
 {/if}
 
 <style>
+	/* Rows stay on one line, so growing the text shrinks the page's room, not the rows */
+	.measurer,
+	.sheet {
+		--bars-wrap: nowrap;
+	}
+
 	.measurer {
 		position: absolute;
 		left: -10000px;
@@ -147,6 +231,18 @@
 	/* flow-root keeps a block's margins inside it, so they count in its height */
 	.block {
 		display: flow-root;
+	}
+
+	.columns {
+		display: flex;
+	}
+
+	.column {
+		flex: none;
+	}
+
+	.scaled {
+		transform-origin: top left;
 	}
 
 	.pages {
@@ -173,9 +269,14 @@
 
 	.sheet {
 		transform-origin: top left;
-		background: var(--color-raised);
-		color: var(--color-ink);
-		border: 1px solid var(--color-line);
+		/* Paper is white whatever the theme: its text colours are fixed too */
+		--color-ink: black;
+		--color-ink-soft: #555;
+		--color-accent: #2563eb;
+
+		background: white;
+		color: black;
+		border: 1px solid #ccc;
 		box-shadow: 0 var(--shadow-reach-small) var(--shadow-reach-large) var(--shadow-dark-edge);
 	}
 

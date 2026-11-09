@@ -9,6 +9,7 @@
 	import { useArranger } from '$lib/arranger/state/context.js';
 	import ArrangerChart from '$lib/arranger/components/lyricChart/ArrangerChart.svelte';
 	import MelodyReader from '$lib/arranger/components/melody/MelodyReader.svelte';
+	import TextSizeControl from '$lib/arranger/components/lyricChart/TextSizeControl.svelte';
 	import PrintButton from '$lib/components/paper/PrintButton.svelte';
 	import FullScreenButton from '$lib/components/FullScreenButton.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -17,6 +18,7 @@
 	const { layout } = useArranger();
 
 	let fullScreen = $state(false);
+	let textScale = $state(1);
 </script>
 
 <svelte:head>
@@ -24,7 +26,7 @@
 </svelte:head>
 
 <main class="px-4 py-6 sm:px-8" style:padding-bottom={layout.bottomSpace}>
-	<div class="mx-auto mb-4 flex max-w-5xl items-center gap-3 print:hidden">
+	<div class="mx-auto mb-4 flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 print:hidden">
 		<a
 			href={resolve('/arranger')}
 			class="ui-button px-4 py-2 text-sm"
@@ -33,11 +35,12 @@
 			‹ Arranger
 		</a>
 		<span class="mr-auto"></span>
+		<TextSizeControl {textScale} />
 		<FullScreenButton onOpen={() => (fullScreen = true)} />
 		<PrintButton />
 	</div>
 
-	<ArrangerChart bind:fullScreen />
+	<ArrangerChart bind:fullScreen bind:textScale />
 	<MelodyReader />
 </main>
 

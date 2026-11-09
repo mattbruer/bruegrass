@@ -18,11 +18,12 @@
 	import ChartBlock from './ChartBlock.svelte';
 	import PlayIcon from '../icons/PlayIcon.svelte';
 	import StopIcon from '../icons/StopIcon.svelte';
+	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/** @type {{ fullScreen?: boolean }} */
-	let { fullScreen = $bindable(false) } = $props();
+	/** @type {{ fullScreen?: boolean, textScale?: number }} */
+	let { fullScreen = $bindable(false), textScale = $bindable(1) } = $props();
 
 	/** @type {PaperPages | undefined} */
 	let pages = $state();
@@ -57,7 +58,13 @@
 			on: fullScreen
 		}}
 	>
-		<PaperPages bind:this={pages} {blocks} coveredBelow={fullScreen ? 0 : layout.barHeight}>
+		<PaperPages
+			bind:this={pages}
+			bind:textScale
+			{blocks}
+			size={settings.chart.textSize}
+			coveredBelow={fullScreen ? 0 : layout.barHeight}
+		>
 			{#snippet block(/** @type {import('../../lyricChart/chartBlocks.js').ChartBlock} */ item)}
 				<ChartBlock block={item} {header} label={arrangement.chordName} />
 			{/snippet}

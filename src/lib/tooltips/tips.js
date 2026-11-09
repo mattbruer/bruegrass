@@ -139,7 +139,10 @@ export const TIPS = Object.freeze({
 
 	chart: {
 		open: 'The song as a chart for the band: chords and words with barlines, on paper you can print.',
-		back: 'Back to the arranger. The song and the band come with you.'
+		back: 'Back to the arranger. The song and the band come with you.',
+		smaller: 'Smaller text on the chart.',
+		larger: 'Larger text on the chart.',
+		fit: 'Let the chart pick the largest text that fits the song on one page.'
 	},
 
 	fullScreen: {

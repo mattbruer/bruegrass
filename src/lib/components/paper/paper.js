@@ -8,7 +8,7 @@ const INCH = 96;
 export const PAPER = Object.freeze({
 	width: 8.5 * INCH,
 	height: 11 * INCH,
-	margin: 0.6 * INCH
+	margin: 0.4 * INCH
 });
 
 export const CONTENT_WIDTH = PAPER.width - 2 * PAPER.margin;

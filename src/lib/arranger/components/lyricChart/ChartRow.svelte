@@ -46,23 +46,16 @@
 		color: var(--color-ink-soft);
 	}
 
-	/* Every row keeps the same room on the left for a pickup, so bars line up from row to row */
 	.bars {
-		--pickup-room: 5rem;
-
-		position: relative;
 		display: flex;
-		padding-left: var(--pickup-room);
-		flex-wrap: wrap;
+		flex-wrap: var(--bars-wrap, wrap);
 		row-gap: 0.4rem;
 	}
 
-	/* Ends where bar 1 starts; a long one runs on into the page margin */
+	/* The first row of a section has its pickup before bar 1; the words line sits level with the bars' words */
 	.pickup {
-		position: absolute;
-		top: 0;
-		right: calc(100% - var(--pickup-room));
 		display: flex;
+		flex: none;
 		flex-direction: column;
 		padding: 0.1rem 0.4rem 0 0;
 		text-align: right;

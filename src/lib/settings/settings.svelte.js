@@ -43,6 +43,13 @@ export const settings = $state({
 		unit: 4
 	},
 
+	// The lyric chart: set from its page
+
+	chart: {
+		/** The chart's text scale, or 0 for the largest that fits the song on one page. */
+		textSize: 0
+	},
+
 	// Appearance tab
 
 	/** Colours, shadow depth and corner roundness (see $lib/theme). */

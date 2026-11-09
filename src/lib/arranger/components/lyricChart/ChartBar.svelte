@@ -14,6 +14,7 @@
 	 */
 	let { bar, label, closesRow } = $props();
 
+	// Without a notated melody the timing is unknown, so words go on equal columns across the bar
 	let nothingNew = $derived(!bar.words && bar.chords.every((chord) => !chord.shown));
 </script>
 
@@ -35,7 +36,9 @@
 			{/each}
 		{/if}
 	</div>
-	<div class="words">{bar.words}</div>
+	<div class="words">
+		{#each bar.words.split(/\s+/).filter(Boolean) as word, w (w)}<span>{word}</span>{/each}
+	</div>
 </div>
 
 <style>
@@ -64,7 +67,7 @@
 		display: flex;
 		gap: 0.4rem;
 		font-weight: 700;
-		color: var(--color-accent);
+		color: var(--color-ink);
 	}
 
 	.chord {
@@ -80,7 +83,12 @@
 		color: var(--color-ink);
 	}
 
+	/* Equal columns, like beats: words sit under the chords they fall near */
 	.words {
+		display: grid;
+		grid-auto-flow: column;
+		grid-auto-columns: 1fr;
+		gap: 0.4rem;
 		white-space: nowrap;
 	}
 
