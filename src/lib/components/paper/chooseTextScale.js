@@ -2,12 +2,13 @@ import { paginate } from './paginate.js';
 import { CONTENT_HEIGHT } from './paper.js';
 
 /** The text is never drawn smaller than this to squeeze a long song onto one page. */
-const SMALLEST_FOR_ONE_PAGE = 0.75;
+const SMALLEST_FOR_ONE_PAGE = 0.5;
 /** Nor smaller than this to avoid clipping a row that is too wide. */
 const SMALLEST_EVER = 0.3;
 const LARGEST = 2.2;
 const SEARCH_STEPS = 7;
-const COLUMN_COUNTS = [1, 2];
+/** One column: two looked lame. A seam for later: add 2 here and the rest already handles it. */
+const COLUMN_COUNTS = [1];
 /** More columns only when they make the text this much larger. */
 const WORTH_A_COLUMN = 1.02;
 
