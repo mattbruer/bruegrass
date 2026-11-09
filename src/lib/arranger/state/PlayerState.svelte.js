@@ -123,7 +123,7 @@ export class PlayerState {
 		const startInSong = this.#loop.startInSong;
 		this.#melodyTiming = {
 			offset: startInSong,
-			pickup: startInSong === 0 ? (melody?.pickup ?? 0) : 0
+			pickup: startInSong === 0 ? this.#melody.pickup : 0
 		};
 		if (!melody) return null;
 

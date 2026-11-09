@@ -99,7 +99,7 @@
 	}
 
 	:global(.abcjs-cursor) {
-		fill: var(--color-accent);
-		opacity: 0.6;
+		fill: var(--sheet-music-cursor, #e11d1d);
+		opacity: 0.85;
 	}
 </style>

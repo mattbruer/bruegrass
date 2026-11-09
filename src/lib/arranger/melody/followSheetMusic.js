@@ -1,6 +1,6 @@
 /**
  * While playing, show where the band is in the sheet music: the sounding
- * note is lit in the accent colour, and a thin cursor glides across the
+ * note is lit in the accent colour, and a thin red cursor glides across the
  * staff (so you can see the beat move through a long held note).
  *
  * Time always comes from the band's audio clock (see follow.js), so the
@@ -8,7 +8,7 @@
  */
 import { eventAt } from './follow.js';
 
-const CURSOR_WIDTH = 2; // in the sheet music's SVG units
+const CURSOR_WIDTH = 3; // in the sheet music's SVG units
 /* Classes the page's styles colour (see SheetMusic.svelte) */
 const PLAYING_NOTE_CLASS = 'abcjs-playing';
 const CURSOR_CLASS = 'abcjs-cursor';

@@ -110,10 +110,10 @@ function pickupLength(tune, notes) {
 	const firstBar = firstBarLine(tune);
 	if (firstBar === null) return 0;
 	const after = notes.filter((note) => note.startChar >= firstBar).map((note) => note.time);
-	if (after.length === 0) return 0;
-	const pickup = Math.min(...after);
 	const meter = tune.getMeterFraction();
 	const bar = meter.den ? (meter.num * 4) / meter.den : 4;
+	// A tune of only rests has no notes to measure by, so ask abcjs
+	const pickup = after.length === 0 ? tune.getPickupLength() * 4 : Math.min(...after);
 	return pickup > 0 && pickup < bar - 1e-9 ? pickup : 0;
 }
 

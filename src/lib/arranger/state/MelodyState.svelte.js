@@ -27,6 +27,8 @@ export class MelodyState {
 	/** The melody's notes, timed from bar 1, or why it can't be played. */
 	#read = $derived(readMelody(this.drawn.tune));
 	line = $derived(this.#read.line);
+	/** Quarters before bar 1, known even when the tune is only rests. */
+	pickup = $derived(this.#read.pickup);
 	error = $derived(this.#read.error);
 
 	title = $derived(this.drawn.tune?.metaText?.title ?? '');
@@ -37,8 +39,8 @@ export class MelodyState {
 
 	/** Every drawn note on the melody's clock, for following the sheet music. */
 	notesOnPage = $derived(
-		this.drawn.timings && this.drawn.sequence && this.line
-			? sheetEvents(this.drawn.timings, playedQuarters(this.drawn.sequence), this.line.pickup)
+		this.drawn.timings && this.drawn.sequence
+			? sheetEvents(this.drawn.timings, playedQuarters(this.drawn.sequence), this.pickup)
 			: []
 	);
 
