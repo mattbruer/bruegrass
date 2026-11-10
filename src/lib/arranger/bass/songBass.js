@@ -6,6 +6,7 @@
 import { bassLine } from '../instruments/bassline.js';
 import { rhythm } from '../chart/timeline.js';
 import { mod12 } from '../chart/key.js';
+import { chosenBassStyle } from './chosenBassStyle.js';
 
 const EPSILON = 1e-6;
 
@@ -42,7 +43,11 @@ export function bassPart(
 				tuneOnsets.map((time) => time + pass * quarters)
 			).flat();
 		return {
-			notes: bassLine(repeated, { capo: mod12(capo + transpose), tuneOnsets: onsets }),
+			notes: bassLine(repeated, {
+				capo: mod12(capo + transpose),
+				tuneOnsets: onsets,
+				style: chosenBassStyle()
+			}),
 			passes
 		};
 	}

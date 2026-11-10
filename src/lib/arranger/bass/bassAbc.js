@@ -17,6 +17,7 @@ import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
 import { mod12 } from '../chart/key.js';
 import { rhythm } from '../chart/timeline.js';
 import { leadOnsets } from './melodySpace.js';
+import { chosenBassStyle } from './chosenBassStyle.js';
 
 /**
  * @typedef {{
@@ -46,7 +47,11 @@ export function generatedBassAbc({ sections, songKey, capo, melodyKey, tune = nu
 		melodyKey.spelling
 	);
 	const tuneOnsets = leadOnsets(tune, { quarters: rhythm(sections).quarters });
-	const notes = bassLine(sections, { capo: mod12(capo), tuneOnsets }).map((note) => ({
+	const notes = bassLine(sections, {
+		capo: mod12(capo),
+		tuneOnsets,
+		style: chosenBassStyle()
+	}).map((note) => ({
 		midi: note.pitch,
 		start: Math.round(note.beat * TICKS_PER_QUARTER),
 		length: Math.round(note.length * TICKS_PER_QUARTER)

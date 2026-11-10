@@ -15,7 +15,7 @@ export const TIPS = Object.freeze({
 			'/': 'Your recorded songs: play one, or play them all.',
 			'/arranger': 'Write a chord chart and hear a bluegrass band play it.'
 		},
-		settings: 'Settings: tips, the music keypad, colours and shape.',
+		settings: 'Settings: tips, the music keypad, the bass line, colours and shape.',
 		storage: 'What the app keeps on this device: see it, and delete what you don’t want.',
 		tipsToggle: 'Tips are on: rest on any control to see what it does. Tap to turn them off.'
 	},

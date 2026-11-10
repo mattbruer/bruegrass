@@ -106,7 +106,7 @@ export function arrangementToMidi(
 		velocity: velocityFromDb(partDb[event.part] + event.levelDb) // includes the player's touch
 	}));
 
-	// Bass player: the edited line, or its own root-fifth line with walks into chord changes
+	// Bass player: the edited line, or its own in the chosen style (bassStyles.js)
 	/** @type {MidiNote[]} */
 	const tuneOnsets = leadOnsets(melody ?? null, { quarters: rhythm(sections).quarters });
 	const bass = bassPart(sections, { capo, transpose, written: writtenBass, tuneOnsets }).notes.map(

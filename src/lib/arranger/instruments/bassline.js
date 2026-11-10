@@ -16,6 +16,8 @@
  *                        (G G A B │ C), or in 3/4 "1 2 3 │ 4" (G A B │ C)
  *   Not every change gets a lead-in, and a repeated section never plays
  *   exactly the same line as its previous time through.
+ * - How busy it is comes from a style (bassStyles.js): plain root and fifth,
+ *   or with the lead-ins below and fills under the tune.
  * - With a tune, wherever the lead holds a note longer than a half note, the bass
  *   walks in quarters under it into its next note (bassFills.js), on top
  *   of everything above.
@@ -39,6 +41,7 @@ import { rhythm } from '../chart/timeline.js';
 import { createRng } from './seededRandom.js';
 import { fillUnderHeldNotes } from './bassFills.js';
 import { heldSpans } from '../bass/melodySpace.js';
+import { BASS_STYLES, DEFAULT_BASS_STYLE } from './bassStyles.js';
 
 /** Bass range in this file's numbering: open E (40) up to the open G string (55). */
 const LOW = 40;
@@ -51,7 +54,6 @@ const LOW_PULL = 0.25;
 const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
 
 /* Variation: how often each choice goes the less common way */
-const LEAD_CHANCE = 0.65; // lead into a chord change at all
 const OTHER_SIDE_CHANCE = 0.25; // approach the next root from the far side
 
 /* Articulation: fraction of each note's length it is held */
@@ -72,12 +74,19 @@ const VELOCITY_JITTER = 4;
 
 /**
  * @param {import('../chart/timeline.js').Section[]} sections
- * @param {{ capo?: number, tuneOnsets?: number[] | null }} options
+ * @param {{
+ *   capo?: number, tuneOnsets?: number[] | null,
+ *   style?: import('./bassStyles.js').BassStyle
+ * }} options
  *   tuneOnsets: when the tune's lead notes start, in quarters from the
- *   start (bass/melodySpace.js), or null without a tune
+ *   start (bass/melodySpace.js), or null without a tune;
+ *   style: how busy the line is (bassStyles.js)
  * @returns {BassNote[]} beats are quarter notes from the start
  */
-export function bassLine(sections, { capo = 0, tuneOnsets = null } = {}) {
+export function bassLine(
+	sections,
+	{ capo = 0, tuneOnsets = null, style = BASS_STYLES[DEFAULT_BASS_STYLE] } = {}
+) {
 	const { beats, slots: positions, quarters } = rhythm(sections);
 	if (positions.length === 0) return [];
 
@@ -112,7 +121,7 @@ export function bassLine(sections, { capo = 0, tuneOnsets = null } = {}) {
 		for (const run of runs) {
 			if (run.section !== i) continue;
 			decisions[runs.indexOf(run)] = {
-				lead: rng() < LEAD_CHANCE,
+				lead: rng() < style.leadInChance,
 				otherSide: rng() < OTHER_SIDE_CHANCE
 			};
 		}
@@ -139,6 +148,7 @@ export function bassLine(sections, { capo = 0, tuneOnsets = null } = {}) {
 	};
 
 	sections.forEach((_, i) => {
+		if (style.leadInChance === 0) return; // plain root and fifth repeats as it is
 		const previous = previousOccurrence[i];
 		if (previous < 0 || sliceOf(raw, i) !== sliceOf(raw, previous)) return;
 
@@ -158,7 +168,7 @@ export function bassLine(sections, { capo = 0, tuneOnsets = null } = {}) {
 		}
 	});
 
-	const held = heldSpans(tuneOnsets, quarters);
+	const held = style.fillUnderTune ? heldSpans(tuneOnsets, quarters) : [];
 	if (held.length > 0) {
 		raw = fillUnderHeldNotes(raw, { held, bars: barSpans(beats), inScale: scaleOf(context.key) });
 	}

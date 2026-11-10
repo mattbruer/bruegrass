@@ -279,6 +279,7 @@ The core of the arranger.
 ### `bassline.js`
 
 - The MIDI-only bass part: root–fifth (usually the fifth below) and stepwise walks/approaches into chord changes.
+- **How busy it is is a style** (`instruments/bassStyles.js`, plain data: `leadInChance`, `fillUnderTune`; a new style is one entry, a new knob one field read in `bassline.js`). Settings → General → Bass line picks it (`settings.bassStyle`), default Root and fifth (no walks, no fills, repeats play the same); Active is the walks and fills below. `bass/chosenBassStyle.js` is the one place that reads the setting, for both writers of the band's own line (`bassPart`, `generatedBassAbc`); an edited line ignores it. A change is heard on the next Play.
 - Choices are seeded (mulberry32), so exports are deterministic.
 - Repeated sections (same chords) are guaranteed to differ from their previous pass.
 - With a tune, wherever the lead holds a note longer than a half note (or rests: from one lead note's start to the next, `bass/melodySpace.js`), the bass walks in quarters under it into its next note (`instruments/bassFills.js`), on top of the walks above (never replacing them; the downbeat stays). The tune's note starts reach it as `tuneOnsets` through `bassPart`. Without a tune the line is unchanged. A first try that only walked where the tune was silent removed nearly all walking from Amazing Grace and was dropped.

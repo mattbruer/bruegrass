@@ -3,6 +3,7 @@
 	import { settings } from '../settings.svelte.js';
 	import SettingRow from '../controls/SettingRow.svelte';
 	import ToggleSwitch from '../controls/ToggleSwitch.svelte';
+	import { BASS_STYLES, bassStyle } from '$lib/arranger/instruments/bassStyles.js';
 </script>
 
 <!-- Tips need hover, so phones and touch-only tablets don't get the option -->
@@ -27,5 +28,22 @@
 		description="Type arrangements with chord keys instead of the phone's keyboard."
 	>
 		<ToggleSwitch bind:on={settings.musicKeypad} labelledBy="setting-music-keypad" />
+	</SettingRow>
+
+	<SettingRow
+		id="setting-bass-style"
+		label="Bass line"
+		description={bassStyle(settings.bassStyle).description}
+	>
+		<select
+			class="ui-field px-3 py-2"
+			style="width: auto"
+			aria-labelledby="setting-bass-style"
+			bind:value={settings.bassStyle}
+		>
+			{#each Object.entries(BASS_STYLES) as [id, style] (id)}
+				<option value={id}>{style.name}</option>
+			{/each}
+		</select>
 	</SettingRow>
 </section>
