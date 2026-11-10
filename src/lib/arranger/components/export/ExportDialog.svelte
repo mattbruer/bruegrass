@@ -11,6 +11,7 @@
 	import { useArranger } from '../../state/context.js';
 	import { exportAudio } from '../../export/exportAudio.js';
 	import { downloadArrangementMidi } from '../../export/downloadMidi.js';
+	import { readWrittenBass } from '../../bass/readBass.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -61,7 +62,8 @@
 			bpm: arrangement.bpm,
 			capo: arrangement.capoFret,
 			transpose: arrangement.transpose,
-			melody: melody.line
+			melody: melody.line,
+			bass: await readWrittenBass(arranger.bass.notation)
 		};
 		try {
 			if (choice === 'midi') downloadArrangementMidi(songToExport);

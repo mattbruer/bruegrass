@@ -7,6 +7,7 @@
  *   arranger.arrangement   the chord chart, tempo, capo, key
  *   arranger.loop          which bars play
  *   arranger.melody        the ABC melody
+ *   arranger.bass          the bass line, once it's been edited
  *   arranger.player        play/stop, and problems to show
  *   arranger.layout        mixer drawer and phone keypad (what covers the screen)
  *   arranger.song          which song is open; New, Open, Save
@@ -17,12 +18,14 @@
 import { ArrangementState } from './ArrangementState.svelte.js';
 import { LoopState } from './LoopState.svelte.js';
 import { MelodyState } from './MelodyState.svelte.js';
+import { BassState } from './BassState.svelte.js';
 import { PlayerState } from './PlayerState.svelte.js';
 import { PageLayoutState } from './PageLayoutState.svelte.js';
 import { SongState } from './SongState.svelte.js';
 import { RecordingState } from './RecordingState.svelte.js';
 import { abcWithChords, arrangementFromAbc } from '../melody/abcChords.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
+import { respellBass } from '../bass/respellBass.js';
 import { abcWithWords } from '../melody/words/abcWithWords.js';
 import { readLyrics } from '../chart/sectionLyrics.js';
 import { harmonizeAbc } from '../melody/harmony/harmonizeAbc.js';
@@ -43,7 +46,8 @@ export class Arranger {
 	arrangement = new ArrangementState();
 	loop = new LoopState(this.arrangement);
 	melody = new MelodyState();
-	player = new PlayerState(this.arrangement, this.loop, this.melody);
+	bass = new BassState();
+	player = new PlayerState(this.arrangement, this.loop, this.melody, this.bass);
 	layout = new PageLayoutState();
 	/** Which song is open, and saving it (created last: it reads all of the above). */
 	song = new SongState(this);
@@ -112,18 +116,29 @@ export class Arranger {
 
 	/**
 	 * Name the song's key (the chart's [K:]), or go back to the first chord's
-	 * guess with null. The melody and its harmony parts keep their pitches,
-	 * spelled in the new key,
+	 * guess with null. The melody, its harmony parts and an edited bass line
+	 * keep their pitches, spelled in the new key,
 	 * so the strip, the chord names and the sheet music all agree.
 	 * @param {string | null} name the key of the guitar's shapes, e.g. "G", "Em"
 	 */
 	async nameSongKey(name) {
 		this.arrangement.text = withKeyField(this.arrangement.text, name);
+		await Promise.all([this.#respellMelody(), this.#respellBass()]);
+	}
+
+	async #respellMelody() {
 		const abc = this.melody.notation;
 		if (!this.melody.hasNotation) return;
 		const read = await readDrawnMelody(abc);
 		if (!read || read.voices.some((voice) => voice.problem) || this.melody.notation !== abc) return;
 		this.melody.notation = respellDrawnMelody(abc, read.voices, this.melodyKey);
+	}
+
+	async #respellBass() {
+		const abc = this.bass.notation;
+		if (!this.bass.isWritten) return;
+		const respelled = await respellBass(abc, this.melodyKey);
+		if (this.bass.notation === abc) this.bass.notation = respelled;
 	}
 
 	/**
@@ -212,7 +227,18 @@ export class Arranger {
 		const capo = validCapo(fret);
 		if (capo === this.arrangement.capoFret) return;
 		if (this.melody.hasNotation) this.capoAsked = capo;
-		else this.arrangement.capo = capo;
+		else this.#moveCapoWithBass(capo);
+	}
+
+	/**
+	 * Move the capo, everything sounding higher or lower: an edited bass line
+	 * moves with it, in the same step, so it still fits the chart.
+	 * @param {number} capo
+	 */
+	async #moveCapoWithBass(capo) {
+		const semitones = capo - this.arrangement.capoFret;
+		if (this.bass.isWritten) this.bass.notation = await transposeAbc(this.bass.notation, semitones);
+		this.arrangement.capo = capo;
 	}
 
 	/** Same shapes, everything sounds higher or lower: the melody moves with the band. */
@@ -221,7 +247,7 @@ export class Arranger {
 		if (capo === null) return;
 		const semitones = capo - this.arrangement.capoFret;
 		this.melody.notation = await transposeAbc(this.melody.notation, semitones);
-		this.arrangement.capo = capo;
+		await this.#moveCapoWithBass(capo);
 		this.capoAsked = null;
 	}
 

@@ -46,6 +46,7 @@ w: once was _ lost, but now am found, was blind, but _ now I see _
 export const STARTER_SONG = Object.freeze({
 	arrangement: STARTER_ARRANGEMENT,
 	abc: STARTER_MELODY,
+	bass: '', // the band writes it from the chart
 	tempo: TEMPO_DEFAULT,
 	capo: 0,
 	transpose: 0,

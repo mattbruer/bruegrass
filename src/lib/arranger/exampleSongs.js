@@ -40,6 +40,7 @@ Keep on the |sun-ny side, |al-ways on the |sun-ny |side, keep on the
 |sun-ny side of |life | | |
 `,
 	abc: '',
+	bass: '',
 	tempo: TEMPO_DEFAULT,
 	capo: 0,
 	transpose: 0,
@@ -53,6 +54,7 @@ const BOIL_THEM_CABBAGE_DOWN = Object.freeze({
 "Break" as Verse
 `,
 	abc: '',
+	bass: '',
 	tempo: TEMPO_DEFAULT,
 	capo: 0,
 	transpose: 0,
@@ -66,6 +68,7 @@ const THE_LONESOME_RIVER = Object.freeze({
 "Chorus" as Verse
 `,
 	abc: '',
+	bass: '',
 	tempo: TEMPO_DEFAULT,
 	capo: 0,
 	transpose: 0,

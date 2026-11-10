@@ -2,7 +2,7 @@ import { buildEvents, guitarTuning, midiNote } from '../instruments/guitar.js';
 import { DEFAULT_METER, barQuarters, slotPositions } from '../chart/timeline.js';
 import { melodyEvents, melodyPitch } from '../melody/melody.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
-import { bassLine } from '../instruments/bassline.js';
+import { bassPart } from '../bass/songBass.js';
 import { mod12 } from '../chart/key.js';
 import { chopNotes } from '../instruments/mandolin.js';
 
@@ -68,14 +68,24 @@ export function velocityFromDb(db) {
  * @param {import('../chart/timeline.js').Section[]} sections
  * @param {{
  *   capo?: number, transpose?: number, bpm?: number, bassDb?: number, strumDb?: number,
- *   melody?: import('../melody/melody.js').Melody | null, tuneDb?: Record<string, number>
- * }} options tuneDb: the Melody's and each harmony part's fader, by channel id,
+ *   melody?: import('../melody/melody.js').Melody | null, tuneDb?: Record<string, number>,
+ *   bass?: import('../instruments/bassline.js').BassNote[] | null
+ * }} options bass: the edited bass line, or null for the band's own; tuneDb: the Melody's and each harmony part's fader, by channel id,
  *   like bassDb/strumDb for the guitar's parts
  * @returns {Uint8Array}
  */
 export function arrangementToMidi(
 	sections,
-	{ capo = 0, transpose = 0, bpm = 120, bassDb = 0, strumDb = 0, melody = null, tuneDb = {} } = {}
+	{
+		capo = 0,
+		transpose = 0,
+		bpm = 120,
+		bassDb = 0,
+		strumDb = 0,
+		melody = null,
+		tuneDb = {},
+		bass: writtenBass = null
+	} = {}
 ) {
 	const shift = capo + transpose;
 	// Same split as playback: capo where it reaches, plain transposition beyond
@@ -95,9 +105,9 @@ export function arrangementToMidi(
 		velocity: velocityFromDb(partDb[event.part] + event.levelDb) // includes the player's touch
 	}));
 
-	// Bass player: its own root-fifth line with walks into chord changes
+	// Bass player: the edited line, or its own root-fifth line with walks into chord changes
 	/** @type {MidiNote[]} */
-	const bass = bassLine(sections, { capo: mod12(shift) }).map((note) => ({
+	const bass = bassPart(sections, { capo, transpose, written: writtenBass }).notes.map((note) => ({
 		tick: Math.round(note.beat * PPQ),
 		end: Math.round((note.beat + note.length * note.gate) * PPQ),
 		note: note.pitch,

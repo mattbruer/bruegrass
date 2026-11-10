@@ -40,8 +40,10 @@ const TAIL_MAX = 8;
  * @typedef {{
  *   sections: import('../chart/timeline.js').Section[],
  *   bpm: number, capo: number, transpose: number,
- *   melody: import('../melody/melody.js').Melody | null
+ *   melody: import('../melody/melody.js').Melody | null,
+ *   bass?: import('../instruments/bassline.js').BassNote[] | null
  * }} Song
+ *   bass: the edited bass line (readWrittenBass), or null for the band's own
  * @typedef {ReturnType<typeof import('../playback/mixer.svelte.js').mixSnapshot>} Mix
  * @typedef {{ name: string, channels: Float32Array[] }} RenderedFile
  *   channels: one (mono) or two (stereo) arrays of samples, -1 to 1
@@ -172,7 +174,14 @@ function planRender(song, mix) {
 	const melody = song.melody
 		? melodyEvents(song.melody, { sections, bpm, shift: transpose, loop: false })
 		: null;
-	const performance = preparePerformance(sections, { bpm, capo, transpose, loop: false, melody });
+	const performance = preparePerformance(sections, {
+		bpm,
+		capo,
+		transpose,
+		loop: false,
+		melody,
+		bass: song.bass ?? null
+	});
 
 	// The .mid file's lead-in: a bar for the pickup, so bar 1 is on a bar line
 	const firstMeter = slotPositions(sections)[0]?.meter ?? DEFAULT_METER;

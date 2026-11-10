@@ -7,6 +7,7 @@ import { audioTaps } from '../playback/mixerGraph.svelte.js';
 import { melodyEvents } from '../melody/melody.js';
 import { melodyTime } from '../melody/follow.js';
 import { MetronomeState } from './MetronomeState.svelte.js';
+import { readWrittenBass } from '../bass/readBass.js';
 
 /** @typedef {Awaited<ReturnType<typeof playArrangement>>} Playback */
 
@@ -17,6 +18,8 @@ export class PlayerState {
 	#loop;
 	/** @type {import('./MelodyState.svelte.js').MelodyState} */
 	#melody;
+	/** @type {import('./BassState.svelte.js').BassState} */
+	#bass;
 
 	/** What's playing now (null when stopped). Its position() and beats() read the audio clock. */
 	playback = /** @type {Playback | null} */ ($state(null));
@@ -44,11 +47,13 @@ export class PlayerState {
 	 * @param {import('./ArrangementState.svelte.js').ArrangementState} arrangement
 	 * @param {import('./LoopState.svelte.js').LoopState} loop
 	 * @param {import('./MelodyState.svelte.js').MelodyState} melody
+	 * @param {import('./BassState.svelte.js').BassState} bass
 	 */
-	constructor(arrangement, loop, melody) {
+	constructor(arrangement, loop, melody, bass) {
 		this.#arrangement = arrangement;
 		this.#loop = loop;
 		this.#melody = melody;
+		this.#bass = bass;
 		this.metronome = new MetronomeState(this, arrangement);
 	}
 
@@ -72,6 +77,8 @@ export class PlayerState {
 				transpose: this.#arrangement.transpose,
 				bpm,
 				melody: this.#melodyForThisPass(),
+				bass: await readWrittenBass(this.#bass.notation),
+				offset: this.#loop.startInSong,
 				takes: await this.takesToPlay(leaveOutTrack ?? null),
 				regionStart: (this.#loop.startInSong * 60) / bpm,
 				countIn,

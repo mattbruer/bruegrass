@@ -1,29 +1,32 @@
 <script>
 	/**
-	 * Draw the melody and its harmony parts on a piano roll, over the
-	 * chart's bars and chords. It reads and writes the tune's ABC, so the
-	 * sheet music, the ABC tab and the roll always show the same tune.
+	 * Draw the melody, its harmony parts and the bass line on a piano roll,
+	 * over the chart's bars and chords. It reads and writes the tune's ABC,
+	 * so the sheet music, the ABC tab and the roll always show the same tune;
+	 * the bass is kept apart, in the song's bass field.
 	 */
 	import { untrack } from 'svelte';
 	import { useArranger } from '../../state/context.js';
 	import { MelodyDrawing } from '../../melody/roll/MelodyDrawing.svelte.js';
-	import { auditionNote } from '../../playback/auditionNote.js';
+	import { auditionBassNote, auditionNote } from '../../playback/auditionNote.js';
 	import PianoRoll from './PianoRoll.svelte';
 	import RollToolbar from './RollToolbar.svelte';
 	import VoicePicker from './VoicePicker.svelte';
 	import HarmonyOptions from './HarmonyOptions.svelte';
 	import { voiceColour } from '../../melody/roll/MelodyDrawing.svelte.js';
-	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
+	import BassLineNote from './BassLineNote.svelte';
 
 	const arranger = useArranger();
-	const { arrangement, melody, player } = arranger;
+	const { arrangement, melody, bass, player } = arranger;
 	const drawing = new MelodyDrawing(arranger);
 
 	$effect(() => {
 		// Read again whenever the tune or the chart it's drawn over changes
 		void melody.notation;
+		void bass.notation;
 		void arrangement.sections;
 		void arrangement.capoFret;
+		void arranger.melodyKey;
 		untrack(() => drawing.load());
 	});
 
@@ -38,7 +41,8 @@
 
 	/** @param {number} midi */
 	function sound(midi) {
-		auditionNote(midi, arrangement.transpose).catch(console.error);
+		const play = drawing.isBass ? auditionBassNote : auditionNote;
+		play(midi, arrangement.transpose).catch(console.error);
 	}
 </script>
 
@@ -54,6 +58,7 @@
 			chordName={arrangement.chordName}
 			spelling={arranger.melodyKey.spelling}
 			tonic={arranger.melodyKey.tonic}
+			range={drawing.range}
 			end={drawing.end}
 			gridStep={drawing.gridStep}
 			drawLength={drawing.drawLength}
@@ -78,7 +83,9 @@
 				Tap to add a note, swipe to scroll. Drag a note to move it, or its right end to change its
 				length. Double-tap to delete.
 			</p>
-			{#if drawing.current?.id !== MELODY_CHANNEL}
+			{#if drawing.isBass}
+				<BassLineNote />
+			{:else if drawing.isHarmonyPart}
 				<p class="mt-2 text-sm text-ink-soft">
 					There's more than one good harmony. Pick a note, and dots show the chord's other notes
 					near it: tap one to move the note there. When you change the melody, only the bars you

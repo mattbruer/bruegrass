@@ -12,6 +12,7 @@
 	import { harmonyOptions, withOption } from '../../melody/roll/harmonyOptions.js';
 	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
 	import { mixer } from '../../playback/mixer.svelte.js';
+	import { BASS_VOICE } from '../../bass/readBass.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -42,7 +43,7 @@
 		);
 	});
 	let barOnly = $derived(scope === 'bar' && pickedBar >= 0);
-	let singers = $derived(drawing.voices.map((voice) => voice.id));
+	let singers = $derived(drawing.voices.map((voice) => voice.id).filter((id) => id !== BASS_VOICE));
 	let singersOnly = $derived(
 		mixer.channels.every((channel) => channel.solo === singers.includes(channel.id))
 	);
@@ -71,7 +72,9 @@
 	async function findOptions(abc, id) {
 		const reading = ++reads;
 		const found =
-			id === MELODY_CHANNEL ? [] : await harmonyOptions(abc, id, arranger.songForMelody());
+			id === MELODY_CHANNEL || id === BASS_VOICE
+				? []
+				: await harmonyOptions(abc, id, arranger.songForMelody());
 		if (reading === reads) options = found;
 	}
 
@@ -101,7 +104,7 @@
 	}
 </script>
 
-{#if part !== MELODY_CHANNEL && options.length > 0}
+{#if drawing.isHarmonyPart && options.length > 0}
 	<div class="mb-2 ui-card p-3 text-sm">
 		<p class="mb-2 text-ink-soft">
 			Other ways to sing the {partName}. Loop a few bars, press Play, and tap through them.

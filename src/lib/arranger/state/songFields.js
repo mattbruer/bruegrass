@@ -7,7 +7,7 @@ import { validCapo } from '../chart/capo.js';
 
 /**
  * @typedef {Pick<import('$lib/storage/arrangements.js').Arrangement,
- *   'arrangement' | 'abc' | 'tempo' | 'capo' | 'transpose' | 'mix'>} SongFields
+ *   'arrangement' | 'abc' | 'bass' | 'tempo' | 'capo' | 'transpose' | 'mix'>} SongFields
  *   what a song is made of (its name is kept separately)
  */
 
@@ -20,6 +20,7 @@ export function readSongFields(arranger) {
 	return {
 		arrangement: arranger.arrangement.text,
 		abc: arranger.melody.notation,
+		bass: arranger.bass.notation,
 		tempo: arranger.arrangement.bpm,
 		capo: arranger.arrangement.capoFret,
 		transpose: arranger.arrangement.transpose,
@@ -42,6 +43,7 @@ export function loadSongIntoPage(arranger, song) {
 	arranger.arrangement.capo = validCapo(song.capo);
 	arranger.arrangement.transpose = song.transpose;
 	arranger.melody.notation = song.abc;
+	arranger.bass.notation = song.bass ?? ''; // drafts from before the bass could be edited
 
 	applySongMix(song.mix); // keeps this device's listening setup on, if it has one
 
