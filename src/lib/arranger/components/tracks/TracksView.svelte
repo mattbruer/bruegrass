@@ -8,6 +8,8 @@
 	import { useArranger } from '../../state/context.js';
 	import { bandLanes, takeLanes } from '../../tracks/lanes.js';
 	import { bassPart } from '../../bass/songBass.js';
+	import { leadOnsets } from '../../bass/melodySpace.js';
+	import { rhythm } from '../../chart/timeline.js';
 	import { readWrittenBass } from '../../bass/readBass.js';
 	import { rulerBars, rulerSpan } from '../../tracks/ruler.js';
 	import { trackScale } from '../../tracks/trackScale.js';
@@ -41,7 +43,8 @@
 			bass: bassPart(arrangement.sections, {
 				capo: arrangement.capoFret,
 				transpose: arrangement.transpose,
-				written: writtenBass
+				written: writtenBass,
+				tuneOnsets: leadOnsets(melody.line, { quarters: rhythm(arrangement.sections).quarters })
 			}).notes,
 			melody: melody.line
 		})

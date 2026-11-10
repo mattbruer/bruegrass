@@ -13,6 +13,7 @@
 import { buildEvents, guitarTuning, sampleUrl, touch } from './guitar.js';
 import { bassEvents } from './upright.js';
 import { bassPart } from '../bass/songBass.js';
+import { leadOnsetsOfPart } from '../bass/melodySpace.js';
 import { chopNotes, mandoSampleUrl } from './mandolin.js';
 import { mod12 } from '../chart/key.js';
 import { rhythm } from '../chart/timeline.js';
@@ -52,7 +53,14 @@ export function preparePerformance(
 	// Bass and mandolin work in concert pitch and pick their own register
 	const concert = { bpm, capo: mod12(shift) };
 	const bassLine = bassEvents(
-		bassPart(sections, { capo, transpose, written: bass, offset, passes: loop ? 2 : 1 }),
+		bassPart(sections, {
+			capo,
+			transpose,
+			written: bass,
+			offset,
+			passes: loop ? 2 : 1,
+			tuneOnsets: leadOnsetsOfPart(melody, bpm)
+		}),
 		{ bpm }
 	);
 	const chops = chopNotes(sections, concert);

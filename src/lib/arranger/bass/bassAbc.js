@@ -15,13 +15,16 @@ import { scoreFromChart } from '../melody/roll/scoreFromChart.js';
 import { newAbc } from '../melody/roll/scoreToAbc.js';
 import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
 import { mod12 } from '../chart/key.js';
+import { rhythm } from '../chart/timeline.js';
+import { leadOnsets } from './melodySpace.js';
 
 /**
  * @typedef {{
  *   sections: import('../chart/timeline.js').Section[],
  *   songKey: import('../chart/key.js').Key | null,
  *   capo: number,
- *   melodyKey: { spelling: import('../theory/musicInKey.js').Key, keyText: string }
+ *   melodyKey: { spelling: import('../theory/musicInKey.js').Key, keyText: string },
+ *   tune?: import('../melody/melody.js').Melody | null
  * }} BassSong what the bass line is written from (the melody's key is the concert key)
  */
 
@@ -35,14 +38,15 @@ export function bassAbcInUse(written, song) {
 }
 
 /** @param {BassSong} song */
-export function generatedBassAbc({ sections, songKey, capo, melodyKey }) {
+export function generatedBassAbc({ sections, songKey, capo, melodyKey, tune = null }) {
 	const { score, lineStarts } = scoreFromChart(
 		barsInPlayOrder(sections),
 		songKey,
 		capo,
 		melodyKey.spelling
 	);
-	const notes = bassLine(sections, { capo: mod12(capo) }).map((note) => ({
+	const tuneOnsets = leadOnsets(tune, { quarters: rhythm(sections).quarters });
+	const notes = bassLine(sections, { capo: mod12(capo), tuneOnsets }).map((note) => ({
 		midi: note.pitch,
 		start: Math.round(note.beat * TICKS_PER_QUARTER),
 		length: Math.round(note.length * TICKS_PER_QUARTER)
@@ -56,14 +60,20 @@ export function generatedBassAbc({ sections, songKey, capo, melodyKey }) {
 
 /**
  * What the bass is written from, for the open song.
- * @param {{ arrangement: { sections: any[], key: any, capoFret: number }, melodyKey: BassSong['melodyKey'] }} arranger
+ * @param {{
+ *   arrangement: { sections: any[], key: any, capoFret: number },
+ *   melodyKey: BassSong['melodyKey'],
+ *   melody: { line: BassSong['tune'] }
+ * }} arranger
+ * @param {BassSong['tune']} [tune] the tune to fit the walks around (default: the open one)
  * @returns {BassSong}
  */
-export function bassSongOf({ arrangement, melodyKey }) {
+export function bassSongOf({ arrangement, melodyKey, melody }, tune = melody.line) {
 	return {
 		sections: arrangement.sections,
 		songKey: arrangement.key,
 		capo: arrangement.capoFret,
-		melodyKey
+		melodyKey,
+		tune
 	};
 }

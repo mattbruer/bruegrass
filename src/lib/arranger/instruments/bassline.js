@@ -16,6 +16,9 @@
  *                        (G G A B │ C), or in 3/4 "1 2 3 │ 4" (G A B │ C)
  *   Not every change gets a lead-in, and a repeated section never plays
  *   exactly the same line as its previous time through.
+ * - With a tune, wherever the lead holds a note longer than a half note, the bass
+ *   walks in quarters under it into its next note (bassFills.js), on top
+ *   of everything above.
  * - Notes are released early (punchy, not organ-like), with the odd
  *   staccato note on beat 3.
  *
@@ -34,6 +37,8 @@ import {
 } from './guitar.js';
 import { rhythm } from '../chart/timeline.js';
 import { createRng } from './seededRandom.js';
+import { fillUnderHeldNotes } from './bassFills.js';
+import { heldSpans } from '../bass/melodySpace.js';
 
 /** Bass range in this file's numbering: open E (40) up to the open G string (55). */
 const LOW = 40;
@@ -67,11 +72,13 @@ const VELOCITY_JITTER = 4;
 
 /**
  * @param {import('../chart/timeline.js').Section[]} sections
- * @param {{ capo?: number }} options
+ * @param {{ capo?: number, tuneOnsets?: number[] | null }} options
+ *   tuneOnsets: when the tune's lead notes start, in quarters from the
+ *   start (bass/melodySpace.js), or null without a tune
  * @returns {BassNote[]} beats are quarter notes from the start
  */
-export function bassLine(sections, { capo = 0 } = {}) {
-	const { beats, slots: positions } = rhythm(sections);
+export function bassLine(sections, { capo = 0, tuneOnsets = null } = {}) {
+	const { beats, slots: positions, quarters } = rhythm(sections);
 	if (positions.length === 0) return [];
 
 	// The bass plays on the booms; group consecutive booms of the same chord,
@@ -151,7 +158,34 @@ export function bassLine(sections, { capo = 0 } = {}) {
 		}
 	});
 
+	const held = heldSpans(tuneOnsets, quarters);
+	if (held.length > 0) {
+		raw = fillUnderHeldNotes(raw, { held, bars: barSpans(beats), inScale: scaleOf(context.key) });
+	}
 	return articulate(raw);
+}
+
+/**
+ * Each bar's start and end, in quarters.
+ * @param {{ bar: number, time: number, length: number }[]} beats
+ */
+function barSpans(beats) {
+	/** @type {{ start: number, end: number }[]} */
+	const bars = [];
+	for (const beat of beats) {
+		const bar = (bars[beat.bar] ??= { start: beat.time, end: beat.time });
+		bar.end = Math.max(bar.end, beat.time + beat.length);
+	}
+	return bars.filter(Boolean);
+}
+
+/**
+ * Whether a pitch is in the key's major scale.
+ * @param {number} key pitch class
+ */
+function scaleOf(key) {
+	const scale = new Set(MAJOR_STEPS.map((step) => (key + step) % 12));
+	return (/** @type {number} */ pitch) => scale.has(((pitch % 12) + 12) % 12);
 }
 
 /**
@@ -161,9 +195,7 @@ export function bassLine(sections, { capo = 0 } = {}) {
  * @returns {RawNote[]}
  */
 function render({ runs, capo, key }, decisions) {
-	const scale = new Set(MAJOR_STEPS.map((step) => (key + step) % 12));
-	/** @param {number} pitch */
-	const inScale = (pitch) => scale.has(((pitch % 12) + 12) % 12);
+	const inScale = scaleOf(key);
 	/** Scale notes strictly between two pitches, in the direction of travel. */
 	const stepsBetween = (/** @type {number} */ from, /** @type {number} */ to) => {
 		const dir = Math.sign(to - from);

@@ -11,7 +11,11 @@ import { bassSongOf, generatedBassAbc } from '../bass/bassAbc.js';
 /** @param {import('./Arranger.svelte.js').Arranger} arranger */
 export function keepBassWithChart(arranger) {
 	$effect(() => {
-		const song = bassSongOf(arranger);
+		// Only the chart moves an edited line; the tune just shapes the bars it rewrites
+		const song = bassSongOf(
+			arranger,
+			untrack(() => arranger.melody.line)
+		);
 		void arranger.melodyKey;
 		if (!arranger.arrangement.isPlayable) return;
 		const written = untrack(() => arranger.bass.notation);

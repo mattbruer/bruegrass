@@ -1,8 +1,9 @@
 import { buildEvents, guitarTuning, midiNote } from '../instruments/guitar.js';
-import { DEFAULT_METER, barQuarters, slotPositions } from '../chart/timeline.js';
+import { DEFAULT_METER, barQuarters, rhythm, slotPositions } from '../chart/timeline.js';
 import { melodyEvents, melodyPitch } from '../melody/melody.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { bassPart } from '../bass/songBass.js';
+import { leadOnsets } from '../bass/melodySpace.js';
 import { mod12 } from '../chart/key.js';
 import { chopNotes } from '../instruments/mandolin.js';
 
@@ -107,12 +108,15 @@ export function arrangementToMidi(
 
 	// Bass player: the edited line, or its own root-fifth line with walks into chord changes
 	/** @type {MidiNote[]} */
-	const bass = bassPart(sections, { capo, transpose, written: writtenBass }).notes.map((note) => ({
-		tick: Math.round(note.beat * PPQ),
-		end: Math.round((note.beat + note.length * note.gate) * PPQ),
-		note: note.pitch,
-		velocity: note.velocity
-	}));
+	const tuneOnsets = leadOnsets(melody ?? null, { quarters: rhythm(sections).quarters });
+	const bass = bassPart(sections, { capo, transpose, written: writtenBass, tuneOnsets }).notes.map(
+		(note) => ({
+			tick: Math.round(note.beat * PPQ),
+			end: Math.round((note.beat + note.length * note.gate) * PPQ),
+			note: note.pitch,
+			velocity: note.velocity
+		})
+	);
 
 	// Mandolin chops on the off-beats, one note per string, strummed G → E
 	/** @type {MidiNote[]} */
