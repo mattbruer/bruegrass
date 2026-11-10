@@ -153,6 +153,14 @@ export const TIPS = Object.freeze({
 		fit: 'Let the chart pick the largest text that fits the song on one page.'
 	},
 
+	tracks: {
+		open: 'The song as tracks, like a recording studio: each part of the band and each recorded take on its own lane.',
+		back: 'Back to the arranger. The song and the band come with you.',
+		clip: 'Drag the take sideways to line it up with the band.',
+		clipTakes:
+			'Drag the take sideways to line it up with the band. Tap it to play the track’s next take instead.'
+	},
+
 	fullScreen: {
 		open: 'Fill the screen with the chart, for reading on a stand. Tap the sides or use the arrow keys to turn pages.',
 		close: 'Leave full screen (or press Esc).',

@@ -14,6 +14,7 @@
 	import PlayerCard from '$lib/arranger/components/player/PlayerCard.svelte';
 	import SheetMusic from '$lib/arranger/components/melody/SheetMusic.svelte';
 	import ChartLink from '$lib/arranger/components/lyricChart/ChartLink.svelte';
+	import TracksLink from '$lib/arranger/components/tracks/TracksLink.svelte';
 
 	const { layout } = useArranger();
 </script>
@@ -26,7 +27,10 @@
 <main class="mx-auto max-w-5xl px-4 py-8 sm:px-8" style:padding-bottom={layout.bottomSpace}>
 	<div class="mb-6 flex items-center justify-between gap-3">
 		<h1 class="text-3xl font-bold">Bluegrass Arranger</h1>
-		<ChartLink />
+		<div class="flex gap-2">
+			<TracksLink />
+			<ChartLink />
+		</div>
 	</div>
 
 	<SongBar />
