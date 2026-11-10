@@ -12,9 +12,10 @@
  */
 import { readStored, removeStored, writeStored } from './localStore.js';
 import { newId } from './newId.js';
+import { DEFAULT_BASS_STYLE } from '$lib/arranger/instruments/bassStyles.js';
 
 /** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
-export const ARRANGEMENT_VERSION = 2;
+export const ARRANGEMENT_VERSION = 3;
 
 /** Where every saved song is kept, as { [id]: Arrangement }. */
 const SONGS_KEY = 'bruegrass.arrangements';
@@ -34,6 +35,7 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   arrangement: string,
  *   abc: string,
  *   bass: string,
+ *   bassStyle: string,
  *   tempo: number,
  *   capo: number,
  *   transpose: number,
@@ -43,7 +45,8 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  * }} Arrangement
  *   title: the song's name; arrangement: the chord chart text; abc: the
  *   melody in ABC notation; bass: the bass line in ABC once it's been
- *   edited ('' while the band writes it from the chart); transpose: semitones from the Key setting;
+ *   edited ('' while the band writes it from the chart); bassStyle: how the band
+ *   writes its own bass line, an id in BASS_STYLES; transpose: semitones from the Key setting;
  *   mix: the mixer's settings (see mixSnapshot in mixer.svelte.js);
  *   dates are ISO strings
  */
@@ -60,6 +63,7 @@ export function createArrangement(fields = {}) {
 		arrangement: '',
 		abc: '',
 		bass: '',
+		bassStyle: DEFAULT_BASS_STYLE,
 		tempo: 120,
 		capo: 0,
 		transpose: 0,
@@ -122,7 +126,8 @@ function allSongs() {
 
 /**
  * Bring an older saved document up to the current shape. Version 2 added
- * `bass` (the defaults fill it in: older songs play the generated bass).
+ * `bass` (the defaults fill it in: older songs play the generated bass);
+ * version 3 `bassStyle` (it was a device setting before: older songs get the default).
  * @param {Arrangement} song
  * @returns {Arrangement}
  */

@@ -17,7 +17,10 @@
 	let open = $derived(receive.showing && !drafts.offer);
 	let offer = $derived(receive.offer);
 	let takeCount = $derived(offer?.songPackage.takes.length ?? 0);
-	let title = $derived(offer?.songPackage.song.title ?? 'Song received');
+	let title = $derived(
+		offer?.songPackage.song.title ??
+			(receive.problem ? 'That song couldn’t be opened' : 'Song received')
+	);
 
 	/** @param {boolean} asNewSong */
 	function openIt(asNewSong) {

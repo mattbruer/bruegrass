@@ -21,7 +21,7 @@
 	const LONG_LINK = 8000;
 
 	const arranger = useArranger();
-	const takeCount = arranger.recording.takes.filter((take) => take.inUse).length;
+	const takeCount = arranger.recording.takes.length;
 
 	let way = $state(/** @type {'link' | 'file'} */ (takeCount > 0 ? 'file' : 'link'));
 	/** @type {{ way: 'link', url: string } | { way: 'file', bytes: Uint8Array, name: string } | null} */
@@ -137,7 +137,7 @@
 	<p class="text-xs text-ink-soft">
 		{way === 'link'
 			? 'The link opens the song in the app.'
-			: 'They open it from Open → Open a song file.'}
+			: 'They open it from Open → Open a song file, or drop it on the page on a computer.'}
 		Changes after you send it don’t reach them: send it again to update their copy.
 	</p>
 </div>

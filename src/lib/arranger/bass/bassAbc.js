@@ -17,7 +17,7 @@ import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
 import { mod12 } from '../chart/key.js';
 import { rhythm } from '../chart/timeline.js';
 import { leadOnsets } from './melodySpace.js';
-import { chosenBassStyle } from './chosenBassStyle.js';
+import { chosenBassStyle } from './songBassStyle.svelte.js';
 
 /**
  * @typedef {{

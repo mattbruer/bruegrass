@@ -8,7 +8,9 @@
  *
  * In IndexedDB, in two stores:
  *   takes      each take's details (small: listed often)
- *   takeAudio  each take's audio, by the take's id (big: read one at a time)
+ *   takeAudio  each take's audio, by the take's id (big: read one at a time);
+ *              a take received in a shared song also keeps the file it came
+ *              in (`sent`), so sharing the song again passes it on unchanged
  */
 import { askToKeepData, finished, keptOpen, result } from './indexedDb.js';
 import { newId } from './newId.js';
@@ -94,9 +96,11 @@ export function addTake(details, channels) {
  * other takes on its track stop.
  * @param {TakeDocument} take
  * @param {Float32Array[]} channels
+ * @param {{ bytes: Uint8Array, audio: import('$lib/arranger/share/takeFormat.js').TakeAudio } | null} [sent]
+ *   the file a received take came in
  * @returns {Promise<TakeDocument>}
  */
-export async function putTake(take, channels) {
+export async function putTake(take, channels, sent = null) {
 	const db = await database();
 	const others = (await listTakes(take.songId)).filter((each) => each.trackId === take.trackId);
 
@@ -105,7 +109,9 @@ export async function putTake(take, channels) {
 	if (take.inUse)
 		for (const other of others) if (other.inUse) store.put({ ...other, inUse: false });
 	store.put(take);
-	transaction.objectStore('takeAudio').put({ id: take.id, channels });
+	transaction
+		.objectStore('takeAudio')
+		.put(sent ? { id: take.id, channels, sent } : { id: take.id, channels });
 	await finished(transaction);
 	await askToKeepData();
 	return take;
@@ -145,6 +151,17 @@ export async function readTakeAudio(id) {
 	const db = await database();
 	const stored = await result(db.transaction('takeAudio').objectStore('takeAudio').get(id));
 	return stored?.channels ?? null;
+}
+
+/**
+ * The file a received take came in (null: recorded or added here).
+ * @param {string} id
+ * @returns {Promise<{ bytes: Uint8Array, audio: import('$lib/arranger/share/takeFormat.js').TakeAudio } | null>}
+ */
+export async function readSentAudio(id) {
+	const db = await database();
+	const stored = await result(db.transaction('takeAudio').objectStore('takeAudio').get(id));
+	return stored?.sent ?? null;
 }
 
 /**

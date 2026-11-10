@@ -4,10 +4,12 @@
  */
 import { applySongMix, songMixSnapshot } from '../playback/eq/listeningSetup.svelte.js';
 import { validCapo } from '../chart/capo.js';
+import { songBassStyle } from '../bass/songBassStyle.svelte.js';
+import { DEFAULT_BASS_STYLE } from '../instruments/bassStyles.js';
 
 /**
  * @typedef {Pick<import('$lib/storage/arrangements.js').Arrangement,
- *   'arrangement' | 'abc' | 'bass' | 'tempo' | 'capo' | 'transpose' | 'mix'>} SongFields
+ *   'arrangement' | 'abc' | 'bass' | 'bassStyle' | 'tempo' | 'capo' | 'transpose' | 'mix'>} SongFields
  *   what a song is made of (its name is kept separately)
  */
 
@@ -21,6 +23,7 @@ export function readSongFields(arranger) {
 		arrangement: arranger.arrangement.text,
 		abc: arranger.melody.notation,
 		bass: arranger.bass.notation,
+		bassStyle: songBassStyle.id,
 		tempo: arranger.arrangement.bpm,
 		capo: arranger.arrangement.capoFret,
 		transpose: arranger.arrangement.transpose,
@@ -44,6 +47,7 @@ export function loadSongIntoPage(arranger, song) {
 	arranger.arrangement.transpose = song.transpose;
 	arranger.melody.notation = song.abc;
 	arranger.bass.notation = song.bass ?? ''; // drafts from before the bass could be edited
+	songBassStyle.id = song.bassStyle ?? DEFAULT_BASS_STYLE; // examples, and drafts from before
 
 	applySongMix(song.mix); // keeps this device's listening setup on, if it has one
 

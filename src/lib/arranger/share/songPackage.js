@@ -26,7 +26,7 @@ export const PACKAGE_VERSION = 1;
  *   takes: SharedTake[]
  * }} SongPackage
  *   chords: the sender's own shapes (My chords) that the song uses, or it wouldn't play;
- *   takes: the takes in use, each with where its audio is in a song file
+ *   takes: every take (the one in use on each track says so), each with where its audio is in a song file
  */
 
 /** A problem with what was received, worded for the person receiving it. */

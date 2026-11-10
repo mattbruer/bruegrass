@@ -91,7 +91,7 @@ async function addTakes(takes, audioFiles, songId, asNewSong) {
 		}
 		const bytes = audioFiles.get(audio.file);
 		if (!bytes) continue;
-		await putTake(take, await unpackTakeAudio(bytes, audio));
+		await putTake(take, await unpackTakeAudio(bytes, audio), { bytes, audio });
 		added++;
 	}
 	return added;

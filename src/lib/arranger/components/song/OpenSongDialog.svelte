@@ -3,7 +3,7 @@
 	 * Your saved songs, newest first: open one, or delete it.
 	 * Opening replaces what's on the page, so it asks first if that has
 	 * unsaved changes. "Open a song file" opens one someone sent (Export →
-	 * Song for another device); the receive dialog takes it from there.
+	 * Share with a bandmate); the receive dialog takes it from there.
 	 * Any file can be picked (an iPhone greys out file types it doesn't know).
 	 */
 	import Dialog from '$lib/components/Dialog.svelte';

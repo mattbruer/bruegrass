@@ -198,7 +198,7 @@ export const TIPS = Object.freeze({
 		processed:
 			'On: each stem with your levels, pan, EQ and reverb (plus a reverb stem). Off: dry stems.',
 		withMix: 'Also put the full mix in the zip.',
-		song: 'Send the song itself, to open in this app on another phone or computer.'
+		song: 'Send the whole song to a bandmate (or your own other phone or computer) to open in this app.'
 	},
 
 	share: {
@@ -236,6 +236,8 @@ export const TIPS = Object.freeze({
 		},
 		voices:
 			"Pick which line to change: the melody, a harmony part or the bass. The tune's other lines show faintly behind it.",
+		bassStyle:
+			'How the band writes its own bass line for this song. Saved and shared with the song.',
 		bassFromChart:
 			"Throw away your changes to the bass line and go back to the band's own, written from the chart's chords.",
 		roll: {

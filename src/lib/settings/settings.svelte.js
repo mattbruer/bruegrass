@@ -11,7 +11,6 @@
  * layout does this).
  */
 import { DEFAULT_APPEARANCE } from '$lib/theme/theme.js';
-import { DEFAULT_BASS_STYLE } from '$lib/arranger/instruments/bassStyles.js';
 
 /** Where settings are kept in localStorage. src/app.html reads it too (for the theme). */
 export const SETTINGS_STORAGE_KEY = 'bruegrass.settings';
@@ -30,9 +29,6 @@ export const settings = $state({
 
 	/** How the arranger shows chords: guitar shapes, concert, roman or nashville (see key.js). */
 	chordDisplay: /** @type {import('$lib/arranger/chart/key.js').ChordDisplay} */ ('shapes'),
-
-	/** How the band's own bass line plays: an id in BASS_STYLES (instruments/bassStyles.js). */
-	bassStyle: DEFAULT_BASS_STYLE,
 
 	/** Which view the mixer's master visualiser shows. */
 	scopeView: /** @type {'waveform' | 'spectrum' | 'stereo'} */ ('spectrum'),

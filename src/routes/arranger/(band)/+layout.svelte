@@ -14,7 +14,8 @@
 	 * device between saves. Your own chord shapes (My chords) load at the
 	 * start too, and the open song's recorded takes whenever it changes.
 	 * A share link (the page opened with one, or one pasted into the address
-	 * bar) offers its song once any drafts have been answered.
+	 * bar) or a song file dropped on the page offers its song once any
+	 * drafts have been answered.
 	 */
 	import { onMount } from 'svelte';
 	import { provideArranger } from '$lib/arranger/state/context.js';
@@ -32,6 +33,7 @@
 		startRememberingSongMixes
 	} from '$lib/arranger/state/songMixMemory.svelte.js';
 	import { loadMyChords } from '$lib/arranger/voicings/myChords.svelte.js';
+	import { openDroppedSongFiles } from '$lib/arranger/share/dropSongFile.js';
 
 	let { children } = $props();
 
@@ -55,9 +57,11 @@
 		const offerSharedSong = () => arranger.receive.fromLink(location.hash);
 		offerSharedSong();
 		addEventListener('hashchange', offerSharedSong);
+		const stopCatchingDrops = openDroppedSongFiles((file) => arranger.receive.fromFile(file));
 		// Leaving the arranger: the music and the click stop with it
 		return () => {
 			removeEventListener('hashchange', offerSharedSong);
+			stopCatchingDrops();
 			arranger.player.metronome.turnOff();
 			arranger.player.stop();
 		};

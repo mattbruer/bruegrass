@@ -7,7 +7,7 @@
 	 * Rendering takes a few seconds (it's faster than real time), and stops
 	 * playback first: an offline render takes over the audio engine.
 	 *
-	 * "Song for another device" sends the song itself, to open in this app
+	 * "Share with a bandmate" sends the song itself, to open in this app
 	 * (components/share/ShareSong.svelte).
 	 */
 	import Dialog from '$lib/components/Dialog.svelte';
@@ -39,8 +39,9 @@
 		},
 		{
 			id: 'song',
-			name: 'Song for another device',
-			about: 'The whole song, to open in this app: send it to a friend or your other device.'
+			name: 'Share with a bandmate',
+			about:
+				'The whole song, takes and all, for them to open in this app. Works for your own phone or computer too.'
 		}
 	]);
 

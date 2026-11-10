@@ -1,7 +1,8 @@
 /**
  * How the band's own bass line plays (bassline.js), as plain data. A new
  * style is one entry; a new knob is one field here plus where bassline.js
- * reads it. Settings → General picks one (settings.bassStyle).
+ * reads it. Each song has one (bass/songBassStyle.svelte.js), picked under
+ * the piano roll while editing the bass.
  *
  * Knobs:
  *   leadInChance: how often a chord change gets a walk or approach into it

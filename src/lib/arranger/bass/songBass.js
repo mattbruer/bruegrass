@@ -6,7 +6,7 @@
 import { bassLine } from '../instruments/bassline.js';
 import { rhythm } from '../chart/timeline.js';
 import { mod12 } from '../chart/key.js';
-import { chosenBassStyle } from './chosenBassStyle.js';
+import { chosenBassStyle } from './songBassStyle.svelte.js';
 
 const EPSILON = 1e-6;
 

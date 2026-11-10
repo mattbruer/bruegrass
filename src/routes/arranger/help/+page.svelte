@@ -298,8 +298,8 @@
 		</ul>
 		{@render example(`"High G"|G|G:high|C|G:high/B|`)}
 		<p class="tip">
-			Your shapes are kept on this device, for every song. A song that uses one won't play on
-			another device until you add the shape there too.
+			Your shapes are kept on this device, for every song. When you share a song (Export → Share
+			with a bandmate), the shapes it uses go with it.
 		</p>
 	</section>
 
