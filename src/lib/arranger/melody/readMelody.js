@@ -17,6 +17,10 @@ export function readMelody(tune) {
 		const hasNotes = line.notes.length > 0;
 		return { line: hasNotes ? line : null, pickup: line.pickup, error: '' };
 	} catch (problem) {
-		return { line: null, pickup: 0, error: problem instanceof Error ? problem.message : String(problem) };
+		return {
+			line: null,
+			pickup: 0,
+			error: problem instanceof Error ? problem.message : String(problem)
+		};
 	}
 }

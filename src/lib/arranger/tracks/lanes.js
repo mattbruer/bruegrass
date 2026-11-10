@@ -9,8 +9,6 @@
  * reads and writes the blocks.
  */
 import { barsInPlayOrder } from '../chart/chartBars.js';
-import { mod12 } from '../chart/key.js';
-import { bassLine } from '../instruments/bassline.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { RECORD_TRACKS } from '../takes/recordTracks.js';
@@ -28,17 +26,17 @@ import { takeStart } from '../takes/takeTiming.js';
 /**
  * @param {{
  *   sections: import('../chart/timeline.js').Section[],
- *   pitchShift: number,
+ *   bass: import('../instruments/bassline.js').BassNote[],
  *   melody: import('../melody/melody.js').Melody | null
- * }} song pitchShift: capo + key change (the bass plays in concert pitch)
+ * }} song bass: what the bass plays (bass/songBass.js: edited or the band's own)
  * @returns {BandLane[]}
  */
-export function bandLanes({ sections, pitchShift, melody }) {
+export function bandLanes({ sections, bass, melody }) {
 	const chords = chordBlocks(sections);
 	return [
 		{ id: 'guitar', name: 'Guitar', kind: 'chords', blocks: chords },
 		{ id: 'mandolin', name: 'Mandolin', kind: 'chords', blocks: chords },
-		{ id: 'bass', name: 'Bass', kind: 'notes', blocks: bassBlocks(sections, pitchShift) },
+		{ id: 'bass', name: 'Bass', kind: 'notes', blocks: bassBlocks(bass) },
 		...tuneLanes(melody)
 	];
 }
@@ -79,12 +77,9 @@ function chordBlocks(sections) {
 	});
 }
 
-/**
- * @param {import('../chart/timeline.js').Section[]} sections
- * @param {number} pitchShift
- */
-function bassBlocks(sections, pitchShift) {
-	return bassLine(sections, { capo: mod12(pitchShift) }).map((note) => ({
+/** @param {import('../instruments/bassline.js').BassNote[]} notes */
+function bassBlocks(notes) {
+	return notes.map((note) => ({
 		start: note.beat,
 		length: note.length,
 		pitch: note.pitch

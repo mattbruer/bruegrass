@@ -7,6 +7,8 @@
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { bandLanes, takeLanes } from '../../tracks/lanes.js';
+	import { bassPart } from '../../bass/songBass.js';
+	import { readWrittenBass } from '../../bass/readBass.js';
 	import { rulerBars, rulerSpan } from '../../tracks/ruler.js';
 	import { trackScale } from '../../tracks/trackScale.js';
 	import { followPlayhead } from '../../tracks/followPlayhead.js';
@@ -15,16 +17,32 @@
 	import BlockLane from './BlockLane.svelte';
 	import TakeClip from './TakeClip.svelte';
 
-	const { arrangement, melody, recording, player } = useArranger();
+	const { arrangement, melody, recording, player, bass } = useArranger();
 
 	/** The names column (px); the lanes scroll under it. */
 	const HEADER_WIDTH = 104;
+
+	/** The edited bass line, read from its ABC (null: the band's own line). */
+	let writtenBass = $state.raw(
+		/** @type {import('../../instruments/bassline.js').BassNote[] | null} */ (null)
+	);
+	$effect(() => {
+		let current = true;
+		readWrittenBass(bass.notation).then((notes) => {
+			if (current) writtenBass = notes;
+		});
+		return () => (current = false);
+	});
 
 	const bars = $derived(rulerBars(arrangement.sections));
 	const band = $derived(
 		bandLanes({
 			sections: arrangement.sections,
-			pitchShift: arrangement.pitchShift,
+			bass: bassPart(arrangement.sections, {
+				capo: arrangement.capoFret,
+				transpose: arrangement.transpose,
+				written: writtenBass
+			}).notes,
 			melody: melody.line
 		})
 	);
