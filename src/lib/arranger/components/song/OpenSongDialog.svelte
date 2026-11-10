@@ -30,7 +30,7 @@
 
 	/** @param {import('$lib/storage/arrangements.js').Arrangement} saved */
 	function deleteSong(saved) {
-		if (!confirm(`Delete “${saved.title}” for good?`)) return;
+		if (!confirm(`Delete “${saved.title}” and any takes recorded on it, for good?`)) return;
 		song.delete(saved.id);
 	}
 </script>

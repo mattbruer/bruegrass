@@ -2,7 +2,7 @@
 	/**
 	 * The bar across the top of every page: the app's name, a link to each
 	 * section (the one you're on is pressed in and lit), the tips on/off
-	 * button, and the Settings button. While developing on this machine,
+	 * button, what's stored on this device, and the Settings button. While developing on this machine,
 	 * dashed buttons for the dev tools too (Todo, and the Sampler on a
 	 * computer); they never appear in the real app. It stays at the top while you scroll.
 	 *
@@ -12,6 +12,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import GearIcon from './GearIcon.svelte';
+	import StorageIcon from './StorageIcon.svelte';
 	import TipsToggle from '$lib/tooltips/TipsToggle.svelte';
 	import { isLocalDev } from '$lib/devOnly.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -47,10 +48,10 @@
 </script>
 
 <header class="topbar print:hidden">
-	<nav class="mx-auto flex max-w-5xl items-center gap-3 px-4 sm:px-8" aria-label="Main">
+	<nav class="mx-auto flex max-w-5xl items-center gap-1.5 px-3 sm:gap-3 sm:px-8" aria-label="Main">
 		<a
 			href={resolve('/')}
-			class="mr-auto text-lg font-extrabold tracking-tight"
+			class="mr-auto text-base font-extrabold tracking-tight sm:text-lg"
 			use:tooltip={TIPS.app.home}
 		>
 			Brue<span class="text-accent">grass</span>
@@ -59,7 +60,7 @@
 		{#each PAGES as section (section.path)}
 			<a
 				href={resolve(section.path)}
-				class="ui-button px-3 py-1.5 text-sm"
+				class="ui-button px-2 py-1.5 text-sm sm:px-3"
 				class:ui-button-on={isCurrentSection(section.path)}
 				aria-current={isCurrentSection(section.path) ? 'page' : undefined}
 				use:tooltip={TIPS.app.pages[/** @type {keyof typeof TIPS.app.pages} */ (section.path)]}
@@ -73,7 +74,7 @@
 				<a
 					href={resolve(tool.path)}
 					class={[
-						'dev-link ui-button px-3 py-1.5 text-sm',
+						'dev-link ui-button px-2 py-1.5 text-sm sm:px-3',
 						isCurrentSection(tool.path) && 'ui-button-on',
 						'computerOnly' in tool && 'pointer-coarse:hidden'
 					]}
@@ -89,6 +90,17 @@
 		{/if}
 
 		<TipsToggle />
+
+		<a
+			href={resolve('/storage')}
+			class="flex h-9 w-9 shrink-0 items-center justify-center ui-button rounded-full"
+			class:ui-button-on={isCurrentSection('/storage')}
+			aria-label="Stored on this device"
+			aria-current={isCurrentSection('/storage') ? 'page' : undefined}
+			use:tooltip={TIPS.app.storage}
+		>
+			<StorageIcon />
+		</a>
 
 		<button
 			type="button"

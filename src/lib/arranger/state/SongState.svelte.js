@@ -12,6 +12,7 @@ import {
 	listArrangements,
 	saveArrangement
 } from '$lib/storage/arrangements.js';
+import { deleteSongTakes } from '$lib/storage/songTakes.js';
 import { STARTER_SONG } from '../starterSong.js';
 import { loadSongIntoPage, readSongFields } from './songFields.js';
 import { applyRememberedMix, forgetSongMix } from './songMixMemory.svelte.js';
@@ -116,6 +117,9 @@ export class SongState {
 	delete(id) {
 		deleteArrangement(id);
 		forgetSongMix(id);
+		deleteSongTakes(id).catch((problem) =>
+			console.error('Couldn’t delete the song’s takes', problem)
+		);
 		if (id === this.savedId) {
 			this.savedId = null;
 			this.name = '';

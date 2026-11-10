@@ -17,7 +17,7 @@
  *
  * This computer only (a dev tool's working files): sessions never sync.
  */
-import { askToKeepData, finished, openDatabase, result } from './indexedDb.js';
+import { askToKeepData, finished, keptOpen, result } from './indexedDb.js';
 import { newId } from './newId.js';
 
 const DATABASE = 'bruegrass.sampler';
@@ -47,17 +47,11 @@ export const SESSION_VERSION = 1;
  * }} TakeRecord
  */
 
-/** @type {Promise<IDBDatabase> | null} */
-let opened = null;
-
-function database() {
-	opened ??= openDatabase(DATABASE, DATABASE_VERSION, (db) => {
-		db.createObjectStore('sessions', { keyPath: 'id' });
-		db.createObjectStore('takes', { keyPath: 'id' }).createIndex('bySession', 'sessionId');
-		db.createObjectStore('takeAudio', { keyPath: 'id' });
-	});
-	return opened;
-}
+const database = keptOpen(DATABASE, DATABASE_VERSION, (db) => {
+	db.createObjectStore('sessions', { keyPath: 'id' });
+	db.createObjectStore('takes', { keyPath: 'id' }).createIndex('bySession', 'sessionId');
+	db.createObjectStore('takeAudio', { keyPath: 'id' });
+});
 
 /** @param {SamplingSession} session */
 function upgrade(session) {

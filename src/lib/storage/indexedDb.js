@@ -27,6 +27,33 @@ export function openDatabase(name, version, upgrade) {
 }
 
 /**
+ * A database opened once and kept open for the page, but let go of when
+ * something deletes it (the storage page), so the delete isn't blocked;
+ * the next use opens it afresh.
+ * @param {string} name
+ * @param {number} version
+ * @param {(database: IDBDatabase, oldVersion: number) => void} upgrade
+ * @returns {() => Promise<IDBDatabase>}
+ */
+export function keptOpen(name, version, upgrade) {
+	/** @type {Promise<IDBDatabase> | null} */
+	let opened = null;
+	return () => {
+		if (!opened) {
+			opened = openDatabase(name, version, upgrade).then((db) => {
+				db.onversionchange = () => {
+					db.close();
+					opened = null;
+				};
+				return db;
+			});
+			opened.catch(() => (opened = null)); // try again next time
+		}
+		return opened;
+	};
+}
+
+/**
  * @template T
  * @param {IDBRequest<T>} request
  * @returns {Promise<T>}

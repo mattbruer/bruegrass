@@ -10,7 +10,7 @@
  *   takes      each take's details (small: listed often)
  *   takeAudio  each take's audio, by the take's id (big: read one at a time)
  */
-import { askToKeepData, finished, openDatabase, result } from './indexedDb.js';
+import { askToKeepData, finished, keptOpen, result } from './indexedDb.js';
 import { newId } from './newId.js';
 
 const DATABASE = 'bruegrass.takes';
@@ -40,16 +40,10 @@ export const TAKE_VERSION = 1;
  *   nudgeMs: moved by ear on top of that
  */
 
-/** @type {Promise<IDBDatabase> | null} */
-let opened = null;
-
-function database() {
-	opened ??= openDatabase(DATABASE, DATABASE_VERSION, (db) => {
-		db.createObjectStore('takes', { keyPath: 'id' }).createIndex('bySong', 'songId');
-		db.createObjectStore('takeAudio', { keyPath: 'id' });
-	});
-	return opened;
-}
+const database = keptOpen(DATABASE, DATABASE_VERSION, (db) => {
+	db.createObjectStore('takes', { keyPath: 'id' }).createIndex('bySong', 'songId');
+	db.createObjectStore('takeAudio', { keyPath: 'id' });
+});
 
 /** @param {TakeDocument} take */
 function upgrade(take) {
@@ -142,5 +136,21 @@ export async function deleteTake(id) {
 	const transaction = db.transaction(['takes', 'takeAudio'], 'readwrite');
 	transaction.objectStore('takes').delete(id);
 	transaction.objectStore('takeAudio').delete(id);
+	await finished(transaction);
+}
+
+/**
+ * Delete every take of a song, with its audio (when the song is deleted).
+ * @param {string} songId
+ */
+export async function deleteSongTakes(songId) {
+	const takes = await listTakes(songId);
+	if (takes.length === 0) return;
+	const db = await database();
+	const transaction = db.transaction(['takes', 'takeAudio'], 'readwrite');
+	for (const take of takes) {
+		transaction.objectStore('takes').delete(take.id);
+		transaction.objectStore('takeAudio').delete(take.id);
+	}
 	await finished(transaction);
 }

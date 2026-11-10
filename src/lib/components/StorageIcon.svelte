@@ -1,0 +1,14 @@
+<!-- A stack of disks (stored data), drawn in the current text colour -->
+<svg
+	viewBox="0 0 24 24"
+	width="18"
+	height="18"
+	fill="none"
+	stroke="currentColor"
+	stroke-width="2"
+	aria-hidden="true"
+>
+	<ellipse cx="12" cy="5" rx="8" ry="3" />
+	<path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5" />
+	<path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" />
+</svg>
