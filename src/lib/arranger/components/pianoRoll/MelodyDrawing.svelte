@@ -41,8 +41,10 @@
 
 	/** @param {number} midi */
 	function sound(midi) {
-		const play = drawing.isBass ? auditionBassNote : auditionNote;
-		play(midi, arrangement.transpose).catch(console.error);
+		const heard = drawing.isBass
+			? auditionBassNote(midi, arrangement.transpose)
+			: auditionNote(midi, arrangement.transpose, drawing.current?.id);
+		heard.catch(console.error);
 	}
 </script>
 

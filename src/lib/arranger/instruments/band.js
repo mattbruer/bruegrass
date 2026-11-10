@@ -6,6 +6,8 @@
  * (export/renderSong.js). Both get the same sound from here.
  */
 import { createUpright } from './upright.js';
+import { createTuneSynth } from './tuneInstruments.js';
+import { melodyPitch } from '../melody/melody.js';
 
 /** Seconds; avoids clicks when a note is cut off. */
 const FADE_OUT = 0.03;
@@ -45,13 +47,20 @@ export function loadBuffer(Tone, url) {
  * @param {import('./performance.js').Performance} performance
  * @param {(id: string, part?: string) => import('tone').ToneAudioNode | Promise<import('tone').ToneAudioNode>} channelInput
  *   where each instrument plays into the mixer
- * @param {{ live?: boolean }} [options]
+ * @param {{ live?: boolean, instrumentOf?: (channelId: string) => import('./tuneInstruments.js').TuneInstrument }} [options]
  *   live: playing for as long as you listen, so each finished note's player
  *   is let go (an offline render is thrown away whole once it's done; and
  *   there, Tone reports a player stopped before it has even played, so
- *   letting it go then would silence it)
+ *   letting it go then would silence it); instrumentOf: what each tune
+ *   channel plays on, asked at each note, so a change is heard while playing
+ *   (the guitar samples when not given)
  */
-export async function createBand(Tone, performance, channelInput, { live = true } = {}) {
+export async function createBand(
+	Tone,
+	performance,
+	channelInput,
+	{ live = true, instrumentOf } = {}
+) {
 	const { guitar, mandolin, bass, melody } = performance;
 
 	// Touch filters: a lighter pick stroke is duller
@@ -91,13 +100,36 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 		return player;
 	};
 
+	/** Tune synths, made when a channel first plays on one: key "channel:instrument" */
+	/** @type {Map<string, ReturnType<typeof createTuneSynth>>} */
+	const tuneSynths = new Map();
 	/**
-	 * A melody note on the guitar samples.
+	 * @param {string} channel
+	 * @param {import('./tuneInstruments.js').TuneInstrument} instrument
+	 */
+	const tuneSynth = (channel, instrument) => {
+		const key = `${channel}:${instrument.id}`;
+		let synth = tuneSynths.get(key);
+		if (!synth && instrument.synth) {
+			const output = /** @type {import('tone').ToneAudioNode} */ (melodyOuts.get(channel));
+			synth = createTuneSynth(Tone, instrument.synth, output);
+			tuneSynths.set(key, synth);
+		}
+		return synth;
+	};
+
+	/**
+	 * A melody note, on its channel's instrument.
 	 * @param {import('../melody/melody.js').MelodyEvent} note
-	 * @param {import('tone').ToneAudioBuffer} buffer
+	 * @param {import('tone').ToneAudioBuffer} buffer the guitar sample
 	 * @param {number} at
 	 */
-	const playMelody = (note, buffer, at) =>
+	const playMelody = (note, buffer, at) => {
+		const synth = instrumentOf && tuneSynth(note.channel, instrumentOf(note.channel));
+		if (synth) {
+			synth.play(melodyPitch(note), note.stop - note.time, at, note.levelDb);
+			return;
+		}
 		track(
 			new Tone.Player({
 				url: buffer,
@@ -108,6 +140,7 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 		)
 			.start(at)
 			.stop(at + note.stop - note.time);
+	};
 
 	/** @type {Stream[]} */
 	const streams = [
@@ -179,6 +212,8 @@ export async function createBand(Tone, performance, channelInput, { live = true 
 			}
 			players.clear();
 			upright.stop();
+			for (const synth of tuneSynths.values()) synth.stop();
+			tuneSynths.clear();
 			// Let any fade-outs finish before removing the touch filters
 			setTimeout(() => {
 				guitarOut.bass.dispose();

@@ -22,6 +22,7 @@ sections
 timeline
    │  instruments/performance.js  every instrument's notes (guitar.js, mandolin.js, bassline.js)
    │  instruments/band.js         those notes as sound: samples and the upright's synth
+   │  instruments/tuneInstruments.js  what the tune's voices play on (guitar samples or a synth), picked per strip in components/mixer/instruments/
    │  instruments/strumPatterns.js  the guitar's strum patterns, as data
    │  instruments/seededRandom.js the repeatable random choices
    │  instruments/mandolin.js     off-beat chops

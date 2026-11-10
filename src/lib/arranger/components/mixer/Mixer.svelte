@@ -13,6 +13,7 @@
 	import OutputStrip from './output/OutputStrip.svelte';
 	import MasterScope from './scope/MasterScope.svelte';
 	import EqWindow from './eq/EqWindow.svelte';
+	import InstrumentWindow from './instruments/InstrumentWindow.svelte';
 	import ListeningSetupsDialog from './listening/ListeningSetupsDialog.svelte';
 	import { useArranger } from '../../state/context.js';
 	import { channelsInUse, isTuneChannel } from '../../melody/harmony/partChannels.js';
@@ -48,6 +49,8 @@
 
 <!-- One EQ window for whichever strip's EQ is open -->
 <EqWindow />
+<!-- What the melody or a harmony part plays on -->
+<InstrumentWindow />
 <!-- Listening setups: every strip's EQ, tuned for a speaker or headphones -->
 <ListeningSetupsDialog />
 

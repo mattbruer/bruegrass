@@ -14,6 +14,7 @@ import { flatEq } from './eq/eqBands.js';
 import { DEFAULT_OUTPUT_GAIN_DB } from './output/outputSettings.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { RECORD_TRACKS } from '../takes/recordTracks.js';
+import { GUITAR } from '../instruments/tuneInstruments.js';
 
 /*
  * The default mix: a loose, natural bluegrass balance. Change it here.
@@ -29,6 +30,17 @@ const PAN_SPREAD = 0.35; // 35% left/right
 const SEND_FULLY = 0; // dB: the top of the send's travel
 const SEND_NONE = FADER_MIN;
 const REVERB_LEVEL_DB = -15;
+/*
+ *   - The tune's voices start on different instruments, so each harmony part
+ *     stands apart from the lead and from each other (instruments/tuneInstruments.js).
+ */
+const TUNE_INSTRUMENT_DEFAULTS = {
+	melody: GUITAR,
+	tenor: 'fiddle',
+	'high-baritone': 'flute',
+	baritone: 'clarinet',
+	'low-tenor': 'cello'
+};
 
 /**
  * A part is a sub-level inside a channel (e.g. the guitar's bass notes vs.
@@ -39,9 +51,11 @@ const REVERB_LEVEL_DB = -15;
  *   volume: number, pan: number, send: number,
  *   mute: boolean, solo: boolean,
  *   eq: import('./eq/eqBands.js').EqSettings,
- *   parts: PartSettings[]
+ *   parts: PartSettings[],
+ *   instrument?: string
  * }} ChannelSettings
- *   volume, send: dB; pan: -1 (left) to 1 (right)
+ *   volume, send: dB; pan: -1 (left) to 1 (right); instrument: what a tune
+ *   channel (Melody, a harmony part) plays on (instruments/tuneInstruments.js)
  */
 
 /**
@@ -51,6 +65,16 @@ const REVERB_LEVEL_DB = -15;
  */
 function channelStrip({ id, name, pan = 0, send = SEND_FULLY, parts = [] }) {
 	return { id, name, volume: 0, pan, send, mute: false, solo: false, eq: flatEq(), parts };
+}
+
+/**
+ * A channel the tune plays on (the melody or a harmony part): it also picks an instrument.
+ * @param {{ id: string, name: string }} channel
+ */
+function tuneStrip({ id, name }) {
+	const instrument =
+		TUNE_INSTRUMENT_DEFAULTS[/** @type {keyof typeof TUNE_INSTRUMENT_DEFAULTS} */ (id)];
+	return { ...channelStrip({ id, name }), instrument: instrument ?? GUITAR };
 }
 
 export const mixer = $state({
@@ -66,9 +90,9 @@ export const mixer = $state({
 		}),
 		channelStrip({ id: 'mandolin', name: 'Mandolin', pan: -PAN_SPREAD }),
 		channelStrip({ id: 'bass', name: 'Bass', send: SEND_NONE }),
-		channelStrip({ id: 'melody', name: 'Melody' }),
+		tuneStrip({ id: 'melody', name: 'Melody' }),
 		// One per harmony part; the mixer shows them only while the song has the part
-		...HARMONY_PARTS.map((part) => channelStrip({ id: part.id, name: part.name })),
+		...HARMONY_PARTS.map((part) => tuneStrip({ id: part.id, name: part.name })),
 		// One per record track; the mixer shows them only while the track has a take
 		...RECORD_TRACKS.map((track) => channelStrip({ id: track.id, name: track.name }))
 	],
@@ -142,7 +166,9 @@ export function applyMix(saved) {
 		channel.solo = false;
 		const stored = findById(mix.channels, channel.id);
 		if (!stored) continue;
-		copyMatching(channel, stored, ['volume', 'pan', 'send', 'mute']);
+		// Settings a mix saved before they existed take their defaults
+		const withDefaults = { ...defaultChannel(channel.id), ...stored };
+		copyMatching(channel, withDefaults, ['volume', 'pan', 'send', 'mute', 'instrument']);
 		applyEq(channel.eq, stored.eq);
 		for (const part of channel.parts) {
 			const storedPart = findById(stored.parts, part.id);

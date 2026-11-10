@@ -1,7 +1,7 @@
 /**
- * Play one melody note now, the way the band would play it (the guitar
- * samples, fingered as melody.js fingers the tune, through the Melody
- * channel), so a note drawn on the piano roll is heard straight away.
+ * Play one melody note now, the way the band would play it (on the Melody
+ * channel's instrument: the guitar samples fingered as melody.js fingers
+ * the tune, or its synth), so a note drawn on the piano roll is heard straight away.
  */
 import { finger } from '../melody/melody.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
@@ -10,6 +10,8 @@ import { loadBuffer } from '../instruments/band.js';
 import { getChannel } from './mixerGraph.svelte.js';
 import { createUpright, uprightPitch } from '../instruments/upright.js';
 import { BASS_VOICE } from '../bass/readBass.js';
+import { channelInstrument, createTuneSynth } from '../instruments/tuneInstruments.js';
+import { mixer } from './mixer.svelte.js';
 
 /** Seconds a drawn note rings when heard on its own. */
 const AUDITION_SECONDS = 0.7;
@@ -19,19 +21,27 @@ const LEVEL_DB = -2;
 /**
  * @param {number} midi written (concert) pitch
  * @param {number} shift semitones (the Key setting), as the band plays it
+ * @param {string} [channelId] the tune channel to play it on (its instrument and strip)
  */
-export async function auditionNote(midi, shift) {
+export async function auditionNote(midi, shift, channelId = MELODY_CHANNEL) {
 	// iPhone: play through the silent switch, as playArrangement does (set before any await)
 	const audioSession = /** @type {any} */ (globalThis.navigator)?.audioSession;
 	if (audioSession) audioSession.type = 'playback';
 
 	const Tone = await import('tone');
 	await Tone.start();
-	const note = { time: 0, length: 1, pitch: midi, volume: 0, channel: MELODY_CHANNEL };
+	const note = { time: 0, length: 1, pitch: midi, volume: 0, channel: channelId };
 	const [{ string, fret, rate }] = finger([note], shift);
+	const { synth } = channelInstrument(mixer.channels, channelId);
+	if (synth) {
+		const voice = createTuneSynth(Tone, synth, await getChannel(channelId));
+		voice.play(midi - 12 + shift, AUDITION_SECONDS, Tone.now(), LEVEL_DB);
+		setTimeout(() => voice.stop(), (AUDITION_SECONDS + 1) * 1000);
+		return;
+	}
 	const [buffer, output] = await Promise.all([
 		loadBuffer(Tone, sampleUrl(string, fret)),
-		getChannel(MELODY_CHANNEL)
+		getChannel(channelId)
 	]);
 	const player = new Tone.Player({
 		url: buffer,

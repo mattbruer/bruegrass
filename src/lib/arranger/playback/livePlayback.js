@@ -5,6 +5,8 @@
 import { preparePerformance } from '../instruments/performance.js';
 import { createBand } from '../instruments/band.js';
 import { getChannel } from './mixerGraph.svelte.js';
+import { mixer } from './mixer.svelte.js';
+import { channelInstrument } from '../instruments/tuneInstruments.js';
 import { createStream } from './scheduler.js';
 import { rhythm } from '../chart/timeline.js';
 import { songClickGrid } from './metronome/clickGrid.js';
@@ -65,7 +67,9 @@ export async function playArrangement(sections, options = {}) {
 
 	const Tone = await import('tone');
 	await Tone.start();
-	const band = await createBand(Tone, performance, getChannel);
+	const band = await createBand(Tone, performance, getChannel, {
+		instrumentOf: (channelId) => channelInstrument(mixer.channels, channelId)
+	});
 
 	/*
 	 * Timing. Every note is placed on the audio hardware's sample clock at an

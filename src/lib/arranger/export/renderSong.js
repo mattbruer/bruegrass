@@ -22,6 +22,7 @@
  */
 import { preparePerformance } from '../instruments/performance.js';
 import { createBand } from '../instruments/band.js';
+import { channelInstrument } from '../instruments/tuneInstruments.js';
 import { buildMixerGraph } from '../playback/graph/buildMixerGraph.js';
 import { melodyEvents } from '../melody/melody.js';
 import { channelsInUse, isTuneChannel } from '../melody/harmony/partChannels.js';
@@ -191,7 +192,9 @@ function planRender(song, mix) {
 	const decay = mix.reverb.plugin.enabled ? mix.reverb.plugin.decay : 0;
 	const tail = Math.min(TAIL_MAX, Math.max(TAIL_MIN, decay + TAIL_PAST_DECAY));
 
-	return { performance, barOne, seconds: barOne + performance.passLength + tail };
+	/** @param {string} channelId */
+	const instrumentOf = (channelId) => channelInstrument(mix.channels, channelId);
+	return { performance, barOne, instrumentOf, seconds: barOne + performance.passLength + tail };
 }
 
 /**
@@ -200,8 +203,11 @@ function planRender(song, mix) {
  * @param {ReturnType<typeof planRender>} plan
  * @param {import('../playback/graph/buildMixerGraph.js').MixerGraph} graph
  */
-async function playOnePass(Tone, { performance, barOne }, graph) {
-	const band = await createBand(Tone, performance, graph.channelInput, { live: false });
+async function playOnePass(Tone, { performance, barOne, instrumentOf }, graph) {
+	const band = await createBand(Tone, performance, graph.channelInput, {
+		live: false,
+		instrumentOf
+	});
 	band.playIntro(barOne);
 	for (const { notes, play } of band.streams) {
 		notes.forEach((note, index) => {

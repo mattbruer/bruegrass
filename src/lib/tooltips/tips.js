@@ -273,6 +273,7 @@ export const TIPS = Object.freeze({
 			bass: 'How loud the guitar’s bass notes (the “boom”) are.',
 			strum: 'How loud the guitar’s strums (the “chuck”) are.'
 		},
+		instrument: 'What this part of the tune plays on. Tap to choose another.',
 		send: 'How much of this instrument goes to the reverb.',
 		pan: 'Where this instrument sits, from left to right.',
 		mute: 'Silence this strip.',

@@ -1,12 +1,13 @@
 <script>
 	/**
-	 * One instrument's channel strip, top to bottom: its parts' levels (if
-	 * it has any), how much it sends to the reverb, pan, mute/solo, fader.
+	 * One instrument's channel strip, top to bottom: what it plays on (a
+	 * tune channel), its parts' levels (if it has any), how much it sends to the reverb, pan, mute/solo, fader.
 	 */
 	import Strip from './Strip.svelte';
 	import Slider from './Slider.svelte';
 	import MuteSoloButtons from './MuteSoloButtons.svelte';
 	import ChannelFader from './ChannelFader.svelte';
+	import InstrumentButton from './instruments/InstrumentButton.svelte';
 	import { LEVEL_SCALE, PAN_SCALE, SEND_SCALE } from './controlScales.js';
 	import { defaultChannel } from '../../playback/mixer.svelte.js';
 	import { audioTaps } from '../../playback/mixerGraph.svelte.js';
@@ -24,6 +25,10 @@
 </script>
 
 <Strip id={channel.id} name={channel.name}>
+	{#if channel.instrument !== undefined}
+		<InstrumentButton {channel} />
+	{/if}
+
 	{#each channel.parts as part (part.id)}
 		<Slider
 			name={part.name}
