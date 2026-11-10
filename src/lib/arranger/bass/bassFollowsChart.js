@@ -2,10 +2,11 @@
  * After the chart changes, an edited bass line follows it only where it
  * must: a bar whose chords (or length) changed is written fresh from the
  * band's own line; every other bar keeps its notes, hand edits included.
- * Bars are matched by their place in play order, so adding or removing a
- * bar writes fresh every bar after it whose chords moved.
+ * Bars are matched in order like a text diff (matchBars.js), so adding or
+ * removing a bar anywhere leaves the others' edits where they were.
  */
 import { readScore } from '../melody/roll/readScore.js';
+import { matchBars } from './matchBars.js';
 
 /**
  * @typedef {import('../melody/roll/readScore.js').Score} Score
@@ -24,18 +25,18 @@ export function bassFollowingChart(written, fresh, parse) {
 	const old = readScore(written, writtenTune, 0).score;
 	const neu = readScore(fresh, freshTune, 0).score;
 
-	const kept = neu.bars.map((bar, index) => {
-		const before = old.bars[index];
-		return Boolean(before) && sameBar(old, before, neu, bar);
-	});
-	if (old.bars.length === neu.bars.length && kept.every(Boolean)) return written;
+	const matched = matchBars(barKeys(old), barKeys(neu));
+	const unchanged =
+		old.bars.length === neu.bars.length &&
+		neu.bars.every((_, index) => matched.get(index) === index);
+	if (unchanged) return written;
 
-	// Start from the fresh line (the chart's shape now) and put the kept bars back
+	// Start from the fresh line (the chart's shape now) and put the matched bars back
 	let text = fresh;
 	for (let index = neu.bars.length - 1; index >= 0; index--) {
 		const bar = neu.bars[index];
-		const before = old.bars[index];
-		if (!kept[index] || bar.from === null || bar.to === null) continue;
+		const before = old.bars[matched.get(index) ?? -1];
+		if (!before || bar.from === null || bar.to === null) continue;
 		if (before.from === null || before.to === null) continue;
 		text = text.slice(0, bar.from) + written.slice(before.from, before.to) + text.slice(bar.to);
 	}
@@ -43,18 +44,13 @@ export function bassFollowingChart(written, fresh, parse) {
 }
 
 /**
- * The same length and meter, and the same chords at the same places in it.
- * @param {Score} oldScore
- * @param {import('../melody/roll/readScore.js').ScoreBar} oldBar
- * @param {Score} newScore
- * @param {import('../melody/roll/readScore.js').ScoreBar} newBar
+ * What each bar is, to match bars across a change: its length, meter, and
+ * chords at their places in it.
+ * @param {Score} score
  */
-function sameBar(oldScore, oldBar, newScore, newBar) {
-	return (
-		oldBar.length === newBar.length &&
-		oldBar.meter.num === newBar.meter.num &&
-		oldBar.meter.den === newBar.meter.den &&
-		chordsIn(oldScore, oldBar) === chordsIn(newScore, newBar)
+function barKeys(score) {
+	return score.bars.map(
+		(bar) => `${bar.length} ${bar.meter.num}/${bar.meter.den} ${chordsIn(score, bar)}`
 	);
 }
 

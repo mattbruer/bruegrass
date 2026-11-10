@@ -25,6 +25,7 @@ import { SongState } from './SongState.svelte.js';
 import { RecordingState } from './RecordingState.svelte.js';
 import { abcWithChords, arrangementFromAbc } from '../melody/abcChords.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
+import { respellBass } from '../bass/respellBass.js';
 import { abcWithWords } from '../melody/words/abcWithWords.js';
 import { readLyrics } from '../chart/sectionLyrics.js';
 import { harmonizeAbc } from '../melody/harmony/harmonizeAbc.js';
@@ -115,18 +116,29 @@ export class Arranger {
 
 	/**
 	 * Name the song's key (the chart's [K:]), or go back to the first chord's
-	 * guess with null. The melody and its harmony parts keep their pitches,
-	 * spelled in the new key,
+	 * guess with null. The melody, its harmony parts and an edited bass line
+	 * keep their pitches, spelled in the new key,
 	 * so the strip, the chord names and the sheet music all agree.
 	 * @param {string | null} name the key of the guitar's shapes, e.g. "G", "Em"
 	 */
 	async nameSongKey(name) {
 		this.arrangement.text = withKeyField(this.arrangement.text, name);
+		await Promise.all([this.#respellMelody(), this.#respellBass()]);
+	}
+
+	async #respellMelody() {
 		const abc = this.melody.notation;
 		if (!this.melody.hasNotation) return;
 		const read = await readDrawnMelody(abc);
 		if (!read || read.voices.some((voice) => voice.problem) || this.melody.notation !== abc) return;
 		this.melody.notation = respellDrawnMelody(abc, read.voices, this.melodyKey);
+	}
+
+	async #respellBass() {
+		const abc = this.bass.notation;
+		if (!this.bass.isWritten) return;
+		const respelled = await respellBass(abc, this.melodyKey);
+		if (this.bass.notation === abc) this.bass.notation = respelled;
 	}
 
 	/**
