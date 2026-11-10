@@ -5,7 +5,7 @@
 	 * folder's +layout.svelte, and each part is a component in
 	 * $lib/arranger/components.
 	 *
-	 * The music (chart, then sheet music) fills the page. Playback sits in a
+	 * The music (the chords scrolling past, or the sheet music) fills the page. Playback sits in a
 	 * bar fixed to the bottom of the screen, and the editor and mixer slide up
 	 * above it, one at a time, the same on phone and desktop.
 	 */
@@ -15,8 +15,13 @@
 	import SheetMusic from '$lib/arranger/components/melody/SheetMusic.svelte';
 	import ChartLink from '$lib/arranger/components/lyricChart/ChartLink.svelte';
 	import TracksLink from '$lib/arranger/components/tracks/TracksLink.svelte';
+	import MelodyReader from '$lib/arranger/components/melody/MelodyReader.svelte';
+	import { shownMusicView } from '$lib/arranger/components/page/musicView.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
 
-	const { layout } = useArranger();
+	const { layout, melody } = useArranger();
+
+	let view = $derived(shownMusicView(settings.musicView, melody.hasNotation));
 </script>
 
 <svelte:head>
@@ -24,7 +29,7 @@
 </svelte:head>
 
 <!-- Leaves room at the bottom for the player bar and whatever drawer or keypad is over it -->
-<main class="mx-auto max-w-5xl px-4 py-8 sm:px-8" style:padding-bottom={layout.bottomSpace}>
+<main class="ui-page-width py-6" style:padding-bottom={layout.bottomSpace}>
 	<div class="mb-6 flex items-center justify-between gap-3">
 		<h1 class="text-3xl font-bold">Bluegrass Arranger</h1>
 		<div class="flex gap-2">
@@ -34,6 +39,10 @@
 	</div>
 
 	<SongBar />
-	<PlayerCard />
-	<SheetMusic />
+	<PlayerCard showChords={view === 'chords'} />
+	{#if view === 'sheet'}
+		<SheetMusic />
+	{:else}
+		<MelodyReader />
+	{/if}
 </main>

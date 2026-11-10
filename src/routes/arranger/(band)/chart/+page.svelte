@@ -25,8 +25,8 @@
 	<title>Chart · Bluegrass Arranger</title>
 </svelte:head>
 
-<main class="px-4 py-6 sm:px-8" style:padding-bottom={layout.bottomSpace}>
-	<div class="mx-auto mb-4 flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 print:hidden">
+<main class="ui-page-width py-6" style:padding-bottom={layout.bottomSpace}>
+	<div class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 print:hidden">
 		<a
 			href={resolve('/arranger')}
 			class="ui-button px-4 py-2 text-sm"

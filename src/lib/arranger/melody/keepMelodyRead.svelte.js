@@ -16,12 +16,14 @@ const REDRAW_DELAY_MS = 200;
  * @param {import('../state/MelodyState.svelte.js').MelodyState} melody
  * @param {() => HTMLElement | undefined} target where to draw (read when it changes)
  * @param {() => number} transpose semitones to draw it moved by (display only)
+ * @param {() => number} [width] the page's width, so the lines reflow when it changes
  */
-export function keepMelodyRead(melody, target, transpose) {
+export function keepMelodyRead(melody, target, transpose, width = () => 0) {
 	$effect(() => {
 		const notation = melody.notation;
 		const shift = transpose();
 		const element = target();
+		width();
 		if (!melody.hasNotation) {
 			melody.clearDrawing();
 			return;

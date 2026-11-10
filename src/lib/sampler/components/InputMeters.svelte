@@ -33,9 +33,9 @@
 	});
 
 	/** @type {HTMLElement[]} */
-	const bars = [];
+	const bars = $state([]);
 	/** @type {HTMLElement[]} */
-	const readouts = [];
+	const readouts = $state([]);
 	/** @type {boolean[]} */
 	let clipped = $state([]);
 

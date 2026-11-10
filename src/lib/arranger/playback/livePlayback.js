@@ -10,6 +10,7 @@ import { rhythm } from '../chart/timeline.js';
 import { songClickGrid } from './metronome/clickGrid.js';
 import { createTakePlayback } from '../takes/playTakes.js';
 import { sungPickup } from '../takes/takePickup.js';
+import { firstBar } from '../takes/takeTiming.js';
 
 /** Lead before the first note, so nothing is clipped (seconds). */
 const START_DELAY = 0.1;
@@ -81,7 +82,7 @@ export async function playArrangement(sections, options = {}) {
 	const fromTheTop = (options.regionStart ?? 0) === 0;
 	const lead = Math.max(
 		performance.melody?.leadIn ?? 0,
-		fromTheTop ? sungPickup(options.takes ?? []) : 0,
+		fromTheTop ? sungPickup(options.takes ?? [], firstBar(sections, 60 / quarter).seconds) : 0,
 		options.countIn ?? 0
 	);
 	const takes = await createTakePlayback(

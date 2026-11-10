@@ -15,7 +15,7 @@
 </script>
 
 <div class="bar" class:hidden-by-keypad={layout.keypadVisible} bind:offsetHeight={layout.barHeight}>
-	<div class="bar-content mx-auto max-w-5xl px-3 sm:px-8" use:animateKeys>
+	<div class="bar-content ui-page-width" use:animateKeys>
 		{#each PLAYER_BAR_TILES.start as Tile, i (i)}
 			<Tile />
 		{/each}
