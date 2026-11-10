@@ -49,7 +49,7 @@
 	aria-label={title}
 	inert={!open}
 >
-	<div class="drawer-content mx-auto max-w-5xl px-4 pt-3 pb-4 sm:px-8">
+	<div class="drawer-content ui-page-width pt-3 pb-4">
 		<div class="mb-2 flex items-center gap-3">
 			<h2 class="font-semibold">{title}</h2>
 			<div class="mr-auto min-w-0">{@render heading?.()}</div>

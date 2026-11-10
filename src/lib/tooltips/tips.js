@@ -126,6 +126,10 @@ export const TIPS = Object.freeze({
 		mixer: 'Open the mixer: levels, pan, EQ, reverb and loudness for each instrument.',
 		edit: 'Open the editor to write the chords and the melody. The chart changes as you type.',
 		export: 'Download the song: the full mix or stems as WAV files, or a MIDI file.',
+		musicView: {
+			chords: 'Show the chords scrolling past as the band plays.',
+			sheet: 'Show the tune as sheet music, with the chords over it.'
+		},
 		loopSection: 'Choose which part of the song repeats while it plays.',
 		loopFrom: 'The first bar of the loop.',
 		loopTo: 'The last bar of the loop.',

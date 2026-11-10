@@ -28,6 +28,20 @@ export const NOTHING_DRAWN = Object.freeze({
 
 const PAGE_MARGIN = 15;
 
+/** Notes keep about their printed size, so a wider page fits more bars on a line instead of bigger notes. */
+const NARROWEST_STAFF = 480;
+const STAFF_WIDTH_PER_BAR = 220;
+
+/** @param {number} width the page's width in pixels */
+function staffLayout(width) {
+	const staffwidth = Math.max(NARROWEST_STAFF, width - 2 * PAGE_MARGIN);
+	const barsPerLine = Math.max(2, Math.round(staffwidth / STAFF_WIDTH_PER_BAR));
+	return {
+		staffwidth,
+		wrap: { minSpacing: 1.8, maxSpacing: 2.7, preferredMeasuresPerLine: barsPerLine }
+	};
+}
+
 /**
  * Voice names (the harmony parts') push the staves right by the width of
  * their label, which abcjs doesn't count in the drawing's width, so the staff
@@ -39,6 +53,7 @@ function widenToFitStaves(target) {
 	const box = svg?.viewBox.baseVal;
 	if (!svg || !box?.width) return;
 	const shown = svg.getBoundingClientRect();
+	if (!shown.width) return; // drawn out of sight, only to be read
 	const staffRight = Math.max(
 		0,
 		...[...svg.querySelectorAll('.abcjs-staff path')].map(
@@ -65,6 +80,7 @@ export async function drawSheetMusic(target, notation, { transpose = 0 } = {}) {
 
 	const [tune] = abcjs.renderAbc(target, notation, {
 		responsive: 'resize',
+		...staffLayout(target.clientWidth),
 		add_classes: true,
 		visualTranspose: transpose
 	});

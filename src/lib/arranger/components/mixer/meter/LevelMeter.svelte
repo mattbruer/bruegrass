@@ -28,7 +28,7 @@
 	const SIDES = ['left', 'right'];
 	const ballistics = SIDES.map(() => createMeterBallistics(FADER_MIN));
 	/** @type {HTMLElement[]} */
-	const bars = [];
+	const bars = $state([]);
 	let clipped = $state(false);
 
 	/** The colour ramp, placed at the dB scale's positions so the colours mean the same everywhere. */

@@ -48,7 +48,7 @@
 </script>
 
 <header class="topbar print:hidden">
-	<nav class="mx-auto flex max-w-5xl items-center gap-1.5 px-3 sm:gap-3 sm:px-8" aria-label="Main">
+	<nav class="ui-page-width flex items-center gap-1.5 sm:gap-3" aria-label="Main">
 		<a
 			href={resolve('/')}
 			class="mr-auto text-base font-extrabold tracking-tight sm:text-lg"

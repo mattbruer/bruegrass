@@ -23,11 +23,13 @@
 
 	/** @type {HTMLDivElement | undefined} */
 	let page = $state();
+	let windowWidth = $state(0);
 
 	keepMelodyRead(
 		melody,
 		() => page,
-		() => drawnTranspose
+		() => drawnTranspose,
+		() => windowWidth
 	);
 
 	// Follow along while playing
@@ -68,14 +70,15 @@
 	}
 </script>
 
+<svelte:window bind:innerWidth={windowWidth} />
+
 {#if melody.hasNotation}
 	<section aria-label="Sheet music">
-		<div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-			<h2 class="text-xl font-semibold">Sheet music</h2>
-			{#if canTranspose}
+		{#if canTranspose}
+			<div class="mb-3 flex justify-end">
 				<SheetViewToggle />
-			{/if}
-		</div>
+			</div>
+		{/if}
 
 		<div bind:this={page} class="paper overflow-x-auto p-2"></div>
 	</section>

@@ -4,7 +4,8 @@
  *
  * A take starts a bar or two before bar 1 (the count-in), mostly silence.
  * Only the stretch from where its sound begins counts, so a take without
- * a sung pickup adds no wait.
+ * a sung pickup adds no wait. A pickup is sung in the bar before bar 1, so
+ * sound earlier than that (click bleed, a breath) never makes the band wait longer.
  */
 import { takeStart } from './takeTiming.js';
 
@@ -29,15 +30,16 @@ export function firstSound(samples, sampleRate) {
 
 /**
  * How long before bar 1 the band should start, for the earliest sung pickup
- * among these takes (0: none starts before bar 1).
+ * among these takes (0: none starts before bar 1), at most one bar.
  * @param {(import('./takeTiming.js').Placed & { soundFrom: number })[]} takes
  *   soundFrom: from firstSound()
+ * @param {number} barSeconds the length of bar 1
  */
-export function sungPickup(takes) {
+export function sungPickup(takes, barSeconds) {
 	let lead = 0;
 	for (const take of takes) {
 		const soundStarts = takeStart(take) + take.soundFrom - BEFORE_FIRST_SOUND;
 		lead = Math.max(lead, -soundStarts);
 	}
-	return lead;
+	return Math.min(lead, barSeconds);
 }

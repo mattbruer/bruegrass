@@ -19,8 +19,8 @@
 	<title>Tracks · Bluegrass Arranger</title>
 </svelte:head>
 
-<main class="px-4 py-6 sm:px-8" style:padding-bottom={layout.bottomSpace}>
-	<div class="mx-auto max-w-5xl">
+<main class="ui-page-width py-6" style:padding-bottom={layout.bottomSpace}>
+	<div>
 		<div class="mb-4 flex items-center gap-3">
 			<a
 				href={resolve('/arranger')}
