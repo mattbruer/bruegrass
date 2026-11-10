@@ -17,8 +17,9 @@ const CLICK = Object.freeze({
 const START_DELAY_SECONDS = 0.1;
 
 /**
- * @typedef {{ tempo: number, beatsPerBar: number, bars: number }} ClickRun
- *   tempo in beats per minute; bars counts every bar clicked, count-in included
+ * @typedef {{ tempo: number, beatsPerBar: number, bars: number, beats?: number }} ClickRun
+ *   tempo in beats per minute; bars counts every bar clicked, count-in included;
+ *   beats: stop after this many clicks (default: every beat of every bar)
  */
 
 /**
@@ -61,7 +62,7 @@ export function playClicks(
  * @param {ClickRun} run
  */
 export function clickTimes(run) {
-	const total = run.bars * run.beatsPerBar;
+	const total = run.beats ?? run.bars * run.beatsPerBar;
 	return Array.from({ length: total }, (_, beat) => ({
 		beat,
 		downbeat: beat % run.beatsPerBar === 0

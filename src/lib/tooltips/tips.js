@@ -95,7 +95,9 @@ export const TIPS = Object.freeze({
 		tile: 'Record yourself along with the band: a voice, or a real instrument in place of one of the band’s.',
 		track: 'The track to record on. Each track has its own strip in the mixer.',
 		record:
-			'Start recording: a bar of clicks, then the band plays the song once. Press again (or Stop) to finish early.',
+			'Start recording: the count-in clicks, then the band plays the song once. Press again (or Stop) to finish early.',
+		countIn:
+			'How many bars of clicks before the song starts. With a pickup, the clicks stop where it starts, unless the metronome is on.',
 		use: 'Play this take on its track. The other takes on the track are kept, but not played.',
 		earlier: 'Move the take a little earlier, if it sounds behind the band.',
 		later: 'Move the take a little later, if it sounds ahead of the band.',

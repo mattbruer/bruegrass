@@ -7,7 +7,8 @@
 import { sliceForPass } from './takeTiming.js';
 
 /**
- * @typedef {import('./takeTiming.js').Placed & { trackId: string, buffer: AudioBuffer }} PlayableTake
+ * @typedef {import('./takeTiming.js').Placed & { trackId: string, buffer: AudioBuffer, soundFrom: number }} PlayableTake
+ *   soundFrom: how far into the take its sound begins (takePickup.js)
  */
 
 /**

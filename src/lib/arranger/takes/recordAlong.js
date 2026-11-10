@@ -45,12 +45,17 @@ export async function openRecordAlong(Tone, deviceId) {
 			roundTrip: outputLatency(audio) + mic.latency,
 
 			/**
-			 * One bar of clicks before the band.
-			 * @param {{ tempo: number, beatsPerBar: number }} bar
+			 * The count-in clicks before the band (takes/countIn.js says how many).
+			 * @param {{ tempo: number, beatsPerBar: number, beats: number }} run
 			 * @param {number} at the audio-clock time of its first click
 			 */
-			countIn(bar, at) {
-				return playClicks(audio, { ...bar, bars: 1 }, clickOut, at);
+			countIn(run, at) {
+				return playClicks(
+					audio,
+					{ ...run, bars: Math.ceil(run.beats / run.beatsPerBar) },
+					clickOut,
+					at
+				);
 			},
 
 			close() {

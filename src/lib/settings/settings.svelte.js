@@ -44,6 +44,13 @@ export const settings = $state({
 		unit: 4
 	},
 
+	// Recording along: set from the record panel
+
+	recording: {
+		/** Bars of clicks before bar 1 (the melody's pickup is sung in the last of them). */
+		countInBars: 2
+	},
+
 	// The lyric chart: set from its page
 
 	chart: {

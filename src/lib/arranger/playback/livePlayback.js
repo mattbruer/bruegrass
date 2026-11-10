@@ -9,6 +9,7 @@ import { createStream } from './scheduler.js';
 import { rhythm } from '../chart/timeline.js';
 import { songClickGrid } from './metronome/clickGrid.js';
 import { createTakePlayback } from '../takes/playTakes.js';
+import { sungPickup } from '../takes/takePickup.js';
 
 /** Lead before the first note, so nothing is clipped (seconds). */
 const START_DELAY = 0.1;
@@ -37,6 +38,7 @@ const TICK = 0.1;
  * @returns {Promise<{
  *   stop: () => void,
  *   barOne: number,
+ *   pickup: number,
  *   passLength: number,
  *   beats: () => { elapsed: number, length: number } | null,
  *   clicks: { origin: number, quarterSeconds: number, grid: import('./metronome/clickGrid.js').ClickGrid },
@@ -72,8 +74,13 @@ export async function playArrangement(sections, options = {}) {
 	 * it was ever late, and never plays a note after its time has passed.
 	 */
 	const context = Tone.getContext();
-	// The band waits for the melody's pickup (or a count-in), so bar 1 lands together
-	const lead = Math.max(performance.melody?.leadIn ?? 0, options.countIn ?? 0);
+	// The band waits for a pickup (the melody's, or one sung on a take) or a count-in, so bar 1 lands together
+	const fromTheTop = (options.regionStart ?? 0) === 0;
+	const lead = Math.max(
+		performance.melody?.leadIn ?? 0,
+		fromTheTop ? sungPickup(options.takes ?? []) : 0,
+		options.countIn ?? 0
+	);
 	const takes = await createTakePlayback(
 		Tone,
 		options.takes ?? [],
@@ -115,6 +122,8 @@ export async function playArrangement(sections, options = {}) {
 	return {
 		/** The audio-clock time of bar 1 of the first pass (seconds). */
 		barOne: start,
+		/** How long the melody's pickup is before bar 1 (seconds; 0 without one). */
+		pickup: performance.melody?.leadIn ?? 0,
 		/** One pass, in seconds. */
 		passLength: duration,
 		/**

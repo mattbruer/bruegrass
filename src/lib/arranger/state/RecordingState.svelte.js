@@ -1,7 +1,7 @@
 /**
  * Recording along with the band, and the open song's takes.
  *
- * Record: a bar of clicks, then the band plays the song (or the loop region)
+ * Record: a count-in (takes/countIn.js), then the band plays the song (or the loop region)
  * once while the mic records onto the chosen track; it stops by itself at
  * the end, or when you press Stop. The take is saved on this device at once
  * (storage/songTakes.js), and from then on plays on its track's mixer channel
@@ -23,7 +23,10 @@ import { slugify } from '$lib/utils/slugify.js';
 import { RECORD_TRACKS, trackName } from '../takes/recordTracks.js';
 import { firstBar } from '../takes/takeTiming.js';
 import { openRecordAlong } from '../takes/recordAlong.js';
+import { countIn } from '../takes/countIn.js';
+import { settings } from '$lib/settings/settings.svelte.js';
 import { readAudioFile, takeAsWav } from '../takes/takeFiles.js';
+import { firstSound } from '../takes/takePickup.js';
 
 /** How long recording runs past the song's end, for the last chord to ring (seconds). */
 const RING_OUT = 2;
@@ -66,7 +69,7 @@ export class RecordingState {
 	);
 
 	#songId = /** @type {string | null} */ (null);
-	/** Each take's audio, ready to play, by take id (made once; audio, not UI state). */
+	/** Each take's audio, ready to play, and where its sound begins, by take id (made once; audio, not UI state). */
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	#buffers = new Map();
 
@@ -103,6 +106,7 @@ export class RecordingState {
 			rig = await openRecordAlong(Tone, null);
 			const bar = firstBar(loop.sectionsToPlay, arrangement.bpm);
 			const regionStart = (loop.startInSong * 60) / arrangement.bpm;
+			const countInSeconds = settings.recording.countInBars * bar.seconds;
 			/** @type {Recording} */
 			const recording = {
 				rig,
@@ -116,7 +120,7 @@ export class RecordingState {
 			};
 
 			await player.play({
-				countIn: bar.seconds,
+				countIn: countInSeconds,
 				passes: 1,
 				leaveOutTrack: trackId,
 				onStop: () => this.#finish(recording)
@@ -124,9 +128,15 @@ export class RecordingState {
 			const playback = player.playback;
 			if (!playback) throw new Error(player.problem || 'The band couldn’t start.');
 			recording.barOne = playback.barOne;
-			const countInAt = playback.barOne - bar.seconds;
+			const clicks = countIn({
+				bars: settings.recording.countInBars,
+				bar,
+				pickup: playback.pickup,
+				clickThrough: player.metronome.on
+			});
+			const countInAt = playback.barOne - countInSeconds;
 			recording.stopClicks = rig.countIn(
-				{ tempo: arrangement.bpm, beatsPerBar: bar.quarters },
+				{ tempo: arrangement.bpm, beatsPerBar: bar.quarters, beats: clicks.beats },
 				countInAt
 			);
 			rig.recorder.start(countInAt);
@@ -288,15 +298,16 @@ export class RecordingState {
 		const audio = Tone.getContext().rawContext;
 		const ready = [];
 		for (const take of inUse) {
-			let buffer = this.#buffers.get(take.id);
-			if (!buffer) {
+			let audioReady = this.#buffers.get(take.id);
+			if (!audioReady) {
 				const channels = await readTakeAudio(take.id);
 				if (!channels) continue;
-				buffer = audio.createBuffer(channels.length, channels[0].length, take.sampleRate);
+				const buffer = audio.createBuffer(channels.length, channels[0].length, take.sampleRate);
 				channels.forEach((channel, index) => buffer.copyToChannel(channel, index));
-				this.#buffers.set(take.id, buffer);
+				audioReady = { buffer, soundFrom: firstSound(channels[0], take.sampleRate) };
+				this.#buffers.set(take.id, audioReady);
 			}
-			ready.push({ ...take, buffer });
+			ready.push({ ...take, ...audioReady });
 		}
 		return ready;
 	}

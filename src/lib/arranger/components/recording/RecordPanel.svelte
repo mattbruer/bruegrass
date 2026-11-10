@@ -7,6 +7,8 @@
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { RECORD_TRACKS } from '../../takes/recordTracks.js';
+	import { COUNT_IN_BARS } from '../../takes/countIn.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import SaveSongDialog from '../song/SaveSongDialog.svelte';
@@ -74,6 +76,24 @@
 				{/each}
 			</div>
 
+			<div class="count-in" role="radiogroup" aria-label="Count-in">
+				<span>Count-in</span>
+				{#each COUNT_IN_BARS as bars (bars)}
+					<button
+						type="button"
+						role="radio"
+						class="ui-button py-2"
+						class:ui-button-on={settings.recording.countInBars === bars}
+						aria-checked={settings.recording.countInBars === bars}
+						disabled={recording.isRecording}
+						onclick={() => (settings.recording.countInBars = bars)}
+						use:tooltip={TIPS.recording.countIn}
+					>
+						{bars === 1 ? '1 bar' : `${bars} bars`}
+					</button>
+				{/each}
+			</div>
+
 			<button
 				type="button"
 				class="record ui-button"
@@ -87,8 +107,9 @@
 			</button>
 
 			<p class="hint">
-				Headphones on (wired if you can). You’ll hear one bar of clicks, then the band plays the
-				song once while you record.
+				Headphones on (wired if you can). You’ll hear the count-in clicks, then the band plays the
+				song once while you record. If the tune starts with a pickup, the clicks stop where it
+				starts: come in there.
 			</p>
 
 			{#if recording.lastInput}
@@ -145,6 +166,19 @@
 		grid-template-columns: repeat(4, minmax(0, 1fr));
 		gap: 0.4rem;
 		font-size: 0.85rem;
+	}
+
+	.count-in {
+		display: grid;
+		grid-template-columns: auto 1fr 1fr;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.85rem;
+	}
+
+	.count-in span {
+		color: var(--color-ink-soft);
+		padding-right: 0.3rem;
 	}
 
 	.record {

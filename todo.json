@@ -9,12 +9,6 @@
 	],
 	"suggestions": [
 		{
-			"id": "count-in",
-			"text": "Count-in clicks before the band starts",
-			"done": false,
-			"addedAt": "2026-11-06T00:00:00.000Z"
-		},
-		{
 			"id": "tap-to-play",
 			"text": "Tap a note in the sheet music to play from there",
 			"done": false,
@@ -49,6 +43,18 @@
 			"text": "Send a song as a link, so a collaborator opens the same chart",
 			"done": false,
 			"addedAt": "2026-11-08T00:00:00.000Z"
+		},
+		{
+			"id": "tracks-view",
+			"text": "Tracks view: the song as DAW-style lanes, takes as waveforms you drag to line up",
+			"done": false,
+			"addedAt": "2026-11-09"
+		},
+		{
+			"id": "bass-editing",
+			"text": "Editable bass line in the piano roll (generated first, hand edits kept)",
+			"done": false,
+			"addedAt": "2026-11-09"
 		},
 		{
 			"id": "takes-in-export",
