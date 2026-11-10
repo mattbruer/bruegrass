@@ -12,6 +12,7 @@
  *   arranger.layout        mixer drawer and phone keypad (what covers the screen)
  *   arranger.song          which song is open; New, Open, Save
  *   arranger.recording     recording along with the band, and the song's takes
+ *   arranger.receive       a song someone sent (a share link or song file), waiting to be opened
  *   arranger.conversionReport  what the last conversion between chart and melody (chords, words) wants you to know
  *   arranger.capoAsked     a capo change waiting for "raise the song or keep its key?"
  */
@@ -23,6 +24,7 @@ import { PlayerState } from './PlayerState.svelte.js';
 import { PageLayoutState } from './PageLayoutState.svelte.js';
 import { SongState } from './SongState.svelte.js';
 import { RecordingState } from './RecordingState.svelte.js';
+import { ReceiveState } from './ReceiveState.svelte.js';
 import { abcWithChords, arrangementFromAbc } from '../melody/abcChords.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
 import { respellBass } from '../bass/respellBass.js';
@@ -53,6 +55,8 @@ export class Arranger {
 	song = new SongState(this);
 	/** Recording along with the band, and the song's takes. */
 	recording = new RecordingState(this);
+	/** A song someone sent, waiting to be opened. */
+	receive = new ReceiveState(this);
 
 	/** @type {{ title: string, notes: string[] } | null} */
 	conversionReport = $state(null);

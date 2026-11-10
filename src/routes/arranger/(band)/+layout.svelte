@@ -13,6 +13,8 @@
 	 * the next time the page opens. Each song's mix is remembered on this
 	 * device between saves. Your own chord shapes (My chords) load at the
 	 * start too, and the open song's recorded takes whenever it changes.
+	 * A share link (the page opened with one, or one pasted into the address
+	 * bar) offers its song once any drafts have been answered.
 	 */
 	import { onMount } from 'svelte';
 	import { provideArranger } from '$lib/arranger/state/context.js';
@@ -21,6 +23,7 @@
 	import EditDrawer from '$lib/arranger/components/editor/EditDrawer.svelte';
 	import MixerDrawer from '$lib/arranger/components/mixer/MixerDrawer.svelte';
 	import RestoreDraftsDialog from '$lib/arranger/components/song/RestoreDraftsDialog.svelte';
+	import ReceiveSongDialog from '$lib/arranger/components/share/ReceiveSongDialog.svelte';
 	import { startThisDevicesSetup } from '$lib/arranger/playback/eq/listeningSetup.svelte.js';
 	import { keepDrafts, offerDraftsFromLastTime } from '$lib/arranger/state/drafts.svelte.js';
 	import { keepBassWithChart } from '$lib/arranger/state/bassFollowsChart.svelte.js';
@@ -49,8 +52,12 @@
 		startThisDevicesSetup();
 		startRememberingSongMixes(arranger);
 		offerDraftsFromLastTime();
+		const offerSharedSong = () => arranger.receive.fromLink(location.hash);
+		offerSharedSong();
+		addEventListener('hashchange', offerSharedSong);
 		// Leaving the arranger: the music and the click stop with it
 		return () => {
+			removeEventListener('hashchange', offerSharedSong);
 			arranger.player.metronome.turnOff();
 			arranger.player.stop();
 		};
@@ -65,3 +72,4 @@
 	<MixerDrawer />
 </div>
 <RestoreDraftsDialog />
+<ReceiveSongDialog />

@@ -2,7 +2,9 @@
 	/**
 	 * Your saved songs, newest first: open one, or delete it.
 	 * Opening replaces what's on the page, so it asks first if that has
-	 * unsaved changes.
+	 * unsaved changes. "Open a song file" opens one someone sent (Export →
+	 * Song for another device); the receive dialog takes it from there.
+	 * Any file can be picked (an iPhone greys out file types it doesn't know).
 	 */
 	import Dialog from '$lib/components/Dialog.svelte';
 	import { useArranger } from '../../state/context.js';
@@ -14,7 +16,18 @@
 	/** @type {{ open: boolean }} */
 	let { open = $bindable(false) } = $props();
 
-	const { song } = useArranger();
+	const { song, receive } = useArranger();
+
+	/** @type {HTMLInputElement} */
+	let filePicker;
+
+	function openSongFile() {
+		const file = filePicker.files?.[0];
+		filePicker.value = ''; // the same file can be picked again
+		if (!file) return;
+		open = false;
+		receive.fromFile(file);
+	}
 
 	// The list is read fresh each time the dialog opens
 	$effect(() => {
@@ -72,5 +85,17 @@
 				{/each}
 			</ul>
 		{/if}
+
+		<div class="mt-5 border-t border-line pt-4">
+			<button
+				type="button"
+				class="ui-button px-4 py-2"
+				onclick={() => filePicker.click()}
+				use:tooltip={TIPS.song.openFile}
+			>
+				Open a song file…
+			</button>
+			<input bind:this={filePicker} type="file" class="hidden" onchange={openSongFile} />
+		</div>
 	</div>
 </Dialog>

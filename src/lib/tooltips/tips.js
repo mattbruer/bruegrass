@@ -83,6 +83,7 @@ export const TIPS = Object.freeze({
 		open: 'Open one of your saved songs.',
 		save: 'Save this song on this device (⌘S / Ctrl+S). The first save asks for a name.',
 		openSaved: 'Open this song.',
+		openFile: 'Open a song file someone sent you from this app.',
 		deleteSaved: 'Delete this song for good.'
 	},
 
@@ -196,7 +197,20 @@ export const TIPS = Object.freeze({
 		midi: 'The notes as a MIDI file, a track per instrument, for Logic or another DAW.',
 		processed:
 			'On: each stem with your levels, pan, EQ and reverb (plus a reverb stem). Off: dry stems.',
-		withMix: 'Also put the full mix in the zip.'
+		withMix: 'Also put the full mix in the zip.',
+		song: 'Send the song itself, to open in this app on another phone or computer.'
+	},
+
+	share: {
+		link: 'A link with the whole song in it, to paste into a message. Recorded takes don’t fit.',
+		file: 'One file with the whole song and its takes. They open it from Open → Open a song file.',
+		send: 'Send it: the share sheet on a phone; on a computer, copy the link or save the file.'
+	},
+
+	receive: {
+		open: 'Save this song among yours and open it.',
+		update: 'Replace your copy with what was sent. Takes you recorded on it are kept.',
+		keepBoth: 'Save what was sent as a new song, next to yours.'
 	},
 
 	melody: {

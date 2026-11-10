@@ -16,7 +16,7 @@ import { newId } from './newId.js';
 const DATABASE = 'bruegrass.takes';
 const DATABASE_VERSION = 1;
 /** The shape of a take document; raise it and convert in `upgrade` when it changes. */
-export const TAKE_VERSION = 1;
+export const TAKE_VERSION = 2;
 
 /**
  * @typedef {{
@@ -33,11 +33,13 @@ export const TAKE_VERSION = 1;
  *   seconds: number,
  *   startsAt: number,
  *   nudgeMs: number,
- *   latencyMs: number
+ *   latencyMs: number,
+ *   quality: 'full' | 'compressed'
  * }} TakeDocument
  *   inUse: the take its track plays (one per track);
  *   startsAt: seconds from bar 1, already moved earlier by latencyMs (the delay measured when recording);
- *   nudgeMs: moved by ear on top of that
+ *   nudgeMs: moved by ear on top of that;
+ *   quality: 'compressed' when it arrived in a shared song (sent compressed), else 'full'
  */
 
 const database = keptOpen(DATABASE, DATABASE_VERSION, (db) => {
@@ -45,9 +47,12 @@ const database = keptOpen(DATABASE, DATABASE_VERSION, (db) => {
 	db.createObjectStore('takeAudio', { keyPath: 'id' });
 });
 
-/** @param {TakeDocument} take */
+/**
+ * Version 2 added `quality` (every older take was recorded or added here: full).
+ * @param {TakeDocument} take
+ */
 function upgrade(take) {
-	return { ...take, version: TAKE_VERSION };
+	return { quality: 'full', ...take, version: TAKE_VERSION };
 }
 
 /**
@@ -65,25 +70,40 @@ export async function listTakes(songId) {
 
 /**
  * Save a new take and its audio, and make it the one its track plays.
- * @param {Omit<TakeDocument, 'id' | 'version' | 'inUse' | 'recordedAt'>} details
+ * @param {Omit<TakeDocument, 'id' | 'version' | 'inUse' | 'recordedAt' | 'quality'>} details
  * @param {Float32Array[]} channels
  * @returns {Promise<TakeDocument>}
  */
-export async function addTake(details, channels) {
+export function addTake(details, channels) {
+	return putTake(
+		{
+			...details,
+			id: newId(),
+			version: TAKE_VERSION,
+			inUse: true,
+			recordedAt: new Date().toISOString(),
+			quality: 'full'
+		},
+		channels
+	);
+}
+
+/**
+ * Save a take as it is (one received in a shared song keeps its id, so
+ * receiving the song again doesn't add it twice). If it's in use, the
+ * other takes on its track stop.
+ * @param {TakeDocument} take
+ * @param {Float32Array[]} channels
+ * @returns {Promise<TakeDocument>}
+ */
+export async function putTake(take, channels) {
 	const db = await database();
-	/** @type {TakeDocument} */
-	const take = {
-		...details,
-		id: newId(),
-		version: TAKE_VERSION,
-		inUse: true,
-		recordedAt: new Date().toISOString()
-	};
 	const others = (await listTakes(take.songId)).filter((each) => each.trackId === take.trackId);
 
 	const transaction = db.transaction(['takes', 'takeAudio'], 'readwrite');
 	const store = transaction.objectStore('takes');
-	for (const other of others) if (other.inUse) store.put({ ...other, inUse: false });
+	if (take.inUse)
+		for (const other of others) if (other.inUse) store.put({ ...other, inUse: false });
 	store.put(take);
 	transaction.objectStore('takeAudio').put({ id: take.id, channels });
 	await finished(transaction);

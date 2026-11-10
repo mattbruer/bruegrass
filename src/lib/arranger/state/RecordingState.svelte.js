@@ -91,6 +91,12 @@ export class RecordingState {
 		await this.#reload();
 	}
 
+	/** Read the open song's takes again (after takes arrive in a shared song). */
+	async refreshTakes() {
+		this.#buffers.clear();
+		await this.#reload();
+	}
+
 	async record() {
 		const { player, song, arrangement, loop } = this.#arranger;
 		if (this.isRecording || !song.savedId) return;

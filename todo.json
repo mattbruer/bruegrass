@@ -39,22 +39,10 @@
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
-			"id": "share-song-link",
-			"text": "Send a song as a link, so a collaborator opens the same chart",
+			"id": "bass-style-per-song",
+			"text": "Bass style saved with the song, so a shared song plays the same bass",
 			"done": false,
-			"addedAt": "2026-11-08T00:00:00.000Z"
-		},
-		{
-			"id": "tracks-view",
-			"text": "Tracks view: the song as DAW-style lanes, takes as waveforms you drag to line up",
-			"done": false,
-			"addedAt": "2026-11-09"
-		},
-		{
-			"id": "bass-editing",
-			"text": "Editable bass line in the piano roll (generated first, hand edits kept)",
-			"done": false,
-			"addedAt": "2026-11-09"
+			"addedAt": "2026-11-10"
 		},
 		{
 			"id": "takes-in-export",
@@ -97,12 +85,6 @@
 			"text": "Guitar or mandolin tab under the melody (with capo)",
 			"done": false,
 			"addedAt": "2026-11-06T00:00:00.000Z"
-		},
-		{
-			"id": "melody-entry",
-			"text": "Piano-roll melody editor: draw a tune, get ABC",
-			"done": true,
-			"addedAt": "2026-11-07T00:00:00.000Z"
 		},
 		{
 			"id": "midi-import",

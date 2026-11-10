@@ -1,9 +1,10 @@
 /**
- * A .zip of several files, so stems download as one file (browsers block a
- * burst of separate downloads, and on an iPhone the Files app opens a zip
- * with a tap). Files are stored as they are, not compressed: audio barely
- * compresses, and storing is instant. Written by hand: the browser has no
- * zip writer.
+ * A .zip of several files, so stems (and a shared song with its takes)
+ * travel as one file (browsers block a burst of separate downloads, and on
+ * an iPhone the Files app opens a zip with a tap). Files are stored as they
+ * are, not compressed: audio barely compresses, and storing is instant.
+ * Written by hand: the browser has no zip writer. `readZip` reads one back,
+ * also when someone has unzipped and zipped it again (compressed entries).
  */
 
 /** CRC-32 lookup table (the checksum every zip entry carries). */
@@ -93,4 +94,55 @@ export function makeZip(files) {
 		at += part.length;
 	}
 	return zip;
+}
+
+/**
+ * The files in a .zip, by name.
+ * @param {Uint8Array} zip
+ * @returns {Promise<Map<string, Uint8Array>>}
+ */
+export async function readZip(zip) {
+	const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
+	const end = findEndOfDirectory(view);
+	const count = view.getUint16(end + 10, true);
+	const decoder = new TextDecoder();
+	const files = new Map();
+	let entry = view.getUint32(end + 16, true);
+
+	for (let i = 0; i < count; i++) {
+		if (view.getUint32(entry, true) !== 0x02014b50) throw new Error('the zip is damaged');
+		const method = view.getUint16(entry + 10, true);
+		const packedSize = view.getUint32(entry + 20, true);
+		const nameLength = view.getUint16(entry + 28, true);
+		const extraLength = view.getUint16(entry + 30, true);
+		const commentLength = view.getUint16(entry + 32, true);
+		const local = view.getUint32(entry + 42, true);
+		const name = decoder.decode(zip.subarray(entry + 46, entry + 46 + nameLength));
+
+		const dataStart =
+			local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
+		const packed = zip.subarray(dataStart, dataStart + packedSize);
+		files.set(name, await unpack(packed, method));
+		entry += 46 + nameLength + extraLength + commentLength;
+	}
+	return files;
+}
+
+/** @param {DataView} view */
+function findEndOfDirectory(view) {
+	for (let at = view.byteLength - 22; at >= 0; at--) {
+		if (view.getUint32(at, true) === 0x06054b50) return at;
+	}
+	throw new Error('this isn’t a zip file');
+}
+
+/**
+ * @param {Uint8Array} packed
+ * @param {number} method 0 stored, 8 deflated
+ */
+async function unpack(packed, method) {
+	if (method === 0) return packed.slice();
+	if (method !== 8) throw new Error('the zip uses a kind of compression this app can’t read');
+	const stream = new Blob([packed]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+	return new Uint8Array(await new Response(stream).arrayBuffer());
 }

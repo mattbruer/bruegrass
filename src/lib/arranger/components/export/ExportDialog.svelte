@@ -6,12 +6,16 @@
 	 *
 	 * Rendering takes a few seconds (it's faster than real time), and stops
 	 * playback first: an offline render takes over the audio engine.
+	 *
+	 * "Song for another device" sends the song itself, to open in this app
+	 * (components/share/ShareSong.svelte).
 	 */
 	import Dialog from '$lib/components/Dialog.svelte';
 	import { useArranger } from '../../state/context.js';
 	import { exportAudio } from '../../export/exportAudio.js';
 	import { downloadArrangementMidi } from '../../export/downloadMidi.js';
 	import { readWrittenBass } from '../../bass/readBass.js';
+	import ShareSong from '../share/ShareSong.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -32,10 +36,15 @@
 			id: 'midi',
 			name: 'MIDI',
 			about: 'The notes as a .mid file, for your own instruments in a DAW.'
+		},
+		{
+			id: 'song',
+			name: 'Song for another device',
+			about: 'The whole song, to open in this app: send it to a friend or your other device.'
 		}
 	]);
 
-	let choice = $state(/** @type {'mix' | 'stems' | 'midi'} */ ('mix'));
+	let choice = $state(/** @type {'mix' | 'stems' | 'midi' | 'song'} */ ('mix'));
 	/** Stems with the mix's EQ, levels, pan and reverb (off: dry, as a DAW mix starts). */
 	let processed = $state(false);
 	/** Put the full mix in the stems zip too. */
@@ -121,28 +130,34 @@
 			</div>
 		{/if}
 
-		<p class="mt-3 text-xs text-ink-soft">
-			{choice === 'midi'
-				? 'One pass of the arrangement.'
-				: 'WAV, 48 kHz, 24-bit. One pass of the whole arrangement, lined up with the .mid file.'}
-		</p>
+		{#if choice === 'song' && open}
+			<!-- made afresh each time the dialog opens, so it packs the song that's open now -->
 
-		{#if problem}
-			<p class="mt-3 text-sm text-danger" role="alert">{problem}</p>
+			<ShareSong onClose={() => (open = false)} />
+		{:else}
+			<p class="mt-3 text-xs text-ink-soft">
+				{choice === 'midi'
+					? 'One pass of the arrangement.'
+					: 'WAV, 48 kHz, 24-bit. One pass of the whole arrangement, lined up with the .mid file.'}
+			</p>
+
+			{#if problem}
+				<p class="mt-3 text-sm text-danger" role="alert">{problem}</p>
+			{/if}
+
+			<div class="mt-5 flex justify-end gap-3">
+				<button type="button" class="ui-button px-4 py-2" onclick={() => (open = false)}>
+					Cancel
+				</button>
+				<button
+					type="button"
+					class="ui-button px-5 py-2 ui-button-primary"
+					disabled={busy}
+					onclick={exportNow}
+				>
+					{busy ? 'Rendering…' : 'Export'}
+				</button>
+			</div>
 		{/if}
-
-		<div class="mt-5 flex justify-end gap-3">
-			<button type="button" class="ui-button px-4 py-2" onclick={() => (open = false)}>
-				Cancel
-			</button>
-			<button
-				type="button"
-				class="ui-button px-5 py-2 ui-button-primary"
-				disabled={busy}
-				onclick={exportNow}
-			>
-				{busy ? 'Rendering…' : 'Export'}
-			</button>
-		</div>
 	</div>
 </Dialog>

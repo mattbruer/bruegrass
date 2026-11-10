@@ -30,6 +30,7 @@
 		"vite": "^8.0.16"
 	},
 	"dependencies": {
+		"@breezystack/lamejs": "^1.2.7",
 		"@tonejs/midi": "^2.0.28",
 		"abcjs": "^6.7.2",
 		"tone": "^15.1.22"
