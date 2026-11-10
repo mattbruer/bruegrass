@@ -7,6 +7,7 @@
  *   arranger.arrangement   the chord chart, tempo, capo, key
  *   arranger.loop          which bars play
  *   arranger.melody        the ABC melody
+ *   arranger.bass          the bass line, once it's been edited
  *   arranger.player        play/stop, and problems to show
  *   arranger.layout        mixer drawer and phone keypad (what covers the screen)
  *   arranger.song          which song is open; New, Open, Save
@@ -17,6 +18,7 @@
 import { ArrangementState } from './ArrangementState.svelte.js';
 import { LoopState } from './LoopState.svelte.js';
 import { MelodyState } from './MelodyState.svelte.js';
+import { BassState } from './BassState.svelte.js';
 import { PlayerState } from './PlayerState.svelte.js';
 import { PageLayoutState } from './PageLayoutState.svelte.js';
 import { SongState } from './SongState.svelte.js';
@@ -43,7 +45,8 @@ export class Arranger {
 	arrangement = new ArrangementState();
 	loop = new LoopState(this.arrangement);
 	melody = new MelodyState();
-	player = new PlayerState(this.arrangement, this.loop, this.melody);
+	bass = new BassState();
+	player = new PlayerState(this.arrangement, this.loop, this.melody, this.bass);
 	layout = new PageLayoutState();
 	/** Which song is open, and saving it (created last: it reads all of the above). */
 	song = new SongState(this);
@@ -212,7 +215,18 @@ export class Arranger {
 		const capo = validCapo(fret);
 		if (capo === this.arrangement.capoFret) return;
 		if (this.melody.hasNotation) this.capoAsked = capo;
-		else this.arrangement.capo = capo;
+		else this.#moveCapoWithBass(capo);
+	}
+
+	/**
+	 * Move the capo, everything sounding higher or lower: an edited bass line
+	 * moves with it, in the same step, so it still fits the chart.
+	 * @param {number} capo
+	 */
+	async #moveCapoWithBass(capo) {
+		const semitones = capo - this.arrangement.capoFret;
+		if (this.bass.isWritten) this.bass.notation = await transposeAbc(this.bass.notation, semitones);
+		this.arrangement.capo = capo;
 	}
 
 	/** Same shapes, everything sounds higher or lower: the melody moves with the band. */
@@ -221,7 +235,7 @@ export class Arranger {
 		if (capo === null) return;
 		const semitones = capo - this.arrangement.capoFret;
 		this.melody.notation = await transposeAbc(this.melody.notation, semitones);
-		this.arrangement.capo = capo;
+		await this.#moveCapoWithBass(capo);
 		this.capoAsked = null;
 	}
 

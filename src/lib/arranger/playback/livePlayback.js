@@ -24,12 +24,15 @@ const TICK = 0.1;
  * @param {{
  *   capo?: number, transpose?: number, bpm?: number,
  *   melody?: import('../melody/melody.js').MelodyPart | null,
+ *   bass?: import('../instruments/bassline.js').BassNote[] | null, offset?: number,
  *   takes?: import('../takes/playTakes.js').PlayableTake[],
  *   regionStart?: number, countIn?: number, passes?: number
  * }} options
  *   transpose: semitones on top of the capo, for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo, played on
  *   the guitar samples through the Melody channel, locked to the band;
+ *   bass, offset: the song's edited bass line and where these sections start
+ *   in it (quarters), see preparePerformance;
  *   takes: recorded takes to play with it; regionStart: where these sections
  *   start in the song (seconds), for the takes;
  *   countIn: at least this long before bar 1 (seconds), e.g. a bar of clicks to record after;

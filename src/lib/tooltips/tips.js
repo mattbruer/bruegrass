@@ -207,7 +207,9 @@ export const TIPS = Object.freeze({
 			putBack: 'Go back to the harmony line as it was before you tried any options.'
 		},
 		voices:
-			'Pick which line to change: the melody or a harmony part. The others show faintly behind it.',
+			"Pick which line to change: the melody, a harmony part or the bass. The tune's other lines show faintly behind it.",
+		bassFromChart:
+			"Throw away your changes to the bass line and go back to the band's own, written from the chart's chords.",
 		roll: {
 			grids: {
 				eighth: 'Notes snap to eighth notes: two to a beat.',

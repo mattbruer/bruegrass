@@ -1,9 +1,8 @@
 /**
- * Upright bass for browser playback: the bassline.js part played on a
+ * Upright bass for browser playback: the bass part (bass/songBass.js) played on a
  * Tone.js synth shaped like a plucked upright. A stand-in until there are
  * bass samples; only this file should need to change when they arrive.
  */
-import { bassLine } from './bassline.js';
 
 /*
  * bassline.js pitches use the MIDI export's numbering, where 40 is the bass's
@@ -37,22 +36,29 @@ const VOLUME_DB = -4;
  */
 
 /**
- * Two passes of the bass line in seconds. Two passes so the second time
- * through varies and the end of the first leads back into the top.
- * @param {{ name?: string, measures: string[][] }[]} sections
- * @param {{ capo?: number, bpm?: number }} options
- * @returns {{ notes: UprightNote[], passes: number }}
+ * The bass part in seconds, at the upright's sounding pitch.
+ * @param {{ notes: import('./bassline.js').BassNote[], passes: number }} part from bassPart()
+ * @param {{ bpm?: number }} options
+ * @returns {{ notes: UprightNote[], passes: number }} passes: how many passes the notes span
  */
-export function bassEvents(sections, { capo = 0, bpm = 120 } = {}) {
+export function bassEvents({ notes, passes }, { bpm = 120 } = {}) {
 	const quarter = 60 / bpm;
-	const notes = bassLine([...sections, ...sections], { capo }).map((note) => ({
+	const timed = notes.map((note) => ({
 		time: note.beat * quarter,
 		duration: note.length * note.gate * quarter,
-		pitch: note.pitch + SOUNDING_OFFSET,
+		pitch: uprightPitch(note.pitch),
 		velocity: note.velocity / 127
 	}));
-	notes.sort((a, b) => a.time - b.time);
-	return { notes, passes: 2 };
+	timed.sort((a, b) => a.time - b.time);
+	return { notes: timed, passes };
+}
+
+/**
+ * Where a bass note sounds on the upright, from its written (file) number.
+ * @param {number} pitch
+ */
+export function uprightPitch(pitch) {
+	return pitch + SOUNDING_OFFSET;
 }
 
 /**

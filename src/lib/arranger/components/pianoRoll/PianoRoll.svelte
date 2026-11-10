@@ -17,11 +17,11 @@
 	 * While the band plays, a line shows where it is and the roll scrolls
 	 * with it (it lets go for a moment when you scroll it yourself).
 	 */
-	import { onMount } from 'svelte';
+	import { onMount, tick as rendered, untrack } from 'svelte';
 	import { onEveryFrame } from '../../playback/analysis/frameLoop.js';
 	import { addNote, changeNote, deleteNote, noteAt } from '../../melody/roll/editNotes.js';
 	import { snapDown, snapNearest, TICKS_PER_QUARTER } from '../../melody/roll/ticks.js';
-	import { HIGHEST_ROW, LOWEST_ROW, pitchRows } from '../../melody/roll/pitchRows.js';
+	import { pitchRows } from '../../melody/roll/pitchRows.js';
 
 	/* Size */
 	const LABEL_WIDTH = 44;
@@ -47,6 +47,7 @@
 	 *   chordName: (name: string) => string,
 	 *   spelling: import('../../theory/musicInKey.js').Key,
 	 *   tonic: number,
+	 *   range: import('../../melody/roll/pitchRows.js').RowRange,
 	 *   end: number,
 	 *   gridStep: number,
 	 *   drawLength: number,
@@ -68,6 +69,7 @@
 		chordName,
 		spelling,
 		tonic,
+		range,
 		end,
 		gridStep,
 		drawLength,
@@ -95,7 +97,7 @@
 		(gridStep < TICKS_PER_QUARTER / 2 ? QUARTER_WIDTH.fine : QUARTER_WIDTH.coarse) /
 			TICKS_PER_QUARTER
 	);
-	let rows = $derived(pitchRows(spelling, tonic));
+	let rows = $derived(pitchRows(spelling, tonic, range));
 	let shown = $derived(preview ?? notes);
 	let width = $derived(end * tickWidth);
 	let height = $derived(rows.length * rowHeight);
@@ -104,6 +106,12 @@
 	onMount(() => {
 		touchScreen = matchMedia('(pointer: coarse)').matches;
 		requestAnimationFrame(scrollToTune);
+	});
+
+	// Another voice's rows (the bass sits lower): show its notes
+	$effect(() => {
+		void range;
+		untrack(() => rendered().then(scrollToTune));
 	});
 
 	/** @type {HTMLElement | undefined} */
@@ -135,7 +143,7 @@
 		scroller.scrollLeft = Math.max(0, x - (scroller.clientWidth - LABEL_WIDTH) * FOLLOW_AT);
 		const sounding = notes.find((note) => note.start <= tick && tick < note.start + note.length);
 		if (!sounding) return;
-		const y = (HIGHEST_ROW - sounding.midi) * rowHeight;
+		const y = (range.highest - sounding.midi) * rowHeight;
 		const view = scroller.clientHeight - RULER_HEIGHT - CHORD_HEIGHT;
 		if (y < scroller.scrollTop || y + rowHeight > scroller.scrollTop + view) {
 			scroller.scrollTop = Math.max(0, y - view / 2);
@@ -153,7 +161,7 @@
 		const middle = pitches.length
 			? (Math.min(...pitches) + Math.max(...pitches)) / 2
 			: 60 + ((tonic + 7) % 12);
-		const y = (HIGHEST_ROW - middle) * rowHeight + RULER_HEIGHT - scroller.clientHeight / 2;
+		const y = (range.highest - middle) * rowHeight + RULER_HEIGHT - scroller.clientHeight / 2;
 		scroller.scrollTop = Math.max(0, y);
 	}
 
@@ -173,8 +181,13 @@
 		const rect = /** @type {HTMLElement} */ (surface).getBoundingClientRect();
 		const x = event.clientX - rect.left;
 		const y = event.clientY - rect.top;
-		const midi = HIGHEST_ROW - Math.floor(y / rowHeight);
-		return { x, y, tick: x / tickWidth, midi: Math.min(HIGHEST_ROW, Math.max(LOWEST_ROW, midi)) };
+		const midi = range.highest - Math.floor(y / rowHeight);
+		return {
+			x,
+			y,
+			tick: x / tickWidth,
+			midi: Math.min(range.highest, Math.max(range.lowest, midi))
+		};
 	}
 
 	/**
@@ -264,8 +277,8 @@
 			const shift = snapNearest(dx / tickWidth, gridStep);
 			const start = Math.min(Math.max(0, gesture.start + shift), end - gesture.length);
 			const midi = Math.min(
-				HIGHEST_ROW,
-				Math.max(LOWEST_ROW, gesture.midi - Math.round(dy / rowHeight))
+				range.highest,
+				Math.max(range.lowest, gesture.midi - Math.round(dy / rowHeight))
 			);
 			if (midi !== gesture.now.midi) onSound(midi);
 			gesture.now = { ...gesture.now, start, midi };
@@ -336,7 +349,7 @@
 		} else if (event.key in steps) {
 			event.preventDefault();
 			const step = steps[/** @type {keyof typeof steps} */ (event.key)] * (event.shiftKey ? 12 : 1);
-			const midi = Math.min(HIGHEST_ROW, Math.max(LOWEST_ROW, note.midi + step));
+			const midi = Math.min(range.highest, Math.max(range.lowest, note.midi + step));
 			onSound(midi);
 			nudge({ midi });
 		} else if (event.key in moves) {
@@ -420,7 +433,7 @@
 							class="note other voice-colour"
 							style:--voice={voice.colour}
 							style:left="{note.start * tickWidth}px"
-							style:top="{(HIGHEST_ROW - note.midi) * rowHeight}px"
+							style:top="{(range.highest - note.midi) * rowHeight}px"
 							style:width="{note.length * tickWidth}px"
 							style:height="{rowHeight}px"
 						></div>
@@ -432,7 +445,7 @@
 						style:--voice={colour}
 						class:selected={!preview && index === selected}
 						style:left="{note.start * tickWidth}px"
-						style:top="{(HIGHEST_ROW - note.midi) * rowHeight}px"
+						style:top="{(range.highest - note.midi) * rowHeight}px"
 						style:width="{note.length * tickWidth}px"
 						style:height="{rowHeight}px"
 					></div>
@@ -447,7 +460,7 @@
 							style:--voice={colour}
 							data-option={midi}
 							style:left="{picked.start * tickWidth}px"
-							style:top="{(HIGHEST_ROW - midi) * rowHeight}px"
+							style:top="{(range.highest - midi) * rowHeight}px"
 							style:width="{Math.max(picked.length * tickWidth, rowHeight)}px"
 							style:height="{rowHeight}px"
 							aria-label="Move the note here"

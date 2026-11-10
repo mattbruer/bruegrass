@@ -14,7 +14,7 @@ import { readStored, removeStored, writeStored } from './localStore.js';
 import { newId } from './newId.js';
 
 /** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
-export const ARRANGEMENT_VERSION = 1;
+export const ARRANGEMENT_VERSION = 2;
 
 /** Where every saved song is kept, as { [id]: Arrangement }. */
 const SONGS_KEY = 'bruegrass.arrangements';
@@ -33,6 +33,7 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   title: string,
  *   arrangement: string,
  *   abc: string,
+ *   bass: string,
  *   tempo: number,
  *   capo: number,
  *   transpose: number,
@@ -41,7 +42,8 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   updatedAt: string
  * }} Arrangement
  *   title: the song's name; arrangement: the chord chart text; abc: the
- *   melody in ABC notation; transpose: semitones from the Key setting;
+ *   melody in ABC notation; bass: the bass line in ABC once it's been
+ *   edited ('' while the band writes it from the chart); transpose: semitones from the Key setting;
  *   mix: the mixer's settings (see mixSnapshot in mixer.svelte.js);
  *   dates are ISO strings
  */
@@ -57,6 +59,7 @@ export function createArrangement(fields = {}) {
 		title: '',
 		arrangement: '',
 		abc: '',
+		bass: '',
 		tempo: 120,
 		capo: 0,
 		transpose: 0,
@@ -118,7 +121,8 @@ function allSongs() {
 }
 
 /**
- * Bring an older saved document up to the current shape.
+ * Bring an older saved document up to the current shape. Version 2 added
+ * `bass` (the defaults fill it in: older songs play the generated bass).
  * @param {Arrangement} song
  * @returns {Arrangement}
  */

@@ -8,6 +8,8 @@ import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { sampleUrl } from '../instruments/guitar.js';
 import { loadBuffer } from '../instruments/band.js';
 import { getChannel } from './mixerGraph.svelte.js';
+import { createUpright, uprightPitch } from '../instruments/upright.js';
+import { BASS_VOICE } from '../bass/readBass.js';
 
 /** Seconds a drawn note rings when heard on its own. */
 const AUDITION_SECONDS = 0.7;
@@ -41,4 +43,26 @@ export async function auditionNote(midi, shift) {
 	player.onstop = () => player.dispose();
 	const now = Tone.now();
 	player.start(now).stop(now + AUDITION_SECONDS);
+}
+
+/**
+ * Play one bass note now, on the upright through the Bass channel.
+ * @param {number} midi written (concert) pitch, as the bass line's ABC writes it
+ * @param {number} shift semitones (the Key setting)
+ */
+export async function auditionBassNote(midi, shift) {
+	const audioSession = /** @type {any} */ (globalThis.navigator)?.audioSession;
+	if (audioSession) audioSession.type = 'playback';
+
+	const Tone = await import('tone');
+	await Tone.start();
+	const upright = createUpright(Tone, await getChannel(BASS_VOICE));
+	const note = {
+		time: 0,
+		duration: AUDITION_SECONDS,
+		pitch: uprightPitch(midi + shift),
+		velocity: 0.9
+	};
+	upright.play(note, Tone.now());
+	setTimeout(() => upright.stop(), (AUDITION_SECONDS + FADE_OUT) * 1000);
 }

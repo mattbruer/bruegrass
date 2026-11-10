@@ -12,6 +12,7 @@
  */
 import { buildEvents, guitarTuning, sampleUrl, touch } from './guitar.js';
 import { bassEvents } from './upright.js';
+import { bassPart } from '../bass/songBass.js';
 import { chopNotes, mandoSampleUrl } from './mandolin.js';
 import { mod12 } from '../chart/key.js';
 import { rhythm } from '../chart/timeline.js';
@@ -25,16 +26,20 @@ import { rhythm } from '../chart/timeline.js';
  * @param {import('../chart/timeline.js').Section[]} sections
  * @param {{
  *   bpm?: number, capo?: number, transpose?: number, loop?: boolean,
- *   melody?: import('../melody/melody.js').MelodyPart | null
+ *   melody?: import('../melody/melody.js').MelodyPart | null,
+ *   bass?: import('./bassline.js').BassNote[] | null, offset?: number
  * }} options
  *   transpose: semitones on top of the capo, for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo (looping
  *   to match), played on the guitar samples, each voice through its own
- *   channel (Melody, or a harmony part's)
+ *   channel (Melody, or a harmony part's);
+ *   bass: the song's edited bass line (readWrittenBass), or null for the
+ *   band's own; offset: where these sections start in the song (quarters),
+ *   for the edited bass
  */
 export function preparePerformance(
 	sections,
-	{ bpm = 120, capo = 0, transpose = 0, loop = true, melody = null } = {}
+	{ bpm = 120, capo = 0, transpose = 0, loop = true, melody = null, bass = null, offset = 0 } = {}
 ) {
 	const quarter = 60 / bpm;
 	const passLength = rhythm(sections).quarters * quarter;
@@ -46,7 +51,10 @@ export function preparePerformance(
 
 	// Bass and mandolin work in concert pitch and pick their own register
 	const concert = { bpm, capo: mod12(shift) };
-	const bass = bassEvents(sections, concert);
+	const bassLine = bassEvents(
+		bassPart(sections, { capo, transpose, written: bass, offset, passes: loop ? 2 : 1 }),
+		{ bpm }
+	);
 	const chops = chopNotes(sections, concert);
 
 	if (melody && loop && Math.abs(melody.period - passLength) > 1e-6) {
@@ -75,9 +83,9 @@ export function preparePerformance(
 			urls: chops.map((note) => mandoSampleUrl(note.course, note.fret))
 		},
 		bass: {
-			notes: loop ? bass.notes : bass.notes.filter((note) => note.time < passLength),
-			/** The bass line repeats every this many seconds (it spans several passes). */
-			period: bass.passes * passLength
+			notes: loop ? bassLine.notes : bassLine.notes.filter((note) => note.time < passLength),
+			/** The bass line repeats every this many seconds (the band's own spans several passes). */
+			period: bassLine.passes * passLength
 		},
 		melody: melody
 			? {

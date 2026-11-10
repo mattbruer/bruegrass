@@ -23,6 +23,7 @@
 	import RestoreDraftsDialog from '$lib/arranger/components/song/RestoreDraftsDialog.svelte';
 	import { startThisDevicesSetup } from '$lib/arranger/playback/eq/listeningSetup.svelte.js';
 	import { keepDrafts, offerDraftsFromLastTime } from '$lib/arranger/state/drafts.svelte.js';
+	import { keepBassWithChart } from '$lib/arranger/state/bassFollowsChart.svelte.js';
 	import {
 		keepSongMixes,
 		startRememberingSongMixes
@@ -34,6 +35,7 @@
 	const arranger = provideArranger();
 	guardUnsavedChanges(arranger.song);
 	keepDrafts(arranger);
+	keepBassWithChart(arranger);
 	keepSongMixes(arranger);
 	// The open song's recorded takes (from this device's storage)
 	$effect(() => {
