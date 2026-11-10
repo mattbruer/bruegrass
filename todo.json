@@ -39,12 +39,6 @@
 			"addedAt": "2026-11-06T00:00:00.000Z"
 		},
 		{
-			"id": "bass-style-per-song",
-			"text": "Bass style saved with the song, so a shared song plays the same bass",
-			"done": false,
-			"addedAt": "2026-11-10"
-		},
-		{
 			"id": "takes-in-export",
 			"text": "Recorded takes in the exported mix and stems",
 			"done": false,
