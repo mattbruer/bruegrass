@@ -118,8 +118,7 @@
 <style>
 	/*
 	 * Black ink, whatever the theme: the chart reads like a printed lead sheet.
-	 * The paper, its glow and the bezel come from the hardware look around it
-	 * ($lib/theme/hardware.css); these are the fallbacks.
+	 * The paper and the frame around it: plain colours, set here.
 	 */
 	.window {
 		--strip-ink: #000000;

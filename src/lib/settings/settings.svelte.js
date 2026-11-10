@@ -11,7 +11,6 @@
  * layout does this).
  */
 import { DEFAULT_APPEARANCE } from '$lib/theme/theme.js';
-import { DEFAULT_HARDWARE_LOOK } from '$lib/theme/hardwareLooks.js';
 
 /** Where settings are kept in localStorage. src/app.html reads it too (for the theme). */
 export const SETTINGS_STORAGE_KEY = 'bruegrass.settings';
@@ -68,10 +67,7 @@ export const settings = $state({
 	// Appearance tab
 
 	/** Colours, shadow depth and corner roundness (see $lib/theme). */
-	appearance: /** @type {import('$lib/theme/theme.js').Appearance} */ ({ ...DEFAULT_APPEARANCE }),
-
-	/** The piece of vintage gear the player card is dressed as (see hardwareLooks.js). */
-	playerLook: DEFAULT_HARDWARE_LOOK
+	appearance: /** @type {import('$lib/theme/theme.js').Appearance} */ ({ ...DEFAULT_APPEARANCE })
 });
 
 let alreadyLoaded = false;

@@ -358,7 +358,6 @@ export const TIPS = Object.freeze({
 
 	settings: {
 		preset: 'Use this colour scheme.',
-		playerLook: 'Dress the player in this look.',
 		resetAppearance: 'Go back to the original colours and shape.'
 	}
 });

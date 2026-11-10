@@ -13,7 +13,6 @@
 		READABLE_CONTRAST,
 		contrastRatio
 	} from '$lib/theme/theme.js';
-	import { HARDWARE_LOOKS } from '$lib/theme/hardwareLooks.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -61,26 +60,6 @@
 						aria-hidden="true"
 					></span>
 					{preset.name}
-				</button>
-			{/each}
-		</div>
-	</section>
-
-	<!-- The player card's hardware: its own materials, whatever the colours -->
-	<section>
-		<h3 class="mb-3 text-xs font-bold tracking-wider text-ink-faint uppercase">Player</h3>
-		<div class="flex flex-wrap gap-3">
-			{#each HARDWARE_LOOKS as look (look.id)}
-				<button
-					type="button"
-					class="flex items-center gap-2 ui-button px-3 py-2 text-sm"
-					class:ui-button-on={settings.playerLook === look.id}
-					aria-pressed={settings.playerLook === look.id}
-					onclick={() => (settings.playerLook = look.id)}
-					use:tooltip={TIPS.settings.playerLook}
-				>
-					<span class="hardware-swatch" data-hardware={look.id} aria-hidden="true"></span>
-					{look.name}
 				</button>
 			{/each}
 		</div>
