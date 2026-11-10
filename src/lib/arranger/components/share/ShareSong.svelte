@@ -51,7 +51,7 @@
 			withTakes: chosen === 'file'
 		});
 		if (chosen === 'link') {
-			return { way: chosen, url: await shareLink(songPackage, `${location.origin}/arranger`) };
+			return { way: chosen, url: await shareLink(songPackage) };
 		}
 		const name = `${slugify(title)}.${SONG_FILE_EXTENSION}`;
 		return { way: chosen, bytes: songFileBytes(songPackage, audioFiles), name };

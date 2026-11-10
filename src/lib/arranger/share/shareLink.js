@@ -9,13 +9,16 @@ import { readPackage, ShareProblem } from './songPackage.js';
 const HASH_PREFIX = '#song=';
 
 /**
- * @param {import('./songPackage.js').SongPackage} songPackage (without takes)
- * @param {string} pageUrl the arranger's address
+ * Links always point at the deployed arranger, so they open on any device
+ * (a link made on localhost would only ever open on this computer).
  */
-export async function shareLink(songPackage, pageUrl) {
+const SHARED_SONG_PAGE = 'https://bruegrass.vercel.app/arranger';
+
+/** @param {import('./songPackage.js').SongPackage} songPackage (without takes) */
+export async function shareLink(songPackage) {
 	const json = new TextEncoder().encode(JSON.stringify(songPackage));
 	const packed = await squeeze(json, new CompressionStream('deflate-raw'));
-	return `${pageUrl}${HASH_PREFIX}${toBase64Url(packed)}`;
+	return `${SHARED_SONG_PAGE}${HASH_PREFIX}${toBase64Url(packed)}`;
 }
 
 /** @param {string} hash e.g. location.hash */
