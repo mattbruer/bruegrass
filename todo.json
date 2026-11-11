@@ -9,6 +9,12 @@
 	],
 	"suggestions": [
 		{
+			"id": "transcribe-loop",
+			"text": "Transcribe: a waveform to pick an A–B loop on, then key change and fine tuning",
+			"done": false,
+			"addedAt": "2026-11-11T00:00:00.000Z"
+		},
+		{
 			"id": "tap-to-play",
 			"text": "Tap a note in the sheet music to play from there",
 			"done": false,

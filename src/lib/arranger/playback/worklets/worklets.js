@@ -8,18 +8,21 @@
  * Why not Tone's addAudioWorkletModule: it only ever loads one module per
  * audio context, and we'll have several.
  *
- * A processor file must stand alone (no imports): it runs in the audio
- * thread's own scope, not the page's. Vite's `?url` gives its address.
+ * A processor runs in the audio thread's own scope, not the page's. One
+ * that stands alone (no imports) loads with Vite's `?url`; one that imports
+ * shared DSP loads with `?worker&url`, which bundles it into one file.
  */
 import limiterUrl from './truePeakLimiterProcessor.js?url';
 import loudnessUrl from './loudnessMeterProcessor.js?url';
 import takeRecorderUrl from './takeRecorderProcessor.js?url';
+import stretchPlayerUrl from './stretchPlayerProcessor.js?worker&url';
 
 /** Each processor's registered name, and the file that registers it. */
 const PROCESSORS = Object.freeze({
 	'true-peak-limiter': limiterUrl,
 	'loudness-meter': loudnessUrl,
-	'take-recorder': takeRecorderUrl
+	'take-recorder': takeRecorderUrl,
+	'stretch-player': stretchPlayerUrl
 });
 
 /** @typedef {keyof typeof PROCESSORS} ProcessorName */

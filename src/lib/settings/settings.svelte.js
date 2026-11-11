@@ -57,6 +57,13 @@ export const settings = $state({
 		'sheet'
 	),
 
+	// The transcribe page: set from its player
+
+	transcribe: {
+		/** How the slowed-down song is stretched: an id in transcribe/sounds.js. */
+		sound: 'balanced'
+	},
+
 	// The lyric chart: set from its page
 
 	chart: {
