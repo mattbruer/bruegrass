@@ -4,6 +4,13 @@
 	 * over the chart's bars and chords. It reads and writes the tune's ABC,
 	 * so the sheet music, the ABC tab and the roll always show the same tune;
 	 * the bass is kept apart, in the song's bass field.
+	 *
+	 * On its own (the Melody tab) it picks its voice and follows the band.
+	 * A page can instead say which voice to edit (`voice`: the transcription
+	 * grid's picked lane) and what to follow (`clock`: a recording's place in
+	 * the song, in quarters), and have an unedited bass start empty
+	 * (`bassStartsEmpty`, to write by ear) instead of showing the band's own,
+	 * and leave out the Key menu when it has its own (`keyMenu`).
 	 */
 	import { untrack } from 'svelte';
 	import { useArranger } from '../../state/context.js';
@@ -17,9 +24,22 @@
 	import BassLineNote from './BassLineNote.svelte';
 	import { songBassStyle } from '../../bass/songBassStyle.svelte.js';
 
+	/**
+	 * @type {{
+	 *   voice?: string,
+	 *   clock?: { playing: boolean, quarters: () => number },
+	 *   bassStartsEmpty?: boolean,
+	 *   keyMenu?: boolean
+	 * }}
+	 */
+	let { voice, clock, bassStartsEmpty = false, keyMenu = true } = $props();
+
 	const arranger = useArranger();
 	const { arrangement, melody, bass, player } = arranger;
 	const drawing = new MelodyDrawing(arranger);
+	$effect.pre(() => {
+		drawing.bassStartsEmpty = bassStartsEmpty;
+	});
 
 	$effect(() => {
 		// Read again whenever the tune, the bass (or its style) or the chart it's drawn over changes
@@ -31,6 +51,15 @@
 		void arranger.melodyKey;
 		untrack(() => drawing.load());
 	});
+
+	// The page's voice, once the tune that has it is read
+	$effect(() => {
+		if (voice && drawing.voice !== voice && drawing.voices.some((each) => each.id === voice))
+			drawing.editVoice(voice);
+	});
+
+	const playing = $derived(clock ? clock.playing : player.isPlaying);
+	const timeNow = $derived(clock ? clock.quarters : player.melodyTimeNow);
 
 	/**
 	 * @param {import('../../melody/roll/editNotes.js').DrawnNote[]} notes
@@ -52,9 +81,11 @@
 
 <div class="mb-4">
 	{#if drawing.score}
-		<VoicePicker {drawing} />
+		{#if !voice}
+			<VoicePicker {drawing} />
+		{/if}
 		<HarmonyOptions {drawing} />
-		<RollToolbar {drawing} />
+		<RollToolbar {drawing} {keyMenu} />
 		<PianoRoll
 			score={drawing.score}
 			notes={drawing.notes}
@@ -71,8 +102,8 @@
 			colour={voiceColour(drawing.current?.id ?? '')}
 			others={drawing.others}
 			options={drawing.options}
-			playing={player.isPlaying}
-			playhead={() => drawing.tickAt(player.melodyTimeNow())}
+			{playing}
+			playhead={() => drawing.tickAt(timeNow())}
 			onCommit={commit}
 			onSound={sound}
 		/>

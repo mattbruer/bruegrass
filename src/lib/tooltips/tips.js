@@ -174,6 +174,45 @@ export const TIPS = Object.freeze({
 		fit: 'Let the chart pick the largest text that fits the song on one page.'
 	},
 
+	transcription: {
+		open: 'Write a song down from a recording: its bars are found for you, then you write the chords and tune on them.',
+		back: 'Back to the arranger. The song comes with you.',
+		song: 'Pick a recording to transcribe. It becomes the open song’s recording.',
+		file: 'Open a recording from this device: an MP3, WAV or any song file.',
+		startSong:
+			'A new song on this recording’s bars, at its tempo, to write the chords and tune on.',
+		play: 'Play or pause the recording (Space).',
+		speed: 'How fast the recording plays: lower is slower. The pitch stays the same.',
+		resetSpeed: 'Back to the recording’s own speed.',
+		countAlong:
+			'Click on every beat as the recording plays, higher on each ONE, so you can hear if the bars fit.',
+		key: 'The song’s key, if you know it: the tune’s notes are spelled in it. Not known, it’s guessed from the first chord.',
+		time: 'The bars are laid out again in it, and ONE is found again.',
+		more: 'Fixes for the whole song’s beats, and how the slowed-down sound is made.',
+		doubleBeats: 'For when the count is half the song’s speed: a beat between every two.',
+		halveBeats: 'For when the count is twice the song’s speed: every other beat.',
+		findAgain:
+			'Find the beats and bars again from the recording. Your fixes to them are forgotten.',
+		ruler: 'Tap a bar to play from it and open its menu: its beats, and Loop.',
+		beatDot:
+			'A beat. If its hit sits off the line below, drag the dot onto the hit; it snaps. Tap it for more.',
+		recordingLane:
+			'The recording, fitted to the bars. Its hits (orange) should sit on the beat lines. Tap to play from there.',
+		chordBar:
+			'Tap to type this bar’s chords: one box per beat, the chord on the beat where it changes.',
+		partLane: 'Edit this part in the piano roll below.',
+		addLane:
+			'Add a part to write by ear, like the bass. Most songs don’t need it: the band plays its own.',
+		fewerBeats: 'This bar has a beat fewer. The bars after it move along.',
+		moreBeats: 'This bar has a beat more. The bars after it move along.',
+		loop: 'Play this bar over and over, with a couple of beats before it.',
+		closeMenu: 'Close.',
+		barStartsHere:
+			'This beat is a ONE: the nearest bar line moves here, and the bars after it move along.',
+		addBeat: 'Add a beat the finder missed, halfway after this one.',
+		removeBeat: 'Take this beat away: one the finder heard that isn’t there.'
+	},
+
 	tracks: {
 		open: 'The song as tracks, like a recording studio: each part of the band and each recorded take on its own lane.',
 		back: 'Back to the arranger. The song and the band come with you.',

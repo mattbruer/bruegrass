@@ -18,7 +18,7 @@
 			style:left="{scale.toX(bar.start)}px"
 			style:width="{scale.toX(bar.start + bar.beats) - scale.toX(bar.start)}px"
 		>
-			<span class="number">{bar.number === 0 ? 'Count-in' : bar.number}</span>
+			<span class="number">{bar.label ?? (bar.number === 0 ? 'Count-in' : bar.number)}</span>
 			{#if bar.sectionName}
 				<span class="section">{bar.sectionName}</span>
 			{/if}

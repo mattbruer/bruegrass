@@ -4,7 +4,8 @@
 	 * arranger page and the chart page sit inside this, so moving between
 	 * them keeps the song, the mix and the music playing. The player bar,
 	 * the editor and mixer drawers, and the restore-drafts dialog are here
-	 * too, the same on every page.
+	 * too, the same on every page except those with their own player
+	 * (components/page/bandPages.js), where the band stops.
 	 *
 	 * It always opens on the starter song; your own songs open from the song
 	 * bar. Leaving with unsaved changes asks first. If this device has a
@@ -18,6 +19,8 @@
 	 * drafts have been answered.
 	 */
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
+	import { showsTheBand } from '$lib/arranger/components/page/bandPages.js';
 	import { provideArranger } from '$lib/arranger/state/context.js';
 	import { guardUnsavedChanges } from '$lib/arranger/state/guardUnsavedChanges.svelte.js';
 	import PlayerBar from '$lib/arranger/components/page/PlayerBar.svelte';
@@ -38,6 +41,14 @@
 	let { children } = $props();
 
 	const arranger = provideArranger();
+	const showBand = $derived(showsTheBand(page.route.id));
+	// A page without the band's controls has no Stop either, so the band and the click stop
+	$effect(() => {
+		if (showBand) return;
+		arranger.player.metronome.turnOff();
+		arranger.player.stop();
+		arranger.layout.close();
+	});
 	guardUnsavedChanges(arranger.song);
 	keepDrafts(arranger);
 	keepBassWithChart(arranger);
@@ -70,10 +81,12 @@
 
 {@render children()}
 
-<div class="print:hidden">
-	<PlayerBar />
-	<EditDrawer />
-	<MixerDrawer />
-</div>
+{#if showBand}
+	<div class="print:hidden">
+		<PlayerBar />
+		<EditDrawer />
+		<MixerDrawer />
+	</div>
+{/if}
 <RestoreDraftsDialog />
 <ReceiveSongDialog />

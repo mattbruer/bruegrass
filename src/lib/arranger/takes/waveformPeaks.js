@@ -9,11 +9,12 @@ export const PEAKS_PER_SECOND = 50;
 /**
  * @param {Float32Array[]} channels
  * @param {number} sampleRate
- * @returns {Float32Array} 0 to 1, one per 1/PEAKS_PER_SECOND s
+ * @param {number} [perSecond] how many peaks a second
+ * @returns {Float32Array} 0 to 1, one per 1/perSecond s
  */
-export function waveformPeaks(channels, sampleRate) {
+export function waveformPeaks(channels, sampleRate, perSecond = PEAKS_PER_SECOND) {
 	const length = channels[0]?.length ?? 0;
-	const stretch = Math.max(1, Math.round(sampleRate / PEAKS_PER_SECOND));
+	const stretch = Math.max(1, Math.round(sampleRate / perSecond));
 	const peaks = new Float32Array(Math.ceil(length / stretch));
 	for (const samples of channels) {
 		for (let i = 0; i < length; i++) {

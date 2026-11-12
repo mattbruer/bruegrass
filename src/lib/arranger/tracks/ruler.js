@@ -6,8 +6,8 @@
 import { barsInPlayOrder } from '../chart/chartBars.js';
 
 /**
- * @typedef {{ number: number, start: number, beats: number, sectionName: string | null }} RulerBar
- *   number: 0 for the count-in bar; sectionName: where a section starts
+ * @typedef {{ number: number, start: number, beats: number, sectionName: string | null, label?: string }} RulerBar
+ *   number: 0 for the count-in bar; sectionName: where a section starts; label: shown instead of the number
  *
  * @param {import('../chart/timeline.js').Section[]} sections
  * @returns {RulerBar[]}

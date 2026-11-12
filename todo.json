@@ -9,6 +9,18 @@
 	],
 	"suggestions": [
 		{
+			"id": "transcribe-sections",
+			"text": "Transcribe: mark sections, and keep the tune and chords on their bars when a bar is fixed",
+			"done": false,
+			"addedAt": "2026-11-12T00:00:00.000Z"
+		},
+		{
+			"id": "learn-check-logic",
+			"text": "Check the beat finder against Logic's tempo maps",
+			"done": false,
+			"addedAt": "2026-11-12T00:00:00.000Z"
+		},
+		{
 			"id": "transcribe-loop",
 			"text": "Transcribe: a waveform to pick an A–B loop on, then key change and fine tuning",
 			"done": false,

@@ -6,13 +6,18 @@
 /** How wide a quarter note is on the tracks (px). */
 export const PIXELS_PER_QUARTER = 32;
 
-/** @param {{ start: number, end: number }} span quarter notes */
-export function trackScale({ start, end }) {
+/**
+ * @param {{ start: number, end: number }} span quarter notes
+ * @param {number} [pixelsPerQuarter] wider for a view that needs room (Transcribe's chord boxes)
+ */
+export function trackScale({ start, end }, pixelsPerQuarter = PIXELS_PER_QUARTER) {
 	return {
-		width: (end - start) * PIXELS_PER_QUARTER,
+		/** Where the scale starts (quarters from bar 1). */
+		start,
+		width: (end - start) * pixelsPerQuarter,
 		/** @param {number} quarters from bar 1 */
-		toX: (quarters) => (quarters - start) * PIXELS_PER_QUARTER,
-		/** @param {number} pixels */
-		toQuarters: (pixels) => pixels / PIXELS_PER_QUARTER
+		toX: (quarters) => (quarters - start) * pixelsPerQuarter,
+		/** @param {number} pixels a width (add `start` for a place) */
+		toQuarters: (pixels) => pixels / pixelsPerQuarter
 	};
 }
