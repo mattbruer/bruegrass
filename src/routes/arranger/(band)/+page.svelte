@@ -31,8 +31,8 @@
 
 <!-- Leaves room at the bottom for the player bar and whatever drawer or keypad is over it -->
 <main class="ui-page-width py-6" style:padding-bottom={layout.bottomSpace}>
-	<div class="mb-6 flex items-center justify-between gap-3">
-		<h1 class="text-3xl font-bold">Bluegrass Arranger</h1>
+	<div class="mb-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+		<h1 class="text-2xl font-bold sm:text-3xl">Bluegrass Arranger</h1>
 		<div class="flex gap-2">
 			<TranscribeLink />
 			<TracksLink />

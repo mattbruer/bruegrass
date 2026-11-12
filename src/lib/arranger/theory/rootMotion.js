@@ -39,12 +39,12 @@ export const sameRoot = (/** @type {HasRoot} */ from, /** @type {HasRoot} */ to)
 	semitonesUp(from, to) === 0;
 
 /**
- * The note an interval below this one, on the right letter.
+ * The note an interval away (negative: below), on the right letter.
  * @param {Note} note
  * @param {Interval} interval
  * @returns {Note}
  */
-export function noteBelow(note, { letters, semitones }) {
+export function moveNote(note, { letters, semitones }) {
 	const letter = (note.letter + letters + 7) % 7;
 	const pitch = notePc(note) + semitones;
 	const accidental = mod12(pitch - notePc({ letter, accidental: 0 }) + 6) - 6;

@@ -1,7 +1,7 @@
 /**
  * Your own analysis of a chord, written after it in the chart in braces:
  * `|A7{V7/V}|D|`. It travels with the chord through edits, saves and
- * shares, and the band ignores it. Function display shows it instead of
+ * shares, and the band ignores it. The Roman display shows it instead of
  * the worked-out one (chart/chartAnalysis.js).
  */
 import { sectionBlocks } from './sectionBlocks.js';

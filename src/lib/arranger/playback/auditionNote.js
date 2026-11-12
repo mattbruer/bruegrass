@@ -22,8 +22,9 @@ const LEVEL_DB = -2;
  * @param {number} midi written (concert) pitch
  * @param {number} shift semitones (the Key setting), as the band plays it
  * @param {string} [channelId] the tune channel to play it on (its instrument and strip)
+ * @param {number} [at] when, on the audio clock (Tone time); now if left out or already past
  */
-export async function auditionNote(midi, shift, channelId = MELODY_CHANNEL) {
+export async function auditionNote(midi, shift, channelId = MELODY_CHANNEL, at = 0) {
 	// iPhone: play through the silent switch, as playArrangement does (set before any await)
 	const audioSession = /** @type {any} */ (globalThis.navigator)?.audioSession;
 	if (audioSession) audioSession.type = 'playback';
@@ -35,8 +36,9 @@ export async function auditionNote(midi, shift, channelId = MELODY_CHANNEL) {
 	const { synth } = channelInstrument(mixer.channels, channelId);
 	if (synth) {
 		const voice = createTuneSynth(Tone, synth, await getChannel(channelId));
-		voice.play(midi - 12 + shift, AUDITION_SECONDS, Tone.now(), LEVEL_DB);
-		setTimeout(() => voice.stop(), (AUDITION_SECONDS + 1) * 1000);
+		const start = Math.max(at, Tone.now());
+		voice.play(midi - 12 + shift, AUDITION_SECONDS, start, LEVEL_DB);
+		setTimeout(() => voice.stop(), (start - Tone.now() + AUDITION_SECONDS + 1) * 1000);
 		return;
 	}
 	const [buffer, output] = await Promise.all([
@@ -51,8 +53,8 @@ export async function auditionNote(midi, shift, channelId = MELODY_CHANNEL) {
 	});
 	player.connect(output);
 	player.onstop = () => player.dispose();
-	const now = Tone.now();
-	player.start(now).stop(now + AUDITION_SECONDS);
+	const start = Math.max(at, Tone.now());
+	player.start(start).stop(start + AUDITION_SECONDS);
 }
 
 /**

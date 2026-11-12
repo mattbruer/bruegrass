@@ -4,7 +4,7 @@
  * from them.
  */
 import { readArrangement } from '../chart/readArrangement.js';
-import { chordLabel, songKey } from '../chart/key.js';
+import { chordLabel, songKey, validChordDisplay } from '../chart/key.js';
 import { keyChoicesFor } from '../chart/keyChoices.js';
 import { TEMPO_DEFAULT, validTempo } from '../chart/tempo.js';
 import { validCapo } from '../chart/capo.js';
@@ -45,20 +45,20 @@ export class ArrangementState {
 		this.tempo = validTempo(this.tempo);
 	}
 
+	/** How chords are shown (a saved setting, checked: a display can be retired). */
+	chordDisplay = $derived(validChordDisplay(settings.chordDisplay));
+
 	/**
 	 * How to show a chord, following the Chord display setting (shapes,
-	 * concert, roman, nashville, function). Reading it in a template keeps
-	 * it current. Function needs to know which chord of the chart it is.
+	 * concert, roman, nashville). Reading it in a template keeps it current.
+	 * Roman is the function analysis, which needs to know which chord of
+	 * the chart it is.
 	 * @param {string} chord as written
 	 * @param {import('../chart/chartAnalysis.js').ChordPlace} [place]
 	 */
 	chordName = (chord, place) => {
-		if (settings.chordDisplay !== 'function') {
-			return chordLabel(chord, {
-				key: this.key,
-				shift: this.pitchShift,
-				mode: settings.chordDisplay
-			});
+		if (this.chordDisplay !== 'roman') {
+			return chordLabel(chord, { key: this.key, shift: this.pitchShift, mode: this.chordDisplay });
 		}
 		const found = place && this.analysis.get(placeId(place));
 		return found ? (found.mark ?? found.label) : functionOnItsOwn(chord, this.key);

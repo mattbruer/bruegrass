@@ -12,7 +12,7 @@
 	import ChordDisplayToggle from './ChordDisplayToggle.svelte';
 	import KeySummary from './KeySummary.svelte';
 	import ArrangementStrip from '../chart/ArrangementStrip.svelte';
-	import ChordFunctionDialog from './ChordFunctionDialog.svelte';
+	import ChordTutorDialog from '../chordTutor/ChordTutorDialog.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -23,9 +23,9 @@
 
 	const { arrangement, loop, melody, player } = useArranger();
 
-	/** The chord whose function is being looked at (null: none). */
+	/** The chord the tutor is open on (null: none). */
 	/** @type {import('../../chart/chartAnalysis.js').ChordPlace | null} */
-	let functionOf = $state(null);
+	let tutorOn = $state(null);
 </script>
 
 <section class="mb-4 ui-card p-4" aria-label="Chart">
@@ -53,11 +53,9 @@
 			sections={loop.sectionsToPlay}
 			playback={player.playback}
 			label={arrangement.chordName}
-			onChordTap={settings.chordDisplay === 'function'
-				? (place) => (functionOf = place)
-				: undefined}
+			onChordTap={(place) => (tutorOn = place)}
 		/>
-		<ChordFunctionDialog bind:place={functionOf} />
+		<ChordTutorDialog bind:place={tutorOn} />
 	{:else if showChords}
 		<p class="ui-well p-6 text-center text-ink-soft">
 			Press Edit to write an arrangement, and it will show up here.

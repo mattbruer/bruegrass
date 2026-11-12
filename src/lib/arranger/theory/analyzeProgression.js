@@ -25,7 +25,7 @@ import {
 	A_FIFTH_BELOW,
 	A_HALF_STEP_BELOW,
 	fallsAFifth,
-	noteBelow,
+	moveNote,
 	risesAHalfStep,
 	sameRoot,
 	slidesDownAHalfStep
@@ -36,7 +36,9 @@ import {
  * @typedef {import('../chart/key.js').Note} Note
  * @typedef {{ steps: number, offset: number, prefix: string }} Degree
  *   steps: scale degree from the tonic (0 = I); offset: semitones off the major scale (-1 = flat)
- * @typedef {{ label: string, why: string, options: string[] }} Reading
+ * @typedef {'dominant' | 'sub' | 'relatedTwo' | 'own'} ReadingKind
+ *   dominant: V7/x; sub: a tritone substitute; relatedTwo: IIm7/x; own: its own numeral
+ * @typedef {{ kind: ReadingKind, label: string, why: string, options: string[] }} Reading
  *   label: the analysis; options: every reading worth offering, label first
  * @typedef {Reading & { kind: 'dominant' | 'sub', target: Degree }} DominantReading
  * @typedef {{
@@ -75,7 +77,7 @@ export function analyzeProgression(names, key) {
  * @param {Key} key
  * @returns {Chord | null}
  */
-function readChord(name, key) {
+export function readChord(name, key) {
 	const chord = parseChord(name);
 	if (!chord) return null;
 	const family = chordFamily(chord.rest);
@@ -219,7 +221,7 @@ function unresolvedDominant(chord, next, key) {
  * @returns {Degree | null}
  */
 function keyChordBelow(chord, interval, key) {
-	const place = degree(noteBelow(chord.root, interval), key.tonic);
+	const place = degree(moveNote(chord.root, interval), key.tonic);
 	return canBeTarget(place, key.minor) ? place : null;
 }
 
@@ -242,6 +244,7 @@ function relatedTwoReading(chord, next, nextAsDominant, key) {
 	const into = isTonic(nextAsDominant.target) ? 'home' : numeral(nextAsDominant.target);
 	if (chord.diatonic) {
 		return {
+			kind: 'relatedTwo',
 			label: ownNumeral(chord),
 			why: `${chord.name} is in the key, and with ${next.name} makes a II–V into ${into}.`,
 			options: unique([ownNumeral(chord), label])
@@ -250,6 +253,7 @@ function relatedTwoReading(chord, next, nextAsDominant, key) {
 	const borrowed =
 		chord.borrowed && into === 'home' ? `, borrowed from ${modeName(chord.borrowed, key)}` : '';
 	return {
+		kind: 'relatedTwo',
 		label,
 		why: `${chord.name} sets up ${next.name}: the II of a II–V into ${into}${borrowed}.`,
 		options: unique([label, ownNumeral(chord)])
@@ -269,7 +273,12 @@ function plainReading(chord, next, key) {
 	// A borrowed triad that falls a fifth could still be heard as a dominant
 	const couldBeDominant = next && canBeDominant(chord.family) && fallsAFifth(chord, next);
 	const asDominant = couldBeDominant && dominantLabel(chord.rest, degree(next.root, key.tonic));
-	return { label, why: whyItsOwnNumeral(chord, next, key), options: unique([label, asDominant]) };
+	return {
+		kind: 'own',
+		label,
+		why: whyItsOwnNumeral(chord, next, key),
+		options: unique([label, asDominant])
+	};
 }
 
 /**
@@ -318,9 +327,12 @@ function isTonic(place) {
 	return place.steps === 0 && place.offset === 0;
 }
 
-/** @param {DominantReading} reading */
-function withoutDetails({ label, why, options }) {
-	return { label, why, options };
+/**
+ * @param {DominantReading} reading
+ * @returns {Reading}
+ */
+function withoutDetails({ kind, label, why, options }) {
+	return { kind, label, why, options };
 }
 
 /** @param {(string | null | false | undefined)[]} labels */

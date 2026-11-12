@@ -1,10 +1,11 @@
 <script>
 	/**
-	 * How chords are shown: guitar shapes, concert, Roman or Nashville.
+	 * How chords are shown: guitar shapes, concert, Roman (what each chord
+	 * does) or Nashville (its scale degree).
 	 * A preference, so it's saved with the settings.
 	 */
 	import { settings } from '$lib/settings/settings.svelte.js';
-	import { CHORD_DISPLAYS } from '../../chart/key.js';
+	import { CHORD_DISPLAYS, validChordDisplay } from '../../chart/key.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 </script>
@@ -16,7 +17,7 @@
 	aria-label="Show chords as"
 >
 	{#each CHORD_DISPLAYS as display (display.id)}
-		{@const chosen = settings.chordDisplay === display.id}
+		{@const chosen = validChordDisplay(settings.chordDisplay) === display.id}
 		<button
 			type="button"
 			class="rounded-[var(--corner-control)] px-1.5 py-1 text-sm font-semibold sm:px-3"

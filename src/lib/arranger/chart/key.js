@@ -16,21 +16,28 @@ const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11];
 /** Conventional spelling of each key (the one with fewer accidentals). */
 const MAJOR_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 const MINOR_KEYS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
-const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 const SUPERSCRIPT = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
 
 /** @typedef {{ letter: number, accidental: number }} Note letter index into LETTERS, accidental in semitones */
 /** @typedef {{ tonic: Note, minor: boolean }} Key */
-/** @typedef {'shapes' | 'concert' | 'roman' | 'nashville' | 'function'} ChordDisplay */
+/** @typedef {'shapes' | 'concert' | 'roman' | 'nashville'} ChordDisplay */
 
 /** The ways chords can be shown, in the order the Chord display buttons offer them. */
 export const CHORD_DISPLAYS = /** @type {const} */ ([
 	{ id: 'shapes', name: 'Guitar shapes' },
 	{ id: 'concert', name: 'Concert' },
 	{ id: 'roman', name: 'Roman' },
-	{ id: 'nashville', name: 'Nashville' },
-	{ id: 'function', name: 'Function' }
+	{ id: 'nashville', name: 'Nashville' }
 ]);
+
+/**
+ * A saved display that still exists, else guitar shapes.
+ * @param {string} id
+ * @returns {ChordDisplay}
+ */
+export function validChordDisplay(id) {
+	return CHORD_DISPLAYS.find((display) => display.id === id)?.id ?? 'shapes';
+}
 
 /** @param {number} n */
 export function mod12(n) {
@@ -153,9 +160,9 @@ export function degree(note, tonic) {
  * How to show a chord.
  * - shapes: as written (the guitar's shapes, before any capo)
  * - concert: the sounding chord, after capo and transposition
- * - roman / nashville: its scale degree in the key (the same in every key)
- * - function: needs the chords around it, so it's worked out for the whole
- *   chart (chart/chartAnalysis.js), not here
+ * - nashville: its scale degree in the key (the same in every key)
+ * - roman: what it does, which needs the chords around it, so it's worked
+ *   out for the whole chart (chart/chartAnalysis.js), not here
  *
  * @param {string} name chord as written
  * @param {{ key: Key | null, shift: number, mode: ChordDisplay }} options
@@ -173,21 +180,17 @@ export function chordLabel(name, { key, shift, mode }) {
 		return root + chord.rest + bass;
 	}
 
-	// Chord quality: lower case numerals for minor and diminished
 	let rest = chord.rest;
 	let quality = '';
-	let lower = false;
 	if (/^(dim|°)/.test(rest)) {
 		rest = rest.replace(/^(dim|°)/, '');
 		quality = '°';
-		lower = true;
 	} else if (/^(aug|\+)/.test(rest)) {
 		rest = rest.replace(/^(aug|\+)/, '');
 		quality = '+';
 	} else if (isMinor(rest)) {
 		rest = rest.replace(/^(min|m)/, '');
-		quality = mode === 'nashville' ? 'm' : '';
-		lower = true;
+		quality = 'm';
 	}
 
 	const { steps, prefix } = degree(chord.root, key.tonic);
@@ -197,11 +200,7 @@ export function chordLabel(name, { key, shift, mode }) {
 		bass = `/${b.prefix}${b.steps + 1}`;
 	}
 
-	if (mode === 'nashville') {
-		// Extensions are superscript so 5 with a 7th (5⁷) can't be misread as "57"
-		const extension = rest.replace(/\d/g, (digit) => SUPERSCRIPT[Number(digit)]);
-		return `${prefix}${steps + 1}${quality}${extension}${bass}`;
-	}
-	const numeral = lower ? ROMAN[steps].toLowerCase() : ROMAN[steps];
-	return `${prefix}${numeral}${quality}${rest}${bass}`;
+	// Extensions are superscript so 5 with a 7th (5⁷) can't be misread as "57"
+	const extension = rest.replace(/\d/g, (digit) => SUPERSCRIPT[Number(digit)]);
+	return `${prefix}${steps + 1}${quality}${extension}${bass}`;
 }

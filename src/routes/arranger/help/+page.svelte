@@ -329,7 +329,7 @@
 	<section id="function">
 		<h2>12. What each chord does</h2>
 		<p>
-			Choose <b>Function</b> where you pick how chords are shown, and each chord is named by what it
+			Choose <b>Roman</b> where you pick how chords are shown, and each chord is named by what it
 			does in the song, the way a jazz school analyses it. A chord that leads to another gets that
 			chord after a slash: in G, an A7 going to D is <b>V7/V</b>, the dominant of the V chord.
 		</p>
@@ -348,8 +348,12 @@
 			</li>
 		</ul>
 		<p>
-			It's worked out from where each chord goes, so it can guess wrong. Tap a chord on the chart to
-			see why, pick another reading, or type your own. Yours is written in the box after the chord,
+			Tap any chord on the scrolling chart, whatever the display, to learn about it: what to play
+			over it, the note to lean on, and what it does. Hear it plays the scale.
+		</p>
+		<p>
+			What it does is worked out from where each chord goes, so it can guess wrong. Under
+			<b>Not right?</b> pick another reading or type your own. Yours is written in the box after the chord,
 			in curly brackets, and the band ignores it:
 		</p>
 		{@render example(`"Turnaround"|G|E7{VI7}|A7|D7|`, true)}

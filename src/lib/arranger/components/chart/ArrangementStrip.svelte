@@ -16,7 +16,7 @@
 	 *   label?: (chord: string, place: ChordPlace) => string,
 	 *   onChordTap?: (place: ChordPlace) => void
 	 * }}
-	 *   onChordTap: given, chords are buttons (to correct their analysis)
+	 *   onChordTap: given, chords are buttons (the chord tutor)
 	 */
 	let { sections, playback, label = (chord) => chord, onChordTap } = $props();
 
@@ -113,7 +113,7 @@
 											class:long={text.length > 4}
 											class:longer={text.length > 7}
 											onclick={() => onChordTap(place)}
-											use:tooltip={TIPS.player.chordFunction}>{text}</button
+											use:tooltip={TIPS.player.chordTutor}>{text}</button
 										>
 									{:else}
 										<span class="chord" class:long={text.length > 4} class:longer={text.length > 7}

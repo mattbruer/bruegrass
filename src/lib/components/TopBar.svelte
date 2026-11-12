@@ -49,10 +49,14 @@
 </script>
 
 <header class="topbar print:hidden">
-	<nav class="ui-page-width flex items-center gap-1.5 sm:gap-3" aria-label="Main">
+	<!-- On a phone the wordmark makes way so the buttons fit: the lit button says where you are -->
+	<nav
+		class="ui-page-width flex items-center gap-1.5 max-sm:justify-between sm:gap-3"
+		aria-label="Main"
+	>
 		<a
 			href={resolve('/')}
-			class="mr-auto text-base font-extrabold tracking-tight sm:text-lg"
+			class="mr-auto text-lg font-extrabold tracking-tight max-sm:hidden"
 			use:tooltip={TIPS.app.home}
 		>
 			Brue<span class="text-accent">grass</span>
