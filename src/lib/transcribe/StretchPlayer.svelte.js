@@ -25,6 +25,10 @@ export class StretchPlayer {
 	#loadCount = 0;
 	/** @type {number | null} null: the stretcher's own default */
 	#frameSeconds = null;
+	/** @type {{ from: number, to: number } | null} */
+	#loop = null;
+	/** @type {{ times: number[], accents: boolean[] }} */
+	#clicks = { times: [], accents: [] };
 
 	/**
 	 * The stretcher's frame length (see sounds.js). Takes effect at once, from where it is.
@@ -36,20 +40,40 @@ export class StretchPlayer {
 	}
 
 	/**
-	 * Fetch and decode a song, and hand it to the audio thread.
-	 * @param {string} url
+	 * Clicks over the song, on these times in it (seconds). Empty lists for none.
+	 * @param {{ times: number[], accents: boolean[] }} clicks
 	 */
-	async load(url) {
+	setClicks(clicks) {
+		this.#clicks = { times: [...clicks.times], accents: [...clicks.accents] };
+		this.#node?.port.postMessage({ type: 'clicks', ...this.#clicks });
+	}
+
+	/**
+	 * Play one stretch of the song over and over, or null to play on.
+	 * @param {{ from: number, to: number } | null} loop seconds into the song
+	 */
+	setLoop(loop) {
+		this.#loop = loop;
+		this.#node?.port.postMessage({ type: 'loop', from: loop?.from ?? null, to: loop?.to ?? null });
+	}
+
+	/**
+	 * Fetch (or read) and decode a song, and hand it to the audio thread.
+	 * Gives back the decoded audio, or null if another load replaced this one
+	 * or it failed (see `error`).
+	 * @param {string | Blob} source a URL, or a file the user picked
+	 * @returns {Promise<AudioBuffer | null>}
+	 */
+	async load(source) {
 		const load = ++this.#loadCount;
 		this.pause();
 		this.loading = true;
 		this.error = '';
 		try {
 			const node = await this.#ensureNode();
-			const response = await fetch(url);
-			if (!response.ok) throw new Error(`Couldn't fetch the song (${response.status}).`);
-			const buffer = await this.#context.decodeAudioData(await response.arrayBuffer());
-			if (load !== this.#loadCount) return;
+			const bytes = await readBytes(source);
+			const buffer = await this.#context.decodeAudioData(bytes);
+			if (load !== this.#loadCount) return null;
 
 			const left = buffer.getChannelData(0).slice();
 			const right = buffer.numberOfChannels > 1 ? buffer.getChannelData(1).slice() : undefined;
@@ -60,9 +84,11 @@ export class StretchPlayer {
 			node.port.postMessage({ type: 'speed', speed: this.speed });
 			this.duration = buffer.duration;
 			this.time = 0;
+			return buffer;
 		} catch (error) {
 			if (load === this.#loadCount)
 				this.error = String(error instanceof Error ? error.message : error);
+			return null;
 		} finally {
 			if (load === this.#loadCount) this.loading = false;
 		}
@@ -113,6 +139,12 @@ export class StretchPlayer {
 		node.port.onmessage = ({ data }) => this.#receive(data);
 		node.connect(this.#context.destination);
 		if (this.#frameSeconds) node.port.postMessage({ type: 'frame', seconds: this.#frameSeconds });
+		node.port.postMessage({ type: 'clicks', ...this.#clicks });
+		node.port.postMessage({
+			type: 'loop',
+			from: this.#loop?.from ?? null,
+			to: this.#loop?.to ?? null
+		});
 		this.#node = node;
 		return node;
 	}
@@ -125,4 +157,12 @@ export class StretchPlayer {
 			this.time = this.duration;
 		}
 	}
+}
+
+/** @param {string | Blob} source */
+async function readBytes(source) {
+	if (typeof source !== 'string') return source.arrayBuffer();
+	const response = await fetch(source);
+	if (!response.ok) throw new Error(`Couldn't fetch the song (${response.status}).`);
+	return response.arrayBuffer();
 }
