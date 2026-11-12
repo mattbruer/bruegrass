@@ -1,4 +1,5 @@
 import { buildEvents, guitarTuning, midiNote } from '../instruments/guitar.js';
+import { endBeforeStops, sectionsToPlay, stops, withoutStops } from '../chart/noChord.js';
 import { DEFAULT_METER, barQuarters, rhythm, slotPositions } from '../chart/timeline.js';
 import { melodyEvents, melodyPitch } from '../melody/melody.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
@@ -90,9 +91,18 @@ export function arrangementToMidi(
 ) {
 	const shift = capo + transpose;
 	// Same split as playback: capo where it reaches, plain transposition beyond
-	const tuning = guitarTuning(sections, shift);
-	const { events } = buildEvents(sections, { capo: tuning.capo, bpm });
+	// No-chord bars (N.C.): worked out as if the chord before carried on, then left silent
+	const playable = sectionsToPlay(sections);
+	const silent = stops(sections);
+	const passQuarters = rhythm(sections).quarters;
 	const quarter = 60 / bpm;
+	/** @template {{ time: number }} T @param {T[]} notes */
+	const quiet = (notes) => withoutStops(notes, silent, (note) => note.time / quarter, passQuarters);
+	const tuning = guitarTuning(playable, shift);
+	const events = quiet(buildEvents(playable, { capo: tuning.capo, bpm }).events).map((event) => ({
+		...event,
+		stop: endBeforeStops(event.time / quarter, event.stop / quarter, silent, passQuarters) * quarter
+	}));
 	/** @param {number} seconds */
 	const toTicks = (seconds) => Math.round((seconds / quarter) * PPQ);
 
@@ -120,7 +130,7 @@ export function arrangementToMidi(
 
 	// Mandolin chops on the off-beats, one note per string, strummed G → E
 	/** @type {MidiNote[]} */
-	const mando = chopNotes(sections, { capo: mod12(shift), bpm }).map((note) => ({
+	const mando = quiet(chopNotes(playable, { capo: mod12(shift), bpm })).map((note) => ({
 		tick: toTicks(note.time),
 		end: toTicks(note.time) + Math.round(CHOP_LENGTH * PPQ),
 		note: note.pitch + MANDO_OFFSET,

@@ -12,6 +12,7 @@
  */
 import { barsInPlayOrder } from '../../chart/chartBars.js';
 import { concertChord } from '../../chart/concertChords.js';
+import { isNoChord } from '../../chart/noChord.js';
 import { MELODY_CHANNEL } from '../harmony/partChannels.js';
 import { HARMONY_PARTS } from '../harmony/harmonyParts.js';
 import { readDrawnMelody, writeDrawnMelody } from './drawnMelody.js';
@@ -23,7 +24,7 @@ import { playheadTicks } from './playheadTicks.js';
 import { rewriteAbc } from './scoreToAbc.js';
 import { BASS_ROWS, MELODY_ROWS } from './pitchRows.js';
 import { BASS_VOICE, readBassScore, readBassVoice } from '../../bass/readBass.js';
-import { bassAbcInUse, bassSongOf } from '../../bass/bassAbc.js';
+import { blankBassAbc, bassSongOf, generatedBassAbc } from '../../bass/bassAbc.js';
 
 /** Every voice's place in the colour wheel: the melody, then each harmony part. */
 const VOICE_ORDER = [MELODY_CHANNEL, ...HARMONY_PARTS.map((part) => part.id)];
@@ -51,6 +52,11 @@ export class MelodyDrawing {
 	notes = $state.raw([]);
 	/** The note picked to delete or nudge (index into notes), or -1. */
 	selected = $state(-1);
+	/**
+	 * Until the bass is edited, show it empty (to write by ear) rather than
+	 * the band's own line (to change). Transcribe sets this.
+	 */
+	bassStartsEmpty = false;
 	/** New notes are drawn this long (ticks): the last length drawn. */
 	drawLength = $state(gridTicks('eighth'));
 
@@ -114,7 +120,10 @@ export class MelodyDrawing {
 		const under = this.chordsUnder.find(
 			(chord) => chord.at <= note.start && note.start < chord.at + chord.length
 		);
-		const chord = under ? concertChord(under.name, arrangement.key, arrangement.capoFret) : null;
+		const chord =
+			under && !isNoChord(under.name)
+				? concertChord(under.name, arrangement.key, arrangement.capoFret)
+				: null;
 		return chordToneOptions(chord, melodyKey.spelling, note.midi, this.range);
 	});
 
@@ -203,7 +212,10 @@ export class MelodyDrawing {
 	}
 
 	#bassAbc() {
-		return bassAbcInUse(this.arranger.bass.notation, bassSongOf(this.arranger));
+		const written = this.arranger.bass.notation;
+		if (written.trim()) return written;
+		const song = bassSongOf(this.arranger);
+		return this.bassStartsEmpty ? blankBassAbc(song) : generatedBassAbc(song);
 	}
 
 	/** @returns {Read} */

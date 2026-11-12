@@ -4,6 +4,7 @@
  * pitch (as the ABC will write them), nothing written yet.
  */
 import { concertChord } from '../../chart/concertChords.js';
+import { isNoChord } from '../../chart/noChord.js';
 import { barsInPlayOrder } from '../../chart/chartBars.js';
 import { TICKS_PER_QUARTER } from './ticks.js';
 
@@ -59,7 +60,9 @@ export function scoreFromChart(chartBars, songKey, capo, spelling, pickupQuarter
 
 		let at = start;
 		for (const chord of bar.chords) {
-			chords.push({ at, name: concertChord(chord.name, songKey, capo) });
+			// No chord (N.C.) writes no chord symbol
+			if (!isNoChord(chord.name))
+				chords.push({ at, name: concertChord(chord.name, songKey, capo) });
 			at += chord.length * TICKS_PER_QUARTER;
 		}
 	}

@@ -51,7 +51,7 @@ export const BASS_VOICE = 'bass';
 
 /**
  * The bass line as a voice the piano roll can draw and edit.
- * @param {string} abc the bass line in use (bassAbcInUse)
+ * @param {string} abc the bass line in use (the edited one, else bassAbc.js's generated or blank one)
  * @returns {Promise<import('../melody/roll/drawnMelody.js').DrawnVoice | null>}
  */
 export async function readBassVoice(abc) {

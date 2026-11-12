@@ -10,8 +10,13 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/** @type {{ drawing: import('../../melody/roll/MelodyDrawing.svelte.js').MelodyDrawing }} */
-	let { drawing } = $props();
+	/**
+	 * @type {{
+	 *   drawing: import('../../melody/roll/MelodyDrawing.svelte.js').MelodyDrawing,
+	 *   keyMenu?: boolean
+	 * }} keyMenu: false where the page names the key itself
+	 */
+	let { drawing, keyMenu = true } = $props();
 
 	const arranger = useArranger();
 	const { arrangement } = arranger;
@@ -53,21 +58,25 @@
 		{/each}
 	</div>
 
-	<label class="flex items-center gap-1.5">
-		<span class="text-ink-soft">Key</span>
-		<select
-			class="ui-field px-2 py-1.5"
-			value={named ? keyName(named) : GUESS}
-			onchange={chooseKey}
-			disabled={!arrangement.isPlayable}
-			use:tooltip={TIPS.melody.roll.key}
-		>
-			<option value={GUESS}>{guessName}, from the first chord</option>
-			{#each choices as choice (choice.value)}
-				<option value={choice.value}>{choice.name}</option>
-			{/each}
-		</select>
-	</label>
+	{#if keyMenu}
+		<label class="flex items-center gap-1.5">
+			<span class="text-ink-soft">Key</span>
+			<select
+				class="ui-field px-2 py-1.5"
+				value={named ? keyName(named) : GUESS}
+				onchange={chooseKey}
+				disabled={!arrangement.isPlayable}
+				use:tooltip={TIPS.melody.roll.key}
+			>
+				<option value={GUESS}>
+					{guess ? `${guessName}, from the first chord` : 'Not known yet (no chords)'}
+				</option>
+				{#each choices as choice (choice.value)}
+					<option value={choice.value}>{choice.name}</option>
+				{/each}
+			</select>
+		</label>
+	{/if}
 
 	<button
 		type="button"

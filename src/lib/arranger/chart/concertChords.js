@@ -5,6 +5,7 @@
 import { withoutVariant } from '../instruments/chordBook.js';
 import { chordLabel, songKey } from './key.js';
 import { slotPositions } from './timeline.js';
+import { isNoChord } from './noChord.js';
 
 const EPSILON = 1e-6;
 
@@ -31,6 +32,6 @@ export function concertChordAt(sections, capo) {
 	return (time) => {
 		const slot =
 			time < 0 ? slots.at(-1) : (slots.findLast((s) => s.start <= time + EPSILON) ?? slots[0]);
-		return slot ? concertChord(slot.name, key, capo) : null;
+		return slot && !isNoChord(slot.name) ? concertChord(slot.name, key, capo) : null;
 	};
 }

@@ -6,10 +6,15 @@
  * The chord symbols are how a later chart change finds the bars it changed
  * (bassFollowsChart.js).
  *
+ * A bass line written by hand from nothing (transcribed from a recording)
+ * starts from a blank line instead (`blankBassAbc`), marked "as played" by
+ * its first line: the chart's chords didn't write it, so a chart change never
+ * rewrites its bars (state/bassFollowsChart.svelte.js).
+ *
  * Pitches are written as bassline.js numbers them: the bass's open E is 40,
  * E,, in ABC. Like the guitar, it sounds an octave below.
  */
-import { bassLine } from '../instruments/bassline.js';
+import { bandsBassLine } from './songBass.js';
 import { barsInPlayOrder } from '../chart/chartBars.js';
 import { scoreFromChart } from '../melody/roll/scoreFromChart.js';
 import { newAbc } from '../melody/roll/scoreToAbc.js';
@@ -29,25 +34,14 @@ import { chosenBassStyle } from './songBassStyle.svelte.js';
  * }} BassSong what the bass line is written from (the melody's key is the concert key)
  */
 
-/**
- * The bass line in use: the edited one, else the band's own from the chart.
- * @param {string} written the song's bass field
- * @param {BassSong} song
- */
-export function bassAbcInUse(written, song) {
-	return written.trim() ? written : generatedBassAbc(song);
-}
+/** The first line of a bass line written from nothing, by ear. */
+const AS_PLAYED = '% bass as played';
 
 /** @param {BassSong} song */
-export function generatedBassAbc({ sections, songKey, capo, melodyKey, tune = null }) {
-	const { score, lineStarts } = scoreFromChart(
-		barsInPlayOrder(sections),
-		songKey,
-		capo,
-		melodyKey.spelling
-	);
+export function generatedBassAbc(song) {
+	const { sections, capo, tune = null } = song;
 	const tuneOnsets = leadOnsets(tune, { quarters: rhythm(sections).quarters });
-	const notes = bassLine(sections, {
+	const notes = bandsBassLine(sections, {
 		capo: mod12(capo),
 		tuneOnsets,
 		style: chosenBassStyle()
@@ -56,6 +50,36 @@ export function generatedBassAbc({ sections, songKey, capo, melodyKey, tune = nu
 		start: Math.round(note.beat * TICKS_PER_QUARTER),
 		length: Math.round(note.length * TICKS_PER_QUARTER)
 	}));
+	return bassAbcWith(song, notes);
+}
+
+/**
+ * The song's bars with nothing in them yet, for a bass line written by ear.
+ * @param {BassSong} song
+ */
+export function blankBassAbc(song) {
+	return `${AS_PLAYED}\n${bassAbcWith(song, [])}`;
+}
+
+/**
+ * Was this bass line written by ear from nothing (not from the band's own)?
+ * @param {string} abc
+ */
+export function isAsPlayed(abc) {
+	return abc.startsWith(AS_PLAYED);
+}
+
+/**
+ * @param {BassSong} song
+ * @param {import('../melody/roll/editNotes.js').DrawnNote[]} notes
+ */
+function bassAbcWith({ sections, songKey, capo, melodyKey }, notes) {
+	const { score, lineStarts } = scoreFromChart(
+		barsInPlayOrder(sections),
+		songKey,
+		capo,
+		melodyKey.spelling
+	);
 	return newAbc(score, notes, {
 		title: 'Bass',
 		keyText: `${melodyKey.keyText} clef=bass`,

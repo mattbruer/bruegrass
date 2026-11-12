@@ -93,6 +93,7 @@
 			<li><a href="#parts" class="hover:underline">Parts of the song</a></li>
 			<li><a href="#bars" class="hover:underline">Bars</a></li>
 			<li><a href="#two-chords" class="hover:underline">Two chords in one bar</a></li>
+			<li><a href="#stops" class="hover:underline">Stops: no chord</a></li>
 			<li><a href="#repeat" class="hover:underline">Playing a part again</a></li>
 			<li><a href="#waltz" class="hover:underline">Waltzes (3 beats)</a></li>
 			<li><a href="#crooked" class="hover:underline">Crooked tunes (odd bars)</a></li>
@@ -147,8 +148,20 @@
 		</p>
 	</section>
 
+	<section id="stops">
+		<h2>4. Stops: no chord</h2>
+		<p>
+			Write <b>N.C.</b> (no chord) where the band stops. Nobody plays there until the next chord.
+		</p>
+		{@render example(`"Stop"|G|G|N.C.|D,G|`)}
+		<p class="tip">
+			It works for half a bar too: <code>|G,N.C.|</code>. A song you're transcribing starts with
+			N.C. in every bar, until you write its chords.
+		</p>
+	</section>
+
 	<section id="repeat">
-		<h2>4. Playing a part again</h2>
+		<h2>5. Playing a part again</h2>
 		<p>
 			No need to type a part twice. Give the new part a name, then write <b>as</b> and the name of the
 			part to copy.
@@ -161,7 +174,7 @@
 	</section>
 
 	<section id="waltz">
-		<h2>5. Waltzes (3 beats)</h2>
+		<h2>6. Waltzes (3 beats)</h2>
 		<p>
 			Songs are counted in 4 unless you say otherwise. For a waltz, counted
 			<b>“1, 2, 3”</b>, put <code>[M:3/4]</code> before the bars. The guitar plays
@@ -175,7 +188,7 @@
 	</section>
 
 	<section id="crooked">
-		<h2>6. Crooked tunes (odd bars)</h2>
+		<h2>7. Crooked tunes (odd bars)</h2>
 		<p>
 			Some tunes have a bar with extra or missing beats. Put the count for <b>just that one bar</b>
 			in square brackets right before it, with no <code>M:</code>. The next bar goes back to normal
@@ -199,7 +212,7 @@
 	</section>
 
 	<section id="key">
-		<h2>7. The song's key</h2>
+		<h2>8. The song's key</h2>
 		<p>
 			The app works out the key from the <b>first chord</b>, because most songs start on their home
 			chord. If yours starts somewhere else, say the key in square brackets after the first part's
@@ -213,7 +226,7 @@
 	</section>
 
 	<section id="words">
-		<h2>8. Words, for a chart the band can read</h2>
+		<h2>9. Words, for a chart the band can read</h2>
 		<p>
 			Write the words on the lines under a part. Type <code>|</code> where each bar starts, so the
 			words line up with the chords bar by bar. The band doesn't play the words; they're for the
@@ -244,7 +257,7 @@
 	</section>
 
 	<section id="chords">
-		<h2>9. Which chords can I use?</h2>
+		<h2>10. Which chords can I use?</h2>
 		<p>
 			Major, minor, seventh and diminished chords in every key. Put the letter first, then # or b if
 			it has one, then the kind of chord:
@@ -275,7 +288,7 @@
 	</section>
 
 	<section id="my-chords">
-		<h2>10. Your own chord shapes</h2>
+		<h2>11. Your own chord shapes</h2>
 		<p>
 			Want a chord the guitar doesn't know, or a different way to play one? Press <b>My chords</b>
 			above the box, give the shape a name, and type its six frets from the low E string to the high e.
@@ -304,7 +317,7 @@
 	</section>
 
 	<section id="phone">
-		<h2>11. Writing on a phone</h2>
+		<h2>12. Writing on a phone</h2>
 		<p>
 			On a phone, tapping the box opens a <b>music keypad</b> instead of the normal keyboard. It has
 			only the keys you need, so no hunting for <code>|</code>.
@@ -332,7 +345,7 @@
 	</section>
 
 	<section id="mistakes">
-		<h2>12. If something goes wrong</h2>
+		<h2>13. If something goes wrong</h2>
 		<p>A red message appears under the box. The usual causes:</p>
 		<ul class="mb-4 list-disc space-y-2 pl-6">
 			<li>
@@ -354,7 +367,7 @@
 	</section>
 
 	<section id="everything">
-		<h2>13. Putting it all together</h2>
+		<h2>14. Putting it all together</h2>
 		{@render example(
 			`"Verse"|G|G|C|G|\n"Chorus"|C|G|D,C|G|\n"Banjo Break" as Verse\n"Waltz Tag" [M:3/4] |C|G|[2/4]D|G|`
 		)}

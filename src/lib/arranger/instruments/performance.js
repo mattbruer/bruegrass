@@ -17,6 +17,7 @@ import { leadOnsetsOfPart } from '../bass/melodySpace.js';
 import { chopNotes, mandoSampleUrl } from './mandolin.js';
 import { mod12 } from '../chart/key.js';
 import { rhythm } from '../chart/timeline.js';
+import { endBeforeStops, sectionsToPlay, stops, withoutStops } from '../chart/noChord.js';
 
 /**
  * @typedef {ReturnType<typeof preparePerformance>} Performance
@@ -39,21 +40,33 @@ import { rhythm } from '../chart/timeline.js';
  *   for the edited bass
  */
 export function preparePerformance(
-	sections,
+	written,
 	{ bpm = 120, capo = 0, transpose = 0, loop = true, melody = null, bass = null, offset = 0 } = {}
 ) {
 	const quarter = 60 / bpm;
-	const passLength = rhythm(sections).quarters * quarter;
+	const passQuarters = rhythm(written).quarters;
+	const passLength = passQuarters * quarter;
 	const shift = capo + transpose;
+	// No-chord bars (N.C.): every part is worked out as if the chord before
+	// carried on, then the notes starting in them are left out
+	const sections = sectionsToPlay(written);
+	const silent = stops(written);
+	/** @template {{ time: number }} T @param {T[]} notes */
+	const quiet = (notes) => withoutStops(notes, silent, (note) => note.time / quarter, passQuarters);
 
 	// Guitar: the capo where it reaches, resampling for the rest
 	const tuning = guitarTuning(sections, shift);
-	const { events, duration } = buildEvents(sections, { bpm, capo: tuning.capo, loop });
+	const built = buildEvents(sections, { bpm, capo: tuning.capo, loop });
+	const duration = built.duration;
+	const events = quiet(built.events).map((event) => ({
+		...event,
+		stop: endBeforeStops(event.time / quarter, event.stop / quarter, silent, passQuarters) * quarter
+	}));
 
 	// Bass and mandolin work in concert pitch and pick their own register
 	const concert = { bpm, capo: mod12(shift) };
 	const bassLine = bassEvents(
-		bassPart(sections, {
+		bassPart(written, {
 			capo,
 			transpose,
 			written: bass,
@@ -63,7 +76,7 @@ export function preparePerformance(
 		}),
 		{ bpm }
 	);
-	const chops = chopNotes(sections, concert);
+	const chops = quiet(chopNotes(sections, concert));
 
 	if (melody && loop && Math.abs(melody.period - passLength) > 1e-6) {
 		throw new Error('The melody was prepared for a different arrangement or tempo');

@@ -89,7 +89,9 @@ export function songKey(sections) {
  * @returns {Key | null}
  */
 export function guessedKey(sections) {
-	const first = sections.flatMap((section) => section.measures.flat()).find(Boolean);
+	const first = sections
+		.flatMap((section) => section.measures.flat())
+		.find((name) => parseChord(name) !== null);
 	const chord = first ? parseChord(first) : null;
 	return chord ? { tonic: chord.root, minor: isMinor(chord.rest) } : null;
 }

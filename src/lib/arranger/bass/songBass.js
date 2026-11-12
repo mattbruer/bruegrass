@@ -7,6 +7,7 @@ import { bassLine } from '../instruments/bassline.js';
 import { rhythm } from '../chart/timeline.js';
 import { mod12 } from '../chart/key.js';
 import { chosenBassStyle } from './songBassStyle.svelte.js';
+import { sectionsToPlay, stops, withoutStops } from '../chart/noChord.js';
 
 const EPSILON = 1e-6;
 
@@ -43,7 +44,7 @@ export function bassPart(
 				tuneOnsets.map((time) => time + pass * quarters)
 			).flat();
 		return {
-			notes: bassLine(repeated, {
+			notes: bandsBassLine(repeated, {
 				capo: mod12(capo + transpose),
 				tuneOnsets: onsets,
 				style: chosenBassStyle()
@@ -61,4 +62,17 @@ export function bassPart(
 			pitch: note.pitch + transpose // written at concert pitch, like the melody
 		}));
 	return { notes, passes: 1 };
+}
+
+/**
+ * The band's own bass line for these bars (bassline.js), silent in no-chord
+ * bars (N.C.): worked out as if the chord before carried on, then the notes
+ * starting in them are left out.
+ * @param {import('../chart/timeline.js').Section[]} sections
+ * @param {Parameters<typeof bassLine>[1]} options
+ * @returns {BassNote[]}
+ */
+export function bandsBassLine(sections, options) {
+	const notes = bassLine(sectionsToPlay(sections), options);
+	return withoutStops(notes, stops(sections), (note) => note.beat, rhythm(sections).quarters);
 }
