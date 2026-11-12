@@ -6,6 +6,7 @@
 import { chordLabel, keyName, songKey } from './key.js';
 import { isKeyField } from './keyField.js';
 import { parseArrangement } from './parseArrangement.js';
+import { splitMark, withMark } from './analysisMarks.js';
 
 /**
  * @param {string} text the chord chart
@@ -15,8 +16,11 @@ export function transposeChart(text, semitones) {
 	const key = songKey(parseArrangement(text));
 	if (!key) return text;
 
-	/** @param {string} chord */
-	const moved = (chord) => chordLabel(chord, { key, shift: semitones, mode: 'concert' });
+	/** @param {string} text a chord, maybe with your analysis after it (which doesn't change with the key) */
+	const moved = (text) => {
+		const { chord, mark } = splitMark(text);
+		return withMark(chordLabel(chord, { key, shift: semitones, mode: 'concert' }), mark);
+	};
 
 	return text
 		.split('\n')

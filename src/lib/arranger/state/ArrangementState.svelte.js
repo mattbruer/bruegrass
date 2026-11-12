@@ -8,6 +8,8 @@ import { chordLabel, songKey } from '../chart/key.js';
 import { keyChoicesFor } from '../chart/keyChoices.js';
 import { TEMPO_DEFAULT, validTempo } from '../chart/tempo.js';
 import { validCapo } from '../chart/capo.js';
+import { chartAnalysis, functionOnItsOwn, placeId } from '../chart/chartAnalysis.js';
+import { setMark } from '../chart/analysisMarks.js';
 import { settings } from '$lib/settings/settings.svelte.js';
 import { STARTER_SONG } from '../starterSong.js';
 
@@ -35,6 +37,8 @@ export class ArrangementState {
 	/** The song's key: the chart's [K:], else its first chord (null while there are no chords). */
 	key = $derived(songKey(this.sections));
 	keyChoices = $derived(keyChoicesFor(this.key, this.capoFret));
+	/** Every chord's function, worked out from where it goes, with your own marks. */
+	analysis = $derived(chartAnalysis(this.sections, this.key));
 
 	/** Tidy the typed tempo into a whole number in range. */
 	tidyTempo() {
@@ -43,9 +47,30 @@ export class ArrangementState {
 
 	/**
 	 * How to show a chord, following the Chord display setting (shapes,
-	 * concert, roman, nashville). Reading it in a template keeps it current.
+	 * concert, roman, nashville, function). Reading it in a template keeps
+	 * it current. Function needs to know which chord of the chart it is.
 	 * @param {string} chord as written
+	 * @param {import('../chart/chartAnalysis.js').ChordPlace} [place]
 	 */
-	chordName = (chord) =>
-		chordLabel(chord, { key: this.key, shift: this.pitchShift, mode: settings.chordDisplay });
+	chordName = (chord, place) => {
+		if (settings.chordDisplay !== 'function') {
+			return chordLabel(chord, {
+				key: this.key,
+				shift: this.pitchShift,
+				mode: settings.chordDisplay
+			});
+		}
+		const found = place && this.analysis.get(placeId(place));
+		return found ? (found.mark ?? found.label) : functionOnItsOwn(chord, this.key);
+	};
+
+	/**
+	 * Write your own analysis of a chord into the chart, or null to go back
+	 * to the worked-out one.
+	 * @param {import('../chart/chartAnalysis.js').ChordPlace} place
+	 * @param {string | null} mark
+	 */
+	markChord(place, mark) {
+		this.text = setMark(this.text, place, mark);
+	}
 }

@@ -2,6 +2,7 @@ import { DEFAULT_METER } from './timeline.js';
 import { parseMeterField } from './meterField.js';
 import { sectionBlocks } from './sectionBlocks.js';
 import { isKeyField, parseKeyField } from './keyField.js';
+import { splitMark } from './analysisMarks.js';
 
 /**
  * Parse the arrangement text.
@@ -23,11 +24,13 @@ import { isKeyField, parseKeyField } from './keyField.js';
  *   doesn't give it. Every section carries it as `key` (null if not named).
  * - Lines under a section line are its lyrics (see sectionLyrics.js);
  *   the chord chart ignores them.
+ * - `A7{V7/V}`: your own analysis of a chord (analysisMarks.js), kept in
+ *   `marks`, parallel to `measures` (null where there's none).
  *
- * @returns {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], key: import('./key.js').Key | null }[]}
+ * @returns {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], marks: (string | null)[][], key: import('./key.js').Key | null }[]}
  */
 export function parseArrangement(source) {
-	/** @type {{ name: string, measures?: string[][], meters?: import('./timeline.js').Meter[], reference?: string, key?: import('./key.js').Key | null }[]} */
+	/** @type {{ name: string, measures?: string[][], meters?: import('./timeline.js').Meter[], marks?: (string | null)[][], reference?: string, key?: import('./key.js').Key | null }[]} */
 	const sections = [];
 	let meter = DEFAULT_METER;
 	/** @type {import('./key.js').Key | null} */
@@ -44,6 +47,7 @@ export function parseArrangement(source) {
 
 		const measures = [];
 		const meters = [];
+		const marks = [];
 		/** @type {import('./timeline.js').Meter | null} */
 		let barOnly = null;
 		let text = '';
@@ -52,10 +56,12 @@ export function parseArrangement(source) {
 			const chords = text
 				.split(',')
 				.map((chord) => chord.trim())
-				.filter(Boolean);
+				.filter(Boolean)
+				.map(splitMark);
 			text = '';
 			if (chords.length === 0) return; // fields before the first barline wait for a bar
-			measures.push(chords);
+			measures.push(chords.map(({ chord }) => chord));
+			marks.push(chords.map(({ mark }) => mark));
 			meters.push(barOnly ?? meter);
 			barOnly = null;
 		};
@@ -72,7 +78,7 @@ export function parseArrangement(source) {
 		}
 		endBar();
 
-		sections.push({ name, measures, meters });
+		sections.push({ name, measures, meters, marks });
 	}
 
 	// Resolve repeated sections
@@ -87,12 +93,13 @@ export function parseArrangement(source) {
 
 		section.measures = structuredClone(original.measures);
 		section.meters = structuredClone(original.meters);
+		section.marks = structuredClone(original.marks);
 		delete section.reference;
 	}
 
 	for (const section of sections) section.key = key;
 
-	return /** @type {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], key: import('./key.js').Key | null }[]} */ (
+	return /** @type {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], marks: (string | null)[][], key: import('./key.js').Key | null }[]} */ (
 		sections
 	);
 }

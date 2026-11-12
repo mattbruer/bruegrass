@@ -7,17 +7,24 @@
 
 	/** @typedef {Awaited<ReturnType<typeof import('../../playback/livePlayback.js').playArrangement>>} Playback */
 
+	/** @typedef {import('../../chart/chartAnalysis.js').ChordPlace} ChordPlace */
+
 	/**
 	 * @type {{
-	 *   sections: { name?: string, measures: string[][] }[],
+	 *   sections: import('../../chart/loop.js').LoopSection[],
 	 *   playback: Playback | null,
-	 *   label?: (chord: string) => string
+	 *   label?: (chord: string, place: ChordPlace) => string,
+	 *   onChordTap?: (place: ChordPlace) => void
 	 * }}
+	 *   onChordTap: given, chords are buttons (to correct their analysis)
 	 */
-	let { sections, playback, label = (chord) => chord } = $props();
+	let { sections, playback, label = (chord) => chord, onChordTap } = $props();
 
 	import { barsInPlayOrder } from '../../chart/chartBars.js';
+	import { placeInSong } from '../../chart/loop.js';
 	import GlassPlayhead from './GlassPlayhead.svelte';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** Width of one beat (quarter note); chords and bars are sized by their beats. */
 	const BEAT_PX = 40;
@@ -96,8 +103,23 @@
 								</span>
 							{/if}
 							{#each bar.chords as chord (chord.chord)}
+								{@const place = { ...placeInSong(sections, bar), chord: chord.chord }}
+								{@const text = label(chord.name, place)}
 								<div class="slot" style="width: {chord.length * BEAT_PX}px">
-									<span class="chord">{label(chord.name)}</span>
+									{#if onChordTap}
+										<button
+											type="button"
+											class="chord tappable"
+											class:long={text.length > 4}
+											class:longer={text.length > 7}
+											onclick={() => onChordTap(place)}
+											use:tooltip={TIPS.player.chordFunction}>{text}</button
+										>
+									{:else}
+										<span class="chord" class:long={text.length > 4} class:longer={text.length > 7}
+											>{text}</span
+										>
+									{/if}
 									<span class="beats">
 										{#each { length: chord.length }, beat (beat)}
 											<span>/</span>
@@ -219,6 +241,29 @@
 		font-size: 1.25rem;
 		font-weight: 600;
 		color: var(--strip-ink);
+	}
+
+	/* Function labels (subV7/V) are longer than chord names */
+	.chord.long {
+		font-size: 1rem;
+	}
+
+	.chord.longer {
+		font-size: 0.8rem;
+	}
+
+	.tappable {
+		align-self: flex-start;
+		border-radius: var(--corner-small);
+		text-align: left;
+		text-decoration: underline dotted;
+		text-underline-offset: 0.2em;
+	}
+
+	@media (hover: hover) {
+		.tappable:hover {
+			background: rgb(0 0 0 / 0.08);
+		}
 	}
 
 	.beats {

@@ -7,7 +7,7 @@
 	 * @type {{
 	 *   block: import('../../lyricChart/chartBlocks.js').ChartBlock,
 	 *   header: { title: string, details: { label: string, value: string }[] },
-	 *   label: (chord: string) => string
+	 *   label: (chord: string, place?: import('../../chart/chartAnalysis.js').ChordPlace) => string
 	 * }}
 	 */
 	let { block, header, label } = $props();

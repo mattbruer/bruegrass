@@ -8,7 +8,7 @@
 	/**
 	 * @type {{
 	 *   bar: import('../../lyricChart/chartRows.js').RowBar,
-	 *   label: (chord: string) => string,
+	 *   label: (chord: string, place?: import('../../chart/chartAnalysis.js').ChordPlace) => string,
 	 *   closesRow: boolean
 	 * }}
 	 */
@@ -31,7 +31,9 @@
 		{:else}
 			{#each bar.chords as chord, c (c)}
 				<span class="chord" style:flex-grow={chord.length}
-					>{chord.shown ? label(chord.name) : ''}</span
+					>{chord.shown
+						? label(chord.name, { section: bar.section, measure: bar.measure, chord: chord.chord })
+						: ''}</span
 				>
 			{/each}
 		{/if}

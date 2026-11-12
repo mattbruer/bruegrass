@@ -153,8 +153,18 @@ export const TIPS = Object.freeze({
 			shapes: 'Show chords as the guitar shapes you play (with the capo on).',
 			concert: 'Show chords as they actually sound.',
 			roman: 'Show chords as Roman numerals (I, IV, V), the same in any key.',
-			nashville: 'Show chords as Nashville numbers (1, 4, 5), the same in any key.'
-		}
+			nashville: 'Show chords as Nashville numbers (1, 4, 5), the same in any key.',
+			function:
+				'Show what each chord does, the way a jazz school analyses it: V7/V for a chord leading to the V, subV7 for a tritone sub. Tap a chord to see why or correct it.'
+		},
+		chordFunction: 'See why this chord is analysed this way, or correct it.'
+	},
+
+	chordFunction: {
+		workedOut: 'The reading worked out from where the chord goes.',
+		option: 'Another way to read this chord. Tap to use it.',
+		useTyped: 'Use your own reading for this chord.',
+		reset: 'Forget your reading and go back to the worked-out one.'
 	},
 
 	editor: {

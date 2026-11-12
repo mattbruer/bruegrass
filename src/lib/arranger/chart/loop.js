@@ -85,3 +85,13 @@ export function loopOffset(sections, { section, from }) {
 function clamp(value, min, max) {
 	return Math.min(max, Math.max(min, value));
 }
+
+/**
+ * Where a bar of a loop region (or of the whole song) is in the song.
+ * @param {LoopSection[]} sections the region
+ * @param {{ section: number, measure: number }} bar as the region counts it
+ */
+export function placeInSong(sections, { section, measure }) {
+	const item = sections[section];
+	return { section: item?.source ?? section, measure: measure + (item?.barOffset ?? 0) };
+}

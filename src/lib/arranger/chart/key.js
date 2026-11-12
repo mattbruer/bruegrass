@@ -21,14 +21,15 @@ const SUPERSCRIPT = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸',
 
 /** @typedef {{ letter: number, accidental: number }} Note letter index into LETTERS, accidental in semitones */
 /** @typedef {{ tonic: Note, minor: boolean }} Key */
-/** @typedef {'shapes' | 'concert' | 'roman' | 'nashville'} ChordDisplay */
+/** @typedef {'shapes' | 'concert' | 'roman' | 'nashville' | 'function'} ChordDisplay */
 
 /** The ways chords can be shown, in the order the Chord display buttons offer them. */
 export const CHORD_DISPLAYS = /** @type {const} */ ([
 	{ id: 'shapes', name: 'Guitar shapes' },
 	{ id: 'concert', name: 'Concert' },
 	{ id: 'roman', name: 'Roman' },
-	{ id: 'nashville', name: 'Nashville' }
+	{ id: 'nashville', name: 'Nashville' },
+	{ id: 'function', name: 'Function' }
 ]);
 
 /** @param {number} n */
@@ -45,12 +46,12 @@ function parseNote(text) {
 }
 
 /** @param {Note} note */
-function notePc(note) {
+export function notePc(note) {
 	return mod12(NATURAL[note.letter] + note.accidental);
 }
 
 /** @param {Note} note */
-function noteName(note) {
+export function noteName(note) {
 	const sign = note.accidental > 0 ? '#' : 'b';
 	return LETTERS[note.letter] + sign.repeat(Math.abs(note.accidental));
 }
@@ -59,7 +60,7 @@ function noteName(note) {
  * Split a chord name into root, quality/extension and optional bass note.
  * @param {string} name e.g. "G", "F#m7", "Bb/D"
  */
-function parseChord(name) {
+export function parseChord(name) {
 	const match = name.match(/^([A-G][#b]*)([^/]*)(?:\/([A-G][#b]*))?$/);
 	if (!match) return null;
 	return {
@@ -136,22 +137,25 @@ function transposeNote(note, from, to, shift) {
 }
 
 /**
- * A note as a scale degree of the key: accidental prefix and degree index.
+ * A note as a scale degree of the key: degree index (0 = tonic), semitones
+ * off the major scale's note, and that as an accidental prefix.
  * @param {Note} note
  * @param {Note} tonic
  */
-function degree(note, tonic) {
+export function degree(note, tonic) {
 	const steps = (note.letter - tonic.letter + 7) % 7;
 	const offset = mod12(notePc(note) - notePc(tonic) - MAJOR_SCALE[steps] + 6) - 6;
 	const prefix = (offset > 0 ? '#' : 'b').repeat(Math.abs(offset));
-	return { steps, prefix };
+	return { steps, offset, prefix };
 }
 
 /**
  * How to show a chord.
  * - shapes: as written (the guitar's shapes, before any capo)
  * - concert: the sounding chord, after capo and transposition
- * - roman / nashville: its function in the key (the same in every key)
+ * - roman / nashville: its scale degree in the key (the same in every key)
+ * - function: needs the chords around it, so it's worked out for the whole
+ *   chart (chart/chartAnalysis.js), not here
  *
  * @param {string} name chord as written
  * @param {{ key: Key | null, shift: number, mode: ChordDisplay }} options

@@ -11,6 +11,8 @@
 	import { chartBlocks } from '$lib/arranger/lyricChart/chartBlocks.js';
 	import LyricChart from '$lib/arranger/components/lyricChart/LyricChart.svelte';
 	import { BUILT_IN_CHORDS } from '$lib/arranger/instruments/chordBook.js';
+	import { chartAnalysis, placeId } from '$lib/arranger/chart/chartAnalysis.js';
+	import { songKey } from '$lib/arranger/chart/key.js';
 
 	const QUALITIES = [
 		{ suffix: '', label: 'Major' },
@@ -23,12 +25,19 @@
 	/**
 	 * Bars of an example, for drawing it as a little chart.
 	 * @param {string} text
+	 * @param {boolean} byFunction show each chord's function instead of its name
 	 */
-	function chart(text) {
-		return barsInPlayOrder(parseArrangement(text)).map((bar) => ({
+	function chart(text, byFunction) {
+		const sections = parseArrangement(text);
+		const analysis = byFunction ? chartAnalysis(sections, songKey(sections)) : null;
+		return barsInPlayOrder(sections).map((bar) => ({
 			...bar,
 			key: `${bar.section}:${bar.measure}`,
-			name: bar.sectionStart ? bar.sectionName : null
+			name: bar.sectionStart ? bar.sectionName : null,
+			chords: bar.chords.map((chord) => {
+				const found = analysis?.get(placeId({ ...bar, chord: chord.chord }));
+				return { ...chord, name: found ? (found.mark ?? found.label) : chord.name };
+			})
 		}));
 	}
 
@@ -55,11 +64,11 @@
 	</div>
 {/snippet}
 
-{#snippet example(/** @type {string} */ text)}
+{#snippet example(/** @type {string} */ text, byFunction = false)}
 	<div class="example">
 		<pre class="code">{text}</pre>
 		<div class="chart" aria-label="How it looks">
-			{#each chart(text) as bar (bar.key)}
+			{#each chart(text, byFunction) as bar (bar.key)}
 				<div class="bar" class:new-part={bar.name !== null} style="width: {bar.beats * 2.25}rem">
 					{#if bar.name !== null || bar.meter}
 						<span class="bar-label">
@@ -101,6 +110,7 @@
 			<li><a href="#words" class="hover:underline">Words, for a chart the band can read</a></li>
 			<li><a href="#chords" class="hover:underline">Which chords can I use?</a></li>
 			<li><a href="#my-chords" class="hover:underline">Your own chord shapes</a></li>
+			<li><a href="#function" class="hover:underline">What each chord does</a></li>
 			<li><a href="#phone" class="hover:underline">Writing on a phone</a></li>
 			<li><a href="#mistakes" class="hover:underline">If something goes wrong</a></li>
 			<li><a href="#everything" class="hover:underline">Putting it all together</a></li>
@@ -316,8 +326,37 @@
 		</p>
 	</section>
 
+	<section id="function">
+		<h2>12. What each chord does</h2>
+		<p>
+			Choose <b>Function</b> where you pick how chords are shown, and each chord is named by what it
+			does in the song, the way a jazz school analyses it. A chord that leads to another gets that
+			chord after a slash: in G, an A7 going to D is <b>V7/V</b>, the dominant of the V chord.
+		</p>
+		{@render example(`"Turnaround"|G|E7|A7|D7|`)}
+		<p>The same chords, as their functions:</p>
+		{@render example(`"Turnaround"|G|E7|A7|D7|`, true)}
+		<ul class="mb-4 list-disc space-y-2 pl-6">
+			<li><b>V7/V</b>: a dominant leading down a fifth to the chord after the slash.</li>
+			<li>
+				<b>subV7</b>: a tritone substitute, sliding down a half step instead (Ab7 to G in G).
+			</li>
+			<li><b>IIm7/V</b>: the minor chord that sets up a dominant, the II of a II–V.</li>
+			<li>
+				<b>IVm</b>, <b>bVI</b>, <b>bVII</b>: chords borrowed from the minor key, or another mode (in
+				C, Dbmaj7 is <b>bIImaj7</b>, from C Phrygian).
+			</li>
+		</ul>
+		<p>
+			It's worked out from where each chord goes, so it can guess wrong. Tap a chord on the chart to
+			see why, pick another reading, or type your own. Yours is written in the box after the chord,
+			in curly brackets, and the band ignores it:
+		</p>
+		{@render example(`"Turnaround"|G|E7{VI7}|A7|D7|`, true)}
+	</section>
+
 	<section id="phone">
-		<h2>12. Writing on a phone</h2>
+		<h2>13. Writing on a phone</h2>
 		<p>
 			On a phone, tapping the box opens a <b>music keypad</b> instead of the normal keyboard. It has
 			only the keys you need, so no hunting for <code>|</code>.
@@ -345,7 +384,7 @@
 	</section>
 
 	<section id="mistakes">
-		<h2>13. If something goes wrong</h2>
+		<h2>14. If something goes wrong</h2>
 		<p>A red message appears under the box. The usual causes:</p>
 		<ul class="mb-4 list-disc space-y-2 pl-6">
 			<li>
@@ -367,7 +406,7 @@
 	</section>
 
 	<section id="everything">
-		<h2>14. Putting it all together</h2>
+		<h2>15. Putting it all together</h2>
 		{@render example(
 			`"Verse"|G|G|C|G|\n"Chorus"|C|G|D,C|G|\n"Banjo Break" as Verse\n"Waltz Tag" [M:3/4] |C|G|[2/4]D|G|`
 		)}

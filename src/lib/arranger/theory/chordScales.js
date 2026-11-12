@@ -6,12 +6,13 @@
  * and the tensions (9, 11, 13) that sound good on a beat.
  */
 import { chordTones, notesAbove, semitones } from './musicInKey.js';
+import { MODES as PARENT_MODES } from './modes.js';
 
 /* Semitones above the root, one note per letter */
 const MODES = {
-	lydian: [0, 2, 4, 6, 7, 9, 11], // major chords borrowed from outside the key: bVII, bVI
-	dorian: [0, 2, 3, 5, 7, 9, 10], // borrowed minor chords: iv
-	mixolydian: [0, 2, 4, 5, 7, 9, 10], // dominants leading to a major chord: II7, I7
+	lydian: PARENT_MODES.lydian.scale, // major chords borrowed from outside the key: bVII, bVI
+	dorian: PARENT_MODES.dorian.scale, // borrowed minor chords: iv
+	mixolydian: PARENT_MODES.mixolydian.scale, // dominants leading to a major chord: II7, I7
 	phrygianDominant: [0, 1, 4, 5, 7, 8, 10], // dominants leading to a minor chord: III7, VI7, VII7 (b9, b13)
 	lydianDominant: [0, 2, 4, 6, 7, 9, 10] // tritone subs: bII7, bVI7 (#11)
 };

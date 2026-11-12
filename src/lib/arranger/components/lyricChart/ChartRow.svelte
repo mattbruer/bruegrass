@@ -5,7 +5,7 @@
 	/**
 	 * @type {{
 	 *   row: Extract<import('../../lyricChart/chartBlocks.js').ChartBlock, { kind: 'row' }>,
-	 *   label: (chord: string) => string
+	 *   label: (chord: string, place?: import('../../chart/chartAnalysis.js').ChordPlace) => string
 	 * }}
 	 */
 	let { row, label } = $props();
