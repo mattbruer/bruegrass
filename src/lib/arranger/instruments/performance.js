@@ -18,6 +18,7 @@ import { chopNotes, mandoSampleUrl } from './mandolin.js';
 import { mod12 } from '../chart/key.js';
 import { rhythm } from '../chart/timeline.js';
 import { endBeforeStops, sectionsToPlay, stops, withoutStops } from '../chart/noChord.js';
+import { secondsPerQuarter } from '../chart/tempo.js';
 
 /**
  * @typedef {ReturnType<typeof preparePerformance>} Performance
@@ -43,7 +44,7 @@ export function preparePerformance(
 	written,
 	{ bpm = 120, capo = 0, transpose = 0, loop = true, melody = null, bass = null, offset = 0 } = {}
 ) {
-	const quarter = 60 / bpm;
+	const quarter = secondsPerQuarter(bpm);
 	const passQuarters = rhythm(written).quarters;
 	const passLength = passQuarters * quarter;
 	const shift = capo + transpose;

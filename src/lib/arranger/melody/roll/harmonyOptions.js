@@ -9,6 +9,7 @@ import { withHarmonies } from '../harmony/writeHarmonies.js';
 import { partBlockText, withPartFrom } from '../harmony/keepParts.js';
 import { concertChordAt } from '../../chart/concertChords.js';
 import { withPartBars } from './freshHarmonyBars.js';
+import { loadTuneReader } from '../abcjs.js';
 
 /**
  * @typedef {{ id: string, name: string, abc: string, current: boolean }} HarmonyOption
@@ -24,7 +25,7 @@ import { withPartBars } from './freshHarmonyBars.js';
  */
 export async function harmonyOptions(abc, partId, song) {
 	if (song.sections.length === 0) return [];
-	const parse = await parser();
+	const parse = await loadTuneReader();
 	const tune = parse(abc);
 	if (!tune) return [];
 	const chordAt = concertChordAt(song.sections, song.capo);
@@ -55,10 +56,5 @@ export async function harmonyOptions(abc, partId, song) {
  */
 export async function withOption(abc, option, partId, bars) {
 	if (!bars) return withPartFrom(abc, option.abc, partId);
-	return withPartBars(abc, option.abc, await parser(), [partId], bars);
-}
-
-async function parser() {
-	const { default: abcjs } = await import('abcjs');
-	return (/** @type {string} */ text) => abcjs.parseOnly(text)[0];
+	return withPartBars(abc, option.abc, await loadTuneReader(), [partId], bars);
 }

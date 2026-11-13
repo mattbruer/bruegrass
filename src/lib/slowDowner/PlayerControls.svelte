@@ -9,6 +9,7 @@
 	import { SOUNDS, soundById } from './sounds.js';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import { settings } from '$lib/settings/settings.svelte.js';
+	import { formatClock } from '$lib/utils/formatClock.js';
 
 	/** @type {{ player: import('./StretchPlayer.svelte.js').StretchPlayer }} */
 	let { player } = $props();
@@ -34,14 +35,6 @@
 		event.preventDefault();
 		togglePlay();
 	}
-
-	/** @param {number} seconds */
-	function formatTime(seconds) {
-		const whole = Math.floor(seconds || 0);
-		const minutes = Math.floor(whole / 60);
-		const rest = String(whole % 60).padStart(2, '0');
-		return `${minutes}:${rest}`;
-	}
 </script>
 
 <svelte:window onkeydown={onKeydown} />
@@ -62,7 +55,7 @@
 			{#if player.loading}
 				Loading…
 			{:else}
-				{formatTime(player.time)} / {formatTime(player.duration)}
+				{formatClock(player.time)} / {formatClock(player.duration)}
 			{/if}
 		</p>
 	</div>

@@ -13,6 +13,7 @@
 import { MAX_FRET, midiNote } from '../instruments/guitar.js';
 import { rhythm } from '../chart/timeline.js';
 import { MELODY_CHANNEL, voiceChannels } from './harmony/partChannels.js';
+import { secondsPerQuarter } from '../chart/tempo.js';
 
 /*
  * Register. Guitar music is written an octave above where it sounds, so a
@@ -151,7 +152,7 @@ function firstBarLine(tune) {
  */
 export function melodyEvents(melody, { sections, offset = 0, bpm = 120, shift = 0, loop = true }) {
 	const { quarters } = rhythm(sections);
-	const quarter = 60 / bpm;
+	const quarter = secondsPerQuarter(bpm);
 	const period = quarters * quarter;
 	// The pickup leads into bar 1, so it belongs only to a pass that starts there
 	const from = offset === 0 ? -melody.pickup : 0;

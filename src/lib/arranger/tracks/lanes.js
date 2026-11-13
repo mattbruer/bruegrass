@@ -13,6 +13,7 @@ import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { RECORD_TRACKS } from '../takes/recordTracks.js';
 import { takeStart } from '../takes/takeTiming.js';
+import { secondsPerQuarter } from '../chart/tempo.js';
 
 /**
  * @typedef {import('$lib/storage/songTakes.js').TakeDocument} TakeDocument
@@ -48,7 +49,7 @@ export function bandLanes({ sections, bass, melody }) {
  * @returns {TakeLane[]}
  */
 export function takeLanes(takes, bpm) {
-	const quarters = bpm / 60;
+	const quarters = 1 / secondsPerQuarter(bpm);
 	return RECORD_TRACKS.map((track) => {
 		const onTrack = takes.filter((take) => take.trackId === track.id);
 		const inUse = onTrack.find((take) => take.inUse);

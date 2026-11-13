@@ -20,6 +20,7 @@
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import { formatClock } from '$lib/utils/formatClock.js';
 
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
 	let { transcription } = $props();
@@ -44,12 +45,6 @@
 		if (event.code !== 'Space' || busy || event.defaultPrevented) return;
 		event.preventDefault();
 		togglePlay();
-	}
-
-	/** @param {number} seconds */
-	function clock(seconds) {
-		const whole = Math.floor(seconds || 0);
-		return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
 	}
 </script>
 
@@ -93,7 +88,7 @@
 		>
 	</div>
 	<span class="text-sm text-ink-soft tabular-nums">
-		{clock(player.time)} / {clock(player.duration)}
+		{formatClock(player.time)} / {formatClock(player.duration)}
 	</span>
 
 	<label class="flex items-center gap-2">

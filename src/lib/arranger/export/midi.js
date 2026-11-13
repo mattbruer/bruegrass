@@ -7,6 +7,7 @@ import { bassPart } from '../bass/songBass.js';
 import { leadOnsets } from '../bass/melodySpace.js';
 import { mod12 } from '../chart/key.js';
 import { chopNotes } from '../instruments/mandolin.js';
+import { secondsPerQuarter } from '../chart/tempo.js';
 
 /** Ticks per quarter note. */
 const PPQ = 480;
@@ -95,7 +96,7 @@ export function arrangementToMidi(
 	const playable = sectionsToPlay(sections);
 	const silent = stops(sections);
 	const passQuarters = rhythm(sections).quarters;
-	const quarter = 60 / bpm;
+	const quarter = secondsPerQuarter(bpm);
 	/** @template {{ time: number }} T @param {T[]} notes */
 	const quiet = (notes) => withoutStops(notes, silent, (note) => note.time / quarter, passQuarters);
 	const tuning = guitarTuning(playable, shift);

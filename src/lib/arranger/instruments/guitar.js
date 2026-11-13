@@ -2,6 +2,7 @@ import { chordShape } from './chordBook.js';
 import { rhythm, slotPositions } from '../chart/timeline.js';
 import { pickPattern, patternStrokes } from './strumPatterns.js';
 import { createRng } from './seededRandom.js';
+import { secondsPerQuarter } from '../chart/tempo.js';
 
 /** @typedef {import('../chart/timeline.js').SlotPosition} SlotPosition */
 
@@ -268,7 +269,7 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 	const { beats, quarters, slots } = rhythm(sections);
 	if (beats.length === 0) throw new Error('Nothing to play');
 
-	const quarter = 60 / bpm;
+	const quarter = secondsPerQuarter(bpm);
 	const passLength = quarters * quarter;
 	const kept = loop ? LOOP_PASSES : 1;
 

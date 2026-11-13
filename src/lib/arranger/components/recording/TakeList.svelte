@@ -7,6 +7,7 @@
 	import { RECORD_TRACKS } from '../../takes/recordTracks.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import { formatClock } from '$lib/utils/formatClock.js';
 
 	const { recording, arrangement } = useArranger();
 
@@ -19,12 +20,6 @@
 			takes: recording.takes.filter((take) => take.trackId === track.id)
 		})).filter((track) => track.takes.length > 0)
 	);
-
-	/** @param {number} seconds */
-	function length(seconds) {
-		const whole = Math.round(seconds);
-		return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
-	}
 </script>
 
 {#each byTrack as track (track.id)}
@@ -45,7 +40,7 @@
 							Take {index + 1}
 						</button>
 						<span class="details">
-							{length(take.seconds)}{take.from === 'file' ? ` · ${take.fileName}` : ''}
+							{formatClock(take.seconds)}{take.from === 'file' ? ` · ${take.fileName}` : ''}
 						</span>
 						<button
 							type="button"

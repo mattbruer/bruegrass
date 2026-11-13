@@ -3,6 +3,7 @@
  * Tone.js synth shaped like a plucked upright. A stand-in until there are
  * bass samples; only this file should need to change when they arrive.
  */
+import { secondsPerQuarter } from '../chart/tempo.js';
 
 /*
  * bassline.js pitches use the MIDI export's numbering, where 40 is the bass's
@@ -42,7 +43,7 @@ const VOLUME_DB = -4;
  * @returns {{ notes: UprightNote[], passes: number }} passes: how many passes the notes span
  */
 export function bassEvents({ notes, passes }, { bpm = 120 } = {}) {
-	const quarter = 60 / bpm;
+	const quarter = secondsPerQuarter(bpm);
 	const timed = notes.map((note) => ({
 		time: note.beat * quarter,
 		duration: note.length * note.gate * quarter,

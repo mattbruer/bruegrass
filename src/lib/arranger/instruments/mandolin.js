@@ -9,6 +9,7 @@
 import { rootPitchClass } from './guitar.js';
 import { rhythm } from '../chart/timeline.js';
 import { createRng } from './seededRandom.js';
+import { secondsPerQuarter } from '../chart/tempo.js';
 
 /** Course sample prefixes, G D A E. */
 export const COURSES = ['G', 'D', 'A', 'E'];
@@ -76,7 +77,7 @@ export function chopVoicing(name, capo = 0) {
  * @returns {MandoNote[]}
  */
 export function chopNotes(sections, { capo = 0, bpm = 120 } = {}) {
-	const quarter = 60 / bpm;
+	const quarter = secondsPerQuarter(bpm);
 	const rng = createRng(7);
 	const { beats, slots } = rhythm(sections);
 	return beats.flatMap((beat) => {

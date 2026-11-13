@@ -15,3 +15,12 @@ export function validTempo(typed) {
 	if (!Number.isFinite(bpm) || bpm <= 0) return TEMPO_DEFAULT;
 	return Math.min(TEMPO_MAX, Math.max(TEMPO_MIN, bpm));
 }
+
+/**
+ * How long one quarter note lasts at this tempo. Every conversion between
+ * the song's time (quarters) and the clock's (seconds) goes through this.
+ * @param {number} bpm quarters per minute
+ */
+export function secondsPerQuarter(bpm) {
+	return 60 / bpm;
+}

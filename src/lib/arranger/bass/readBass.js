@@ -5,6 +5,7 @@
  */
 import { readScore } from '../melody/roll/readScore.js';
 import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
+import { loadAbcjs } from '../melody/abcjs.js';
 
 /* How a written bass line is played: notes are let go a little early, and the downbeat leans in */
 const WRITTEN_GATE = 0.75;
@@ -16,7 +17,7 @@ const VELOCITY = { downbeat: 120, other: 112 };
  */
 export async function readBassScore(abc) {
 	if (!abc.trim()) return null;
-	const abcjs = (await import('abcjs')).default;
+	const abcjs = await loadAbcjs();
 	const tune = abcjs.parseOnly(abc)[0];
 	if (!tune) return null;
 	const read = readScore(abc, tune, 0);

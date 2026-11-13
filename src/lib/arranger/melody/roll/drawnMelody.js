@@ -8,6 +8,7 @@
  * words), and the harmony parts are written fresh in the changed bars only,
  * so hand edits elsewhere stay. Writing a harmony part changes just that part.
  */
+import { loadAbcjs } from '../abcjs.js';
 import { readScore } from './readScore.js';
 import { changedBars, newAbc, rewriteAbc, withKeySignature } from './scoreToAbc.js';
 import { withFreshHarmonyBars } from './freshHarmonyBars.js';
@@ -111,10 +112,6 @@ function hasWords(/** @type {string} */ abc) {
 /** @param {import('../../chart/sectionLyrics.js').SectionLyrics[]} lyrics */
 function hasLyrics(lyrics) {
 	return lyrics.some((section) => section.pickup.trim() || section.bars.some((bar) => bar.trim()));
-}
-
-async function loadAbcjs() {
-	return (await import('abcjs')).default;
 }
 
 /**

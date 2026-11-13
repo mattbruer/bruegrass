@@ -4,6 +4,7 @@
  *
  * abcjs only works in the browser, so it's loaded on first use.
  */
+import { loadAbcjs } from './abcjs.js';
 
 /**
  * @typedef {{
@@ -76,7 +77,7 @@ function widenToFitStaves(target) {
  * @returns {Promise<DrawnTune>}
  */
 export async function drawSheetMusic(target, notation, { transpose = 0 } = {}) {
-	const { default: abcjs } = await import('abcjs');
+	const abcjs = await loadAbcjs();
 
 	const [tune] = abcjs.renderAbc(target, notation, {
 		responsive: 'resize',

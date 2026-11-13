@@ -3,6 +3,7 @@
  * the notation with abcjs, which is loaded on first use.
  */
 import { withHarmonies } from './writeHarmonies.js';
+import { loadAbcjs } from '../abcjs.js';
 
 /**
  * @param {string} notation
@@ -11,7 +12,7 @@ import { withHarmonies } from './writeHarmonies.js';
  * @returns {Promise<{ abc: string, problem: string }>}
  */
 export async function harmonizeAbc(notation, chordAt, partIds) {
-	const { default: abcjs } = await import('abcjs');
+	const abcjs = await loadAbcjs();
 	const [tune] = abcjs.parseOnly(notation);
 	if (!tune) return { abc: notation, problem: 'The melody has no music to harmonise.' };
 	return withHarmonies(notation, tune, chordAt, partIds);

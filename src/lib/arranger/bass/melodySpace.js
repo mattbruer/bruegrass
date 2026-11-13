@@ -4,6 +4,7 @@
  * so a long note and a note followed by a rest count alike.
  */
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
+import { secondsPerQuarter } from '../chart/tempo.js';
 
 const EPSILON = 1e-6;
 /** A note longer than this (a half note) leaves the bass room to move. */
@@ -36,7 +37,7 @@ export function leadOnsetsOfPart(part, bpm) {
 	if (!part) return null;
 	return part.events
 		.filter((event) => event.channel === MELODY_CHANNEL)
-		.map((event) => event.time / (60 / bpm));
+		.map((event) => event.time / secondsPerQuarter(bpm));
 }
 
 /**

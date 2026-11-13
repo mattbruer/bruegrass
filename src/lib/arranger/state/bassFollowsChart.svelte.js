@@ -6,6 +6,7 @@
  * Call once from the arranger's layout, which owns the effect.
  */
 import { untrack } from 'svelte';
+import { loadTuneReader } from '../melody/abcjs.js';
 import { bassFollowingChart } from '../bass/bassFollowsChart.js';
 import { bassSongOf, generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
 
@@ -32,8 +33,7 @@ export function keepBassWithChart(arranger) {
  * @param {string} fresh
  */
 async function followChart(arranger, written, fresh) {
-	const abcjs = (await import('abcjs')).default;
-	const followed = bassFollowingChart(written, fresh, (abc) => abcjs.parseOnly(abc)[0]);
+	const followed = bassFollowingChart(written, fresh, await loadTuneReader());
 	// Only if nothing else changed the bass meanwhile
 	if (followed !== written && arranger.bass.notation === written) arranger.bass.notation = followed;
 }
