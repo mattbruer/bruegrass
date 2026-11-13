@@ -102,8 +102,8 @@
 			<div class="flex items-center gap-2">
 				<ToggleSwitch
 					bind:on={
-						() => transcription.isCyclingBar(bar.number),
-						() => transcription.toggleBarCycle(bar.number)
+						() => transcription.cycle.isJustBar(bar.number),
+						() => transcription.cycle.toggleBar(bar.number)
 					}
 					labelledBy="bar-loop"
 					tip={TIPS.transcription.loop}

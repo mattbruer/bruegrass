@@ -20,7 +20,16 @@
 	import { onMount, tick as rendered, untrack } from 'svelte';
 	import { onEveryFrame } from '../../../audio/analysis/frameLoop.js';
 	import { addNote, changeNote, deleteNote, noteAt } from '../../melody/roll/editNotes.js';
-	import { snapDown, snapNearest, TICKS_PER_QUARTER } from '../../melody/roll/ticks.js';
+	import { snapDown, TICKS_PER_QUARTER } from '../../melody/roll/ticks.js';
+	import {
+		drawnLength,
+		grabbedPart,
+		keyEdit,
+		movedNote,
+		resizedNote,
+		withinRange
+	} from '../../melody/roll/noteGestures.js';
+	import { followScroll, middlePitch } from '../../melody/roll/followView.js';
 	import { pitchRows } from '../../melody/roll/pitchRows.js';
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 
@@ -34,10 +43,7 @@
 	/* Gestures */
 	const MOVE_THRESHOLD = 6; // px before a press counts as a drag
 	const DOUBLE_TAP_MS = 350;
-	const EDGE_MIN = 10; // px of a note's right end that resizes it
-	const EDGE_MAX = 24;
 	/* Following the band */
-	const FOLLOW_AT = 1 / 3; // the playhead sits this far across the view
 	const FOLLOW_PAUSE_MS = 3000; // after you scroll the roll yourself
 
 	/**
@@ -126,6 +132,7 @@
 	let width = $derived(end * tickWidth);
 	let height = $derived(rows.length * rowHeight);
 	let firstIsPickup = $derived(isShort(score.bars[0]));
+	let grid = $derived({ tickWidth, rowHeight, gridStep, end, range });
 
 	onMount(() => {
 		touchScreen = matchMedia('(pointer: coarse)').matches;
@@ -164,14 +171,18 @@
 		playheadLine.style.transform = `translateX(${x}px)`;
 		if (gesture || performance.now() < followPausedUntil) return;
 
-		scroller.scrollLeft = Math.max(0, x - (scroller.clientWidth - LABEL_WIDTH) * FOLLOW_AT);
-		const sounding = notes.find((note) => note.start <= tick && tick < note.start + note.length);
-		if (!sounding) return;
-		const y = (range.highest - sounding.midi) * rowHeight;
-		const view = scroller.clientHeight - RULER_HEIGHT - CHORD_HEIGHT;
-		if (y < scroller.scrollTop || y + rowHeight > scroller.scrollTop + view) {
-			scroller.scrollTop = Math.max(0, y - view / 2);
-		}
+		const view = {
+			width: scroller.clientWidth - LABEL_WIDTH,
+			height: scroller.clientHeight - RULER_HEIGHT - CHORD_HEIGHT,
+			top: scroller.scrollTop
+		};
+		const { left, top } = followScroll(tick, notes, view, {
+			tickWidth,
+			rowHeight,
+			highest: range.highest
+		});
+		scroller.scrollLeft = left;
+		if (top !== null) scroller.scrollTop = top;
 	}
 
 	function pauseFollowing() {
@@ -181,10 +192,7 @@
 	/** Show the tune's middle (or the home note near middle C) when the roll opens. */
 	function scrollToTune() {
 		if (!scroller) return;
-		const pitches = notes.map((note) => note.midi);
-		const middle = pitches.length
-			? (Math.min(...pitches) + Math.max(...pitches)) / 2
-			: 60 + ((tonic + 7) % 12);
+		const middle = middlePitch(notes, tonic);
 		const y = (range.highest - middle) * rowHeight + RULER_HEIGHT - scroller.clientHeight / 2;
 		scroller.scrollTop = Math.max(0, y);
 	}
@@ -205,13 +213,8 @@
 		const rect = /** @type {HTMLElement} */ (surface).getBoundingClientRect();
 		const x = event.clientX - rect.left;
 		const y = event.clientY - rect.top;
-		const midi = range.highest - Math.floor(y / rowHeight);
-		return {
-			x,
-			y,
-			tick: x / tickWidth,
-			midi: Math.min(range.highest, Math.max(range.lowest, midi))
-		};
+		const midi = withinRange(range.highest - Math.floor(y / rowHeight), range);
+		return { x, y, tick: x / tickWidth, midi };
 	}
 
 	/**
@@ -250,13 +253,10 @@
 			}
 			lastTap = { index, time: now };
 			const note = notes[index];
-			const noteWidth = note.length * tickWidth;
-			const edge = Math.min(EDGE_MAX, Math.max(EDGE_MIN, noteWidth * 0.35));
-			const onEdge = at.x > (note.start + note.length) * tickWidth - edge;
 			selected = index;
 			onSound(note.midi);
 			gesture = {
-				kind: onEdge ? 'resize' : 'move',
+				kind: grabbedPart(note, at.x, tickWidth),
 				x: at.x,
 				y: at.y,
 				moved: false,
@@ -294,24 +294,17 @@
 		if (Math.hypot(dx, dy) > MOVE_THRESHOLD) gesture.moved = true;
 		if (!gesture.moved || gesture.kind === 'tap') return;
 
+		const grabbed = { start: gesture.start, midi: gesture.midi, length: gesture.length };
 		if (gesture.kind === 'draw') {
-			const length = Math.max(gridStep, snapNearest(at.tick, gridStep) - gesture.start);
-			preview = addNote(notes, { midi: gesture.midi, start: gesture.start, length }, end);
-		} else if (gesture.kind === 'move') {
-			const shift = snapNearest(dx / tickWidth, gridStep);
-			const start = Math.min(Math.max(0, gesture.start + shift), end - gesture.length);
-			const midi = Math.min(
-				range.highest,
-				Math.max(range.lowest, gesture.midi - Math.round(dy / rowHeight))
-			);
-			if (midi !== gesture.now.midi) onSound(midi);
-			gesture.now = { ...gesture.now, start, midi };
-			preview = changeNote(notes, gesture.index, gesture.now, end);
-		} else {
-			const length = Math.max(gridStep, snapNearest(gesture.length + dx / tickWidth, gridStep));
-			gesture.now = { ...gesture.now, length };
-			preview = changeNote(notes, gesture.index, gesture.now, end);
+			const length = drawnLength(gesture.start, at.tick, gridStep);
+			preview = addNote(notes, { ...grabbed, length }, end);
+			return;
 		}
+		const now =
+			gesture.kind === 'move' ? movedNote(grabbed, dx, dy, grid) : resizedNote(grabbed, dx, grid);
+		if (now.midi !== gesture.now.midi) onSound(now.midi);
+		gesture.now = now;
+		preview = changeNote(notes, gesture.index, now, end);
 	}
 
 	/**
@@ -362,25 +355,17 @@
 	/** @param {KeyboardEvent} event */
 	function keys(event) {
 		if (readOnly || selected < 0 || !notes[selected]) return;
-		const note = notes[selected];
-		const steps = { ArrowUp: 1, ArrowDown: -1 };
-		const moves = { ArrowLeft: -gridStep, ArrowRight: gridStep };
-		if (event.key === 'Delete' || event.key === 'Backspace') {
-			event.preventDefault();
+		const edit = keyEdit(event.key, event.shiftKey, notes[selected], grid);
+		if (!edit) return;
+		event.preventDefault();
+		if (edit === 'delete') {
 			const index = selected;
 			selected = -1;
 			onCommit(deleteNote(notes, index));
-		} else if (event.key in steps) {
-			event.preventDefault();
-			const step = steps[/** @type {keyof typeof steps} */ (event.key)] * (event.shiftKey ? 12 : 1);
-			const midi = Math.min(range.highest, Math.max(range.lowest, note.midi + step));
-			onSound(midi);
-			nudge({ midi });
-		} else if (event.key in moves) {
-			event.preventDefault();
-			const shift = moves[/** @type {keyof typeof moves} */ (event.key)];
-			nudge({ start: Math.min(Math.max(0, note.start + shift), end - note.length) });
+			return;
 		}
+		if ('midi' in edit) onSound(edit.midi);
+		nudge(edit);
 	}
 
 	/** @param {{ midi?: number, start?: number }} change */

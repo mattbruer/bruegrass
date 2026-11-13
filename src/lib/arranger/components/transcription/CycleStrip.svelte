@@ -27,7 +27,7 @@
 	let dragged = $state.raw(
 		/** @type {import('../../transcription/cycle.js').Cycle | null} */ (null)
 	);
-	const shown = $derived(dragged ?? transcription.cycle);
+	const shown = $derived(dragged ?? transcription.cycle.region);
 
 	/** @param {PointerEvent & { currentTarget: HTMLElement }} event */
 	function quartersAt(event) {
@@ -55,10 +55,10 @@
 		const clickedAt = press.quarters;
 		press = null;
 		dragged = null;
-		if (made) return transcription.setCycle(made);
-		if (transcription.cycle) return transcription.setCycling(!transcription.cycling);
+		if (made) return transcription.cycle.set(made);
+		if (transcription.cycle.region) return transcription.cycle.turn(!transcription.cycle.on);
 		const bar = barAround(clickedAt, lines);
-		if (bar) transcription.setCycle(bar);
+		if (bar) transcription.cycle.set(bar);
 		event.preventDefault();
 	}
 
@@ -80,7 +80,7 @@
 	{#if shown}
 		<div
 			class="region"
-			class:on={transcription.cycling || dragged}
+			class:on={transcription.cycle.on || dragged}
 			style:left="{scale.toX(shown.from)}px"
 			style:width="{scale.toX(shown.to) - scale.toX(shown.from)}px"
 		></div>

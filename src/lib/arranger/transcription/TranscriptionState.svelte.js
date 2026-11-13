@@ -56,6 +56,7 @@ import { uprightPitch } from '../instruments/upright.js';
 import { channelInstrument } from '../instruments/tuneInstruments.js';
 import { mixer } from '../mixer/mixer.svelte.js';
 import { heardNotes, laneLevels } from './heardParts.js';
+import { CycleState, leadInBefore } from './CycleState.svelte.js';
 
 /**
  * @typedef {{ key: string, name: string, source: string | Blob }} Recording
@@ -70,8 +71,6 @@ export const PEAKS_PER_SECOND = 200;
 const HIT_SCALE = 6;
 /** The recording lane's id among the lanes that can be muted and soloed. */
 const RECORDING_LANE = 'recording';
-/** Looping a bar starts this many beats before it, so you hear it come in. */
-const LEAD_IN_BEATS = 2;
 
 export class TranscriptionState {
 	player = new StretchPlayer();
@@ -118,9 +117,8 @@ export class TranscriptionState {
 	selectedBeat = $state(null);
 	finding = $state(false);
 	clicksOn = $state(true);
-	/** @type {import('./cycle.js').Cycle | null} the cycle region (kept while it's off, like Logic's) */
-	cycle = $state.raw(null);
-	cycling = $state(false);
+	/** Logic's cycle: the region the player loops while it's on. */
+	cycle = new CycleState(this);
 
 	bars = $derived(this.grid ? layOutBars(this.grid.beats.length, this.grid.bars) : []);
 	bar = $derived(this.bars.find((bar) => bar.number === this.openBar) ?? null);
@@ -128,12 +126,6 @@ export class TranscriptionState {
 	linked = $derived(this.written !== '' && this.arranger.arrangement.text === this.written);
 	/** Where the recording is now, in the song's quarters from bar 1. */
 	quartersNow = $derived(this.grid ? quartersAt(this.grid, this.player.time) : 0);
-	/** The cycle as moments of the recording, for the player (null: off). */
-	cycleSeconds = $derived(
-		this.grid && this.cycling && this.cycle
-			? { from: secondsAt(this.grid, this.cycle.from), to: secondsAt(this.grid, this.cycle.to) }
-			: null
-	);
 	/** The written parts' notes, on the recording's time. */
 	heardNotes = $derived(
 		this.grid
@@ -184,8 +176,7 @@ export class TranscriptionState {
 		this.written = '';
 		this.peaks = null;
 		this.hits = null;
-		this.cycle = null;
-		this.cycling = false;
+		this.cycle.clear();
 		this.markers = {};
 		this.player.setCents(0);
 		this.closeMenus();
@@ -396,7 +387,7 @@ export class TranscriptionState {
 		this.selectedBeat = null;
 		this.naming = false;
 		this.openBar = number;
-		if (!this.player.playing) this.player.seek(this.#leadInBefore(bar.firstBeat));
+		if (!this.player.playing) this.player.seek(leadInBefore(this.grid?.beats ?? [], bar.firstBeat));
 	}
 
 	/** @param {number} beat open a beat's menu (A bar starts here, add, remove) */
@@ -471,49 +462,6 @@ export class TranscriptionState {
 		this.closeMenus();
 	}
 
-	/**
-	 * A new cycle, turned on.
-	 * @param {import('./cycle.js').Cycle} cycle
-	 */
-	setCycle(cycle) {
-		this.cycle = cycle;
-		this.setCycling(true);
-	}
-
-	/**
-	 * Turn the cycle on or off. Turned on while stopped outside it, the
-	 * player waits a couple of beats before it, so you hear it come in.
-	 * @param {boolean} on
-	 */
-	setCycling(on) {
-		this.cycling = on && this.cycle !== null;
-		const grid = this.grid;
-		if (!this.cycling || !this.cycle || !grid || this.player.playing) return;
-		const time = this.player.time;
-		const inside =
-			time >= secondsAt(grid, this.cycle.from) && time < secondsAt(grid, this.cycle.to);
-		if (!inside) this.player.seek(this.#leadInBefore(this.cycle.from + grid.bars.firstBeat));
-	}
-
-	/** @param {number} number cycle just this bar (on), or turn the cycle off when it already is */
-	toggleBarCycle(number) {
-		const bar = this.bars.find((each) => each.number === number);
-		const grid = this.grid;
-		if (!bar || !grid) return;
-		const from = bar.firstBeat - grid.bars.firstBeat;
-		if (this.isCyclingBar(number)) this.setCycling(false);
-		else this.setCycle({ from, to: from + bar.beats });
-	}
-
-	/** @param {number} number the cycle is on and is just this bar */
-	isCyclingBar(number) {
-		const bar = this.bars.find((each) => each.number === number);
-		const grid = this.grid;
-		if (!bar || !grid || !this.cycling || !this.cycle) return false;
-		const from = bar.firstBeat - grid.bars.firstBeat;
-		return this.cycle.from === from && this.cycle.to === from + bar.beats;
-	}
-
 	dispose() {
 		this.player.dispose();
 	}
@@ -537,12 +485,6 @@ export class TranscriptionState {
 		const beats = detectBeats(this.#analysis);
 		this.grid = newBeatGrid(beats, beatsPerBar, findDownbeat(this.#analysis, beats, beatsPerBar));
 		this.closeMenus();
-	}
-
-	/** @param {number} beat */
-	#leadInBefore(beat) {
-		const beats = this.grid?.beats ?? [];
-		return beats[Math.max(0, beat - LEAD_IN_BEATS)] ?? 0;
 	}
 
 	/**

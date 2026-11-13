@@ -136,10 +136,10 @@
 			<button
 				type="button"
 				class="ui-button px-2 py-0.5 text-xs"
-				class:ui-button-on={transcription.cycling}
-				disabled={!transcription.cycle}
-				aria-pressed={transcription.cycling}
-				onclick={() => transcription.setCycling(!transcription.cycling)}
+				class:ui-button-on={transcription.cycle.on}
+				disabled={!transcription.cycle.region}
+				aria-pressed={transcription.cycle.on}
+				onclick={() => transcription.cycle.turn(!transcription.cycle.on)}
 				use:tooltip={TIPS.transcription.cycle}>Cycle</button
 			>
 		</div>
@@ -212,11 +212,12 @@
 			</div>
 		{/if}
 
-		{#if transcription.cycling && transcription.cycle}
+		{#if transcription.cycle.on && transcription.cycle.region}
 			<div
 				class="cycle-shade"
-				style:left="calc(var(--header-width) + {scale.toX(transcription.cycle.from)}px)"
-				style:width="{scale.toX(transcription.cycle.to) - scale.toX(transcription.cycle.from)}px"
+				style:left="calc(var(--header-width) + {scale.toX(transcription.cycle.region.from)}px)"
+				style:width="{scale.toX(transcription.cycle.region.to) -
+					scale.toX(transcription.cycle.region.from)}px"
 			></div>
 		{/if}
 		<div class="playhead" style:left="calc(var(--header-width) + {playheadX}px)"></div>

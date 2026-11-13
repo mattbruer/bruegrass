@@ -43,7 +43,7 @@
 	});
 
 	$effect(() => {
-		transcription.player.setLoop(transcription.cycleSeconds);
+		transcription.player.setLoop(transcription.cycle.seconds);
 	});
 
 	$effect(() => {
@@ -71,9 +71,9 @@
 		if (event.key === '.') return () => transcription.stepBar(1);
 		const bar = transcription.bar;
 		if ((event.key === 'l' || event.key === 'L') && bar)
-			return () => transcription.toggleBarCycle(bar.number);
+			return () => transcription.cycle.toggleBar(bar.number);
 		if (event.key === 'c' || event.key === 'C')
-			return () => transcription.setCycling(!transcription.cycling);
+			return () => transcription.cycle.turn(!transcription.cycle.on);
 		if (event.key === 'Enter' && beat !== null) return () => transcription.barStartsHere();
 	}
 
