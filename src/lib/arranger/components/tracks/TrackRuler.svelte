@@ -18,9 +18,11 @@
 			style:left="{scale.toX(bar.start)}px"
 			style:width="{scale.toX(bar.start + bar.beats) - scale.toX(bar.start)}px"
 		>
-			<span class="number">{bar.label ?? (bar.number === 0 ? 'Count-in' : bar.number)}</span>
+			<span class="number" data-bar={bar.number}
+				>{bar.label ?? (bar.number === 0 ? 'Count-in' : bar.number)}</span
+			>
 			{#if bar.sectionName}
-				<span class="section">{bar.sectionName}</span>
+				<span class="section" data-bar={bar.number}>{bar.sectionName}</span>
 			{/if}
 		</div>
 	{/each}
@@ -50,6 +52,7 @@
 	}
 
 	.number {
+		align-self: flex-start;
 		color: var(--color-ink-soft);
 		font-variant-numeric: tabular-nums;
 	}
@@ -59,6 +62,7 @@
 	}
 
 	.section {
+		align-self: flex-start;
 		font-weight: 700;
 	}
 </style>

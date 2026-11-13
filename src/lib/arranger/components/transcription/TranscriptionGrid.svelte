@@ -1,13 +1,15 @@
 <script>
 	/**
-	 * The track grid, Logic's way: a bar ruler that follows the recording,
+	 * The track grid, Logic's way: the cycle strip (drag across it to play a
+	 * stretch over and over), a bar ruler that follows the recording,
 	 * the Beats row under it (drag a dot onto its hit; tap one for its menu),
 	 * the recording bent onto the bars, the chords by beat, and a lane for
 	 * each part being written (+ Lane adds the bass). Lane names stay put
 	 * while the lanes scroll sideways together; tap a part to edit it in the
-	 * piano roll below. Tap a bar number for its menu (its beats, Loop) and to
-	 * play from it. The playhead follows the recording and the lanes scroll
-	 * with it.
+	 * piano roll below. Click the ruler to play from that spot; click a bar's
+	 * number for its menu (its beats, Loop). The playhead follows the
+	 * recording and the lanes scroll with it. Zoom (settings.transcribe.zoom)
+	 * widens the quarters and heightens the lanes.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { readWrittenBass } from '../../bass/readBass.js';
@@ -19,8 +21,13 @@
 	import BlockLane from '../tracks/BlockLane.svelte';
 	import BeatDots from './BeatDots.svelte';
 	import GridMenu from './GridMenu.svelte';
+	import CycleStrip from './CycleStrip.svelte';
+	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
+	import { mixer } from '../../playback/mixer.svelte.js';
 	import RecordingLane from './RecordingLane.svelte';
 	import ChordLane from './ChordLane.svelte';
+	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -30,7 +37,7 @@
 	const { melody, bass } = useArranger();
 
 	/** The names column (px); the lanes scroll under it. */
-	const HEADER_WIDTH = 104;
+	const HEADER_WIDTH = 150;
 	/** Room for a chord on every beat. */
 	const PIXELS_PER_QUARTER = 44;
 	/** The playhead sits this far across the lanes while following. */
@@ -50,9 +57,16 @@
 
 	const beatsPerBar = $derived(timeSignature(transcription.time).beatsPerBar);
 	const ruler = $derived(
-		rulerFromBars(transcription.bars, beatsPerBar, transcription.grid?.bars.firstBeat ?? 0)
+		rulerFromBars(
+			transcription.bars,
+			beatsPerBar,
+			transcription.grid?.bars.firstBeat ?? 0,
+			transcription.markers
+		)
 	);
-	const scale = $derived(trackScale(rulerSpanWithRoom(ruler, beatsPerBar), PIXELS_PER_QUARTER));
+	const zoom = $derived(settings.transcribe.zoom);
+	const pixelsPerQuarter = $derived(PIXELS_PER_QUARTER * zoom.across);
+	const scale = $derived(trackScale(rulerSpanWithRoom(ruler, beatsPerBar), pixelsPerQuarter));
 	const parts = $derived(
 		transcription.linked ? partLanes(melody.line, writtenBass, transcription.addedLanes) : []
 	);
@@ -60,6 +74,11 @@
 		ADDABLE_LANES.filter((lane) => !parts.some((part) => part.id === lane.id))
 	);
 	const playheadX = $derived(scale.toX(transcription.quartersNow));
+
+	// What the recording plays along with
+	$effect(() => {
+		transcription.parts = parts;
+	});
 
 	let adding = $state(false);
 	/** @type {HTMLDivElement | undefined} */
@@ -74,14 +93,25 @@
 			scroller.scrollLeft = playheadX - lanesWidth * FOLLOW_AT;
 	});
 
-	/** @param {MouseEvent & { currentTarget: HTMLElement }} event */
-	function pickBar(event) {
+	// Zooming keeps the middle of the view where it was
+	let shownPixelsPerQuarter = pixelsPerQuarter;
+	$effect(() => {
+		const change = pixelsPerQuarter / shownPixelsPerQuarter;
+		shownPixelsPerQuarter = pixelsPerQuarter;
+		if (scroller && change !== 1)
+			keepMiddleInView(scroller, { across: change, down: 1 }, { left: HEADER_WIDTH });
+	});
+
+	/**
+	 * A click on a bar's number opens its menu; anywhere else plays from that spot.
+	 * @param {MouseEvent & { currentTarget: HTMLElement }} event
+	 */
+	function clickRuler(event) {
+		const number = /** @type {HTMLElement} */ (event.target).closest('[data-bar]');
+		const bar = Number(/** @type {HTMLElement | null} */ (number)?.dataset.bar);
+		if (bar > 0) return transcription.openBarMenu(bar);
 		const box = event.currentTarget.getBoundingClientRect();
-		const quarters = scale.toQuarters(event.clientX - box.left) + scale.start;
-		const bar = ruler.findLast((each) => each.number > 0 && each.start <= quarters);
-		if (!bar) return;
-		transcription.openBarMenu(bar.number);
-		transcription.seekToQuarters(bar.start);
+		transcription.seekToQuarters(scale.toQuarters(event.clientX - box.left) + scale.start);
 	}
 
 	/** @param {string} id */
@@ -98,36 +128,56 @@
 		style:--header-width="{HEADER_WIDTH}px"
 		style:--lanes-width="{scale.width}px"
 		style:--lanes-height="{lanesHeight}px"
-		style:--quarter="{PIXELS_PER_QUARTER}px"
+		style:--quarter="{pixelsPerQuarter}px"
+		style:--zoom-down={zoom.down}
 		style:--grid-offset="{scale.toX(0)}px"
 	>
+		<div class="header cycle-header">
+			<button
+				type="button"
+				class="ui-button px-2 py-0.5 text-xs"
+				class:ui-button-on={transcription.cycling}
+				disabled={!transcription.cycle}
+				aria-pressed={transcription.cycling}
+				onclick={() => transcription.setCycling(!transcription.cycling)}
+				use:tooltip={TIPS.transcription.cycle}>Cycle</button
+			>
+		</div>
+		<CycleStrip {transcription} {ruler} {scale} />
+
 		<div class="corner"></div>
 		<!-- svelte-ignore a11y_click_events_have_key_events (← → pick beats on a computer) -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="ruler" onclick={pickBar} use:tooltip={TIPS.transcription.ruler}>
+		<div class="ruler" onclick={clickRuler} use:tooltip={TIPS.transcription.ruler}>
 			<TrackRuler bars={ruler} {scale} />
 		</div>
 
 		<div class="header quiet"><span class="name">Beats</span></div>
 		<BeatDots {transcription} {scale} />
 
-		<div class="header recording"><span class="name">Recording</span></div>
+		<div class="header recording">
+			<span class="name">Recording</span>
+			<MuteSoloButtons settings={transcription.recordingLane} name="Recording" />
+		</div>
 		<RecordingLane {transcription} {scale} />
 
 		<div class="header"><span class="name">Chords</span></div>
 		<ChordLane {transcription} {scale} />
 
 		{#each parts as lane (lane.id)}
-			<button
-				type="button"
-				class="header"
-				class:picked-lane={transcription.lane === lane.id}
-				onclick={() => (transcription.lane = lane.id)}
-				aria-pressed={transcription.lane === lane.id}
-				use:tooltip={TIPS.transcription.partLane}
-			>
-				<span class="name">{lane.name}</span>
-			</button>
+			{@const channel = mixer.channels.find((each) => each.id === lane.id)}
+			<div class="header" class:picked-lane={transcription.lane === lane.id}>
+				<button
+					type="button"
+					class="name pick"
+					onclick={() => (transcription.lane = lane.id)}
+					aria-pressed={transcription.lane === lane.id}
+					use:tooltip={TIPS.transcription.partLane}>{lane.name}</button
+				>
+				{#if channel}
+					<MuteSoloButtons settings={channel} name={lane.name} />
+				{/if}
+			</div>
 			<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div
@@ -162,6 +212,13 @@
 			</div>
 		{/if}
 
+		{#if transcription.cycling && transcription.cycle}
+			<div
+				class="cycle-shade"
+				style:left="calc(var(--header-width) + {scale.toX(transcription.cycle.from)}px)"
+				style:width="{scale.toX(transcription.cycle.to) - scale.toX(transcription.cycle.from)}px"
+			></div>
+		{/if}
 		<div class="playhead" style:left="calc(var(--header-width) + {playheadX}px)"></div>
 		<GridMenu {transcription} {scale} />
 	</div>
@@ -177,10 +234,11 @@
 	}
 
 	.tracks {
+		--cycle-row-height: 1.25rem;
 		--ruler-height: 2.5rem;
 		--beats-row-height: 1.5rem;
-		--lane-height: 2.75rem;
-		--recording-lane-height: 5rem;
+		--lane-height: calc(2.75rem * var(--zoom-down));
+		--recording-lane-height: calc(5rem * var(--zoom-down));
 		position: relative;
 		display: grid;
 		grid-template-columns: var(--header-width) var(--lanes-width);
@@ -199,8 +257,17 @@
 
 	.header {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		padding: 0 0.5rem;
+		justify-content: space-between;
+		gap: 0.15rem 0.3rem;
+		padding: 0 0.4rem;
+		text-align: left;
+	}
+
+	.pick {
+		flex: 1;
+		min-width: 0;
 		text-align: left;
 	}
 
@@ -245,6 +312,21 @@
 
 	.part.picked-lane {
 		background: color-mix(in oklch, var(--color-accent) 8%, transparent);
+	}
+
+	.cycle-header {
+		height: var(--cycle-row-height);
+		padding: 0 0.35rem;
+	}
+
+	.cycle-shade {
+		position: absolute;
+		top: var(--cycle-row-height);
+		bottom: 0;
+		z-index: 1;
+		background: color-mix(in oklch, var(--color-accent) 10%, transparent);
+		border-inline: 1px solid color-mix(in oklch, var(--color-accent) 50%, transparent);
+		pointer-events: none;
 	}
 
 	.playhead {

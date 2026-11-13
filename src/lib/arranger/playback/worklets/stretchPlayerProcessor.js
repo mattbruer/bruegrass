@@ -10,6 +10,9 @@
  *               { type: 'frame', seconds }  the stretcher's frame length (the page's Sound)
  *               { type: 'clicks', times, accents }  clicks on these song times (empty: none)
  *               { type: 'loop', from, to }  play this stretch over and over (from null: no loop)
+ *               { type: 'notes', notes }  the written parts' notes to play (partNotes.js)
+ *               { type: 'levels', recording, parts }  0 to 1: the recording's, and each part's
+ *               { type: 'tune', cents }  move the song's pitch a little (fine tuning)
  * Messages out: { type: 'time', seconds } about 40 times a second while playing,
  *               { type: 'ended' } when the song runs out.
  *
@@ -17,7 +20,9 @@
  * tests); worklets.js loads it bundled into one file.
  */
 import { createStretcher, frameSizeFor } from '../../../transcribe/stretch/stretcher.js';
+import { withPitchShift } from '../../../transcribe/stretch/withPitchShift.js';
 import { createBeatClicks } from '../../../transcribe/beatClicks.js';
+import { createPartNotes } from '../../../transcribe/partNotes.js';
 
 /** Play and pause fade over this long, so they never click. */
 const FADE_SECONDS = 0.01;
@@ -27,8 +32,9 @@ const QUANTA_PER_REPORT = 8;
 class StretchPlayerProcessor extends AudioWorkletProcessor {
 	constructor() {
 		super();
-		/** @type {ReturnType<typeof createStretcher> | null} */
+		/** @type {ReturnType<typeof withPitchShift> | null} */
 		this.stretcher = null;
+		this.cents = 0;
 		/** @type {{ left: Float32Array, right?: Float32Array } | null} */
 		this.song = null;
 		this.frameSize = frameSizeFor(sampleRate);
@@ -39,6 +45,9 @@ class StretchPlayerProcessor extends AudioWorkletProcessor {
 		this.quantaSinceReport = 0;
 		this.spareRight = new Float32Array(128);
 		this.clicks = createBeatClicks(sampleRate);
+		this.notes = createPartNotes(sampleRate);
+		this.recordingLevel = 1;
+		this.heardRecordingLevel = 1;
 		/** @type {{ from: number, to: number } | null} */
 		this.loop = null;
 		this.port.onmessage = ({ data }) => this.receive(data);
@@ -67,6 +76,14 @@ class StretchPlayerProcessor extends AudioWorkletProcessor {
 			this.loop = message.from === null ? null : { from: message.from, to: message.to };
 		} else if (message.type === 'clicks') {
 			this.clicks.set(message.times, message.accents);
+		} else if (message.type === 'notes') {
+			this.notes.set(message.notes);
+		} else if (message.type === 'tune') {
+			this.cents = message.cents;
+			this.stretcher?.setCents(this.cents);
+		} else if (message.type === 'levels') {
+			this.recordingLevel = message.recording;
+			this.notes.setLevels(message.parts);
 		}
 	}
 
@@ -82,6 +99,8 @@ class StretchPlayerProcessor extends AudioWorkletProcessor {
 		const right = outputs[0][1] ?? this.spareRight;
 		const from = stretcher.time;
 		stretcher.render(left, right, this.speed);
+		this.applyRecordingLevel(left, right);
+		this.notes.mixInto(left, right, from, stretcher.time);
 		this.fade(left, right);
 		if (this.playing) this.clicks.mixInto(left, right, from, stretcher.time);
 		if (this.playing && this.loop && stretcher.time >= this.loop.to) {
@@ -95,6 +114,22 @@ class StretchPlayerProcessor extends AudioWorkletProcessor {
 		}
 		if (++this.quantaSinceReport >= QUANTA_PER_REPORT) this.report();
 		return true;
+	}
+
+	/**
+	 * The recording at its level (0 when muted), ramped so a change never clicks.
+	 * @param {Float32Array} left
+	 * @param {Float32Array} right
+	 */
+	applyRecordingLevel(left, right) {
+		const target = this.recordingLevel;
+		if (this.heardRecordingLevel === 1 && target === 1) return;
+		for (let i = 0; i < left.length; i++) {
+			const gap = target - this.heardRecordingLevel;
+			this.heardRecordingLevel += Math.max(-this.fadeStep, Math.min(this.fadeStep, gap));
+			left[i] *= this.heardRecordingLevel;
+			right[i] *= this.heardRecordingLevel;
+		}
 	}
 
 	/**
@@ -121,7 +156,10 @@ class StretchPlayerProcessor extends AudioWorkletProcessor {
 	 */
 	startStretcher(seconds) {
 		if (!this.song) return;
-		this.stretcher = createStretcher({ ...this.song, sampleRate, frameSize: this.frameSize });
+		this.stretcher = withPitchShift(
+			createStretcher({ ...this.song, sampleRate, frameSize: this.frameSize })
+		);
+		this.stretcher.setCents(this.cents);
 		this.stretcher.seek(seconds);
 	}
 

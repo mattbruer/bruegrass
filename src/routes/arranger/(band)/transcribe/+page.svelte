@@ -9,7 +9,9 @@
 	 *
 	 * Keys on a computer: Space plays and pauses, ← → pick the beat before or
 	 * after (its menu opens), Alt+← → move the picked beat a little, Enter
-	 * says a bar starts on it, L loops a bar, Escape closes the menu.
+	 * says a bar starts on it, L cycles the open bar, C turns the cycle on
+	 * and off (Logic's), Escape closes the menu, Home
+	 * goes back to the start, comma and full stop a bar back or on (Logic's).
 	 */
 	import { onDestroy } from 'svelte';
 	import { resolve } from '$app/paths';
@@ -40,6 +42,18 @@
 		);
 	});
 
+	$effect(() => {
+		transcription.player.setLoop(transcription.cycleSeconds);
+	});
+
+	$effect(() => {
+		transcription.player.setNotes(transcription.heardNotes);
+	});
+
+	$effect(() => {
+		transcription.player.setLevels(transcription.levels);
+	});
+
 	/** @param {KeyboardEvent} event @returns {(() => void) | undefined} */
 	function keyAction(event) {
 		const beat = transcription.selectedBeat;
@@ -52,8 +66,14 @@
 				? () => transcription.nudgeBeat(NUDGE_SECONDS)
 				: () => transcription.openBeatMenu((beat ?? -1) + 1);
 		if (event.key === 'Escape') return () => transcription.closeMenus();
-		if ((event.key === 'l' || event.key === 'L') && transcription.bar)
-			return () => transcription.setLooping(!transcription.looping);
+		if (event.key === 'Home') return () => transcription.startOver();
+		if (event.key === ',') return () => transcription.stepBar(-1);
+		if (event.key === '.') return () => transcription.stepBar(1);
+		const bar = transcription.bar;
+		if ((event.key === 'l' || event.key === 'L') && bar)
+			return () => transcription.toggleBarCycle(bar.number);
+		if (event.key === 'c' || event.key === 'C')
+			return () => transcription.setCycling(!transcription.cycling);
 		if (event.key === 'Enter' && beat !== null) return () => transcription.barStartsHere();
 	}
 

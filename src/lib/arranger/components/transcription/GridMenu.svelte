@@ -1,10 +1,11 @@
 <script>
 	/**
 	 * The small menu over the grid for what you tapped: a bar number (its
-	 * beats − / +, Loop) or a beat's dot (a bar starts here, add a beat after,
+	 * marker, beats − / +, cycle it) or a beat's dot (a bar starts here, add a beat after,
 	 * remove it). It sits by what it's about; Escape or ✕ closes it.
 	 */
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
+	import { MARKER_NAMES } from '../../transcription/markerNames.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -26,6 +27,16 @@
 				) ?? null)
 	);
 	const isOne = $derived(transcription.bars.some((bar) => bar.firstBeat === beat));
+	/**
+	 * Focus the element when `on` (a marker to name).
+	 * @param {HTMLElement} element
+	 * @param {boolean} on
+	 */
+	function focusWhen(element, on) {
+		if (on) element.focus();
+		return { update: (/** @type {boolean} */ now) => now && element.focus() };
+	}
+
 	const anchor = $derived(
 		transcription.bar ? transcription.bar.firstBeat : beat !== null ? beat : null
 	);
@@ -48,6 +59,28 @@
 					use:tooltip={TIPS.transcription.closeMenu}>✕</button
 				>
 			</div>
+			<label class="flex items-center gap-2">
+				<span>Marker</span>
+				<input
+					type="text"
+					class="min-w-0 flex-1 ui-field px-2 py-1"
+					list="marker-names"
+					placeholder="Verse, Banjo solo…"
+					value={transcription.markers[bar.number] ?? ''}
+					onchange={(event) => transcription.setMarker(bar.number, event.currentTarget.value)}
+					onkeydown={(event) => {
+						if (event.key === 'Enter') event.currentTarget.blur();
+						if (event.key === 'Escape') transcription.closeMenus();
+					}}
+					use:focusWhen={transcription.naming}
+					use:tooltip={TIPS.transcription.marker}
+				/>
+				<datalist id="marker-names">
+					{#each MARKER_NAMES as name (name)}
+						<option value={name}></option>
+					{/each}
+				</datalist>
+			</label>
 			<div class="flex items-center gap-2">
 				<button
 					type="button"
@@ -68,11 +101,14 @@
 			</div>
 			<div class="flex items-center gap-2">
 				<ToggleSwitch
-					bind:on={() => transcription.looping, (on) => transcription.setLooping(on)}
+					bind:on={
+						() => transcription.isCyclingBar(bar.number),
+						() => transcription.toggleBarCycle(bar.number)
+					}
 					labelledBy="bar-loop"
 					tip={TIPS.transcription.loop}
 				/>
-				<span id="bar-loop">Loop this bar</span>
+				<span id="bar-loop">Cycle this bar</span>
 			</div>
 		{:else if beat !== null && beatBar}
 			<div class="flex items-center gap-2">
@@ -111,7 +147,7 @@
 <style>
 	.menu {
 		position: absolute;
-		top: calc(var(--ruler-height) + var(--beats-row-height) + 0.25rem);
+		top: calc(var(--cycle-row-height) + var(--ruler-height) + var(--beats-row-height) + 0.25rem);
 		z-index: 5;
 		display: flex;
 		flex-direction: column;

@@ -8,7 +8,8 @@
 	 * On its own (the Melody tab) it picks its voice and follows the band.
 	 * A page can instead say which voice to edit (`voice`: the transcription
 	 * grid's picked lane) and what to follow (`clock`: a recording's place in
-	 * the song, in quarters), and have an unedited bass start empty
+	 * the song, in quarters; with `seek`, a click on the roll's ruler plays
+	 * from there), a `zoom`, and have an unedited bass start empty
 	 * (`bassStartsEmpty`, to write by ear) instead of showing the band's own,
 	 * and leave out the Key menu when it has its own (`keyMenu`).
 	 */
@@ -27,12 +28,19 @@
 	/**
 	 * @type {{
 	 *   voice?: string,
-	 *   clock?: { playing: boolean, quarters: () => number },
+	 *   clock?: { playing: boolean, quarters: () => number, seek?: (quarters: number) => void },
 	 *   bassStartsEmpty?: boolean,
-	 *   keyMenu?: boolean
+	 *   keyMenu?: boolean,
+	 *   zoom?: { across: number, down: number }
 	 * }}
 	 */
-	let { voice, clock, bassStartsEmpty = false, keyMenu = true } = $props();
+	let { voice, clock, bassStartsEmpty = false, keyMenu = true, zoom } = $props();
+
+	/** @param {number} ticks a click on the roll's ruler: play from there */
+	function seek(ticks) {
+		const quarters = drawing.timeAt(ticks);
+		if (quarters !== null) clock?.seek?.(quarters);
+	}
 
 	const arranger = useArranger();
 	const { arrangement, melody, bass, player } = arranger;
@@ -106,6 +114,8 @@
 			playhead={() => drawing.tickAt(timeNow())}
 			onCommit={commit}
 			onSound={sound}
+			onSeek={clock?.seek ? seek : undefined}
+			{zoom}
 		/>
 		{#if drawing.problem}
 			<p class="mt-2 text-sm text-ink-soft">{drawing.problem}</p>

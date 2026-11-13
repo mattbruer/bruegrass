@@ -27,3 +27,21 @@ export function playheadTicks(sequence) {
 		return item ? (item.src + played - item.t) * TICKS_PER_QUARTER : null;
 	};
 }
+
+/**
+ * The other way: a place on the roll as a time in the music (quarters
+ * from bar 1), the first time it's played.
+ * @param {any[][] | null} sequence as for playheadTicks
+ * @returns {(ticks: number) => number | null} null: a place the band never plays
+ */
+export function playedTime(sequence) {
+	if (!sequence) return (ticks) => ticks / TICKS_PER_QUARTER;
+	const { items, pickup } = walk(sequence[0] ?? []);
+	return (ticks) => {
+		const written = ticks / TICKS_PER_QUARTER;
+		const item = items.find(
+			(each) => each.src <= written + EPSILON && written < each.src + each.length - EPSILON
+		);
+		return item ? item.t + written - item.src - pickup : null;
+	};
+}

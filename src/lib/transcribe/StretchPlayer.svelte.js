@@ -8,6 +8,7 @@
  */
 import { createNativeWorkletNode } from '$lib/arranger/playback/worklets/worklets.js';
 import { clampSpeed } from './speed.js';
+import { clampCents } from './tuning.js';
 
 export class StretchPlayer {
 	/** Seconds into the song of what's playing now. */
@@ -17,6 +18,8 @@ export class StretchPlayer {
 	loading = $state(false);
 	error = $state('');
 	speed = $state(1);
+	/** The song's pitch moved by this much (fine tuning; 0: as recorded). */
+	cents = $state(0);
 
 	/** @type {AudioContext | null} */
 	#context = null;
@@ -29,6 +32,10 @@ export class StretchPlayer {
 	#loop = null;
 	/** @type {{ times: number[], accents: boolean[] }} */
 	#clicks = { times: [], accents: [] };
+	/** @type {import('./partNotes.js').PartNote[]} */
+	#notes = [];
+	/** @type {{ recording: number, parts: Record<string, number> }} */
+	#levels = { recording: 1, parts: {} };
 
 	/**
 	 * The stretcher's frame length (see sounds.js). Takes effect at once, from where it is.
@@ -46,6 +53,24 @@ export class StretchPlayer {
 	setClicks(clicks) {
 		this.#clicks = { times: [...clicks.times], accents: [...clicks.accents] };
 		this.#node?.port.postMessage({ type: 'clicks', ...this.#clicks });
+	}
+
+	/**
+	 * Written notes to play along with the song (empty: none).
+	 * @param {import('./partNotes.js').PartNote[]} notes in order of start
+	 */
+	setNotes(notes) {
+		this.#notes = notes;
+		this.#node?.port.postMessage({ type: 'notes', notes });
+	}
+
+	/**
+	 * How loud the recording and each part's notes are, 0 to 1 (0: muted).
+	 * @param {{ recording: number, parts: Record<string, number> }} levels
+	 */
+	setLevels(levels) {
+		this.#levels = { recording: levels.recording, parts: { ...levels.parts } };
+		this.#node?.port.postMessage({ type: 'levels', ...this.#levels });
 	}
 
 	/**
@@ -115,6 +140,12 @@ export class StretchPlayer {
 		this.time = time;
 	}
 
+	/** @param {number} cents up when positive, within ±50 */
+	setCents(cents) {
+		this.cents = clampCents(cents);
+		this.#node?.port.postMessage({ type: 'tune', cents: this.cents });
+	}
+
 	/** @param {number} speed 1 = as recorded */
 	setSpeed(speed) {
 		this.speed = clampSpeed(speed);
@@ -140,6 +171,9 @@ export class StretchPlayer {
 		node.connect(this.#context.destination);
 		if (this.#frameSeconds) node.port.postMessage({ type: 'frame', seconds: this.#frameSeconds });
 		node.port.postMessage({ type: 'clicks', ...this.#clicks });
+		node.port.postMessage({ type: 'notes', notes: this.#notes });
+		node.port.postMessage({ type: 'tune', cents: this.cents });
+		node.port.postMessage({ type: 'levels', ...this.#levels });
 		node.port.postMessage({
 			type: 'loop',
 			from: this.#loop?.from ?? null,

@@ -20,7 +20,7 @@ import { blankScoreForSong } from './scoreFromChart.js';
 import { chordsUnderBars } from './chordsUnderBars.js';
 import { chordToneOptions } from './chordToneOptions.js';
 import { gridTicks } from './ticks.js';
-import { playheadTicks } from './playheadTicks.js';
+import { playedTime, playheadTicks } from './playheadTicks.js';
 import { rewriteAbc } from './scoreToAbc.js';
 import { BASS_ROWS, MELODY_ROWS } from './pitchRows.js';
 import { BASS_VOICE, readBassScore, readBassVoice } from '../../bass/readBass.js';
@@ -89,6 +89,8 @@ export class MelodyDrawing {
 
 	/** Where the band is on the roll: a time in the music (follow.js) to ticks, or null. */
 	tickAt = $derived(playheadTicks(this.isBass ? null : this.#sequence));
+	/** A place on the roll (ticks) as a time in the music, the first time it's played. */
+	timeAt = $derived(playedTime(this.isBass ? null : this.#sequence));
 
 	/** Edits are written one after another, each from the ABC as the last one left it. */
 	#writing = Promise.resolve();

@@ -1,13 +1,18 @@
 <script>
 	/**
-	 * Transcribe's one row of controls: play, where you are, speed (the
-	 * pitch stays), Count along (a click on every beat, higher on ONE), the
-	 * song's key and time signature (both can be set at any time), and More:
+	 * Transcribe's one row of controls: play, start over and a bar back or
+	 * forward (or click the ruler for any spot), + Marker (name the section
+	 * the playhead is in, at its bar), where you are, speed (the
+	 * pitch stays), fine tuning (TuningControl), Count along (a click on every beat, higher on ONE), the
+	 * song's key and time signature (both can be set at any time), zoom for
+	 * the grid and the piano roll (across and down), and More:
 	 * the whole song's beats counted twice or half as fast, finding them
 	 * again, and how the slowed-down sound is made.
 	 */
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
+	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
+	import TuningControl from './TuningControl.svelte';
 	import { songKeyChoices } from '../../chart/keyChoices.js';
 	import { TIME_SIGNATURES } from '../../transcription/timeSignatures.js';
 	import { MIN_SPEED, MAX_SPEED, SPEED_STEP } from '$lib/transcribe/speed.js';
@@ -60,6 +65,33 @@
 	>
 		{player.playing ? 'Pause' : 'Play'}
 	</button>
+	<div class="flex items-center gap-1" role="group" aria-label="Where in the song">
+		<button
+			type="button"
+			class="ui-button px-3 py-1.5 text-sm"
+			onclick={() => transcription.startOver()}
+			aria-label="Start over"
+			use:tooltip={TIPS.transcription.startOver}>⏮︎</button
+		>
+		<button
+			type="button"
+			class="ui-button px-3 py-1.5 text-sm"
+			onclick={() => transcription.stepBar(-1)}
+			use:tooltip={TIPS.transcription.barBack}>‹ Bar</button
+		>
+		<button
+			type="button"
+			class="ui-button px-3 py-1.5 text-sm"
+			onclick={() => transcription.stepBar(1)}
+			use:tooltip={TIPS.transcription.barForward}>Bar ›</button
+		>
+		<button
+			type="button"
+			class="ml-1 ui-button px-3 py-1.5 text-sm"
+			onclick={() => transcription.markHere()}
+			use:tooltip={TIPS.transcription.addMarker}>+ Marker</button
+		>
+	</div>
 	<span class="text-sm text-ink-soft tabular-nums">
 		{clock(player.time)} / {clock(player.duration)}
 	</span>
@@ -83,6 +115,8 @@
 			use:tooltip={TIPS.transcription.resetSpeed}>{Math.round(player.speed * 100)}%</button
 		>
 	</label>
+
+	<TuningControl {transcription} />
 
 	<span class="flex items-center gap-2">
 		<ToggleSwitch
@@ -121,6 +155,8 @@
 			>
 		{/each}
 	</div>
+
+	<ZoomControl zoom={settings.transcribe.zoom} />
 
 	<details class="more relative ml-auto">
 		<summary class="ui-button px-3 py-1.5 text-sm" use:tooltip={TIPS.transcription.more}

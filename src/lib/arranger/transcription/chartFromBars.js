@@ -8,20 +8,24 @@
  * the song has no key until a chord is written, and the band rests there.
  * A bar whose first beat is empty but has a chord later carries on the
  * chord before it until then.
+ *
+ * Each marker starts a section with its name ("Verse", "Banjo solo"), one
+ * line of the chart each; the bars before the first marker are "Song".
  */
 import { NO_CHORD } from '../chart/noChord.js';
 import { chartCell, isEmptyBar, slotsOf } from './barChords.js';
 
-/** The song's one section, until sections are marked. */
-const SECTION_NAME = 'Song';
+/** The bars before the first marker. */
+const UNMARKED_SECTION = 'Song';
 
 /**
  * @param {import('./barPlan.js').Bar[]} bars
  * @param {{ id: string, beatsPerBar: number }} time from timeSignatures.js
  * @param {Record<number, import('./barChords.js').Slots | string>} chords bar number → its slots
+ * @param {Record<number, string>} [markers] bar number → the name of the section starting there
  * @returns {string}
  */
-export function chartFromBars(bars, time, chords) {
+export function chartFromBars(bars, time, chords, markers = {}) {
 	let carried = NO_CHORD;
 	const cells = bars.map((bar) => {
 		const slots = slotsOf(chords[bar.number], bar.beats);
@@ -35,5 +39,24 @@ export function chartFromBars(bars, time, chords) {
 		return `${meter}${cell}`;
 	});
 	const songMeter = time.id === '4/4' ? '' : `[M:${time.id}]`;
-	return `"${SECTION_NAME}"${songMeter}|${cells.join('|')}|`;
+	return sectionsOf(bars, markers)
+		.map(({ name, from, to }, index) => {
+			const meter = index === 0 ? songMeter : '';
+			return `"${name}"${meter}|${cells.slice(from, to).join('|')}|`;
+		})
+		.join('\n');
+}
+
+/**
+ * The bars split where markers are: each section's name and its bars (indexes).
+ * @param {import('./barPlan.js').Bar[]} bars
+ * @param {Record<number, string>} markers
+ */
+function sectionsOf(bars, markers) {
+	const starts = bars.flatMap((bar, index) => {
+		const name = markers[bar.number]?.replaceAll('"', '').trim();
+		return name ? [{ name, from: index }] : [];
+	});
+	if (starts[0]?.from !== 0) starts.unshift({ name: UNMARKED_SECTION, from: 0 });
+	return starts.map((start, i) => ({ ...start, to: starts[i + 1]?.from ?? bars.length }));
 }

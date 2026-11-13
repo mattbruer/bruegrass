@@ -8,6 +8,7 @@
 	import MelodyDrawing from '../pianoRoll/MelodyDrawing.svelte';
 	import { BASS_VOICE } from '../../bass/readBass.js';
 	import { HARMONY_PARTS } from '../../melody/harmony/harmonyParts.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
 
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
 	let { transcription } = $props();
@@ -22,13 +23,21 @@
 		get playing() {
 			return transcription.player.playing;
 		},
-		quarters: () => transcription.quartersNow
+		quarters: () => transcription.quartersNow,
+		/** @param {number} quarters */
+		seek: (quarters) => transcription.seekToQuarters(quarters)
 	};
 </script>
 
 {#if transcription.linked}
 	<section class="flex flex-col gap-2 ui-card p-3 sm:p-4" aria-label="Piano roll">
 		<h2 class="text-sm font-bold">Piano roll · {laneName}</h2>
-		<MelodyDrawing voice={transcription.lane} {clock} bassStartsEmpty keyMenu={false} />
+		<MelodyDrawing
+			voice={transcription.lane}
+			{clock}
+			bassStartsEmpty
+			keyMenu={false}
+			zoom={settings.transcribe.zoom}
+		/>
 	</section>
 {/if}

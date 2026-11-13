@@ -196,8 +196,21 @@ export const TIPS = Object.freeze({
 		startSong:
 			'A new song on this recording’s bars, at its tempo, to write the chords and tune on.',
 		play: 'Play or pause the recording (Space).',
+		startOver: 'Back to the start of the recording (Home).',
+		barBack: 'Back to the start of this bar, or the one before if it’s only just started (comma).',
+		barForward: 'On to the start of the next bar (full stop).',
+		addMarker:
+			'Mark where a section starts, like “Verse” or “Banjo solo”, at the bar the playhead is in. Each marker is a section of the chart.',
+		marker:
+			'The name of the section starting at this bar. It becomes a section of the chart. Clear it to take the marker away.',
 		speed: 'How fast the recording plays: lower is slower. The pitch stays the same.',
 		resetSpeed: 'Back to the recording’s own speed.',
+		tuneDown:
+			'Lower the recording a cent, for a band that tuned sharp: its notes sit on the piano roll’s instead of between them.',
+		tuneUp: 'Raise the recording a cent, for a band that tuned flat.',
+		tuneReset: 'How far the recording’s pitch is moved, in cents. Tap for as recorded.',
+		findTuning:
+			'Measure how far the band is from A = 440 and tune the recording back by that much. Then nudge by ear if it needs it.',
 		countAlong:
 			'Click on every beat as the recording plays, higher on each ONE, so you can hear if the bars fit.',
 		key: 'The song’s key, if you know it: the tune’s notes are spelled in it. Not known, it’s guessed from the first chord.',
@@ -207,7 +220,8 @@ export const TIPS = Object.freeze({
 		halveBeats: 'For when the count is twice the song’s speed: every other beat.',
 		findAgain:
 			'Find the beats and bars again from the recording. Your fixes to them are forgotten.',
-		ruler: 'Tap a bar to play from it and open its menu: its beats, and Loop.',
+		ruler:
+			'Click anywhere to play from there. Click a bar’s number for its menu: its beats, and Loop.',
 		beatDot:
 			'A beat. If its hit sits off the line below, drag the dot onto the hit; it snaps. Tap it for more.',
 		recordingLane:
@@ -219,12 +233,28 @@ export const TIPS = Object.freeze({
 			'Add a part to write by ear, like the bass. Most songs don’t need it: the band plays its own.',
 		fewerBeats: 'This bar has a beat fewer. The bars after it move along.',
 		moreBeats: 'This bar has a beat more. The bars after it move along.',
-		loop: 'Play this bar over and over, with a couple of beats before it.',
+		loop: 'Play just this bar over and over (L). Drag across the strip at the top for more bars.',
+		cycle: 'Turn the cycle on or off (C): play the stretch marked in the strip over and over.',
+		cycleStrip:
+			'Drag across to play those bars over and over (the cycle). Click to turn it on or off.',
 		closeMenu: 'Close.',
 		barStartsHere:
 			'This beat is a ONE: the nearest bar line moves here, and the bars after it move along.',
 		addBeat: 'Add a beat the finder missed, halfway after this one.',
 		removeBeat: 'Take this beat away: one the finder heard that isn’t there.'
+	},
+
+	zoom: {
+		across: {
+			out: 'Zoom out across: more of the song fits.',
+			in: 'Zoom in across: more room for each beat.',
+			reset: 'Back to the usual width.'
+		},
+		down: {
+			out: 'Zoom out down: shorter lanes and piano-roll rows.',
+			in: 'Zoom in down: taller lanes and piano-roll rows.',
+			reset: 'Back to the usual height.'
+		}
 	},
 
 	tracks: {

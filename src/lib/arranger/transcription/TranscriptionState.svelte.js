@@ -19,7 +19,7 @@
  */
 import { StretchPlayer } from '$lib/transcribe/StretchPlayer.svelte.js';
 import { waveformPeaks } from '../takes/waveformPeaks.js';
-import { layOutBars, withBarLength, withBeatsPerBar } from './barPlan.js';
+import { barAt, layOutBars, withBarLength, withBeatsPerBar } from './barPlan.js';
 import {
 	newBeatGrid,
 	nearestBeat,
@@ -45,9 +45,17 @@ import { slotsFromTyped, slotsOf } from './barChords.js';
 import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
 import { withKeyField } from '../chart/keyField.js';
 import { quartersAt, secondsAt } from './tempoMap.js';
+import { barStepTarget } from './barStep.js';
+import { findTuning } from '$lib/transcribe/findTuning.js';
+import { clampCents } from '$lib/transcribe/tuning.js';
 import { STARTER_SONG } from '../starterSong.js';
 import { okToDiscardChanges } from '../state/guardUnsavedChanges.svelte.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
+import { BASS_VOICE } from '../bass/readBass.js';
+import { uprightPitch } from '../instruments/upright.js';
+import { channelInstrument } from '../instruments/tuneInstruments.js';
+import { mixer } from '../playback/mixer.svelte.js';
+import { heardNotes, laneLevels } from './heardParts.js';
 
 /**
  * @typedef {{ key: string, name: string, source: string | Blob }} Recording
@@ -60,6 +68,8 @@ import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 export const PEAKS_PER_SECOND = 200;
 /** Onset strength (in its own spread) drawn full height. */
 const HIT_SCALE = 6;
+/** The recording lane's id among the lanes that can be muted and soloed. */
+const RECORDING_LANE = 'recording';
 /** Looping a bar starts this many beats before it, so you hear it come in. */
 const LEAD_IN_BEATS = 2;
 
@@ -86,6 +96,17 @@ export class TranscriptionState {
 	written = $state('');
 	/** The part the piano roll edits (a voice id). */
 	lane = $state(MELODY_CHANNEL);
+	/** @type {Record<number, string>} bar number → the section (marker) starting there */
+	markers = $state.raw({});
+	/** The open bar's menu is for naming its marker (its name box takes the keys). */
+	naming = $state(false);
+	/**
+	 * The part lanes as the grid shows them (it reads the written bass), to hear with the recording.
+	 * @type {import('../tracks/lanes.js').BandLane[]}
+	 */
+	parts = $state.raw([]);
+	/** The recording's own mute and solo (the parts' are their mixer channels'). */
+	recordingLane = $state({ mute: false, solo: false });
 
 	/** @type {Float32Array | null} */
 	peaks = $state.raw(null);
@@ -97,7 +118,9 @@ export class TranscriptionState {
 	selectedBeat = $state(null);
 	finding = $state(false);
 	clicksOn = $state(true);
-	looping = $state(false);
+	/** @type {import('./cycle.js').Cycle | null} the cycle region (kept while it's off, like Logic's) */
+	cycle = $state.raw(null);
+	cycling = $state(false);
 
 	bars = $derived(this.grid ? layOutBars(this.grid.beats.length, this.grid.bars) : []);
 	bar = $derived(this.bars.find((bar) => bar.number === this.openBar) ?? null);
@@ -105,6 +128,30 @@ export class TranscriptionState {
 	linked = $derived(this.written !== '' && this.arranger.arrangement.text === this.written);
 	/** Where the recording is now, in the song's quarters from bar 1. */
 	quartersNow = $derived(this.grid ? quartersAt(this.grid, this.player.time) : 0);
+	/** The cycle as moments of the recording, for the player (null: off). */
+	cycleSeconds = $derived(
+		this.grid && this.cycling && this.cycle
+			? { from: secondsAt(this.grid, this.cycle.from), to: secondsAt(this.grid, this.cycle.to) }
+			: null
+	);
+	/** The written parts' notes, on the recording's time. */
+	heardNotes = $derived(
+		this.grid
+			? heardNotes(this.parts, this.grid, (lane, pitch) => this.#soundingPitch(lane, pitch))
+			: []
+	);
+	/** How loud the recording and each part are (mute and solo). */
+	levels = $derived.by(() => {
+		const lanes = [
+			{ id: RECORDING_LANE, ...this.recordingLane },
+			...this.parts.map((part) => {
+				const channel = mixer.channels.find((each) => each.id === part.id);
+				return { id: part.id, mute: channel?.mute ?? false, solo: channel?.solo ?? false };
+			})
+		];
+		const { [RECORDING_LANE]: recording, ...parts } = laneLevels(lanes);
+		return { recording, parts };
+	});
 	/** The recording's usual tempo (beats a minute). */
 	tempo = $derived.by(() => {
 		const beats = this.grid?.beats ?? [];
@@ -137,6 +184,10 @@ export class TranscriptionState {
 		this.written = '';
 		this.peaks = null;
 		this.hits = null;
+		this.cycle = null;
+		this.cycling = false;
+		this.markers = {};
+		this.player.setCents(0);
 		this.closeMenus();
 		this.#audio = null;
 		this.#analysis = null;
@@ -160,6 +211,8 @@ export class TranscriptionState {
 			this.key = draft.key;
 			this.time = draft.time;
 			this.addedLanes = draft.addedLanes;
+			this.markers = draft.markers;
+			this.player.setCents(draft.cents);
 			this.written = draft.written;
 		} else this.#findBeats();
 		if (!this.linked) this.startSong();
@@ -264,6 +317,62 @@ export class TranscriptionState {
 		if (this.grid) this.player.seek(secondsAt(this.grid, quarters));
 	}
 
+	/**
+	 * Name the section starting at a bar (a marker); an empty name takes the marker away.
+	 * @param {number} number
+	 * @param {string} name
+	 */
+	setMarker(number, name) {
+		const markers = { ...this.markers };
+		const cleaned = name.replaceAll('"', '').trim();
+		if (cleaned) markers[number] = cleaned;
+		else delete markers[number];
+		this.markers = markers;
+		this.#keepDraft();
+		this.#writeChart();
+	}
+
+	/** A marker on the bar the playhead is in: its menu opens to name it. */
+	markHere() {
+		const grid = this.grid;
+		if (!grid) return;
+		const beat = Math.max(grid.bars.firstBeat, Math.floor(this.quartersNow + grid.bars.firstBeat));
+		const bar = barAt(this.bars, beat) ?? this.bars.at(-1);
+		if (!bar) return;
+		this.openBarMenu(bar.number);
+		this.naming = true;
+	}
+
+	/**
+	 * Move the recording's pitch a few cents, so its notes sit on standard pitch.
+	 * @param {number} cents
+	 */
+	setTuning(cents) {
+		this.player.setCents(cents);
+		this.#keepDraft();
+	}
+
+	/** Measure how far the recording is from standard pitch, and tune it back by that much. */
+	findTuning() {
+		const audio = this.#audio;
+		const off = audio && findTuning(channelsOf(audio), audio.sampleRate);
+		if (off !== null && off !== undefined) this.setTuning(clampCents(-off));
+	}
+
+	/** Back to the very start of the recording. */
+	startOver() {
+		this.player.seek(0);
+	}
+
+	/** @param {1 | -1} step to the next bar, or back to this bar's start (the one before if it's only just started) */
+	stepBar(step) {
+		const beats = this.grid?.beats;
+		if (!beats) return;
+		const starts = this.bars.map((bar) => beats[bar.firstBeat]);
+		const target = barStepTarget(starts, this.player.time, step);
+		if (target !== null) this.player.seek(target);
+	}
+
 	/** The beats were counted twice as slow as the song: one more between each. */
 	doubleBeats() {
 		this.#edit((grid) => this.#withOneFound(withBeatsDoubled(grid)));
@@ -285,9 +394,9 @@ export class TranscriptionState {
 		const bar = this.bars.find((each) => each.number === number);
 		if (!bar) return;
 		this.selectedBeat = null;
+		this.naming = false;
 		this.openBar = number;
-		if (this.looping) this.#loopOpenBar();
-		else if (!this.player.playing) this.player.seek(this.#leadInBefore(bar.firstBeat));
+		if (!this.player.playing) this.player.seek(this.#leadInBefore(bar.firstBeat));
 	}
 
 	/** @param {number} beat open a beat's menu (A bar starts here, add, remove) */
@@ -298,9 +407,9 @@ export class TranscriptionState {
 	}
 
 	closeMenus() {
+		this.naming = false;
 		this.openBar = null;
 		this.selectedBeat = null;
-		this.setLooping(false);
 	}
 
 	/**
@@ -362,15 +471,64 @@ export class TranscriptionState {
 		this.closeMenus();
 	}
 
-	/** @param {boolean} on play the open bar over and over */
-	setLooping(on) {
-		this.looping = on && this.bar !== null;
-		if (this.looping) this.#loopOpenBar();
-		else this.player.setLoop(null);
+	/**
+	 * A new cycle, turned on.
+	 * @param {import('./cycle.js').Cycle} cycle
+	 */
+	setCycle(cycle) {
+		this.cycle = cycle;
+		this.setCycling(true);
+	}
+
+	/**
+	 * Turn the cycle on or off. Turned on while stopped outside it, the
+	 * player waits a couple of beats before it, so you hear it come in.
+	 * @param {boolean} on
+	 */
+	setCycling(on) {
+		this.cycling = on && this.cycle !== null;
+		const grid = this.grid;
+		if (!this.cycling || !this.cycle || !grid || this.player.playing) return;
+		const time = this.player.time;
+		const inside =
+			time >= secondsAt(grid, this.cycle.from) && time < secondsAt(grid, this.cycle.to);
+		if (!inside) this.player.seek(this.#leadInBefore(this.cycle.from + grid.bars.firstBeat));
+	}
+
+	/** @param {number} number cycle just this bar (on), or turn the cycle off when it already is */
+	toggleBarCycle(number) {
+		const bar = this.bars.find((each) => each.number === number);
+		const grid = this.grid;
+		if (!bar || !grid) return;
+		const from = bar.firstBeat - grid.bars.firstBeat;
+		if (this.isCyclingBar(number)) this.setCycling(false);
+		else this.setCycle({ from, to: from + bar.beats });
+	}
+
+	/** @param {number} number the cycle is on and is just this bar */
+	isCyclingBar(number) {
+		const bar = this.bars.find((each) => each.number === number);
+		const grid = this.grid;
+		if (!bar || !grid || !this.cycling || !this.cycle) return false;
+		const from = bar.firstBeat - grid.bars.firstBeat;
+		return this.cycle.from === from && this.cycle.to === from + bar.beats;
 	}
 
 	dispose() {
 		this.player.dispose();
+	}
+
+	/**
+	 * A written note's pitch as heard: as the roll plays it when you tap it
+	 * (the part's instrument, the bass on the upright).
+	 * @param {string} lane
+	 * @param {number} pitch as written
+	 */
+	#soundingPitch(lane, pitch) {
+		const shift = this.arranger.arrangement.transpose;
+		if (lane === BASS_VOICE) return uprightPitch(pitch + shift);
+		const octave = channelInstrument(mixer.channels, lane).synth?.octave ?? 0;
+		return pitch - 12 + shift + octave;
 	}
 
 	#findBeats() {
@@ -379,15 +537,6 @@ export class TranscriptionState {
 		const beats = detectBeats(this.#analysis);
 		this.grid = newBeatGrid(beats, beatsPerBar, findDownbeat(this.#analysis, beats, beatsPerBar));
 		this.closeMenus();
-	}
-
-	#loopOpenBar() {
-		const bar = this.bar;
-		const beats = this.grid?.beats;
-		if (!bar || !beats) return;
-		const from = this.#leadInBefore(bar.firstBeat);
-		this.player.setLoop({ from, to: beats[bar.firstBeat + bar.beats] ?? this.player.duration });
-		if (!this.player.playing) this.player.seek(from);
 	}
 
 	/** @param {number} beat */
@@ -416,7 +565,10 @@ export class TranscriptionState {
 	}
 
 	#chart() {
-		return withKeyField(chartFromBars(this.bars, timeSignature(this.time), this.chords), this.key);
+		return withKeyField(
+			chartFromBars(this.bars, timeSignature(this.time), this.chords, this.markers),
+			this.key
+		);
 	}
 
 	/** The song written from here gets the bars, chords, key and time as they are now. */
@@ -437,6 +589,8 @@ export class TranscriptionState {
 			key: this.key,
 			time: this.time,
 			addedLanes: this.addedLanes,
+			markers: this.markers,
+			cents: this.player.cents,
 			written: this.written
 		});
 	}

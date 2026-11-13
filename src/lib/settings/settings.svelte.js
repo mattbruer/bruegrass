@@ -61,7 +61,9 @@ export const settings = $state({
 
 	transcribe: {
 		/** How the slowed-down song is stretched: an id in transcribe/sounds.js. */
-		sound: 'balanced'
+		sound: 'balanced',
+		/** Transcribe's track grid and piano roll: size multipliers (components/zoom/). */
+		zoom: { across: 1, down: 1 }
 	},
 
 	// The lyric chart: set from its page

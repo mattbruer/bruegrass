@@ -10,7 +10,7 @@
 	"suggestions": [
 		{
 			"id": "transcribe-sections",
-			"text": "Transcribe: mark sections, and keep the tune and chords on their bars when a bar is fixed",
+			"text": "Transcribe: keep the tune, chords and markers on their bars when a bar is fixed",
 			"done": false,
 			"addedAt": "2026-11-12T00:00:00.000Z"
 		},
@@ -22,7 +22,7 @@
 		},
 		{
 			"id": "transcribe-loop",
-			"text": "Transcribe: a waveform to pick an A–B loop on, then key change and fine tuning",
+			"text": "Transcribe: the parts on their own instruments, key change; pinch to zoom",
 			"done": false,
 			"addedAt": "2026-11-11T00:00:00.000Z"
 		},

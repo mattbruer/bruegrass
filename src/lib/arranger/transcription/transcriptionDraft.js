@@ -1,7 +1,7 @@
 /**
  * A recording's transcription, kept on this device as you work, so leaving
  * the page (or an iPhone unloading it) never loses your fixes: the beats
- * and bars, the chords, the key and time, lanes you added, and the chart last written
+ * and bars, the chords, the key and time, lanes you added, the markers, the fine tuning, and the chart last written
  * into a song from it.
  * One draft per recording, found again by the recording's key. The song
  * itself is saved with Save, like any song.
@@ -15,8 +15,10 @@ const VERSION = 3;
  * @typedef {{
  *   grid: import('./beatGrid.js').BeatGrid,
  *   chords: Record<number, import('./barChords.js').Slots>,
- *   key: string | null, time: string, addedLanes: string[], written: string
+ *   key: string | null, time: string, addedLanes: string[], written: string,
+ *   markers: Record<number, string>, cents: number
  * }} Transcription
+ *   cents: the recording's pitch moved by this much (fine tuning)
  *   chords: a slot per beat (an older draft kept typed text; barChords.js slotsOf reads both)
  */
 
@@ -38,6 +40,8 @@ export function readTranscriptionDraft(recordingKey) {
 		key: typeof value.key === 'string' ? value.key : null,
 		time: typeof value.time === 'string' ? value.time : DEFAULT_TIME,
 		addedLanes: Array.isArray(value.addedLanes) ? value.addedLanes : [],
+		markers: value.markers && typeof value.markers === 'object' ? value.markers : {},
+		cents: typeof value.cents === 'number' ? value.cents : 0,
 		written: value.written ?? ''
 	};
 }

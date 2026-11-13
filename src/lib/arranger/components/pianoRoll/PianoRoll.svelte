@@ -22,6 +22,7 @@
 	import { addNote, changeNote, deleteNote, noteAt } from '../../melody/roll/editNotes.js';
 	import { snapDown, snapNearest, TICKS_PER_QUARTER } from '../../melody/roll/ticks.js';
 	import { pitchRows } from '../../melody/roll/pitchRows.js';
+	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 
 	/* Size */
 	const LABEL_WIDTH = 44;
@@ -59,7 +60,9 @@
 	 *   playing: boolean,
 	 *   playhead: () => number | null,
 	 *   onCommit: (notes: import('../../melody/roll/editNotes.js').DrawnNote[], length?: number) => void,
-	 *   onSound: (midi: number) => void
+	 *   onSound: (midi: number) => void,
+	 *   onSeek?: (ticks: number) => void,
+	 *   zoom?: { across: number, down: number }
 	 * }}
 	 */
 	let {
@@ -81,7 +84,9 @@
 		playing,
 		playhead,
 		onCommit,
-		onSound
+		onSound,
+		onSeek,
+		zoom = { across: 1, down: 1 }
 	} = $props();
 
 	let touchScreen = $state(false);
@@ -92,11 +97,30 @@
 	/** The notes while a drag is under way (null when none is). */
 	let preview = $state.raw(/** @type {typeof notes | null} */ (null));
 
-	let rowHeight = $derived(touchScreen ? ROW_HEIGHT.touch : ROW_HEIGHT.mouse);
+	let rowHeight = $derived((touchScreen ? ROW_HEIGHT.touch : ROW_HEIGHT.mouse) * zoom.down);
 	let tickWidth = $derived(
-		(gridStep < TICKS_PER_QUARTER / 2 ? QUARTER_WIDTH.fine : QUARTER_WIDTH.coarse) /
+		((gridStep < TICKS_PER_QUARTER / 2 ? QUARTER_WIDTH.fine : QUARTER_WIDTH.coarse) * zoom.across) /
 			TICKS_PER_QUARTER
 	);
+
+	// Zooming keeps the middle of the view where it was
+	let shownSize = { tickWidth, rowHeight };
+	$effect(() => {
+		const change = {
+			across: tickWidth / shownSize.tickWidth,
+			down: rowHeight / shownSize.rowHeight
+		};
+		shownSize = { tickWidth, rowHeight };
+		if (!scroller || (change.across === 1 && change.down === 1)) return;
+		keepMiddleInView(scroller, change, { left: LABEL_WIDTH, top: RULER_HEIGHT });
+		pauseFollowing();
+	});
+
+	/** @param {MouseEvent & { currentTarget: HTMLElement }} event a click on the ruler: play from there */
+	function seekFromRuler(event) {
+		const box = event.currentTarget.getBoundingClientRect();
+		onSeek?.((event.clientX - box.left) / tickWidth);
+	}
 	let rows = $derived(pitchRows(spelling, tonic, range));
 	let shown = $derived(preview ?? notes);
 	let width = $derived(end * tickWidth);
@@ -380,7 +404,14 @@
 	<div class="relative" style:width="{LABEL_WIDTH + width}px">
 		<div class="sticky top-0 z-20 flex" style:height="{RULER_HEIGHT}px">
 			<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
-			<div class="ruler relative" style:width="{width}px">
+			<!-- svelte-ignore a11y_click_events_have_key_events (the page's own keys move around) -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div
+				class="ruler relative"
+				class:seeks={onSeek}
+				style:width="{width}px"
+				onclick={onSeek ? seekFromRuler : undefined}
+			>
 				{#each score.bars as bar, index (index)}
 					<span class="bar-number" style:left="{bar.start * tickWidth}px">{barNumber(index)}</span>
 				{/each}
@@ -500,6 +531,9 @@
 	.chords {
 		font-size: 0.75rem;
 		color: var(--color-ink-soft);
+	}
+	.ruler.seeks {
+		cursor: pointer;
 	}
 	.bar-number {
 		position: absolute;
