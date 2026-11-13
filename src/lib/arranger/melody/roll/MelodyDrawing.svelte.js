@@ -3,7 +3,8 @@
  * ABC, or a melody shaped like the chart when there's none yet), the bass
  * line, which voice is being edited, its notes, and the grid. The ABC stays
  * the saved tune: every finished edit is written straight into it (so
- * drafts and Save cover it), and any change to the ABC is read back here.
+ * drafts and Save cover it), and any change to the ABC is read back here
+ * (from MelodyState and BassState, which parse them once).
  *
  * The bass is a voice of its own, in the song's bass field rather than the
  * tune (bass/): written as played, bar for bar with the chart, on lower
@@ -15,7 +16,7 @@ import { concertChord } from '../../chart/concertChords.js';
 import { isNoChord } from '../../chart/noChord.js';
 import { MELODY_CHANNEL } from '../harmony/partChannels.js';
 import { HARMONY_PARTS } from '../harmony/harmonyParts.js';
-import { readDrawnMelody, writeDrawnMelody } from './drawnMelody.js';
+import { writeDrawnMelody } from './drawnMelody.js';
 import { blankScoreForSong } from './scoreFromChart.js';
 import { chordsUnderBars } from './chordsUnderBars.js';
 import { chordToneOptions } from './chordToneOptions.js';
@@ -23,9 +24,10 @@ import { gridTicks } from './ticks.js';
 import { playedTime, playheadTicks } from './playheadTicks.js';
 import { rewriteAbc } from './scoreToAbc.js';
 import { BASS_ROWS, MELODY_ROWS } from './pitchRows.js';
-import { BASS_VOICE, readBassScore, readBassVoice } from '../../bass/readBass.js';
+import { BASS_VOICE, bassVoice, readBassScore } from '../../bass/readBass.js';
 import { blankBassAbc, generatedBassAbc } from '../../bass/bassAbc.js';
 import { bassSongOf } from '../../bass/songBassStyle.svelte.js';
+import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
 
 /** Every voice's place in the colour wheel: the melody, then each harmony part. */
 const VOICE_ORDER = [MELODY_CHANNEL, ...HARMONY_PARTS.map((part) => part.id)];
@@ -93,9 +95,11 @@ export class MelodyDrawing {
 	/** A place on the roll (ticks) as a time in the music, the first time it's played. */
 	timeAt = $derived(playedTime(this.isBass ? null : this.#sequence));
 
-	/** Edits are written one after another, each from the ABC as the last one left it. */
-	#writing = Promise.resolve();
-	#reads = 0;
+	/** The band's own bass line (not saved in the song), read once per version of it. */
+	#ownBass = {
+		abc: '',
+		read: /** @type {import('../../bass/readBass.js').ReadBass | null} */ (null)
+	};
 
 	/** @param {import('../../state/Arranger.svelte.js').Arranger} arranger */
 	constructor(arranger) {
@@ -130,21 +134,11 @@ export class MelodyDrawing {
 		return chordToneOptions(chord, melodyKey.spelling, note.midi, this.range);
 	});
 
-	/** Read the tune's ABC and the bass line again (or the chart, when there's no melody). */
-	async load() {
-		const { melody, arrangement } = this.arranger;
-		const reading = ++this.#reads;
-		const abc = melody.notation;
-		const [fromAbc, bass] = await Promise.all([
-			abc.trim() ? readDrawnMelody(abc) : null,
-			arrangement.isPlayable ? readBassVoice(this.#bassAbc()) : null
-		]);
-		if (reading !== this.#reads) return;
-		const read = fromAbc
-			? { ...fromAbc, lineStarts: null }
-			: arrangement.isPlayable
-				? this.#fromChart()
-				: null;
+	/** Show the tune and the bass line as they're read now (or the chart, when there's no melody). */
+	load() {
+		const { arrangement } = this.arranger;
+		const bass = arrangement.isPlayable ? bassVoice(this.#bassRead()) : null;
+		const read = this.#fromAbc() ?? (arrangement.isPlayable ? this.#fromChart() : null);
 		this.#show(read && bass ? { ...read, voices: [...read.voices, bass] } : read);
 	}
 
@@ -161,9 +155,7 @@ export class MelodyDrawing {
 	 */
 	commit(notes) {
 		this.notes = notes;
-		const voice = this.current?.id ?? MELODY_CHANNEL;
-		this.#writing = this.#writing.then(() => this.#write(voice, notes)).catch(console.error);
-		return this.#writing;
+		this.#write(this.current?.id ?? MELODY_CHANNEL, notes);
 	}
 
 	/** @param {import('./ticks.js').GridId} id */
@@ -176,13 +168,12 @@ export class MelodyDrawing {
 	 * @param {string} voice
 	 * @param {DrawnNote[]} notes
 	 */
-	async #write(voice, notes) {
+	#write(voice, notes) {
 		if (voice === BASS_VOICE) return this.#writeBass(notes);
 		const { melody } = this.arranger;
 		const song = this.arranger.songForMelody();
 		const abc = melody.notation;
-		const current = abc.trim() ? await readDrawnMelody(abc) : null;
-		const base = current ? { ...current, lineStarts: null } : this.#fromChart();
+		const base = this.#fromAbc() ?? this.#fromChart();
 		const drawn = base.voices.find((each) => each.id === voice);
 		if (!drawn || drawn.problem) return;
 		const newTune = base.lineStarts
@@ -192,13 +183,14 @@ export class MelodyDrawing {
 					lineStarts: base.lineStarts
 				}
 			: null;
-		melody.notation = await writeDrawnMelody({
+		melody.notation = writeDrawnMelody({
 			abc,
 			voice,
 			score: drawn.score,
 			notes,
 			song,
-			newTune
+			newTune,
+			abcjs: abcjsIfLoaded()
 		});
 	}
 
@@ -207,11 +199,20 @@ export class MelodyDrawing {
 	 * first edit writes out the band's own line with it.
 	 * @param {DrawnNote[]} notes
 	 */
-	async #writeBass(notes) {
-		const abc = this.#bassAbc();
-		const read = await readBassScore(abc);
+	#writeBass(notes) {
+		const read = this.#bassRead();
 		if (!read || read.problem) return;
-		this.arranger.bass.notation = rewriteAbc(abc, read.score, notes);
+		this.arranger.bass.notation = rewriteAbc(this.#bassAbc(), read.score, notes);
+	}
+
+	/** The bass line in use, read: the song's edited one, else the band's own. */
+	#bassRead() {
+		const { bass } = this.arranger;
+		if (bass.isWritten) return bass.read;
+		const abc = this.#bassAbc();
+		if (abc !== this.#ownBass.abc || !this.#ownBass.read)
+			this.#ownBass = { abc, read: readBassScore(abc, abcjsIfLoaded()) };
+		return this.#ownBass.read;
 	}
 
 	#bassAbc() {
@@ -219,6 +220,12 @@ export class MelodyDrawing {
 		if (written.trim()) return written;
 		const song = bassSongOf(this.arranger);
 		return this.bassStartsEmpty ? blankBassAbc(song) : generatedBassAbc(song);
+	}
+
+	/** @returns {Read | null} the tune's voices as MelodyState read them */
+	#fromAbc() {
+		const { voices, sequence } = this.arranger.melody;
+		return voices ? { voices, sequence, lineStarts: null } : null;
 	}
 
 	/** @returns {Read} */

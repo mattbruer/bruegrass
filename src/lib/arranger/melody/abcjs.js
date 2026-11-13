@@ -8,10 +8,11 @@ export async function loadAbcjs() {
 
 /**
  * A function that reads ABC text into abcjs's first tune (undefined when
- * there's no music), for code that parses many versions of a tune.
- * @returns {Promise<(abc: string) => import('abcjs').TuneObject | undefined>}
+ * there's no music), for code that reads other versions of a tune or bass
+ * line than the open song's (which state has read already).
+ * @param {any} abcjs
+ * @returns {(abc: string) => import('abcjs').TuneObject | undefined}
  */
-export async function loadTuneReader() {
-	const abcjs = await loadAbcjs();
+export function tuneReader(abcjs) {
 	return (abc) => abcjs.parseOnly(abc)[0];
 }

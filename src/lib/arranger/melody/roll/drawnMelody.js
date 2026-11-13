@@ -1,14 +1,14 @@
 /**
  * The piano roll's way in and out of the tune's ABC: the melody and each
- * harmony part, every one a voice the roll can edit. abcjs reads it (loaded
- * on first use).
+ * harmony part, every one a voice the roll can edit. The open tune is read
+ * in MelodyState; these take what it read.
  *
  * Writing the melody rewrites the drawn bars, then brings the rest along:
  * words under it are placed again on the new notes (when the chart has the
  * words), and the harmony parts are written fresh in the changed bars only,
  * so hand edits elsewhere stay. Writing a harmony part changes just that part.
  */
-import { loadAbcjs } from '../abcjs.js';
+import { tuneReader } from '../abcjs.js';
 import { readScore } from './readScore.js';
 import { changedBars, newAbc, rewriteAbc, withKeySignature } from './scoreToAbc.js';
 import { withFreshHarmonyBars } from './freshHarmonyBars.js';
@@ -31,38 +31,35 @@ import { concertChordAt } from '../../chart/concertChords.js';
 
 /**
  * @param {string} abc
- * @returns {Promise<{ voices: DrawnVoice[], sequence: any[][] | null } | null>}
- *   voices: the melody first; null when the ABC has no music yet
+ * @param {import('abcjs').TuneObject} tune abcjs's parse of this ABC
+ * @returns {DrawnVoice[] | null} the melody first; null when the ABC has no music yet
  */
-export async function readDrawnMelody(abc) {
-	const abcjs = await loadAbcjs();
-	const tune = abcjs.parseOnly(abc)[0];
-	if (!tune) return null;
+export function readVoices(abc, tune) {
 	const voices = voiceChannels(tune).map((id, index) => ({
 		id,
 		name: voiceName(id),
 		...readScore(abc, tune, index)
 	}));
-	if (!voices[0] || voices[0].score.bars.length === 0) return null;
-	return { voices, sequence: tryOrNull(() => abcjs.synth.sequence(tune, {})) };
+	return voices[0] && voices[0].score.bars.length > 0 ? voices : null;
 }
 
 /**
  * The ABC with one voice's notes as drawn.
  * @param {{
  *   abc: string, voice: string, score: Score, notes: DrawnNote[], song: Song,
- *   newTune?: { title: string, keyText: string, lineStarts: Map<number, string> } | null
+ *   newTune?: { title: string, keyText: string, lineStarts: Map<number, string> } | null,
+ *   abcjs?: any
  * }} change voice: which one was drawn; newTune: write a whole tune (the
- *   score came from the chart)
+ *   score came from the chart); abcjs: to bring words and harmony along
+ *   (not needed for a new tune)
  */
-export async function writeDrawnMelody({ abc, voice, score, notes, song, newTune = null }) {
+export function writeDrawnMelody({ abc, voice, score, notes, song, newTune = null, abcjs }) {
 	if (newTune) return newAbc(score, notes, newTune);
 	const written = rewriteAbc(abc, score, notes);
-	if (voice !== MELODY_CHANNEL) return written;
+	if (voice !== MELODY_CHANNEL || !abcjs) return written;
 
-	const abcjs = await loadAbcjs();
-	const parse = (/** @type {string} */ text) => abcjs.parseOnly(text)[0];
-	let text = withWords(written, song, abcjs);
+	const parse = readingEachOnce(tuneReader(abcjs));
+	let text = withWords(written, song, abcjs, parse);
 	if (song.sections.length > 0) {
 		const chordAt = concertChordAt(song.sections, song.capo);
 		text = withFreshHarmonyBars(text, parse, chordAt, changedBars(score, notes));
@@ -95,10 +92,11 @@ function voiceName(id) {
  * @param {string} abc
  * @param {Song} song
  * @param {any} abcjs
+ * @param {(abc: string) => any} parse
  */
-function withWords(abc, song, abcjs) {
+function withWords(abc, song, abcjs, parse) {
 	if (!hasWords(abc) || !hasLyrics(song.lyrics) || song.sections.length === 0) return abc;
-	const tune = abcjs.parseOnly(abc)[0];
+	const tune = parse(abc);
 	const sequence = tune && tryOrNull(() => abcjs.synth.sequence(tune, {}));
 	return sequence ? abcWithWords(abc, tune, sequence, song.sections, song.lyrics).abc : abc;
 }
@@ -112,6 +110,20 @@ function hasWords(/** @type {string} */ abc) {
 /** @param {import('../../chart/sectionLyrics.js').SectionLyrics[]} lyrics */
 function hasLyrics(lyrics) {
 	return lyrics.some((section) => section.pickup.trim() || section.bars.some((bar) => bar.trim()));
+}
+
+/**
+ * One edit passes the same text through several steps (words, harmony);
+ * each version of it is parsed once.
+ * @param {(abc: string) => any} parse
+ * @returns {(abc: string) => any}
+ */
+function readingEachOnce(parse) {
+	const read = new Map();
+	return (abc) => {
+		if (!read.has(abc)) read.set(abc, parse(abc));
+		return read.get(abc);
+	};
 }
 
 /**

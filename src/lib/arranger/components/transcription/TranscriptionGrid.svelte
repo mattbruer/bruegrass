@@ -12,7 +12,6 @@
 	 * widens the quarters and heightens the lanes.
 	 */
 	import { useArranger } from '../../state/context.js';
-	import { readWrittenBass } from '../../bass/readBass.js';
 	import { trackScale } from '../../tracks/trackScale.js';
 	import { rulerFromBars, rulerSpanWithRoom } from '../../transcription/rulerFromBars.js';
 	import { ADDABLE_LANES, partLanes } from '../../transcription/partLanes.js';
@@ -43,17 +42,8 @@
 	/** The playhead sits this far across the lanes while following. */
 	const FOLLOW_AT = 1 / 3;
 
-	/** The written bass line, read from its ABC (null: none yet). */
-	let writtenBass = $state.raw(
-		/** @type {import('../../instruments/bassline.js').BassNote[] | null} */ (null)
-	);
-	$effect(() => {
-		let current = true;
-		readWrittenBass(bass.notation).then((notes) => {
-			if (current) writtenBass = notes;
-		});
-		return () => (current = false);
-	});
+	/** The written bass line (null: none yet). */
+	const writtenBass = $derived(bass.written);
 
 	const beatsPerBar = $derived(timeSignature(transcription.time).beatsPerBar);
 	const ruler = $derived(

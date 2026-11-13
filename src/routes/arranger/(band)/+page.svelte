@@ -16,7 +16,6 @@
 	import ChartLink from '$lib/arranger/components/lyricChart/ChartLink.svelte';
 	import TranscribeLink from '$lib/arranger/components/transcription/TranscribeLink.svelte';
 	import TracksLink from '$lib/arranger/components/tracks/TracksLink.svelte';
-	import MelodyReader from '$lib/arranger/components/melody/MelodyReader.svelte';
 	import { shownMusicView } from '$lib/arranger/components/page/musicView.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 
@@ -44,7 +43,5 @@
 	<PlayerCard showChords={view === 'chords'} />
 	{#if view === 'sheet'}
 		<SheetMusic />
-	{:else}
-		<MelodyReader />
 	{/if}
 </main>

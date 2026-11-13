@@ -22,7 +22,7 @@ const EPSILON = 1e-6;
  *   offset?: number, passes?: number, tuneOnsets?: number[] | null,
  *   style?: import('../instruments/bassStyles.js').BassStyle
  * }} options
- *   written: the edited line for the whole song (readWrittenBass), or null;
+ *   written: the edited line for the whole song (BassState.written), or null;
  *   offset: where these sections start in the song, in quarters;
  *   passes: how many passes the band's own line should span, so it varies
  *   when it repeats (an edited line plays as written every time);

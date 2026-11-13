@@ -23,7 +23,6 @@
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
-	import MelodyReader from '$lib/arranger/components/melody/MelodyReader.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -138,6 +137,4 @@
 			<BottomPane {transcription} />
 		{/if}
 	{/if}
-	<!-- reads the tune (abcjs reads by drawing), so its lanes show the notes drawn in the roll -->
-	<MelodyReader />
 </main>

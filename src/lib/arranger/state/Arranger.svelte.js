@@ -25,13 +25,13 @@ import { PageLayoutState } from './PageLayoutState.svelte.js';
 import { SongState } from './SongState.svelte.js';
 import { RecordingState } from './RecordingState.svelte.js';
 import { ReceiveState } from './ReceiveState.svelte.js';
+import { abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc } from '../melody/abcChords.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
 import { respellBass } from '../bass/respellBass.js';
 import { abcWithWords } from '../melody/words/abcWithWords.js';
 import { readLyrics } from '../chart/sectionLyrics.js';
-import { harmonizeAbc } from '../melody/harmony/harmonizeAbc.js';
-import { harmonyPartsIn } from '../melody/harmony/writeHarmonies.js';
+import { harmonyPartsIn, withHarmonies } from '../melody/harmony/writeHarmonies.js';
 import { withPartsKept } from '../melody/harmony/keepParts.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { concertChordAt } from '../chart/concertChords.js';
@@ -39,7 +39,7 @@ import { mixer } from '../mixer/mixer.svelte.js';
 import { transposeChart } from '../chart/transposeChart.js';
 import { validCapo } from '../chart/capo.js';
 import { withKeyField } from '../chart/keyField.js';
-import { readDrawnMelody, respellDrawnMelody } from '../melody/roll/drawnMelody.js';
+import { respellDrawnMelody } from '../melody/roll/drawnMelody.js';
 import { melodyKey } from '../melody/roll/melodyKey.js';
 import { blankScoreForSong } from '../melody/roll/scoreFromChart.js';
 import { newAbc } from '../melody/roll/scoreToAbc.js';
@@ -85,7 +85,7 @@ export class Arranger {
 	 * Asks first if there's an arrangement to lose.
 	 */
 	writeArrangementFromMelodyChords() {
-		const sequence = this.melody.drawn.sequence;
+		const sequence = this.melody.sequence;
 		const written = sequence ? arrangementFromAbc(sequence) : null;
 		if (!written) return;
 
@@ -126,23 +126,21 @@ export class Arranger {
 	 * @param {string | null} name the key of the guitar's shapes, e.g. "G", "Em"
 	 */
 	async nameSongKey(name) {
+		await abcjsReady();
 		this.arrangement.text = withKeyField(this.arrangement.text, name);
-		await Promise.all([this.#respellMelody(), this.#respellBass()]);
+		this.#respellMelody();
+		this.#respellBass();
 	}
 
-	async #respellMelody() {
-		const abc = this.melody.notation;
-		if (!this.melody.hasNotation) return;
-		const read = await readDrawnMelody(abc);
-		if (!read || read.voices.some((voice) => voice.problem) || this.melody.notation !== abc) return;
-		this.melody.notation = respellDrawnMelody(abc, read.voices, this.melodyKey);
+	#respellMelody() {
+		const { notation, voices } = this.melody;
+		if (!voices || voices.some((voice) => voice.problem)) return;
+		this.melody.notation = respellDrawnMelody(notation, voices, this.melodyKey);
 	}
 
-	async #respellBass() {
-		const abc = this.bass.notation;
-		if (!this.bass.isWritten) return;
-		const respelled = await respellBass(abc, this.melodyKey);
-		if (this.bass.notation === abc) this.bass.notation = respelled;
+	#respellBass() {
+		const { notation, read } = this.bass;
+		this.bass.notation = respellBass(notation, read, this.melodyKey);
 	}
 
 	/**
@@ -161,7 +159,7 @@ export class Arranger {
 
 	/** Write the arrangement's chords (at concert pitch) into a melody that has none. */
 	writeChordsIntoMelody() {
-		const sequence = this.melody.drawn.sequence;
+		const sequence = this.melody.sequence;
 		if (!sequence || !this.arrangement.isPlayable) return;
 
 		const result = abcWithChords(this.melody.notation, sequence, this.arrangement.sections, {
@@ -179,7 +177,7 @@ export class Arranger {
 	 * replacing any words it had.
 	 */
 	writeWordsIntoMelody() {
-		const { tune, sequence } = this.melody.drawn;
+		const { tune, sequence } = this.melody;
 		if (!tune || !sequence || !this.arrangement.isPlayable) return;
 
 		const result = abcWithWords(
@@ -205,9 +203,12 @@ export class Arranger {
 	 */
 	async writeHarmonies(partIds, { fresh = false } = {}) {
 		if (!this.arrangement.isPlayable) return;
-		const before = this.melody.notation;
+		await abcjsReady();
+		const { notation: before, tune } = this.melody;
 		const chordAt = concertChordAt(this.arrangement.sections, this.arrangement.capoFret);
-		const result = await harmonizeAbc(before, chordAt, partIds);
+		const result = tune
+			? withHarmonies(before, tune, chordAt, partIds)
+			: { abc: before, problem: 'The melody has no music to harmonise.' };
 		const unchanged = fresh ? [] : harmonyPartsIn(before).filter((id) => partIds.includes(id));
 		this.melody.notation = withPartsKept(result.abc, before, unchanged);
 		this.harmonyProblem = result.problem;

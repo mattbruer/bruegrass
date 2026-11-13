@@ -24,6 +24,7 @@
 	import { voiceColour } from '../../melody/roll/MelodyDrawing.svelte.js';
 	import BassLineNote from './BassLineNote.svelte';
 	import { songBassStyle } from '../../bass/songBassStyle.svelte.js';
+	import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
 
 	/**
 	 * @type {{
@@ -51,8 +52,9 @@
 
 	$effect(() => {
 		// Read again whenever the tune, the bass (or its style) or the chart it's drawn over changes
-		void melody.notation;
-		void bass.notation;
+		void melody.voices;
+		void bass.read;
+		void abcjsIfLoaded();
 		void songBassStyle.id;
 		void arrangement.sections;
 		void arrangement.capoFret;

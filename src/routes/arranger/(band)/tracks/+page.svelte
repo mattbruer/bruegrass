@@ -8,7 +8,6 @@
 	import { resolve } from '$app/paths';
 	import { useArranger } from '$lib/arranger/state/context.js';
 	import TracksView from '$lib/arranger/components/tracks/TracksView.svelte';
-	import MelodyReader from '$lib/arranger/components/melody/MelodyReader.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -32,5 +31,4 @@
 		</div>
 		<TracksView />
 	</div>
-	<MelodyReader />
 </main>

@@ -22,7 +22,7 @@
 	}
 </script>
 
-{#if melody.drawn.tune && arrangement.isPlayable}
+{#if melody.tune && arrangement.isPlayable}
 	<div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
 		<span class="text-ink-soft">Harmony:</span>
 		{#each HARMONY_PARTS as part (part.id)}

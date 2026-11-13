@@ -10,7 +10,6 @@
 	import { bassPart } from '../../bass/songBass.js';
 	import { leadOnsets } from '../../bass/melodySpace.js';
 	import { rhythm } from '../../chart/timeline.js';
-	import { readWrittenBass } from '../../bass/readBass.js';
 	import { rulerBars, rulerSpan } from '../../tracks/ruler.js';
 	import { trackScale } from '../../tracks/trackScale.js';
 	import { followPlayhead } from '../../tracks/followPlayhead.js';
@@ -25,17 +24,8 @@
 	/** The names column (px); the lanes scroll under it. */
 	const HEADER_WIDTH = 104;
 
-	/** The edited bass line, read from its ABC (null: the band's own line). */
-	let writtenBass = $state.raw(
-		/** @type {import('../../instruments/bassline.js').BassNote[] | null} */ (null)
-	);
-	$effect(() => {
-		let current = true;
-		readWrittenBass(bass.notation).then((notes) => {
-			if (current) writtenBass = notes;
-		});
-		return () => (current = false);
-	});
+	/** The edited bass line (null: the band's own line). */
+	const writtenBass = $derived(bass.written);
 
 	const bars = $derived(rulerBars(arrangement.sections));
 	const band = $derived(

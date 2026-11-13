@@ -1,6 +1,7 @@
 <script>
 	/**
-	 * The melody drawn as sheet music. It redraws once you pause typing, and
+	 * The melody drawn as sheet music (the one place it's drawn; everything
+	 * else reads the tune from MelodyState). It redraws once you pause typing, and
 	 * while the band plays it follows along: the sounding note lights up, a
 	 * cursor glides across the staff, and a new line scrolls into view.
 	 *
@@ -9,7 +10,8 @@
 	 * guitar's shapes, for reading with the capo on.
 	 */
 	import { useArranger } from '../../state/context.js';
-	import { keepMelodyRead } from '../../melody/keepMelodyRead.svelte.js';
+	import { drawSheetMusic } from '../../melody/drawSheetMusic.js';
+	import { playedQuarters, sheetEvents } from '../../melody/follow.js';
 	import { followSheetMusic } from '../../melody/followSheetMusic.js';
 	import SheetViewToggle from './SheetViewToggle.svelte';
 
@@ -25,17 +27,43 @@
 	let page = $state();
 	let windowWidth = $state(0);
 
-	keepMelodyRead(
-		melody,
-		() => page,
-		() => drawnTranspose,
-		() => windowWidth
+	/** Redraw this long after the last keystroke, not on every one. */
+	const REDRAW_DELAY_MS = 200;
+
+	/** Every drawn note as played, with where it's drawn (null: nothing drawn yet). */
+	let drawnNotes = $state.raw(/** @type {import('abcjs').NoteTimingEvent[] | null} */ (null));
+
+	// Draw again when the tune, its key on the page or the page's width changes
+	$effect(() => {
+		const notation = melody.notation;
+		const transpose = drawnTranspose;
+		const target = page;
+		void windowWidth;
+		if (!target) return;
+
+		let replaced = false;
+		const timer = setTimeout(async () => {
+			const drawn = await drawSheetMusic(target, notation, { transpose });
+			if (!replaced) drawnNotes = drawn;
+		}, REDRAW_DELAY_MS);
+
+		return () => {
+			replaced = true; // newer typing wins
+			clearTimeout(timer);
+		};
+	});
+
+	/** The drawn notes on the melody's clock. */
+	let notesOnPage = $derived(
+		drawnNotes && melody.sequence
+			? sheetEvents(drawnNotes, playedQuarters(melody.sequence), melody.pickup)
+			: []
 	);
 
 	// Follow along while playing
 	$effect(() => {
 		const svg = page?.querySelector('svg');
-		const notes = melody.notesOnPage;
+		const notes = notesOnPage;
 		if (!player.isPlaying || !svg || notes.length === 0) return;
 
 		return followSheetMusic({

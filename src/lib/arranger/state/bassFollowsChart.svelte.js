@@ -6,10 +6,11 @@
  * Call once from the arranger's layout, which owns the effect.
  */
 import { untrack } from 'svelte';
-import { loadTuneReader } from '../melody/abcjs.js';
 import { bassFollowingChart } from '../bass/bassFollowsChart.js';
 import { generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
+import { readBassScore } from '../bass/readBass.js';
 import { bassSongOf } from '../bass/songBassStyle.svelte.js';
+import { abcjsIfLoaded } from './abcjsLoaded.svelte.js';
 
 /** @param {import('./Arranger.svelte.js').Arranger} arranger */
 export function keepBassWithChart(arranger) {
@@ -20,21 +21,17 @@ export function keepBassWithChart(arranger) {
 			untrack(() => arranger.melody.line)
 		);
 		void arranger.melodyKey;
+		const abcjs = abcjsIfLoaded();
 		if (!arranger.arrangement.isPlayable) return;
 		const written = untrack(() => arranger.bass.notation);
+		const old = untrack(() => arranger.bass.read);
 		// A line written by ear (as played) is left as written
-		if (!written.trim() || isAsPlayed(written)) return;
-		followChart(arranger, written, generatedBassAbc(song)).catch(console.error);
-	});
-}
+		if (!old || isAsPlayed(written)) return;
 
-/**
- * @param {import('./Arranger.svelte.js').Arranger} arranger
- * @param {string} written
- * @param {string} fresh
- */
-async function followChart(arranger, written, fresh) {
-	const followed = bassFollowingChart(written, fresh, await loadTuneReader());
-	// Only if nothing else changed the bass meanwhile
-	if (followed !== written && arranger.bass.notation === written) arranger.bass.notation = followed;
+		const fresh = generatedBassAbc(song);
+		const neu = readBassScore(fresh, abcjs);
+		if (!neu) return;
+		const followed = bassFollowingChart(written, old.score, fresh, neu.score);
+		if (followed !== written) arranger.bass.notation = followed;
+	});
 }

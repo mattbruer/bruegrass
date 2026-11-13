@@ -13,6 +13,8 @@
 	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
 	import { mixer } from '../../mixer/mixer.svelte.js';
 	import { BASS_VOICE } from '../../bass/readBass.js';
+	import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
+	import { tuneReader } from '../../melody/abcjs.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -30,7 +32,6 @@
 	/** The tune as the last option left it, to tell our changes from anyone else's. */
 	let lastTried = '';
 	let restartWhenRead = false;
-	let reads = 0;
 
 	let part = $derived(drawing.current?.id ?? MELODY_CHANNEL);
 	let partName = $derived(drawing.current?.name ?? '');
@@ -50,10 +51,14 @@
 
 	$effect(() => {
 		const abc = melody.notation;
+		const tune = melody.tune;
 		const id = part;
 		untrack(() => {
 			if (abc !== lastTried) before = null;
-			findOptions(abc, id);
+			options =
+				id === MELODY_CHANNEL || id === BASS_VOICE
+					? []
+					: harmonyOptions(abc, tune, id, arranger.songForMelody());
 		});
 	});
 
@@ -65,25 +70,13 @@
 		untrack(() => player.restartIfPlaying());
 	});
 
-	/**
-	 * @param {string} abc
-	 * @param {string} id
-	 */
-	async function findOptions(abc, id) {
-		const reading = ++reads;
-		const found =
-			id === MELODY_CHANNEL || id === BASS_VOICE
-				? []
-				: await harmonyOptions(abc, id, arranger.songForMelody());
-		if (reading === reads) options = found;
-	}
-
 	/** @param {import('../../melody/roll/harmonyOptions.js').HarmonyOption} option */
-	async function tryOption(option) {
+	function tryOption(option) {
 		const abc = melody.notation;
+		const abcjs = abcjsIfLoaded();
+		if (!abcjs) return;
 		const bars = barOnly ? new Set([pickedBar]) : null;
-		const tried = await withOption(abc, option, part, bars);
-		if (melody.notation !== abc) return;
+		const tried = withOption(abc, option, part, bars, tuneReader(abcjs));
 		before ??= abc;
 		lastTried = tried;
 		restartWhenRead = player.isPlaying;

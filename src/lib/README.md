@@ -45,7 +45,9 @@ Three layers, and imports only point down:
    them testable on their own (see Tests below).
 2. **State** (`*.svelte.js`: `arranger/state/`, `arranger/mixer/`,
    `TranscriptionState`…): what the page knows, and the edges that read it and
-   pass it down (e.g. `chosenBassStyle()` handed to the bass logic).
+   pass it down (e.g. `chosenBassStyle()` handed to the bass logic). The open
+   song's texts are parsed here, once per change (`ArrangementState`,
+   `MelodyState`, `BassState`), and handed down already read.
 3. **Components** (`.svelte`): thin; they show state and call its methods.
 
 A few plain modules sit at the edge on purpose and read app state: recording

@@ -7,7 +7,7 @@ import { audioTaps } from '../mixer/mixerGraph.svelte.js';
 import { melodyEvents } from '../melody/melody.js';
 import { melodyTime } from '../melody/follow.js';
 import { MetronomeState } from './MetronomeState.svelte.js';
-import { readWrittenBass } from '../bass/readBass.js';
+import { abcjsReady } from './abcjsLoaded.svelte.js';
 import { chosenBassStyle } from '../bass/songBassStyle.svelte.js';
 
 /** @typedef {Awaited<ReturnType<typeof playArrangement>>} Playback */
@@ -72,13 +72,15 @@ export class PlayerState {
 		}
 
 		try {
+			// The tune and bass are read once abcjs is in (it loads after the page)
+			await abcjsReady();
 			const bpm = this.#arrangement.bpm;
 			this.playback = await playArrangement(this.#loop.sectionsToPlay, {
 				capo: this.#arrangement.capoFret,
 				transpose: this.#arrangement.transpose,
 				bpm,
 				melody: this.#melodyForThisPass(),
-				bass: await readWrittenBass(this.#bass.notation),
+				bass: this.#bass.written,
 				bassStyle: chosenBassStyle(),
 				offset: this.#loop.startInSong,
 				takes: await this.takesToPlay(leaveOutTrack ?? null),

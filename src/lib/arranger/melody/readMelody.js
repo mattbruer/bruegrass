@@ -1,10 +1,10 @@
 /**
- * Read a drawn ABC tune into the melody's notes, or explain what's wrong.
+ * Read a parsed ABC tune into the melody's notes, or explain what's wrong.
  */
 import { melodyFromTune } from './melody.js';
 
 /**
- * @param {import('abcjs').TuneObject | null} tune from drawSheetMusic
+ * @param {import('abcjs').TuneObject | null} tune from readTune
  * @returns {{ line: import('./melody.js').Melody | null, pickup: number, error: string }}
  *   line is null when there's no tune, or it has no notes to play; pickup is
  *   still known for a tune of only rests, so the sheet music can follow it

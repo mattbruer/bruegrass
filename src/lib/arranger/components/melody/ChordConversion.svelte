@@ -18,7 +18,7 @@
 	);
 </script>
 
-{#if melody.drawn.sequence}
+{#if melody.sequence}
 	<div class="mt-3 flex flex-wrap items-center gap-3">
 		{#if melody.hasChordSymbols}
 			<button

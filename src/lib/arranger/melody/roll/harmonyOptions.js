@@ -9,7 +9,6 @@ import { withHarmonies } from '../harmony/writeHarmonies.js';
 import { partBlockText, withPartFrom } from '../harmony/keepParts.js';
 import { concertChordAt } from '../../chart/concertChords.js';
 import { withPartBars } from './freshHarmonyBars.js';
-import { loadTuneReader } from '../abcjs.js';
 
 /**
  * @typedef {{ id: string, name: string, abc: string, current: boolean }} HarmonyOption
@@ -19,15 +18,13 @@ import { loadTuneReader } from '../abcjs.js';
 
 /**
  * @param {string} abc
+ * @param {import('abcjs').TuneObject | null} tune abcjs's parse of this ABC
  * @param {string} partId
  * @param {import('./drawnMelody.js').Song} song
- * @returns {Promise<HarmonyOption[]>}
+ * @returns {HarmonyOption[]}
  */
-export async function harmonyOptions(abc, partId, song) {
-	if (song.sections.length === 0) return [];
-	const parse = await loadTuneReader();
-	const tune = parse(abc);
-	if (!tune) return [];
+export function harmonyOptions(abc, tune, partId, song) {
+	if (song.sections.length === 0 || !tune) return [];
 	const chordAt = concertChordAt(song.sections, song.capo);
 	const now = partBlockText(abc, partId);
 
@@ -53,8 +50,9 @@ export async function harmonyOptions(abc, partId, song) {
  * @param {HarmonyOption} option made from this ABC
  * @param {string} partId
  * @param {Set<number> | null} bars null: the whole line
+ * @param {(abc: string) => any} parse abcjs parseOnly, first tune
  */
-export async function withOption(abc, option, partId, bars) {
+export function withOption(abc, option, partId, bars, parse) {
 	if (!bars) return withPartFrom(abc, option.abc, partId);
-	return withPartBars(abc, option.abc, await loadTuneReader(), [partId], bars);
+	return withPartBars(abc, option.abc, parse, [partId], bars);
 }

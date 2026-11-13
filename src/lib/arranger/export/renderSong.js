@@ -45,7 +45,7 @@ const TAIL_MAX = 8;
  *   bass?: import('../instruments/bassline.js').BassNote[] | null,
  *   bassStyle?: import('../instruments/bassStyles.js').BassStyle
  * }} Song
- *   bass: the edited bass line (readWrittenBass), or null for the band's own
+ *   bass: the edited bass line (BassState.written), or null for the band's own
  * @typedef {ReturnType<typeof import('../mixer/mixer.svelte.js').mixSnapshot>} Mix
  * @typedef {{ name: string, channels: Float32Array[] }} RenderedFile
  *   channels: one (mono) or two (stereo) arrays of samples, -1 to 1

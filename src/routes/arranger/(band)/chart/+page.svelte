@@ -8,7 +8,6 @@
 	import { resolve } from '$app/paths';
 	import { useArranger } from '$lib/arranger/state/context.js';
 	import ArrangerChart from '$lib/arranger/components/lyricChart/ArrangerChart.svelte';
-	import MelodyReader from '$lib/arranger/components/melody/MelodyReader.svelte';
 	import TextSizeControl from '$lib/arranger/components/lyricChart/TextSizeControl.svelte';
 	import PrintButton from '$lib/components/paper/PrintButton.svelte';
 	import FullScreenButton from '$lib/components/FullScreenButton.svelte';
@@ -41,7 +40,6 @@
 	</div>
 
 	<ArrangerChart bind:fullScreen bind:textScale />
-	<MelodyReader />
 </main>
 
 <style>

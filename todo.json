@@ -9,12 +9,6 @@
 	],
 	"suggestions": [
 		{
-			"id": "song-model",
-			"text": "Read each song once: one parsed song every feature shares (handoff in HANDOFF-song-model.md)",
-			"done": false,
-			"addedAt": "2026-11-12T00:00:00.000Z"
-		},
-		{
 			"id": "vitest",
 			"text": "Tests with Vitest for the song logic (chart, bass, MIDI, theory)",
 			"done": false,

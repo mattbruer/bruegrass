@@ -37,7 +37,7 @@ import { secondsPerQuarter } from '../chart/tempo.js';
  *   melody: from melodyEvents() for these sections at this tempo (looping
  *   to match), played on the guitar samples, each voice through its own
  *   channel (Melody, or a harmony part's);
- *   bass: the song's edited bass line (readWrittenBass), or null for the
+ *   bass: the song's edited bass line (BassState.written), or null for the
  *   band's own; offset: where these sections start in the song (quarters),
  *   for the edited bass; bassStyle: how busy the band's own bass is
  */

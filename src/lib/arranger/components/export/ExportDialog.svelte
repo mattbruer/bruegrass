@@ -14,7 +14,7 @@
 	import { useArranger } from '../../state/context.js';
 	import { exportAudio } from '../../export/exportAudio.js';
 	import { downloadArrangementMidi } from '../../export/downloadMidi.js';
-	import { readWrittenBass } from '../../bass/readBass.js';
+	import { abcjsReady } from '../../state/abcjsLoaded.svelte.js';
 	import ShareSong from '../share/ShareSong.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -67,6 +67,7 @@
 		problem = '';
 		busy = true;
 		player.stop();
+		await abcjsReady();
 		const songToExport = {
 			name: song.name || arranger.title,
 			sections: arrangement.sections,
@@ -74,7 +75,7 @@
 			capo: arrangement.capoFret,
 			transpose: arrangement.transpose,
 			melody: melody.line,
-			bass: await readWrittenBass(arranger.bass.notation),
+			bass: arranger.bass.written,
 			bassStyle: chosenBassStyle()
 		};
 		try {
