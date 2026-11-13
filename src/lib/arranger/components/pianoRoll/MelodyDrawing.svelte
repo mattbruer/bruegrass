@@ -32,10 +32,11 @@
 	 *   clock?: { playing: boolean, quarters: () => number, seek?: (quarters: number) => void },
 	 *   bassStartsEmpty?: boolean,
 	 *   keyMenu?: boolean,
-	 *   zoom?: { across: number, down: number }
+	 *   zoom?: { across: number, down: number },
+	 *   lanes?: import('../../transcription/extraLanes.js').LaneStore
 	 * }}
 	 */
-	let { voice, clock, bassStartsEmpty = false, keyMenu = true, zoom } = $props();
+	let { voice, clock, bassStartsEmpty = false, keyMenu = true, zoom, lanes } = $props();
 
 	/** @param {number} ticks a click on the roll's ruler: play from there */
 	function seek(ticks) {
@@ -48,6 +49,7 @@
 	const drawing = new MelodyDrawing(arranger);
 	$effect.pre(() => {
 		drawing.bassStartsEmpty = bassStartsEmpty;
+		drawing.lanes = lanes ?? null;
 	});
 
 	$effect(() => {
@@ -59,6 +61,7 @@
 		void arrangement.sections;
 		void arrangement.capoFret;
 		void arranger.melodyKey;
+		void lanes?.extraLanes;
 		untrack(() => drawing.load());
 	});
 
@@ -84,7 +87,7 @@
 	function sound(midi) {
 		const heard = drawing.isBass
 			? auditionBassNote(midi, arrangement.transpose)
-			: auditionNote(midi, arrangement.transpose, drawing.current?.id);
+			: auditionNote(midi, arrangement.transpose, drawing.isLane ? undefined : drawing.current?.id);
 		heard.catch(console.error);
 	}
 </script>

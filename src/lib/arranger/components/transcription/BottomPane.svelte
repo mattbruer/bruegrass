@@ -16,7 +16,9 @@
 	const laneName = $derived(
 		transcription.lane === BASS_VOICE
 			? 'Bass'
-			: (HARMONY_PARTS.find((part) => part.id === transcription.lane)?.name ?? 'Melody')
+			: (HARMONY_PARTS.find((part) => part.id === transcription.lane)?.name ??
+					transcription.extraLanes.find((lane) => lane.id === transcription.lane)?.name ??
+					'Melody')
 	);
 
 	const clock = {
@@ -34,6 +36,7 @@
 		<h2 class="text-sm font-bold">Piano roll · {laneName}</h2>
 		<MelodyDrawing
 			voice={transcription.lane}
+			lanes={transcription}
 			{clock}
 			bassStartsEmpty
 			keyMenu={false}

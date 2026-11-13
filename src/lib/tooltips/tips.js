@@ -230,13 +230,17 @@ export const TIPS = Object.freeze({
 			'Tap to type this bar’s chords: one box per beat, the chord on the beat where it changes.',
 		partLane: 'Edit this part in the piano roll below.',
 		addLane:
-			'Add a part to write by ear, like the bass. Most songs don’t need it: the band plays its own.',
+			'Add an empty lane to write by ear, for any instrument. Its Bass button makes it the song’s bass line.',
+		laneBass:
+			'Make this lane the song’s bass line. The lane goes; the bass is written from its notes.',
+		laneRemove: 'Take this lane away, with its notes.',
 		fewerBeats: 'This bar has a beat fewer. The bars after it move along.',
 		moreBeats: 'This bar has a beat more. The bars after it move along.',
 		loop: 'Play just this bar over and over (L). Drag across the strip at the top for more bars.',
 		cycle: 'Turn the cycle on or off (C): play the stretch marked in the strip over and over.',
 		cycleStrip:
-			'Drag across to play those bars over and over (the cycle). Click to turn it on or off.',
+			'Drag across to play that stretch over and over (the cycle). Click to turn it on or off.',
+		snapCycle: 'On: the cycle’s ends snap to sixteenth notes. Off: drag anywhere for a free cycle.',
 		closeMenu: 'Close.',
 		barStartsHere:
 			'This beat is a ONE: the nearest bar line moves here, and the bars after it move along.',

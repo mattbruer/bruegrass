@@ -1,11 +1,13 @@
 <script>
 	/**
 	 * The cycle strip above the ruler, Logic's way: drag across it to make a
-	 * cycle (its ends snap to bar lines) and it turns on; click it to turn
-	 * the cycle on or off (with no cycle yet, a click cycles that bar).
+	 * cycle and it turns on (its ends snap to sixteenth notes, or go anywhere
+	 * with Snap off); click it to turn the cycle on or off (with no cycle yet,
+	 * a click cycles that bar).
 	 */
-	import { barAround, barLines, cycleBetween } from '../../transcription/cycle.js';
+	import { barAround, barLines, cycleFromTo } from '../../transcription/cycle.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
@@ -45,7 +47,7 @@
 	/** @param {PointerEvent & { currentTarget: HTMLElement }} event */
 	function move(event) {
 		if (!press || (!dragged && Math.abs(event.clientX - press.x) < DRAG_THRESHOLD)) return;
-		dragged = cycleBetween(press.quarters, quartersAt(event), lines);
+		dragged = cycleFromTo(press.quarters, quartersAt(event), lines, settings.transcribe.snapCycle);
 	}
 
 	/** @param {PointerEvent & { currentTarget: HTMLElement }} event */

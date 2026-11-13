@@ -62,6 +62,8 @@ export const settings = $state({
 	transcribe: {
 		/** How the slowed-down song is stretched: an id in transcribe/sounds.js. */
 		sound: 'balanced',
+		/** Cycle ends snap to sixteenth notes (off: drag and tap to any spot). */
+		snapCycle: true,
 		/** Transcribe's track grid and piano roll: size multipliers (components/zoom/). */
 		zoom: { across: 1, down: 1 }
 	},

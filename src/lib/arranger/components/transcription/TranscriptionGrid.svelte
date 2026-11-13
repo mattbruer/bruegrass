@@ -14,7 +14,8 @@
 	import { useArranger } from '../../state/context.js';
 	import { trackScale } from '../../tracks/trackScale.js';
 	import { rulerFromBars, rulerSpanWithRoom } from '../../transcription/rulerFromBars.js';
-	import { ADDABLE_LANES, partLanes } from '../../transcription/partLanes.js';
+	import { partLanes } from '../../transcription/partLanes.js';
+	import { isLaneId } from '../../melody/roll/extraLane.js';
 	import { timeSignature } from '../../transcription/timeSignatures.js';
 	import TrackRuler from '../tracks/TrackRuler.svelte';
 	import BlockLane from '../tracks/BlockLane.svelte';
@@ -27,6 +28,7 @@
 	import ChordLane from './ChordLane.svelte';
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
+	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -58,10 +60,7 @@
 	const pixelsPerQuarter = $derived(PIXELS_PER_QUARTER * zoom.across);
 	const scale = $derived(trackScale(rulerSpanWithRoom(ruler, beatsPerBar), pixelsPerQuarter));
 	const parts = $derived(
-		transcription.linked ? partLanes(melody.line, writtenBass, transcription.addedLanes) : []
-	);
-	const addable = $derived(
-		ADDABLE_LANES.filter((lane) => !parts.some((part) => part.id === lane.id))
+		transcription.linked ? partLanes(melody.line, writtenBass, transcription.laneNotes) : []
 	);
 	const playheadX = $derived(scale.toX(transcription.quartersNow));
 
@@ -70,7 +69,6 @@
 		transcription.parts = parts;
 	});
 
-	let adding = $state(false);
 	/** @type {HTMLDivElement | undefined} */
 	let scroller = $state();
 	let lanesHeight = $state(0);
@@ -103,12 +101,6 @@
 		const box = event.currentTarget.getBoundingClientRect();
 		transcription.seekToQuarters(scale.toQuarters(event.clientX - box.left) + scale.start);
 	}
-
-	/** @param {string} id */
-	function addLane(id) {
-		adding = false;
-		transcription.addLane(id);
-	}
 </script>
 
 <div class="scroller" bind:this={scroller}>
@@ -132,6 +124,14 @@
 				onclick={() => transcription.cycle.turn(!transcription.cycle.on)}
 				use:tooltip={TIPS.transcription.cycle}>Cycle</button
 			>
+			<span class="flex items-center gap-1 text-xs text-ink-soft">
+				<ToggleSwitch
+					bind:on={settings.transcribe.snapCycle}
+					labelledBy="snap-cycle"
+					tip={TIPS.transcription.snapCycle}
+				/>
+				<span id="snap-cycle">Snap</span>
+			</span>
 		</div>
 		<CycleStrip {transcription} {ruler} {scale} />
 
@@ -164,7 +164,21 @@
 					aria-pressed={transcription.lane === lane.id}
 					use:tooltip={TIPS.transcription.partLane}>{lane.name}</button
 				>
-				{#if channel}
+				{#if isLaneId(lane.id)}
+					<button
+						type="button"
+						class="ui-button px-2 py-0.5 text-xs"
+						onclick={() => transcription.useLaneAsBass(lane.id)}
+						use:tooltip={TIPS.transcription.laneBass}>Bass</button
+					>
+					<button
+						type="button"
+						class="ui-button px-2 py-0.5 text-xs"
+						aria-label="Remove {lane.name}"
+						onclick={() => transcription.removeLane(lane.id)}
+						use:tooltip={TIPS.transcription.laneRemove}>×</button
+					>
+				{:else if channel}
 					<MuteSoloButtons settings={channel} name={lane.name} />
 				{/if}
 			</div>
@@ -179,26 +193,14 @@
 			</div>
 		{/each}
 
-		{#if transcription.linked && addable.length > 0}
+		{#if transcription.linked}
 			<div class="header add">
 				<button
 					type="button"
 					class="ui-button px-2 py-1 text-xs"
-					onclick={() => (adding = !adding)}
-					aria-expanded={adding}
+					onclick={() => transcription.addLane()}
 					use:tooltip={TIPS.transcription.addLane}>+ Lane</button
 				>
-			</div>
-			<div class="adding">
-				{#if adding}
-					{#each addable as lane (lane.id)}
-						<button
-							type="button"
-							class="ui-button px-3 py-1 text-xs"
-							onclick={() => addLane(lane.id)}>{lane.name}</button
-						>
-					{/each}
-				{/if}
 			</div>
 		{/if}
 
@@ -275,13 +277,6 @@
 	.header.add {
 		border-bottom: none;
 		padding: 0.35rem 0.5rem;
-	}
-
-	.adding {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		padding: 0 0.5rem;
 	}
 
 	.name {

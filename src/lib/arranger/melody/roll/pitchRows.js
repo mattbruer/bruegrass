@@ -14,6 +14,8 @@ import { isInKey } from './melodyKey.js';
 export const MELODY_ROWS = { lowest: 52, highest: 88 };
 /** The bass's open E and a little below (bassline.js numbering, as its ABC writes it), up past its G string's fifth fret. */
 export const BASS_ROWS = { lowest: 36, highest: 62 };
+/** Generic lanes: any instrument, from the bass's lowest to the melody's highest. */
+export const LANE_ROWS = { lowest: BASS_ROWS.lowest, highest: MELODY_ROWS.highest };
 const MIDDLE_C = 60;
 
 /**

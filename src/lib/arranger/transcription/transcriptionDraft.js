@@ -15,7 +15,7 @@ const VERSION = 3;
  * @typedef {{
  *   grid: import('./beatGrid.js').BeatGrid,
  *   chords: Record<number, import('./barChords.js').Slots>,
- *   key: string | null, time: string, addedLanes: string[], written: string,
+ *   key: string | null, time: string, lanes: import('./extraLanes.js').ExtraLane[], written: string,
  *   markers: Record<number, string>, cents: number
  * }} Transcription
  *   cents: the recording's pitch moved by this much (fine tuning)
@@ -39,7 +39,7 @@ export function readTranscriptionDraft(recordingKey) {
 		chords: value.chords ?? {},
 		key: typeof value.key === 'string' ? value.key : null,
 		time: typeof value.time === 'string' ? value.time : DEFAULT_TIME,
-		addedLanes: Array.isArray(value.addedLanes) ? value.addedLanes : [],
+		lanes: Array.isArray(value.lanes) ? value.lanes : [],
 		markers: value.markers && typeof value.markers === 'object' ? value.markers : {},
 		cents: typeof value.cents === 'number' ? value.cents : 0,
 		written: value.written ?? ''

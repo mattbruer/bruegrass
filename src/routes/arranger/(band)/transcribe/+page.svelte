@@ -18,6 +18,7 @@
 	import { useArranger } from '$lib/arranger/state/context.js';
 	import { TranscriptionState } from '$lib/arranger/transcription/TranscriptionState.svelte.js';
 	import { gridClicks } from '$lib/arranger/transcription/gridClicks.js';
+	import { timeSignature } from '$lib/arranger/transcription/timeSignatures.js';
 	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
 	import RecordingChoice from '$lib/arranger/components/transcription/RecordingChoice.svelte';
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
@@ -36,7 +37,7 @@
 		const grid = transcription.grid;
 		transcription.player.setClicks(
 			grid && transcription.clicksOn
-				? gridClicks(grid, transcription.bars)
+				? gridClicks(grid, transcription.bars, timeSignature(transcription.time).clickBeats)
 				: { times: [], accents: [] }
 		);
 	});
