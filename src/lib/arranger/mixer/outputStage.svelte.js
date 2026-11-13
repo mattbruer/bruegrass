@@ -4,7 +4,11 @@
  * and matching the gain to the loudness target.
  */
 import { mixer } from './mixer.svelte.js';
-import { MATCH_MIN_SECONDS, OUTPUT_GAIN_RANGE, TARGET_LUFS } from '../../audio/output/outputSettings.js';
+import {
+	MATCH_MIN_SECONDS,
+	OUTPUT_GAIN_RANGE,
+	TARGET_LUFS
+} from '../../audio/output/outputSettings.js';
 
 /** The A/B comparison (see setComparison in createOutputStage.js). Not saved: it's for listening. */
 export const outputComparison = $state({

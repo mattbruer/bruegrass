@@ -3,10 +3,7 @@
  * page in the app (not the chart, which shares the song), reloading, or closing the tab.
  */
 import { beforeNavigate } from '$app/navigation';
-import {
-	setupDiscardQuestion,
-	setupHasUnsavedChanges
-} from '../mixer/listeningSetup.svelte.js';
+import { setupDiscardQuestion, setupHasUnsavedChanges } from '../mixer/listeningSetup.svelte.js';
 import { forgetDraftsOnLeaving } from './drafts.svelte.js';
 import { forgetSongMix } from './songMixMemory.svelte.js';
 

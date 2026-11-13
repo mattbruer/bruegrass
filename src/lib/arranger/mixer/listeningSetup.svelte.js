@@ -16,14 +16,7 @@
  *   - Stopping the setup ("Each song's own EQ") puts the song's EQs back.
  * With no setup in use, EQs are saved with each song, as before.
  */
-import {
-	applyEq,
-	applyEqs,
-	applyMix,
-	eqsSnapshot,
-	mixSnapshot,
-	resetMix
-} from './mixer.svelte.js';
+import { applyEq, applyEqs, applyMix, eqsSnapshot, mixSnapshot, resetMix } from './mixer.svelte.js';
 import {
 	deleteListeningSetup,
 	getListeningSetup,
