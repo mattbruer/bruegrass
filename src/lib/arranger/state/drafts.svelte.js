@@ -68,6 +68,7 @@ export function offerDraftsFromLastTime() {
  */
 export async function restoreDrafts(arranger) {
 	const offer = drafts.offer;
+	drafts.offer = null; // at once, so the dialog closes and can't restore twice
 	if (offer?.song) {
 		const stillSaved = offer.song.savedId ? await getArrangement(offer.song.savedId) : null;
 		await arranger.song.restoreDraft(
@@ -75,7 +76,6 @@ export async function restoreDrafts(arranger) {
 		);
 	}
 	if (offer?.setup) applyEqs(offer.setup.eqs);
-	drafts.offer = null;
 	drafts.keeping = true;
 }
 
