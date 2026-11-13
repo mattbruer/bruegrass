@@ -2,7 +2,7 @@
 	/** A strip's main fader, with its dB scale and level meter beside it. */
 	import Slider from './Slider.svelte';
 	import LevelMeter from './meter/LevelMeter.svelte';
-	import { dbToFader } from '../../playback/faderTaper.js';
+	import { dbToFader } from '../../../audio/mixer/faderTaper.js';
 	import { LEVEL_SCALE } from './controlScales.js';
 
 	/** Numbered marks beside the fader. */
@@ -23,7 +23,7 @@
 	 *   level: { volume: number },
 	 *   reset: number,
 	 *   label: string,
-	 *   meter: import('../../playback/analysis/taps.js').StereoTap | null,
+	 *   meter: import('../../../audio/analysis/taps.js').StereoTap | null,
 	 *   variant?: string,
 	 *   tip?: string
 	 * }}

@@ -19,10 +19,10 @@
  * Unlike the other processors this one imports its DSP (shared with the
  * tests); worklets.js loads it bundled into one file.
  */
-import { createStretcher, frameSizeFor } from '../../../transcribe/stretch/stretcher.js';
-import { withPitchShift } from '../../../transcribe/stretch/withPitchShift.js';
-import { createBeatClicks } from '../../../transcribe/beatClicks.js';
-import { createPartNotes } from '../../../transcribe/partNotes.js';
+import { createStretcher, frameSizeFor } from '../stretch/stretcher.js';
+import { withPitchShift } from '../stretch/withPitchShift.js';
+import { createBeatClicks } from '../../slowDowner/beatClicks.js';
+import { createPartNotes } from '../../slowDowner/partNotes.js';
 
 /** Play and pause fade over this long, so they never click. */
 const FADE_SECONDS = 0.01;

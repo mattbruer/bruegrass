@@ -3,7 +3,7 @@
  * problem to show the user.
  */
 import { playArrangement } from '../playback/livePlayback.js';
-import { audioTaps } from '../playback/mixerGraph.svelte.js';
+import { audioTaps } from '../mixer/mixerGraph.svelte.js';
 import { melodyEvents } from '../melody/melody.js';
 import { melodyTime } from '../melody/follow.js';
 import { MetronomeState } from './MetronomeState.svelte.js';

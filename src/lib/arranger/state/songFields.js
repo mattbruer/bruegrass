@@ -2,7 +2,7 @@
  * Moving a song between the page and a saved document: which fields a
  * song is made of, reading them off the page, and putting a song onto it.
  */
-import { applySongMix, songMixSnapshot } from '../playback/eq/listeningSetup.svelte.js';
+import { applySongMix, songMixSnapshot } from '../mixer/listeningSetup.svelte.js';
 import { validCapo } from '../chart/capo.js';
 import { songBassStyle } from '../bass/songBassStyle.svelte.js';
 import { DEFAULT_BASS_STYLE } from '../instruments/bassStyles.js';

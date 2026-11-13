@@ -2,8 +2,8 @@
  * Drawing the EQ graph: the grid, the live analyser behind it, the EQ's
  * response curve, and a dot for each band (where you grab it).
  */
-import { EQ_BANDS, isCut } from '../../../playback/eq/eqBands.js';
-import { eqResponseDb } from '../../../playback/eq/eqResponse.js';
+import { EQ_BANDS, isCut } from '../../../../audio/eq/eqBands.js';
+import { eqResponseDb } from '../../../../audio/eq/eqResponse.js';
 import {
 	GRID_FREQUENCIES,
 	GRID_GAINS,
@@ -105,7 +105,7 @@ export function drawAnalyser(context, bandsDb, sampleRate, width, height, colour
 /**
  * The EQ's overall response: what it does to each frequency.
  * @param {CanvasRenderingContext2D} context
- * @param {import('../../../playback/eq/eqBands.js').EqSettings} eq
+ * @param {import('../../../../audio/eq/eqBands.js').EqSettings} eq
  * @param {number} sampleRate
  * @param {number} width
  * @param {number} height
@@ -132,7 +132,7 @@ export function drawResponse(context, eq, sampleRate, width, height, colours) {
 /**
  * Where each band's dot sits: its frequency across, its gain up (cuts sit
  * on the 0 dB line, having no gain).
- * @param {import('../../../playback/eq/eqBands.js').EqSettings} eq
+ * @param {import('../../../../audio/eq/eqBands.js').EqSettings} eq
  * @param {number} width
  * @param {number} height
  */
@@ -148,7 +148,7 @@ export function handlePositions(eq, width, height) {
 /**
  * A dot per band: filled when on, an outline when off, ringed when selected.
  * @param {CanvasRenderingContext2D} context
- * @param {import('../../../playback/eq/eqBands.js').EqSettings} eq
+ * @param {import('../../../../audio/eq/eqBands.js').EqSettings} eq
  * @param {string | null} selectedId
  * @param {number} width
  * @param {number} height

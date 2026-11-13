@@ -9,7 +9,7 @@ import { secondsAt } from './tempoMap.js';
  * @param {import('../tracks/lanes.js').BandLane[]} lanes
  * @param {import('./beatGrid.js').BeatGrid} grid
  * @param {(laneId: string, pitch: number) => number} soundingPitch MIDI as heard
- * @returns {import('$lib/transcribe/partNotes.js').PartNote[]}
+ * @returns {import('$lib/slowDowner/partNotes.js').PartNote[]}
  */
 export function heardNotes(lanes, grid, soundingPitch) {
 	return lanes

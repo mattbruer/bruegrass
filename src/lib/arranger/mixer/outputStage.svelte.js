@@ -3,8 +3,8 @@
  * gain itself is in mixer.output, so it is): the level-matched comparison,
  * and matching the gain to the loudness target.
  */
-import { mixer } from '../mixer.svelte.js';
-import { MATCH_MIN_SECONDS, OUTPUT_GAIN_RANGE, TARGET_LUFS } from './outputSettings.js';
+import { mixer } from './mixer.svelte.js';
+import { MATCH_MIN_SECONDS, OUTPUT_GAIN_RANGE, TARGET_LUFS } from '../../audio/output/outputSettings.js';
 
 /** The A/B comparison (see setComparison in createOutputStage.js). Not saved: it's for listening. */
 export const outputComparison = $state({
@@ -17,7 +17,7 @@ export const outputComparison = $state({
  * Set the output gain so the song plays at TARGET_LUFS, from the loudness
  * measured while it played. Gain changes are exact in loudness (the limiter
  * barely works at the target), so one step lands on it.
- * @param {import('./createOutputStage.js').OutputReadings | null} readings
+ * @param {import('../../audio/output/createOutputStage.js').OutputReadings | null} readings
  * @returns {{ ok: true, changeDb: number } | { ok: false, reason: string }}
  */
 export function matchTargetLoudness(readings) {

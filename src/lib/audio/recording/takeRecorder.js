@@ -3,7 +3,7 @@
  * Float32Array per channel. The recording itself happens on the audio
  * thread (worklets/takeRecorderProcessor.js), so it's sample-accurate.
  */
-import { createNativeWorkletNode } from '$lib/arranger/playback/worklets/worklets.js';
+import { createNativeWorkletNode } from '$lib/audio/worklets/worklets.js';
 
 /**
  * @typedef {{ channels: Float32Array[], sampleRate: number, startTime: number }} Take

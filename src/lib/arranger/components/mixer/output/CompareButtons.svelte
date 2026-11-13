@@ -5,7 +5,7 @@
 	 * loudness. (Louder always sounds better, so only a level-matched test
 	 * tells you whether the limiter changes the sound itself.)
 	 */
-	import { outputComparison } from '../../../playback/output/outputStage.svelte.js';
+	import { outputComparison } from '../../../mixer/outputStage.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 </script>

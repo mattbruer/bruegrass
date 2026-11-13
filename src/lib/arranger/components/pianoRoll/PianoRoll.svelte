@@ -18,7 +18,7 @@
 	 * with it (it lets go for a moment when you scroll it yourself).
 	 */
 	import { onMount, tick as rendered, untrack } from 'svelte';
-	import { onEveryFrame } from '../../playback/analysis/frameLoop.js';
+	import { onEveryFrame } from '../../../audio/analysis/frameLoop.js';
 	import { addNote, changeNote, deleteNote, noteAt } from '../../melody/roll/editNotes.js';
 	import { snapDown, snapNearest, TICKS_PER_QUARTER } from '../../melody/roll/ticks.js';
 	import { pitchRows } from '../../melody/roll/pitchRows.js';

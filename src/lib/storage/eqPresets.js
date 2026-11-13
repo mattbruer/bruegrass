@@ -16,7 +16,7 @@ export const EQ_PRESET_VERSION = 1;
  *   version: number,
  *   name: string,
  *   stripId: string,
- *   eq: import('$lib/arranger/playback/eq/eqBands.js').EqSettings,
+ *   eq: import('$lib/audio/eq/eqBands.js').EqSettings,
  *   createdAt: string,
  *   updatedAt: string
  * }} EqPreset

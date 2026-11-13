@@ -15,8 +15,8 @@
 	import TuningControl from './TuningControl.svelte';
 	import { songKeyChoices } from '../../chart/keyChoices.js';
 	import { TIME_SIGNATURES } from '../../transcription/timeSignatures.js';
-	import { MIN_SPEED, MAX_SPEED, SPEED_STEP } from '$lib/transcribe/speed.js';
-	import { SOUNDS, soundById } from '$lib/transcribe/sounds.js';
+	import { MIN_SPEED, MAX_SPEED, SPEED_STEP } from '$lib/slowDowner/speed.js';
+	import { SOUNDS, soundById } from '$lib/slowDowner/sounds.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';

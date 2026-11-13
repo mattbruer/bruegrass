@@ -10,11 +10,11 @@
  * Open it from a tap (browsers need one before the mic starts), and close it
  * when the take is done: that lets go of the mic.
  */
-import { openMicInput } from '$lib/recording/micInput.js';
-import { createTakeRecorder } from '$lib/recording/takeRecorder.js';
-import { playClicks } from '$lib/recording/clickTrack.js';
-import { createWorkletNode } from '../playback/worklets/worklets.js';
-import { getMetronomeInput } from '../playback/mixerGraph.svelte.js';
+import { openMicInput } from '$lib/audio/recording/micInput.js';
+import { createTakeRecorder } from '$lib/audio/recording/takeRecorder.js';
+import { playClicks } from '$lib/audio/recording/clickTrack.js';
+import { createWorkletNode } from '../../audio/worklets/worklets.js';
+import { getMetronomeInput } from '../mixer/mixerGraph.svelte.js';
 
 /** Input names that mean Bluetooth: a long delay, and call-quality sound. */
 const BLUETOOTH_NAMES = /airpods|bluetooth|hands-?free|beats|buds/i;

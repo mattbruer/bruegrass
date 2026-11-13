@@ -7,11 +7,11 @@ import { finger } from '../melody/melody.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { sampleUrl } from '../instruments/guitar.js';
 import { loadBuffer } from '../instruments/band.js';
-import { getChannel } from './mixerGraph.svelte.js';
+import { getChannel } from '../mixer/mixerGraph.svelte.js';
 import { createUpright, uprightPitch } from '../instruments/upright.js';
 import { BASS_VOICE } from '../bass/readBass.js';
 import { channelInstrument, createTuneSynth } from '../instruments/tuneInstruments.js';
-import { mixer } from './mixer.svelte.js';
+import { mixer } from '../mixer/mixer.svelte.js';
 
 /** Seconds a drawn note rings when heard on its own. */
 const AUDITION_SECONDS = 0.7;

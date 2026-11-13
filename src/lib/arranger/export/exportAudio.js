@@ -10,7 +10,7 @@
 import { renderMix, renderStems, EXPORT_SAMPLE_RATE } from './renderSong.js';
 import { encodeWav } from './wav.js';
 import { makeZip } from './zip.js';
-import { mixSnapshot } from '../playback/mixer.svelte.js';
+import { mixSnapshot } from '../mixer/mixer.svelte.js';
 import { downloadFile } from '$lib/utils/downloadFile.js';
 import { slugify } from '$lib/utils/slugify.js';
 

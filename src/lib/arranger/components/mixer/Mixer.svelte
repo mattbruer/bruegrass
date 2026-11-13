@@ -6,7 +6,7 @@
 	 * master, the output stage (loudness and limiter), and a small
 	 * visualiser of what reaches the speakers.
 	 */
-	import { mixer } from '../../playback/mixer.svelte.js';
+	import { mixer } from '../../mixer/mixer.svelte.js';
 	import ChannelStrip from './ChannelStrip.svelte';
 	import ReverbStrip from './ReverbStrip.svelte';
 	import MasterStrip from './MasterStrip.svelte';

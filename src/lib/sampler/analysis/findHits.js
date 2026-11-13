@@ -114,7 +114,7 @@ export function hitRanges(hits, length, sampleRate) {
 
 /**
  * A stretch of a take, sharing its audio (nothing is copied).
- * @param {import('$lib/recording/takeRecorder.js').Take} take
+ * @param {import('$lib/audio/recording/takeRecorder.js').Take} take
  * @param {FrameRange} range
  */
 export function viewOf(take, range) {
@@ -126,7 +126,7 @@ export function viewOf(take, range) {
 
 /**
  * A stretch of a take as audio of its own (a copy), to keep as a take.
- * @param {import('$lib/recording/takeRecorder.js').Take} take
+ * @param {import('$lib/audio/recording/takeRecorder.js').Take} take
  * @param {FrameRange} range
  */
 export function cutOut(take, range) {
@@ -140,7 +140,7 @@ export function cutOut(take, range) {
  * Every hit in a recording, each with its stretch, its own analysis (trim
  * and onset counted from the start of the stretch) and, when recorded to a
  * click, how early (−) or late (+) it was against the beat, in ms.
- * @param {import('$lib/recording/takeRecorder.js').Take} take
+ * @param {import('$lib/audio/recording/takeRecorder.js').Take} take
  * @param {number | null} midi the note asked for (null: a strum)
  * @param {number | null} [secondsPerBeat] the click's beat, when recorded to one
  */

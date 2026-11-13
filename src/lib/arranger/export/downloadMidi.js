@@ -2,8 +2,8 @@
  * The Export dialog's MIDI choice: build the MIDI file and save it.
  */
 import { arrangementToMidi } from './midi.js';
-import { mixer } from '../playback/mixer.svelte.js';
-import { faderGain } from '../playback/faderTaper.js';
+import { mixer } from '../mixer/mixer.svelte.js';
+import { faderGain } from '../../audio/mixer/faderTaper.js';
 import { downloadFile } from '$lib/utils/downloadFile.js';
 import { slugify } from '$lib/utils/slugify.js';
 import { channelsInUse } from '../melody/harmony/partChannels.js';

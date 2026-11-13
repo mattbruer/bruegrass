@@ -4,7 +4,7 @@
  * that hasn't been downloaded asks first.
  */
 
-/** @typedef {import('$lib/recording/takeRecorder.js').Take} Take */
+/** @typedef {import('$lib/audio/recording/takeRecorder.js').Take} Take */
 
 export class TestTake {
 	/** The last take (raw: big arrays, nothing in them changes). */

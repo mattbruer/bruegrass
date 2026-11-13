@@ -6,7 +6,7 @@
 	 */
 	import Dialog from '$lib/components/Dialog.svelte';
 	import { instrumentFamilies } from '../../../instruments/tuneInstruments.js';
-	import { mixer } from '../../../playback/mixer.svelte.js';
+	import { mixer } from '../../../mixer/mixer.svelte.js';
 	import { auditionNote } from '../../../playback/auditionNote.js';
 	import { useArranger } from '../../../state/context.js';
 	import { closeInstruments, instrumentWindow } from './instrumentWindowState.svelte.js';

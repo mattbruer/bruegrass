@@ -11,7 +11,7 @@
 		listening,
 		saveSetupChanges,
 		setupHasUnsavedChanges
-	} from '../../../playback/eq/listeningSetup.svelte.js';
+	} from '../../../mixer/listeningSetup.svelte.js';
 	import { openListeningDialog } from '../listening/listeningDialogState.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';

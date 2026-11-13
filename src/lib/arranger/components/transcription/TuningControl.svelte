@@ -4,7 +4,7 @@
 	 * number to go back to as recorded), or Find how far it is from A = 440.
 	 * Shows the A the band tuned to.
 	 */
-	import { MAX_CENTS, concertA } from '$lib/transcribe/tuning.js';
+	import { MAX_CENTS, concertA } from '$lib/slowDowner/tuning.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 

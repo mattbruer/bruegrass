@@ -10,10 +10,10 @@
 	import LimiterMeter from './LimiterMeter.svelte';
 	import CompareButtons from './CompareButtons.svelte';
 	import { OUTPUT_GAIN_SCALE } from '../controlScales.js';
-	import { mixer, DEFAULT_OUTPUT_GAIN } from '../../../playback/mixer.svelte.js';
-	import { audioTaps } from '../../../playback/mixerGraph.svelte.js';
-	import { matchTargetLoudness } from '../../../playback/output/outputStage.svelte.js';
-	import { TARGET_LUFS } from '../../../playback/output/outputSettings.js';
+	import { mixer, DEFAULT_OUTPUT_GAIN } from '../../../mixer/mixer.svelte.js';
+	import { audioTaps } from '../../../mixer/mixerGraph.svelte.js';
+	import { matchTargetLoudness } from '../../../mixer/outputStage.svelte.js';
+	import { TARGET_LUFS } from '../../../../audio/output/outputSettings.js';
 	import { formatLufs } from './formatReadings.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';

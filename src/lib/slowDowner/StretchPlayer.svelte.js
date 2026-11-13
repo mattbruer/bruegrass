@@ -6,7 +6,7 @@
  *
  * It owns its own audio context: call `dispose` when the page goes.
  */
-import { createNativeWorkletNode } from '$lib/arranger/playback/worklets/worklets.js';
+import { createNativeWorkletNode } from '$lib/audio/worklets/worklets.js';
 import { clampSpeed } from './speed.js';
 import { clampCents } from './tuning.js';
 

@@ -4,7 +4,7 @@
  * follows the song's bars. Off each time the page opens (not saved with the song).
  */
 import { settings } from '$lib/settings/settings.svelte.js';
-import { getMetronomeInput } from '../playback/mixerGraph.svelte.js';
+import { getMetronomeInput } from '../mixer/mixerGraph.svelte.js';
 import { soloClickGrid } from '../playback/metronome/clickGrid.js';
 import { startClicks } from '../playback/metronome/clicker.js';
 import { clickSoundById } from '../playback/metronome/sounds.js';

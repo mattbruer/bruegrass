@@ -6,7 +6,7 @@
  *   - While the page runs, every mix change is written under the open song.
  *   - Throwing a song's changes away forgets its remembered mix too.
  */
-import { applySongMix, songMixSnapshot } from '../playback/eq/listeningSetup.svelte.js';
+import { applySongMix, songMixSnapshot } from '../mixer/listeningSetup.svelte.js';
 import { forgetSongMix, readSongMix, writeSongMix } from '$lib/storage/songMixes.js';
 
 export { forgetSongMix };

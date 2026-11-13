@@ -3,7 +3,7 @@
  * in dB. The trim, the double-hit check and the cut-off check all read it,
  * so they agree on what "loud" means.
  */
-import { toDecibels } from '$lib/arranger/playback/analysis/levels.js';
+import { toDecibels } from '$lib/audio/analysis/levels.js';
 
 /** Window length in milliseconds: short enough to catch a pick, long enough to smooth a low E's cycles. */
 export const ENVELOPE_WINDOW_MS = 5;

@@ -4,8 +4,8 @@
  */
 import { preparePerformance } from '../instruments/performance.js';
 import { createBand } from '../instruments/band.js';
-import { getChannel } from './mixerGraph.svelte.js';
-import { mixer } from './mixer.svelte.js';
+import { getChannel } from '../mixer/mixerGraph.svelte.js';
+import { mixer } from '../mixer/mixer.svelte.js';
 import { channelInstrument } from '../instruments/tuneInstruments.js';
 import { createStream } from './scheduler.js';
 import { rhythm } from '../chart/timeline.js';

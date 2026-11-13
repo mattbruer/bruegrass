@@ -1,5 +1,5 @@
 <script>
-	import SongList from '$lib/songs/SongList.svelte';
+	import SongList from '$lib/playlist/SongList.svelte';
 </script>
 
 <svelte:head>

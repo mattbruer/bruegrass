@@ -6,7 +6,7 @@
  * A preset can go on any strip: a bright guitar EQ might suit the mandolin
  * too. Each strip lists the presets saved from it first.
  */
-import { applyEq, stripWithEq } from '../mixer.svelte.js';
+import { applyEq, stripWithEq } from './mixer.svelte.js';
 import { deleteEqPreset, listEqPresets, saveEqPreset } from '$lib/storage/eqPresets.js';
 
 export const eqPresets = $state({

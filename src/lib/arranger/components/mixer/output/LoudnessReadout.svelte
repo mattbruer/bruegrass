@@ -5,9 +5,9 @@
 	 * The numbers update ten times a second (the meter's own rate).
 	 */
 	import { onMount } from 'svelte';
-	import { audioTaps } from '../../../playback/mixerGraph.svelte.js';
-	import { onEveryFrame } from '../../../playback/analysis/frameLoop.js';
-	import { TARGET_LUFS } from '../../../playback/output/outputSettings.js';
+	import { audioTaps } from '../../../mixer/mixerGraph.svelte.js';
+	import { onEveryFrame } from '../../../../audio/analysis/frameLoop.js';
+	import { TARGET_LUFS } from '../../../../audio/output/outputSettings.js';
 	import { formatLufs } from './formatReadings.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';

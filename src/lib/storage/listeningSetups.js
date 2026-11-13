@@ -17,7 +17,7 @@ export const LISTENING_SETUP_VERSION = 1;
  *   id: string,
  *   version: number,
  *   name: string,
- *   eqs: Record<string, import('$lib/arranger/playback/eq/eqBands.js').EqSettings>,
+ *   eqs: Record<string, import('$lib/audio/eq/eqBands.js').EqSettings>,
  *   createdAt: string,
  *   updatedAt: string
  * }} ListeningSetup

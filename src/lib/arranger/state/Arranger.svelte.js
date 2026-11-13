@@ -35,7 +35,7 @@ import { harmonyPartsIn } from '../melody/harmony/writeHarmonies.js';
 import { withPartsKept } from '../melody/harmony/keepParts.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { concertChordAt } from '../chart/concertChords.js';
-import { mixer } from '../playback/mixer.svelte.js';
+import { mixer } from '../mixer/mixer.svelte.js';
 import { transposeChart } from '../chart/transposeChart.js';
 import { validCapo } from '../chart/capo.js';
 import { withKeyField } from '../chart/keyField.js';

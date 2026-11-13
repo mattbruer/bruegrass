@@ -3,8 +3,8 @@
 	 * Slow a song down to learn its parts, without changing its pitch.
 	 * Pick a song from the list; its player shows above the list.
 	 */
-	import { songs } from '$lib/songs/songs.js';
-	import TranscribePlayer from '$lib/transcribe/TranscribePlayer.svelte';
+	import { songs } from '$lib/playlist/songs.js';
+	import TranscribePlayer from '$lib/slowDowner/TranscribePlayer.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 

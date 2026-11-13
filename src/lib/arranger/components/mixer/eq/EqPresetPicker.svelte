@@ -17,8 +17,8 @@
 		presetsForStrip,
 		refreshEqPresets,
 		saveStripAsPreset
-	} from '../../../playback/eq/eqPresets.svelte.js';
-	import { listening } from '../../../playback/eq/listeningSetup.svelte.js';
+	} from '../../../mixer/eqPresets.svelte.js';
+	import { listening } from '../../../mixer/listeningSetup.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 

@@ -5,7 +5,7 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/** @type {{ channel: import('../../../playback/mixer.svelte.js').ChannelSettings }} */
+	/** @type {{ channel: import('../../../mixer/mixer.svelte.js').ChannelSettings }} */
 	let { channel } = $props();
 
 	let isOpen = $derived(instrumentWindow.channelId === channel.id);

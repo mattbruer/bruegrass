@@ -6,7 +6,7 @@ import { beforeNavigate } from '$app/navigation';
 import {
 	setupDiscardQuestion,
 	setupHasUnsavedChanges
-} from '../playback/eq/listeningSetup.svelte.js';
+} from '../mixer/listeningSetup.svelte.js';
 import { forgetDraftsOnLeaving } from './drafts.svelte.js';
 import { forgetSongMix } from './songMixMemory.svelte.js';
 

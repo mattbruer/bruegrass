@@ -3,7 +3,7 @@
  * band is, hide it when stopped, and keep it in view by scrolling the
  * tracks when it runs off the visible part.
  */
-import { onEveryFrame } from '../playback/analysis/frameLoop.js';
+import { onEveryFrame } from '../../audio/analysis/frameLoop.js';
 
 /** Where the playhead lands after a scroll, as a share of the visible width. */
 const LAND_AT = 1 / 3;

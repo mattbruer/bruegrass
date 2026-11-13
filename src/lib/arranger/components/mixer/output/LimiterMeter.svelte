@@ -8,8 +8,8 @@
 	 * ten times a second, which is as fast as it can be read.
 	 */
 	import { onMount } from 'svelte';
-	import { audioTaps } from '../../../playback/mixerGraph.svelte.js';
-	import { onEveryFrame } from '../../../playback/analysis/frameLoop.js';
+	import { audioTaps } from '../../../mixer/mixerGraph.svelte.js';
+	import { onEveryFrame } from '../../../../audio/analysis/frameLoop.js';
 	import { formatReduction } from './formatReadings.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';

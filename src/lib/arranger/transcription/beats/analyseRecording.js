@@ -9,7 +9,7 @@
  * - chroma: how much of each of the 12 pitch classes is sounding, so the
  *   finder can see where the chords change (bars usually start there).
  */
-import { createFft } from '../../../transcribe/stretch/fft.js';
+import { createFft } from '../../../audio/stretch/fft.js';
 
 const FRAME_SECONDS = 0.046;
 const HOP_SECONDS = 0.0058;

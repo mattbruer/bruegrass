@@ -23,7 +23,7 @@
 import { preparePerformance } from '../instruments/performance.js';
 import { createBand } from '../instruments/band.js';
 import { channelInstrument } from '../instruments/tuneInstruments.js';
-import { buildMixerGraph } from '../playback/graph/buildMixerGraph.js';
+import { buildMixerGraph } from '../../audio/mixer/buildMixerGraph.js';
 import { melodyEvents } from '../melody/melody.js';
 import { channelsInUse, isTuneChannel } from '../melody/harmony/partChannels.js';
 import { isRecordTrack } from '../takes/recordTracks.js';
@@ -45,7 +45,7 @@ const TAIL_MAX = 8;
  *   bass?: import('../instruments/bassline.js').BassNote[] | null
  * }} Song
  *   bass: the edited bass line (readWrittenBass), or null for the band's own
- * @typedef {ReturnType<typeof import('../playback/mixer.svelte.js').mixSnapshot>} Mix
+ * @typedef {ReturnType<typeof import('../mixer/mixer.svelte.js').mixSnapshot>} Mix
  * @typedef {{ name: string, channels: Float32Array[] }} RenderedFile
  *   channels: one (mono) or two (stereo) arrays of samples, -1 to 1
  */
@@ -201,7 +201,7 @@ function planRender(song, mix) {
  * Build the band in the offline context and queue one pass of every note.
  * @param {typeof import('tone')} Tone
  * @param {ReturnType<typeof planRender>} plan
- * @param {import('../playback/graph/buildMixerGraph.js').MixerGraph} graph
+ * @param {import('../../audio/mixer/buildMixerGraph.js').MixerGraph} graph
  */
 async function playOnePass(Tone, { performance, barOne, instrumentOf }, graph) {
 	const band = await createBand(Tone, performance, graph.channelInput, {

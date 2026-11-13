@@ -2,7 +2,7 @@
  * Where things sit on the EQ graph: frequency across (spaced like a piano,
  * each octave the same width, as in Logic), gain up and down.
  */
-import { EQ_FREQUENCY_RANGE, EQ_GAIN_RANGE } from '../../../playback/eq/eqBands.js';
+import { EQ_FREQUENCY_RANGE, EQ_GAIN_RANGE } from '../../../../audio/eq/eqBands.js';
 
 const LOG_SPAN = Math.log(EQ_FREQUENCY_RANGE.max / EQ_FREQUENCY_RANGE.min);
 

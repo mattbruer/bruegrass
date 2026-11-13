@@ -3,7 +3,7 @@
  * recorded. Plain numbers, saved with the take, so the checks and the
  * export never need the audio again to know where the hit is.
  */
-import { peakLevel, toDecibels } from '$lib/arranger/playback/analysis/levels.js';
+import { peakLevel, toDecibels } from '$lib/audio/analysis/levels.js';
 import { findHit, LEAD_IN_MS } from './findHit.js';
 import { smoothEnvelope } from './envelope.js';
 import { detectPitch, centsOff, midiToHz } from './detectPitch.js';
@@ -44,7 +44,7 @@ const ENDING_MS = 50;
  */
 
 /**
- * @param {import('$lib/recording/takeRecorder.js').Take} take
+ * @param {import('$lib/audio/recording/takeRecorder.js').Take} take
  * @param {number | null} midi the note asked for (null: a strum)
  * @param {number | null} [hitAfter] frames: the hit comes after this (see findHit)
  * @returns {TakeAnalysis}

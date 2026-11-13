@@ -9,8 +9,8 @@
 	import MuteSoloButtons from './MuteSoloButtons.svelte';
 	import ChannelFader from './ChannelFader.svelte';
 	import ReverbPluginWindow from './ReverbPluginWindow.svelte';
-	import { mixer, DEFAULT_REVERB_LEVEL_DB } from '../../playback/mixer.svelte.js';
-	import { audioTaps } from '../../playback/mixerGraph.svelte.js';
+	import { mixer, DEFAULT_REVERB_LEVEL_DB } from '../../mixer/mixer.svelte.js';
+	import { audioTaps } from '../../mixer/mixerGraph.svelte.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	let pluginWindowOpen = $state(false);

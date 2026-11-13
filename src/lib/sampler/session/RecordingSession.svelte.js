@@ -34,7 +34,7 @@ import {
 } from '$lib/storage/samplingSessions.js';
 
 /** @typedef {import('$lib/storage/samplingSessions.js').TakeRecord} TakeRecord */
-/** @typedef {import('$lib/recording/takeRecorder.js').Take} Take */
+/** @typedef {import('$lib/audio/recording/takeRecorder.js').Take} Take */
 /** @typedef {{ kept: TakeRecord | null, fresh: TakeRecord | null }} TargetTakes */
 /** @typedef {ReturnType<typeof analyseHits>[number]} Hit */
 /** @typedef {{ hits: Hit[], chosen: number[] }} Run */

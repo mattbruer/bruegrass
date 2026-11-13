@@ -3,9 +3,9 @@
  * on each mic (to set the interface's gain: the loudest hit should peak a
  * little under 0 dB, around -6 dBFS, never at it).
  */
-import { peakLevel, toDecibels } from '$lib/arranger/playback/analysis/levels.js';
+import { peakLevel, toDecibels } from '$lib/audio/analysis/levels.js';
 
-/** @param {import('$lib/recording/takeRecorder.js').Take} take */
+/** @param {import('$lib/audio/recording/takeRecorder.js').Take} take */
 export function summariseTake(take) {
 	const frames = take.channels[0]?.length ?? 0;
 	return {

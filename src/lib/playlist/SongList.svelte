@@ -1,6 +1,6 @@
 <script>
 	import SongButton from './SongButton.svelte';
-	import { songs } from '$lib/songs/songs.js';
+	import { songs } from '$lib/playlist/songs.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 

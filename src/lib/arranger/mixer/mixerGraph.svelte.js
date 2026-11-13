@@ -8,11 +8,11 @@
  * (export/renderSong.js), so an exported file sounds like playback.
  */
 import { mixer, anyChannelSoloed, mixSnapshot } from './mixer.svelte.js';
-import { buildMixerGraph } from './graph/buildMixerGraph.js';
-import { createSpectrumTap, createStereoTap } from './analysis/taps.js';
-import { outputComparison } from './output/outputStage.svelte.js';
+import { buildMixerGraph } from '../../audio/mixer/buildMixerGraph.js';
+import { createSpectrumTap, createStereoTap } from '../../audio/analysis/taps.js';
+import { outputComparison } from './outputStage.svelte.js';
 
-/** @type {Promise<import('./graph/buildMixerGraph.js').MixerGraph> | null} */
+/** @type {Promise<import('../../audio/mixer/buildMixerGraph.js').MixerGraph> | null} */
 let graph = null;
 
 /**
@@ -20,12 +20,12 @@ let graph = null;
  * analysis/taps.js). `current` is null until the audio is built (on the
  * first Play).
  * @typedef {{
- *   channels: Map<string, import('./analysis/taps.js').StereoTap>,
- *   reverb: import('./analysis/taps.js').StereoTap,
- *   master: import('./analysis/taps.js').StereoTap,
- *   spectrum: import('./analysis/taps.js').SpectrumTap,
- *   afterEq: Map<string, import('./analysis/taps.js').SpectrumTap>,
- *   output: { read: () => import('./output/createOutputStage.js').OutputReadings, resetLoudness: () => void }
+ *   channels: Map<string, import('../../audio/analysis/taps.js').StereoTap>,
+ *   reverb: import('../../audio/analysis/taps.js').StereoTap,
+ *   master: import('../../audio/analysis/taps.js').StereoTap,
+ *   spectrum: import('../../audio/analysis/taps.js').SpectrumTap,
+ *   afterEq: Map<string, import('../../audio/analysis/taps.js').SpectrumTap>,
+ *   output: { read: () => import('../../audio/output/createOutputStage.js').OutputReadings, resetLoudness: () => void }
  * }} AudioTaps
  *   master, spectrum: what reaches the speakers (after the output stage);
  *   afterEq: each strip's sound just after its EQ, by strip id ('reverb' and 'master' too);
@@ -69,7 +69,7 @@ async function buildLiveGraph() {
  * Hang taps: levels after each strip's fader and pan, each strip's sound
  * just after its EQ, and what reaches the speakers (where the visualiser listens).
  * @param {typeof import('tone')} Tone
- * @param {import('./graph/buildMixerGraph.js').MixerGraph} graph
+ * @param {import('../../audio/mixer/buildMixerGraph.js').MixerGraph} graph
  * @returns {AudioTaps}
  */
 function createTaps(Tone, { master, reverbAux, reverbEq, output, strips }) {
@@ -102,7 +102,7 @@ function createTaps(Tone, { master, reverbAux, reverbEq, output, strips }) {
 /**
  * Push mixer settings onto the audio nodes whenever they change. Each part
  * follows only its own settings, so moving one EQ band only touches that strip.
- * @param {import('./graph/buildMixerGraph.js').MixerGraph} graph
+ * @param {import('../../audio/mixer/buildMixerGraph.js').MixerGraph} graph
  */
 function followMixerSettings(graph) {
 	const { strips, reverbEq, masterEq, reverb, output } = graph;

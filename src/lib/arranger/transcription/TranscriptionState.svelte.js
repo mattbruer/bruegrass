@@ -17,7 +17,7 @@
  *
  * Call `dispose` when the page goes (the player has its own audio context).
  */
-import { StretchPlayer } from '$lib/transcribe/StretchPlayer.svelte.js';
+import { StretchPlayer } from '$lib/slowDowner/StretchPlayer.svelte.js';
 import { waveformPeaks } from '../takes/waveformPeaks.js';
 import { barAt, layOutBars, withBarLength, withBeatsPerBar } from './barPlan.js';
 import {
@@ -46,15 +46,15 @@ import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
 import { withKeyField } from '../chart/keyField.js';
 import { quartersAt, secondsAt } from './tempoMap.js';
 import { barStepTarget } from './barStep.js';
-import { findTuning } from '$lib/transcribe/findTuning.js';
-import { clampCents } from '$lib/transcribe/tuning.js';
+import { findTuning } from '$lib/slowDowner/findTuning.js';
+import { clampCents } from '$lib/slowDowner/tuning.js';
 import { STARTER_SONG } from '../starterSong.js';
 import { okToDiscardChanges } from '../state/guardUnsavedChanges.svelte.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { BASS_VOICE } from '../bass/readBass.js';
 import { uprightPitch } from '../instruments/upright.js';
 import { channelInstrument } from '../instruments/tuneInstruments.js';
-import { mixer } from '../playback/mixer.svelte.js';
+import { mixer } from '../mixer/mixer.svelte.js';
 import { heardNotes, laneLevels } from './heardParts.js';
 
 /**

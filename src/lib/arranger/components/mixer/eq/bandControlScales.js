@@ -2,7 +2,7 @@
  * How each EQ band control maps onto a slider (see Slider.svelte), spread
  * into a Slider: <Slider {...FREQUENCY_SCALE} ... />
  */
-import { EQ_FREQUENCY_RANGE, EQ_GAIN_RANGE, EQ_Q_RANGE } from '../../../playback/eq/eqBands.js';
+import { EQ_FREQUENCY_RANGE, EQ_GAIN_RANGE, EQ_Q_RANGE } from '../../../../audio/eq/eqBands.js';
 import { formatFrequency } from './eqGraphScale.js';
 
 /**

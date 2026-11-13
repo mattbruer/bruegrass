@@ -3,7 +3,7 @@
 	 * A strip's EQ button: a tiny picture of its EQ curve (like Logic's EQ
 	 * thumbnail on each channel strip). Tap it to open that strip's EQ.
 	 */
-	import { eqResponseDb } from '../../../playback/eq/eqResponse.js';
+	import { eqResponseDb } from '../../../../audio/eq/eqResponse.js';
 	import { curveFrequencies, xForFrequency, yForGain } from './eqGraphScale.js';
 	import { eqStrip, eqWindow, openEq } from './eqWindowState.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';

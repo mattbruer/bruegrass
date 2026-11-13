@@ -1,6 +1,6 @@
 <script>
 	/** A lane's name, with mute and solo for its mixer channel. It stays put while the lanes scroll. */
-	import { mixer } from '../../playback/mixer.svelte.js';
+	import { mixer } from '../../mixer/mixer.svelte.js';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
 
 	/** @type {{ lane: import('../../tracks/lanes.js').Lane }} */

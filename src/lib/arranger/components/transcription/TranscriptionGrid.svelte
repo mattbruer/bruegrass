@@ -23,7 +23,7 @@
 	import GridMenu from './GridMenu.svelte';
 	import CycleStrip from './CycleStrip.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
-	import { mixer } from '../../playback/mixer.svelte.js';
+	import { mixer } from '../../mixer/mixer.svelte.js';
 	import RecordingLane from './RecordingLane.svelte';
 	import ChordLane from './ChordLane.svelte';
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';

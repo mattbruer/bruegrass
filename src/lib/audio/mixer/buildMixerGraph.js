@@ -15,7 +15,7 @@
  * Every bus after the channels is stereo: a Tone Channel is mono unless told
  * otherwise, and a mono master would fold every pan back to the centre.
  */
-import { faderGain } from '../faderTaper.js';
+import { faderGain } from './faderTaper.js';
 import { createReverb } from '../reverb/createReverb.js';
 import { createEq } from '../eq/createEq.js';
 import { createOutputStage } from '../output/createOutputStage.js';
@@ -47,7 +47,7 @@ const INPUT_TRIM_DB = -14;
 
 /**
  * @param {typeof import('tone')} Tone
- * @param {ReturnType<typeof import('../mixer.svelte.js').mixSnapshot>} settings a plain copy of the mixer
+ * @param {ReturnType<typeof import('../../arranger/mixer/mixer.svelte.js').mixSnapshot>} settings a plain copy of the mixer
  */
 export async function buildMixerGraph(Tone, settings) {
 	// Output stage first: everything else flows into it
@@ -164,7 +164,7 @@ export async function buildMixerGraph(Tone, settings) {
  * One instrument's channel strip: parts → input trim → EQ → fader/pan → mix bus,
  * with a send to the reverb after the fader.
  * @param {typeof import('tone')} Tone
- * @param {import('../mixer.svelte.js').ChannelSettings} settings
+ * @param {import('../../arranger/mixer/mixer.svelte.js').ChannelSettings} settings
  * @param {import('tone').InputNode} mixBus
  * @param {import('tone').InputNode} reverbInput
  * @returns {Strip}

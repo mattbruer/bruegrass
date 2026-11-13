@@ -21,7 +21,7 @@
 		setupHasUnsavedChanges,
 		suggestedSetupNames,
 		useEachSongsOwnEq
-	} from '../../../playback/eq/listeningSetup.svelte.js';
+	} from '../../../mixer/listeningSetup.svelte.js';
 	import { listeningDialog } from './listeningDialogState.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';

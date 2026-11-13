@@ -5,9 +5,9 @@
 	 * the hardest hits should reach the amber, never the red.
 	 */
 	import { onMount } from 'svelte';
-	import { peakLevel, toDecibels } from '$lib/arranger/playback/analysis/levels.js';
-	import { createMeterBallistics } from '$lib/arranger/playback/analysis/meterBallistics.js';
-	import { onEveryFrame } from '$lib/arranger/playback/analysis/frameLoop.js';
+	import { peakLevel, toDecibels } from '$lib/audio/analysis/levels.js';
+	import { createMeterBallistics } from '$lib/audio/analysis/meterBallistics.js';
+	import { onEveryFrame } from '$lib/audio/analysis/frameLoop.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 

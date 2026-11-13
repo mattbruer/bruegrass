@@ -28,7 +28,7 @@
 	import MixerDrawer from '$lib/arranger/components/mixer/MixerDrawer.svelte';
 	import RestoreDraftsDialog from '$lib/arranger/components/song/RestoreDraftsDialog.svelte';
 	import ReceiveSongDialog from '$lib/arranger/components/share/ReceiveSongDialog.svelte';
-	import { startThisDevicesSetup } from '$lib/arranger/playback/eq/listeningSetup.svelte.js';
+	import { startThisDevicesSetup } from '$lib/arranger/mixer/listeningSetup.svelte.js';
 	import { keepDrafts, offerDraftsFromLastTime } from '$lib/arranger/state/drafts.svelte.js';
 	import { keepBassWithChart } from '$lib/arranger/state/bassFollowsChart.svelte.js';
 	import {

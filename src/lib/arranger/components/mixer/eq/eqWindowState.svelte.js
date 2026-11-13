@@ -18,4 +18,4 @@ export function closeEq() {
 }
 
 /** The strip's name and EQ (a channel id, 'reverb' or 'master'): see stripWithEq in mixer.svelte.js. */
-export { stripWithEq as eqStrip } from '../../../playback/mixer.svelte.js';
+export { stripWithEq as eqStrip } from '../../../mixer/mixer.svelte.js';

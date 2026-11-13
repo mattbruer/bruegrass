@@ -8,7 +8,7 @@
 /**
  * @param {import('./guitar.js').Checklist} checklist
  * @param {import('./targets.js').Target} target
- * @returns {import('$lib/recording/clickTrack.js').ClickRun | null}
+ * @returns {import('$lib/audio/recording/clickTrack.js').ClickRun | null}
  */
 export function clickRun(checklist, target) {
 	const click = findGroup(checklist, target)?.click;

@@ -8,10 +8,10 @@
 	 * you tap the meter.
 	 */
 	import { onMount } from 'svelte';
-	import { dbToFader, FADER_MIN } from '../../../playback/faderTaper.js';
-	import { peakLevel, toDecibels } from '../../../playback/analysis/levels.js';
-	import { createMeterBallistics } from '../../../playback/analysis/meterBallistics.js';
-	import { onEveryFrame } from '../../../playback/analysis/frameLoop.js';
+	import { dbToFader, FADER_MIN } from '../../../../audio/mixer/faderTaper.js';
+	import { peakLevel, toDecibels } from '../../../../audio/analysis/levels.js';
+	import { createMeterBallistics } from '../../../../audio/analysis/meterBallistics.js';
+	import { onEveryFrame } from '../../../../audio/analysis/frameLoop.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -20,7 +20,7 @@
 	const CLIP_AT_DB = 0;
 
 	/**
-	 * @type {{ tap: import('../../../playback/analysis/taps.js').StereoTap | null }}
+	 * @type {{ tap: import('../../../../audio/analysis/taps.js').StereoTap | null }}
 	 *   tap: what to measure (null before the audio exists: the meter stays empty)
 	 */
 	let { tap } = $props();

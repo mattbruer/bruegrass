@@ -11,7 +11,7 @@
 	import { useArranger } from '../../state/context.js';
 	import { harmonyOptions, withOption } from '../../melody/roll/harmonyOptions.js';
 	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
-	import { mixer } from '../../playback/mixer.svelte.js';
+	import { mixer } from '../../mixer/mixer.svelte.js';
 	import { BASS_VOICE } from '../../bass/readBass.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';

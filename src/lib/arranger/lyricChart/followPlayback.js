@@ -3,7 +3,7 @@
  * (class `playing` on the element with its `data-bar`, inside an element
  * marked `data-sheet`: a page) and bring that page into view.
  */
-import { onEveryFrame } from '../playback/analysis/frameLoop.js';
+import { onEveryFrame } from '../../audio/analysis/frameLoop.js';
 
 /**
  * @typedef {{ timeNow: () => number, bars: { index: number, start: number, beats: number }[] }} FollowParams

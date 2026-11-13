@@ -14,7 +14,7 @@
 	import EqPresetPicker from './EqPresetPicker.svelte';
 	import ListeningSetupNote from './ListeningSetupNote.svelte';
 	import { closeEq, eqStrip, eqWindow } from './eqWindowState.svelte.js';
-	import { flatEq } from '../../../playback/eq/eqBands.js';
+	import { flatEq } from '../../../../audio/eq/eqBands.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 

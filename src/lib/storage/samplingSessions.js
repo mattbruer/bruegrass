@@ -133,7 +133,7 @@ export async function readTakeAudio(takeId) {
  * new take (if any; a kept one stays until this one is kept).
  * @param {string} sessionId
  * @param {string} targetId
- * @param {import('$lib/recording/takeRecorder.js').Take} take
+ * @param {import('$lib/audio/recording/takeRecorder.js').Take} take
  * @param {TakeRecord['analysis']} analysis
  * @param {TakeRecord | null} replacing the target's current new take
  * @returns {Promise<TakeRecord>}

@@ -12,14 +12,14 @@
 		REVERB_DEFAULTS,
 		positionOf,
 		valueAt
-	} from '../../playback/reverb/reverbSettings.js';
+	} from '../../../audio/reverb/reverbSettings.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
 	 * @type {{
 	 *   open: boolean,
-	 *   settings: import('../../playback/reverb/reverbSettings.js').ReverbSettings
+	 *   settings: import('../../../audio/reverb/reverbSettings.js').ReverbSettings
 	 * }}
 	 */
 	let { open = $bindable(false), settings } = $props();

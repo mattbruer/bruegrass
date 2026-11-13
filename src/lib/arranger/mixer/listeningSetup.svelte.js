@@ -23,7 +23,7 @@ import {
 	eqsSnapshot,
 	mixSnapshot,
 	resetMix
-} from '../mixer.svelte.js';
+} from './mixer.svelte.js';
 import {
 	deleteListeningSetup,
 	getListeningSetup,

@@ -9,11 +9,11 @@
 	import ChannelFader from './ChannelFader.svelte';
 	import InstrumentButton from './instruments/InstrumentButton.svelte';
 	import { LEVEL_SCALE, PAN_SCALE, SEND_SCALE } from './controlScales.js';
-	import { defaultChannel } from '../../playback/mixer.svelte.js';
-	import { audioTaps } from '../../playback/mixerGraph.svelte.js';
+	import { defaultChannel } from '../../mixer/mixer.svelte.js';
+	import { audioTaps } from '../../mixer/mixerGraph.svelte.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/** @type {{ channel: import('../../playback/mixer.svelte.js').ChannelSettings }} */
+	/** @type {{ channel: import('../../mixer/mixer.svelte.js').ChannelSettings }} */
 	let { channel } = $props();
 
 	/** Where resetting each control puts it back to. */

@@ -3,7 +3,7 @@
 	 * Which recording to transcribe: one of the app's songs, or a file from this
 	 * device (an MP3, WAV or anything the browser plays).
 	 */
-	import { songs } from '$lib/songs/songs.js';
+	import { songs } from '$lib/playlist/songs.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 

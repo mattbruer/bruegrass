@@ -3,8 +3,8 @@
  * Slider: <Slider {...LEVEL_SCALE} ... />
  * (Resetting a control puts it back to its default in mixer.svelte.js.)
  */
-import { UNITY, dbToFader, faderToDb, formatDb } from '../../playback/faderTaper.js';
-import { OUTPUT_GAIN_RANGE } from '../../playback/output/outputSettings.js';
+import { UNITY, dbToFader, faderToDb, formatDb } from '../../../audio/mixer/faderTaper.js';
+import { OUTPUT_GAIN_RANGE } from '../../../audio/output/outputSettings.js';
 
 /** Faders and part levels: the console fader taper. */
 export const LEVEL_SCALE = Object.freeze({

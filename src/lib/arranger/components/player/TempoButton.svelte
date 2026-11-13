@@ -8,7 +8,7 @@
 	import { useArranger } from '../../state/context.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
-	import { onEveryFrame } from '../../playback/analysis/frameLoop.js';
+	import { onEveryFrame } from '../../../audio/analysis/frameLoop.js';
 	import { swingAngle } from '../../playback/metronome/swing.js';
 	import MetronomeIcon, {
 		PENDULUM_REST_DEGREES,

@@ -7,11 +7,11 @@
  * The audio work is in $lib/recording; this only holds what the page shows
  * and does the steps in order.
  */
-import { openInputChain } from '$lib/recording/inputChain.js';
-import { playClicks } from '$lib/recording/clickTrack.js';
-import { listInputs, watchInputs } from '$lib/recording/micInput.js';
-import { playTake } from '$lib/recording/playTake.js';
-/** @typedef {import('$lib/recording/takeRecorder.js').Take} Take */
+import { openInputChain } from '$lib/audio/recording/inputChain.js';
+import { playClicks } from '$lib/audio/recording/clickTrack.js';
+import { listInputs, watchInputs } from '$lib/audio/recording/micInput.js';
+import { playTake } from '$lib/audio/recording/playTake.js';
+/** @typedef {import('$lib/audio/recording/takeRecorder.js').Take} Take */
 import {
 	rememberThisDevicesRecordingInput,
 	thisDevicesRecordingInput
@@ -20,7 +20,7 @@ import {
 /** @typedef {'off' | 'opening' | 'on' | 'recording'} InputStatus */
 
 export class InputCheck {
-	/** @type {import('$lib/recording/micInput.js').InputDevice[]} */
+	/** @type {import('$lib/audio/recording/micInput.js').InputDevice[]} */
 	inputs = $state([]);
 	/** The input in use or to use (null: the computer's default). */
 	/** @type {string | null} */
@@ -34,7 +34,7 @@ export class InputCheck {
 	/** @type {string[]} */
 	processingLeftOn = $state([]);
 
-	/** @type {import('$lib/recording/inputChain.js').InputChain | null} */
+	/** @type {import('$lib/audio/recording/inputChain.js').InputChain | null} */
 	#chain = null;
 	/** @type {(() => void) | null} */
 	#stopClicks = null;
@@ -113,7 +113,7 @@ export class InputCheck {
 
 	/**
 	 * Start recording (does nothing unless the input is on and idle).
-	 * @param {import('$lib/recording/clickTrack.js').ClickRun | null} [click] a click to play along to
+	 * @param {import('$lib/audio/recording/clickTrack.js').ClickRun | null} [click] a click to play along to
 	 */
 	startRecording(click = null) {
 		if (this.status !== 'on' || !this.#chain) return false;

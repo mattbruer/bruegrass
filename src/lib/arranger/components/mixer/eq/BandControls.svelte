@@ -10,14 +10,14 @@
 		bandDefinition,
 		hasWidth,
 		isCut
-	} from '../../../playback/eq/eqBands.js';
+	} from '../../../../audio/eq/eqBands.js';
 	import { FREQUENCY_SCALE, GAIN_SCALE, Q_SCALE } from './bandControlScales.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
 	 * @type {{
-	 *   eq: import('../../../playback/eq/eqBands.js').EqSettings,
+	 *   eq: import('../../../../audio/eq/eqBands.js').EqSettings,
 	 *   selectedBandId: string
 	 * }}
 	 */

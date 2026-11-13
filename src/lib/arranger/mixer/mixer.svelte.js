@@ -8,10 +8,10 @@
  *                                                            (reverb plugin, fader, mute)
  *   master ─▶ output stage (gain to a loudness target, true-peak limiter) ─▶ speakers
  */
-import { REVERB_DEFAULTS } from './reverb/reverbSettings.js';
-import { FADER_MIN } from './faderTaper.js';
-import { flatEq } from './eq/eqBands.js';
-import { DEFAULT_OUTPUT_GAIN_DB } from './output/outputSettings.js';
+import { REVERB_DEFAULTS } from '../../audio/reverb/reverbSettings.js';
+import { FADER_MIN } from '../../audio/mixer/faderTaper.js';
+import { flatEq } from '../../audio/eq/eqBands.js';
+import { DEFAULT_OUTPUT_GAIN_DB } from '../../audio/output/outputSettings.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { RECORD_TRACKS } from '../takes/recordTracks.js';
 import { GUITAR } from '../instruments/tuneInstruments.js';
@@ -50,7 +50,7 @@ const TUNE_INSTRUMENT_DEFAULTS = {
  *   id: string, name: string,
  *   volume: number, pan: number, send: number,
  *   mute: boolean, solo: boolean,
- *   eq: import('./eq/eqBands.js').EqSettings,
+ *   eq: import('../../audio/eq/eqBands.js').EqSettings,
  *   parts: PartSettings[],
  *   instrument?: string
  * }} ChannelSettings
@@ -101,7 +101,7 @@ export const mixer = $state({
 		volume: REVERB_LEVEL_DB,
 		mute: false,
 		eq: flatEq(),
-		/** @type {import('./reverb/reverbSettings.js').ReverbSettings} */
+		/** @type {import('../../audio/reverb/reverbSettings.js').ReverbSettings} */
 		plugin: { ...REVERB_DEFAULTS }
 	},
 	/** The master: its EQ shapes the whole mix. */
@@ -194,7 +194,7 @@ export function applyMix(saved) {
  * Every strip that has an EQ, in console order: each channel, then the
  * reverb aux and the master. The EQ window, presets and listening setups
  * all find a strip's EQ through this.
- * @returns {{ id: string, name: string, eq: import('./eq/eqBands.js').EqSettings }[]}
+ * @returns {{ id: string, name: string, eq: import('../../audio/eq/eqBands.js').EqSettings }[]}
  */
 export function stripsWithEq() {
 	return [
@@ -216,7 +216,7 @@ export function stripWithEq(stripId) {
 
 /**
  * A plain copy of every strip's EQ, by strip id: what a listening setup saves.
- * @returns {Record<string, import('./eq/eqBands.js').EqSettings>}
+ * @returns {Record<string, import('../../audio/eq/eqBands.js').EqSettings>}
  */
 export function eqsSnapshot() {
 	return Object.fromEntries(stripsWithEq().map((strip) => [strip.id, $state.snapshot(strip.eq)]));
@@ -238,7 +238,7 @@ export function applyEqs(saved) {
 /**
  * Put a saved EQ back, band by band, taking only settings of the right
  * type. A mix saved before EQs existed has none, which leaves the EQ flat.
- * @param {import('./eq/eqBands.js').EqSettings} target
+ * @param {import('../../audio/eq/eqBands.js').EqSettings} target
  * @param {any} saved
  */
 export function applyEq(target, saved) {

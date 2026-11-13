@@ -7,9 +7,9 @@
 	 */
 	import { onMount } from 'svelte';
 	import { settings } from '$lib/settings/settings.svelte.js';
-	import { audioTaps } from '../../../playback/mixerGraph.svelte.js';
-	import { onEveryFrame } from '../../../playback/analysis/frameLoop.js';
-	import { EQ_BANDS, isCut } from '../../../playback/eq/eqBands.js';
+	import { audioTaps } from '../../../mixer/mixerGraph.svelte.js';
+	import { onEveryFrame } from '../../../../audio/analysis/frameLoop.js';
+	import { EQ_BANDS, isCut } from '../../../../audio/eq/eqBands.js';
 	import { prepareCanvas } from '../scope/canvas.js';
 	import {
 		HANDLE_RADIUS,
@@ -31,7 +31,7 @@
 
 	/**
 	 * @type {{
-	 *   eq: import('../../../playback/eq/eqBands.js').EqSettings,
+	 *   eq: import('../../../../audio/eq/eqBands.js').EqSettings,
 	 *   stripId: string,
 	 *   selectedBandId: string
 	 * }}

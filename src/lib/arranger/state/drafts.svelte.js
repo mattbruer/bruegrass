@@ -14,8 +14,8 @@ import { clearDraft, readDraft, writeDraft } from '$lib/storage/drafts.js';
 import { getArrangement } from '$lib/storage/arrangements.js';
 import { readSongFields } from './songFields.js';
 import { forgetSongMix } from './songMixMemory.svelte.js';
-import { applyEqs, eqsSnapshot } from '../playback/mixer.svelte.js';
-import { listening, setupHasUnsavedChanges } from '../playback/eq/listeningSetup.svelte.js';
+import { applyEqs, eqsSnapshot } from '../mixer/mixer.svelte.js';
+import { listening, setupHasUnsavedChanges } from '../mixer/listeningSetup.svelte.js';
 
 /** Changes are written to the draft this long after the last one (not on every slider tick). */
 const WRITE_DELAY_MS = 1000;

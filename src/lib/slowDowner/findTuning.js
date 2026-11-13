@@ -5,7 +5,7 @@
  * flat). Instruments' partials stretch a little and voices slide, so it's a
  * starting point to nudge from by ear.
  */
-import { createFft } from './stretch/fft.js';
+import { createFft } from '../audio/stretch/fft.js';
 
 /** Long frames: fine enough to tell a few cents apart. */
 const FRAME_SIZE = 16384;

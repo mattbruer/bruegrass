@@ -9,7 +9,7 @@
 	 */
 	import UnsavedDot from '$lib/components/UnsavedDot.svelte';
 	import HeadphonesIcon from '../../icons/HeadphonesIcon.svelte';
-	import { listening, setupHasUnsavedChanges } from '../../../playback/eq/listeningSetup.svelte.js';
+	import { listening, setupHasUnsavedChanges } from '../../../mixer/listeningSetup.svelte.js';
 	import { openListeningDialog } from './listeningDialogState.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';

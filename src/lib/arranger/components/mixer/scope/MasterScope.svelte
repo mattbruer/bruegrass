@@ -9,9 +9,9 @@
 	 */
 	import { onMount } from 'svelte';
 	import { settings } from '$lib/settings/settings.svelte.js';
-	import { audioTaps } from '../../../playback/mixerGraph.svelte.js';
-	import { onEveryFrame } from '../../../playback/analysis/frameLoop.js';
-	import { stereoCorrelation } from '../../../playback/analysis/levels.js';
+	import { audioTaps } from '../../../mixer/mixerGraph.svelte.js';
+	import { onEveryFrame } from '../../../../audio/analysis/frameLoop.js';
+	import { stereoCorrelation } from '../../../../audio/analysis/levels.js';
 	import { prepareCanvas, themeColours } from './canvas.js';
 	import { drawWaveform } from './drawWaveform.js';
 	import { drawSpectrum } from './drawSpectrum.js';
