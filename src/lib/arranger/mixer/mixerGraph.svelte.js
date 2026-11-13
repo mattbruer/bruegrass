@@ -109,9 +109,9 @@ function followMixerSettings(graph) {
 	// Never torn down, on purpose: the live graph is built once and lasts as
 	// long as the page, so its settings watchers do too (they're made once)
 	$effect.root(() => {
-		$effect(() => graph.applyChannels($state.snapshot(mixer.channels), anyChannelSoloed()));
-
 		for (const settings of mixer.channels) {
+			// Reads only this channel's own levels, so one fader never sets every channel again
+			$effect(() => graph.applyChannel(settings, anyChannelSoloed()));
 			$effect(() => {
 				strips.get(settings.id)?.eq.update($state.snapshot(settings.eq));
 			});
@@ -119,7 +119,10 @@ function followMixerSettings(graph) {
 		$effect(() => reverbEq.update($state.snapshot(mixer.reverb.eq)));
 		$effect(() => masterEq.update($state.snapshot(mixer.master.eq)));
 		$effect(() => reverb.update($state.snapshot(mixer.reverb.plugin)));
-		$effect(() => graph.applyReverbAndMaster($state.snapshot(mixer.reverb), mixer.master.volume));
+		$effect(() => {
+			const { volume, mute } = mixer.reverb;
+			graph.applyReverbAndMaster({ volume, mute }, mixer.master.volume);
+		});
 
 		$effect(() => output.setGain(mixer.output.gain));
 		$effect(() => output.setComparison({ ...outputComparison }));

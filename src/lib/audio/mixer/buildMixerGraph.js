@@ -114,17 +114,24 @@ export async function buildMixerGraph(Tone, settings) {
 		 * @param {boolean} soloing is any channel soloed?
 		 */
 		applyChannels(channels, soloing) {
-			for (const channel of channels) {
-				const strip = strips.get(channel.id);
-				if (!strip) continue;
-				strip.channel.volume.value = faderGain(channel.volume);
-				strip.channel.pan.value = channel.pan;
-				strip.channel.mute = channel.mute || (soloing && !(/** @type {any} */ (channel).solo));
-				strip.send.gain.value = faderGain(channel.send);
-				for (const part of channel.parts) {
-					const partNode = strip.parts.get(part.id);
-					if (partNode) partNode.volume.value = faderGain(part.volume);
-				}
+			for (const channel of channels) graph.applyChannel(channel, soloing);
+		},
+
+		/**
+		 * One channel's level, pan, mute and send (not its EQ).
+		 * @param {typeof settings['channels'][number]} channel
+		 * @param {boolean} soloing is any channel soloed?
+		 */
+		applyChannel(channel, soloing) {
+			const strip = strips.get(channel.id);
+			if (!strip) return;
+			strip.channel.volume.value = faderGain(channel.volume);
+			strip.channel.pan.value = channel.pan;
+			strip.channel.mute = channel.mute || (soloing && !(/** @type {any} */ (channel).solo));
+			strip.send.gain.value = faderGain(channel.send);
+			for (const part of channel.parts) {
+				const partNode = strip.parts.get(part.id);
+				if (partNode) partNode.volume.value = faderGain(part.volume);
 			}
 		},
 

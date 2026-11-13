@@ -173,6 +173,15 @@ export function applySongMix(mix) {
  * and choosing a setup doesn't count as changing the song).
  */
 export function songMixSnapshot() {
+	return songMix;
+}
+
+/**
+ * Copied once per change to the mixer and shared by everyone who asks (the
+ * unsaved-changes check, drafts, the mix remembered on this device), so
+ * don't change what it returns.
+ */
+const songMix = $derived.by(() => {
 	const mix = mixSnapshot();
 	if (!listening.songEqs) return mix;
 	const songEqs = listening.songEqs;
@@ -180,7 +189,7 @@ export function songMixSnapshot() {
 	mix.reverb.eq = songEqs.reverb ?? mix.reverb.eq;
 	mix.master.eq = songEqs.master ?? mix.master.eq;
 	return mix;
-}
+});
 
 /** @param {import('$lib/storage/listeningSetups.js').ListeningSetup} setup */
 function useSetup(setup) {
