@@ -31,20 +31,20 @@
 
 	// The list is read fresh each time the dialog opens
 	$effect(() => {
-		if (open) song.refreshSavedSongs();
+		if (open) song.refreshSavedSongs().catch(console.error);
 	});
 
 	/** @param {string} id */
 	function openSong(id) {
 		if (!okToDiscardChanges(song)) return;
-		song.open(id);
+		song.open(id).catch(console.error);
 		open = false;
 	}
 
 	/** @param {import('$lib/storage/arrangements.js').Arrangement} saved */
 	function deleteSong(saved) {
 		if (!confirm(`Delete “${saved.title}” and any takes recorded on it, for good?`)) return;
-		song.delete(saved.id);
+		song.delete(saved.id).catch(console.error);
 	}
 </script>
 

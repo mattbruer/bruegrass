@@ -8,7 +8,9 @@
  * later a database, with this copy as an offline draft that syncs up.
  *
  * Nothing here knows about Svelte, so it can move to a server or a sync
- * worker unchanged.
+ * worker unchanged. Reading and writing are async already, though
+ * localStorage isn't, so when songs move to a server (SvelteKit server
+ * routes or an API) only the bodies here change, not the pages.
  */
 import { readStored, removeStored, writeStored } from './localStore.js';
 import { newId } from './newId.js';
@@ -78,9 +80,9 @@ export function createArrangement(fields = {}) {
 
 /**
  * Every saved song, most recently saved first.
- * @returns {Arrangement[]}
+ * @returns {Promise<Arrangement[]>}
  */
-export function listArrangements() {
+export async function listArrangements() {
 	return Object.values(allSongs())
 		.map(upgrade)
 		.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
@@ -89,9 +91,9 @@ export function listArrangements() {
 /**
  * One saved song, or null if there's no song with that id.
  * @param {string} id
- * @returns {Arrangement | null}
+ * @returns {Promise<Arrangement | null>}
  */
-export function getArrangement(id) {
+export async function getArrangement(id) {
 	const song = allSongs()[id];
 	return song ? upgrade(song) : null;
 }
@@ -99,9 +101,9 @@ export function getArrangement(id) {
 /**
  * Save a song (stamping when it was saved).
  * @param {Arrangement} song
- * @returns {Arrangement} the saved copy
+ * @returns {Promise<Arrangement>} the saved copy
  */
-export function saveArrangement(song) {
+export async function saveArrangement(song) {
 	const saved = { ...song, version: ARRANGEMENT_VERSION, updatedAt: new Date().toISOString() };
 	writeStored(SONGS_KEY, { ...allSongs(), [saved.id]: saved });
 	return saved;
@@ -111,7 +113,7 @@ export function saveArrangement(song) {
  * Delete a saved song for good.
  * @param {string} id
  */
-export function deleteArrangement(id) {
+export async function deleteArrangement(id) {
 	const songs = allSongs();
 	delete songs[id];
 	writeStored(SONGS_KEY, songs);

@@ -33,7 +33,7 @@
 	/** A new song needs a name first; a saved one just saves. */
 	function save() {
 		if (song.isNew) saveDialogOpen = true;
-		else song.save();
+		else song.save().catch(console.error);
 	}
 
 	function saveOnShortcut(/** @type {KeyboardEvent} */ event) {

@@ -66,11 +66,11 @@ export function offerDraftsFromLastTime() {
  * version, so it still shows unsaved changes) and the setup's EQs.
  * @param {import('./Arranger.svelte.js').Arranger} arranger
  */
-export function restoreDrafts(arranger) {
+export async function restoreDrafts(arranger) {
 	const offer = drafts.offer;
 	if (offer?.song) {
-		const stillSaved = offer.song.savedId ? getArrangement(offer.song.savedId) : null;
-		arranger.song.restoreDraft(
+		const stillSaved = offer.song.savedId ? await getArrangement(offer.song.savedId) : null;
+		await arranger.song.restoreDraft(
 			stillSaved ? offer.song : { ...offer.song, savedId: null, name: '' }
 		);
 	}

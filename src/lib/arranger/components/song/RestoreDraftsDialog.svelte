@@ -18,7 +18,7 @@
 	let offer = $derived(drafts.offer);
 
 	function restore() {
-		restoreDrafts(arranger);
+		restoreDrafts(arranger).catch(console.error);
 	}
 </script>
 

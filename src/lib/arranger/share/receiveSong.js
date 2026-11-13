@@ -19,8 +19,8 @@ import { unpackTakeAudio } from './takeFormat.js';
  * Your saved copy of this song, if you have one (it was received before, or it's yours).
  * @param {import('./songPackage.js').SongPackage} songPackage
  */
-export function yourCopyOf(songPackage) {
-	return songPackage.song.id ? getArrangement(songPackage.song.id) : null;
+export async function yourCopyOf(songPackage) {
+	return songPackage.song.id ? await getArrangement(songPackage.song.id) : null;
 }
 
 /**
@@ -31,7 +31,7 @@ export function yourCopyOf(songPackage) {
  */
 export async function receiveSong(songPackage, audioFiles, { asNewSong }) {
 	const notes = [];
-	const songId = saveReceivedSong(songPackage.song, asNewSong);
+	const songId = await saveReceivedSong(songPackage.song, asNewSong);
 	notes.push(...addChords(songPackage.chords));
 
 	const added = await addTakes(songPackage.takes, audioFiles, songId, asNewSong);
@@ -43,13 +43,15 @@ export async function receiveSong(songPackage, audioFiles, { asNewSong }) {
  * @param {import('./songPackage.js').SharedSong} song
  * @param {boolean} asNewSong
  */
-function saveReceivedSong(song, asNewSong) {
+async function saveReceivedSong(song, asNewSong) {
 	const { id, ...fields } = song;
-	const yours = id && !asNewSong ? getArrangement(id) : null;
-	if (yours) return saveArrangement({ ...yours, ...fields }).id;
-	if (id && !getArrangement(id)) return saveArrangement({ ...createArrangement(fields), id }).id;
+	const yours = id && !asNewSong ? await getArrangement(id) : null;
+	if (yours) return (await saveArrangement({ ...yours, ...fields })).id;
+	if (id && !(await getArrangement(id))) {
+		return (await saveArrangement({ ...createArrangement(fields), id })).id;
+	}
 	const title = asNewSong ? `${fields.title} (copy)` : fields.title;
-	return saveArrangement(createArrangement({ ...fields, title })).id;
+	return (await saveArrangement(createArrangement({ ...fields, title }))).id;
 }
 
 /** @param {import('./songPackage.js').SharedChord[]} chords */

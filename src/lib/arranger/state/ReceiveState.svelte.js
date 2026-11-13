@@ -70,8 +70,8 @@ export class ReceiveState {
 				asNewSong
 			});
 			forgetSongMix(received.songId); // the mix that came with it, not one remembered here
-			song.open(received.songId);
-			song.refreshSavedSongs();
+			await song.open(received.songId);
+			await song.refreshSavedSongs();
 			await recording.refreshTakes();
 			this.notes = received.notes;
 			this.offer = null;
@@ -96,7 +96,7 @@ export class ReceiveState {
 		this.notes = [];
 		try {
 			const { songPackage, audioFiles } = await read();
-			this.offer = { songPackage, audioFiles, yourCopy: yourCopyOf(songPackage) };
+			this.offer = { songPackage, audioFiles, yourCopy: await yourCopyOf(songPackage) };
 		} catch (problem) {
 			this.problem =
 				problem instanceof ShareProblem ? problem.message : 'That song couldn’t be read.';

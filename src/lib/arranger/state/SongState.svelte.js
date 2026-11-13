@@ -67,8 +67,8 @@ export class SongState {
 	 * Open one of your saved songs. (Ask about unsaved changes first.)
 	 * @param {string} id
 	 */
-	open(id) {
-		const song = getArrangement(id);
+	async open(id) {
+		const song = await getArrangement(id);
 		if (!song) return;
 		loadSongIntoPage(this.#arranger, song);
 		this.savedId = song.id;
@@ -84,8 +84,8 @@ export class SongState {
 	 * shows as having unsaved changes, just as when you left.
 	 * @param {{ savedId: string | null, name: string, fields: import('./songFields.js').SongFields }} draft
 	 */
-	restoreDraft(draft) {
-		if (draft.savedId) this.open(draft.savedId);
+	async restoreDraft(draft) {
+		if (draft.savedId) await this.open(draft.savedId);
 		else this.startNew();
 		loadSongIntoPage(this.#arranger, draft.fields);
 	}
@@ -95,18 +95,18 @@ export class SongState {
 	 * unless a new name is given.
 	 * @param {string} [name]
 	 */
-	save(name) {
+	async save(name) {
 		const fields = readSongFields(this.#arranger);
 		const title = (name ?? this.name).trim() || this.suggestedName;
-		const existing = this.savedId ? getArrangement(this.savedId) : null;
+		const existing = this.savedId ? await getArrangement(this.savedId) : null;
 		const document = existing ?? createArrangement();
 
-		const saved = saveArrangement({ ...document, ...fields, title });
+		const saved = await saveArrangement({ ...document, ...fields, title });
 		if (!this.savedId) forgetSongMix(null); // it has an id of its own now
 		this.savedId = saved.id;
 		this.name = saved.title;
 		this.#rememberFieldsAsSaved();
-		this.refreshSavedSongs();
+		await this.refreshSavedSongs();
 	}
 
 	/**
@@ -114,8 +114,8 @@ export class SongState {
 	 * as a new, unsaved song (so leaving still asks before losing it).
 	 * @param {string} id
 	 */
-	delete(id) {
-		deleteArrangement(id);
+	async delete(id) {
+		await deleteArrangement(id);
 		forgetSongMix(id);
 		deleteSongTakes(id).catch((problem) =>
 			console.error('Couldn’t delete the song’s takes', problem)
@@ -125,11 +125,11 @@ export class SongState {
 			this.name = '';
 			this.#fieldsWhenSaved = ''; // nothing saved any more: it's all unsaved
 		}
-		this.refreshSavedSongs();
+		await this.refreshSavedSongs();
 	}
 
-	refreshSavedSongs() {
-		this.savedSongs = listArrangements();
+	async refreshSavedSongs() {
+		this.savedSongs = await listArrangements();
 	}
 
 	#rememberFieldsAsSaved() {

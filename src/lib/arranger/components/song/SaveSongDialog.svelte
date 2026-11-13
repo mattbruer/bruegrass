@@ -16,5 +16,5 @@
 	bind:open
 	title="Save song"
 	suggestedName={song.suggestedName}
-	onsave={(name) => song.save(name)}
+	onsave={(name) => song.save(name).catch(console.error)}
 />

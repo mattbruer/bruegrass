@@ -1,17 +1,20 @@
 /**
  * How a take's audio travels in a song file: the one place that decides.
  * Takes are always recorded and kept at full quality on the device that
- * recorded them; only what's sent is compressed. When paid plans come, the
- * plan picks the format here (WAV for lossless).
+ * recorded them; only what's sent is compressed, unless the plan includes
+ * lossless sharing ($lib/account/plans.js), which sends WAV.
  *
  * Reading follows whatever format the file names, so a song file in any
  * format listed here opens anywhere. A new format is one entry in FORMATS.
  */
 import { encodeWav } from '../export/wav.js';
 import { decodeMp3, encodeMp3, MP3_SAMPLE_RATES } from './mp3.js';
+import { planAllows } from '$lib/account/plans.js';
 
 /** The format takes are sent in. */
-export const SEND_FORMAT = 'mp3';
+function sendFormat() {
+	return planAllows('losslessSharing') ? 'wav' : 'mp3';
+}
 
 /**
  * @typedef {{ file: string, format: string, sampleRate: number, frames: number, channels: number }} TakeAudio
@@ -49,7 +52,8 @@ const FORMATS = {
  */
 export async function packTakeAudio(name, channels, sampleRate) {
 	// MP3 only knows some sample rates; anything else goes lossless rather than not at all
-	const format = FORMATS[SEND_FORMAT].canEncode(sampleRate) ? SEND_FORMAT : 'wav';
+	const wanted = sendFormat();
+	const format = FORMATS[wanted].canEncode(sampleRate) ? wanted : 'wav';
 	const { extension, encode } = FORMATS[format];
 	const bytes = await encode(channels, sampleRate);
 	const audio = {
