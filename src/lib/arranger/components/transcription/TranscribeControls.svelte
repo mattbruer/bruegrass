@@ -38,17 +38,30 @@
 		else player.play();
 	}
 
-	/** @param {KeyboardEvent} event Space plays and pauses, unless typing or on a button */
+	/** Space plays and pauses wherever focus is, except while typing in a text box. */
+	const TYPING =
+		'textarea, input:not([type="range"]):not([type="checkbox"]):not([type="button"]), [contenteditable="true"]';
+
+	/** @param {KeyboardEvent} event */
+	function isSpace(event) {
+		const typing = event.target instanceof Element && event.target.closest(TYPING);
+		return event.code === 'Space' && !typing && !event.defaultPrevented;
+	}
+
+	/** @param {KeyboardEvent} event */
 	function onKeydown(event) {
-		const target = event.target;
-		const busy = target instanceof Element && target.closest('input, textarea, select, button');
-		if (event.code !== 'Space' || busy || event.defaultPrevented) return;
+		if (!isSpace(event)) return;
 		event.preventDefault();
-		togglePlay();
+		if (!event.repeat) togglePlay();
+	}
+
+	/** Stop a focused button from also taking the Space as a click. @param {KeyboardEvent} event */
+	function onKeyup(event) {
+		if (isSpace(event)) event.preventDefault();
 	}
 </script>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:window onkeydown={onKeydown} onkeyup={onKeyup} />
 
 <div class="flex flex-wrap items-center gap-x-5 gap-y-3 ui-card px-4 py-3">
 	<button
