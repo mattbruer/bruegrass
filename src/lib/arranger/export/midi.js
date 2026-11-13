@@ -72,7 +72,8 @@ export function velocityFromDb(db) {
  * @param {{
  *   capo?: number, transpose?: number, bpm?: number, bassDb?: number, strumDb?: number,
  *   melody?: import('../melody/melody.js').Melody | null, tuneDb?: Record<string, number>,
- *   bass?: import('../instruments/bassline.js').BassNote[] | null
+ *   bass?: import('../instruments/bassline.js').BassNote[] | null,
+ *   bassStyle?: import('../instruments/bassStyles.js').BassStyle
  * }} options bass: the edited bass line, or null for the band's own; tuneDb: the Melody's and each harmony part's fader, by channel id,
  *   like bassDb/strumDb for the guitar's parts
  * @returns {Uint8Array}
@@ -87,7 +88,8 @@ export function arrangementToMidi(
 		strumDb = 0,
 		melody = null,
 		tuneDb = {},
-		bass: writtenBass = null
+		bass: writtenBass = null,
+		bassStyle = undefined
 	} = {}
 ) {
 	const shift = capo + transpose;
@@ -120,14 +122,18 @@ export function arrangementToMidi(
 	// Bass player: the edited line, or its own in the chosen style (bassStyles.js)
 	/** @type {MidiNote[]} */
 	const tuneOnsets = leadOnsets(melody ?? null, { quarters: rhythm(sections).quarters });
-	const bass = bassPart(sections, { capo, transpose, written: writtenBass, tuneOnsets }).notes.map(
-		(note) => ({
-			tick: Math.round(note.beat * PPQ),
-			end: Math.round((note.beat + note.length * note.gate) * PPQ),
-			note: note.pitch,
-			velocity: note.velocity
-		})
-	);
+	const bass = bassPart(sections, {
+		capo,
+		transpose,
+		written: writtenBass,
+		tuneOnsets,
+		style: bassStyle
+	}).notes.map((note) => ({
+		tick: Math.round(note.beat * PPQ),
+		end: Math.round((note.beat + note.length * note.gate) * PPQ),
+		note: note.pitch,
+		velocity: note.velocity
+	}));
 
 	// Mandolin chops on the off-beats, one note per string, strummed G → E
 	/** @type {MidiNote[]} */

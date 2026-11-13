@@ -18,6 +18,7 @@
 	import LaneHeader from './LaneHeader.svelte';
 	import BlockLane from './BlockLane.svelte';
 	import TakeClip from './TakeClip.svelte';
+	import { chosenBassStyle } from '../../bass/songBassStyle.svelte.js';
 
 	const { arrangement, melody, recording, player, bass } = useArranger();
 
@@ -44,6 +45,7 @@
 				capo: arrangement.capoFret,
 				transpose: arrangement.transpose,
 				written: writtenBass,
+				style: chosenBassStyle(),
 				tuneOnsets: leadOnsets(melody.line, { quarters: rhythm(arrangement.sections).quarters })
 			}).notes,
 			melody: melody.line

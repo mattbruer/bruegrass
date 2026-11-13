@@ -15,10 +15,19 @@ import { channelsInUse } from '../melody/harmony/partChannels.js';
  *   transpose: number,
  *   bpm: number,
  *   melody: import('../melody/melody.js').Melody | null,
- *   bass?: import('../instruments/bassline.js').BassNote[] | null
+ *   bass?: import('../instruments/bassline.js').BassNote[] | null,
+ *   bassStyle?: import('../instruments/bassStyles.js').BassStyle
  * }} arrangement bass: the edited bass line, or null for the band's own
  */
-export function downloadArrangementMidi({ sections, capo, transpose, bpm, melody, bass = null }) {
+export function downloadArrangementMidi({
+	sections,
+	capo,
+	transpose,
+	bpm,
+	melody,
+	bass = null,
+	bassStyle
+}) {
 	const bytes = arrangementToMidi(sections, {
 		capo,
 		transpose,
@@ -28,6 +37,7 @@ export function downloadArrangementMidi({ sections, capo, transpose, bpm, melody
 		strumDb: guitarPartLevel('strum'),
 		melody,
 		bass,
+		bassStyle,
 		tuneDb: Object.fromEntries([...channelsInUse(melody)].map((id) => [id, channelLevel(id)]))
 	});
 

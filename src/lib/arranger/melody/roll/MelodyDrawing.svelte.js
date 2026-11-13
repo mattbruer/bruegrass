@@ -24,7 +24,8 @@ import { playedTime, playheadTicks } from './playheadTicks.js';
 import { rewriteAbc } from './scoreToAbc.js';
 import { BASS_ROWS, MELODY_ROWS } from './pitchRows.js';
 import { BASS_VOICE, readBassScore, readBassVoice } from '../../bass/readBass.js';
-import { blankBassAbc, bassSongOf, generatedBassAbc } from '../../bass/bassAbc.js';
+import { blankBassAbc, generatedBassAbc } from '../../bass/bassAbc.js';
+import { bassSongOf } from '../../bass/songBassStyle.svelte.js';
 
 /** Every voice's place in the colour wheel: the melody, then each harmony part. */
 const VOICE_ORDER = [MELODY_CHANNEL, ...HARMONY_PARTS.map((part) => part.id)];

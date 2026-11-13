@@ -22,7 +22,7 @@ import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
 import { mod12 } from '../chart/key.js';
 import { rhythm } from '../chart/timeline.js';
 import { leadOnsets } from './melodySpace.js';
-import { chosenBassStyle } from './songBassStyle.svelte.js';
+import { bassStyle, DEFAULT_BASS_STYLE } from '../instruments/bassStyles.js';
 
 /**
  * @typedef {{
@@ -30,7 +30,8 @@ import { chosenBassStyle } from './songBassStyle.svelte.js';
  *   songKey: import('../chart/key.js').Key | null,
  *   capo: number,
  *   melodyKey: { spelling: import('../theory/musicInKey.js').Key, keyText: string },
- *   tune?: import('../melody/melody.js').Melody | null
+ *   tune?: import('../melody/melody.js').Melody | null,
+ *   style?: import('../instruments/bassStyles.js').BassStyle
  * }} BassSong what the bass line is written from (the melody's key is the concert key)
  */
 
@@ -44,7 +45,7 @@ export function generatedBassAbc(song) {
 	const notes = bandsBassLine(sections, {
 		capo: mod12(capo),
 		tuneOnsets,
-		style: chosenBassStyle()
+		style: song.style ?? bassStyle(DEFAULT_BASS_STYLE)
 	}).map((note) => ({
 		midi: note.pitch,
 		start: Math.round(note.beat * TICKS_PER_QUARTER),
@@ -85,24 +86,4 @@ function bassAbcWith({ sections, songKey, capo, melodyKey }, notes) {
 		keyText: `${melodyKey.keyText} clef=bass`,
 		lineStarts
 	});
-}
-
-/**
- * What the bass is written from, for the open song.
- * @param {{
- *   arrangement: { sections: any[], key: any, capoFret: number },
- *   melodyKey: BassSong['melodyKey'],
- *   melody: { line: BassSong['tune'] }
- * }} arranger
- * @param {BassSong['tune']} [tune] the tune to fit the walks around (default: the open one)
- * @returns {BassSong}
- */
-export function bassSongOf({ arrangement, melodyKey, melody }, tune = melody.line) {
-	return {
-		sections: arrangement.sections,
-		songKey: arrangement.key,
-		capo: arrangement.capoFret,
-		melodyKey,
-		tune
-	};
 }

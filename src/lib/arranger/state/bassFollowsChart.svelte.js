@@ -8,7 +8,8 @@
 import { untrack } from 'svelte';
 import { loadTuneReader } from '../melody/abcjs.js';
 import { bassFollowingChart } from '../bass/bassFollowsChart.js';
-import { bassSongOf, generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
+import { generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
+import { bassSongOf } from '../bass/songBassStyle.svelte.js';
 
 /** @param {import('./Arranger.svelte.js').Arranger} arranger */
 export function keepBassWithChart(arranger) {

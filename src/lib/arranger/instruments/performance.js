@@ -30,7 +30,8 @@ import { secondsPerQuarter } from '../chart/tempo.js';
  * @param {{
  *   bpm?: number, capo?: number, transpose?: number, loop?: boolean,
  *   melody?: import('../melody/melody.js').MelodyPart | null,
- *   bass?: import('./bassline.js').BassNote[] | null, offset?: number
+ *   bass?: import('./bassline.js').BassNote[] | null, offset?: number,
+ *   bassStyle?: import('./bassStyles.js').BassStyle
  * }} options
  *   transpose: semitones on top of the capo, for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo (looping
@@ -38,11 +39,20 @@ import { secondsPerQuarter } from '../chart/tempo.js';
  *   channel (Melody, or a harmony part's);
  *   bass: the song's edited bass line (readWrittenBass), or null for the
  *   band's own; offset: where these sections start in the song (quarters),
- *   for the edited bass
+ *   for the edited bass; bassStyle: how busy the band's own bass is
  */
 export function preparePerformance(
 	written,
-	{ bpm = 120, capo = 0, transpose = 0, loop = true, melody = null, bass = null, offset = 0 } = {}
+	{
+		bpm = 120,
+		capo = 0,
+		transpose = 0,
+		loop = true,
+		melody = null,
+		bass = null,
+		offset = 0,
+		bassStyle = undefined
+	} = {}
 ) {
 	const quarter = secondsPerQuarter(bpm);
 	const passQuarters = rhythm(written).quarters;
@@ -73,7 +83,8 @@ export function preparePerformance(
 			written: bass,
 			offset,
 			passes: loop ? 2 : 1,
-			tuneOnsets: leadOnsetsOfPart(melody, bpm)
+			tuneOnsets: leadOnsetsOfPart(melody, bpm),
+			style: bassStyle
 		}),
 		{ bpm }
 	);

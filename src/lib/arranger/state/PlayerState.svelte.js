@@ -8,6 +8,7 @@ import { melodyEvents } from '../melody/melody.js';
 import { melodyTime } from '../melody/follow.js';
 import { MetronomeState } from './MetronomeState.svelte.js';
 import { readWrittenBass } from '../bass/readBass.js';
+import { chosenBassStyle } from '../bass/songBassStyle.svelte.js';
 
 /** @typedef {Awaited<ReturnType<typeof playArrangement>>} Playback */
 
@@ -78,6 +79,7 @@ export class PlayerState {
 				bpm,
 				melody: this.#melodyForThisPass(),
 				bass: await readWrittenBass(this.#bass.notation),
+				bassStyle: chosenBassStyle(),
 				offset: this.#loop.startInSong,
 				takes: await this.takesToPlay(leaveOutTrack ?? null),
 				regionStart: (this.#loop.startInSong * 60) / bpm,

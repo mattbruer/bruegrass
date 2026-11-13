@@ -18,6 +18,7 @@
 	import ShareSong from '../share/ShareSong.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import { chosenBassStyle } from '../../bass/songBassStyle.svelte.js';
 
 	/** @type {{ open: boolean }} */
 	let { open = $bindable(false) } = $props();
@@ -73,7 +74,8 @@
 			capo: arrangement.capoFret,
 			transpose: arrangement.transpose,
 			melody: melody.line,
-			bass: await readWrittenBass(arranger.bass.notation)
+			bass: await readWrittenBass(arranger.bass.notation),
+			bassStyle: chosenBassStyle()
 		};
 		try {
 			if (choice === 'midi') downloadArrangementMidi(songToExport);
