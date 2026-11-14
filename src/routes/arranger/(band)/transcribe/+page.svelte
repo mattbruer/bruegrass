@@ -21,6 +21,7 @@
 	import { timeSignature } from '$lib/arranger/transcription/timeSignatures.js';
 	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
 	import RecordingChoice from '$lib/arranger/components/transcription/RecordingChoice.svelte';
+	import FindingBeats from '$lib/arranger/components/transcription/FindingBeats.svelte';
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
@@ -120,7 +121,7 @@
 		{#if transcription.player.loading}
 			<p class="text-ink-soft">Loading…</p>
 		{:else if transcription.finding}
-			<p class="text-ink-soft">Finding the beats and bars…</p>
+			<FindingBeats />
 		{:else if transcription.grid}
 			<TranscribeControls {transcription} />
 			{#if !transcription.linked}

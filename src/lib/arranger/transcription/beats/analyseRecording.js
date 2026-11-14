@@ -39,7 +39,7 @@ const CHROMA_HIGH_HZ = 2000;
  */
 export function analyseRecording(channels, sampleRate) {
 	const mono = mixDown(channels);
-	const size = 2 ** Math.round(Math.log2(FRAME_SECONDS * sampleRate));
+	const size = 1 << Math.round(Math.log2(FRAME_SECONDS * sampleRate));
 	const hop = Math.round(HOP_SECONDS * sampleRate);
 	const fft = createFft(size);
 	const window = hann(size);
@@ -50,33 +50,44 @@ export function analyseRecording(channels, sampleRate) {
 
 	const re = new Float64Array(size);
 	const im = new Float64Array(size);
+	const firstMagnitudes = new Float32Array(bins);
+	const secondMagnitudes = new Float32Array(bins);
 	let previous = new Float32Array(bins);
 	let current = new Float32Array(bins);
 	const flux = new Float32Array(frames);
 	const bassFlux = new Float32Array(frames);
 	const chroma = new Float32Array(frames * 12);
 
-	for (let frame = 0; frame < frames; frame++) {
-		const start = frame * hop;
+	for (let first = 0; first < frames; first += 2) {
+		const second = first + 1;
+		const hasSecond = second < frames;
 		for (let i = 0; i < size; i++) {
-			re[i] = mono[start + i] * window[i];
-			im[i] = 0;
+			re[i] = mono[first * hop + i] * window[i];
+			im[i] = hasSecond ? mono[second * hop + i] * window[i] : 0;
 		}
 		fft.forward(re, im);
-		let rise = 0;
-		let bassRise = 0;
-		for (let bin = 1; bin < bins; bin++) {
-			const magnitude = Math.hypot(re[bin], im[bin]);
-			current[bin] = Math.log1p(COMPRESSION * magnitude);
-			const change = frame > 0 ? Math.max(0, current[bin] - previous[bin]) : 0;
-			rise += change;
-			if (bin <= bassTop) bassRise += change;
-			const pitchClass = pitchClassOf[bin];
-			if (pitchClass >= 0) chroma[frame * 12 + pitchClass] += magnitude;
+		splitTwoFrames(re, im, firstMagnitudes, secondMagnitudes);
+
+		for (const [frame, magnitudes] of [
+			[first, firstMagnitudes],
+			[second, secondMagnitudes]
+		]) {
+			if (frame >= frames) break;
+			let rise = 0;
+			let bassRise = 0;
+			for (let bin = 1; bin < bins; bin++) {
+				const magnitude = magnitudes[bin];
+				current[bin] = Math.log1p(COMPRESSION * magnitude);
+				const change = frame > 0 ? Math.max(0, current[bin] - previous[bin]) : 0;
+				rise += change;
+				if (bin <= bassTop) bassRise += change;
+				const pitchClass = pitchClassOf[bin];
+				if (pitchClass >= 0) chroma[frame * 12 + pitchClass] += magnitude;
+			}
+			flux[frame] = rise;
+			bassFlux[frame] = bassRise;
+			[previous, current] = [current, previous];
 		}
-		flux[frame] = rise;
-		bassFlux[frame] = bassRise;
-		[previous, current] = [current, previous];
 	}
 
 	const framesPerSecond = sampleRate / hop;
@@ -88,6 +99,27 @@ export function analyseRecording(channels, sampleRate) {
 		framesPerSecond,
 		offsetSeconds: size / 2 / sampleRate
 	};
+}
+
+/**
+ * One FFT of two real frames (the first in `re`, the second in `im`) holds
+ * both frames' spectra, which this pulls apart into their magnitudes.
+ * @param {Float64Array} re
+ * @param {Float64Array} im
+ * @param {Float32Array} firstMagnitudes
+ * @param {Float32Array} secondMagnitudes
+ */
+function splitTwoFrames(re, im, firstMagnitudes, secondMagnitudes) {
+	const size = re.length;
+	for (let bin = 1; bin < size / 2; bin++) {
+		const mirror = size - bin;
+		const sumRe = re[bin] + re[mirror];
+		const diffRe = re[bin] - re[mirror];
+		const sumIm = im[bin] + im[mirror];
+		const diffIm = im[bin] - im[mirror];
+		firstMagnitudes[bin] = 0.5 * Math.sqrt(sumRe * sumRe + diffIm * diffIm);
+		secondMagnitudes[bin] = 0.5 * Math.sqrt(sumIm * sumIm + diffRe * diffRe);
+	}
 }
 
 /**

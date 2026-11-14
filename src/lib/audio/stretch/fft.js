@@ -5,6 +5,8 @@
  * @param {number} size
  */
 export function createFft(size) {
+	// A whole number the engine knows is one: Safari runs the transform ~40× slower when `size` arrives as a float (e.g. from `2 ** n`)
+	size |= 0;
 	const levels = Math.log2(size);
 	if (!Number.isInteger(levels)) throw new Error('FFT size must be a power of two');
 
