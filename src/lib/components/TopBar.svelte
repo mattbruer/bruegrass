@@ -23,8 +23,7 @@
 
 	const PAGES = /** @type {const} */ ([
 		{ path: '/', name: 'Songs' },
-		{ path: '/arranger', name: 'Arranger' },
-		{ path: '/transcribe', name: 'Transcribe' }
+		{ path: '/arranger', name: 'Arranger' }
 	]);
 
 	/**

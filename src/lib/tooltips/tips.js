@@ -13,8 +13,7 @@ export const TIPS = Object.freeze({
 		home: 'Back to the song list.',
 		pages: {
 			'/': 'Your recorded songs: play one, or play them all.',
-			'/arranger': 'Write a chord chart and hear a bluegrass band play it.',
-			'/transcribe': 'Slow a song down to learn its parts. The pitch stays the same.'
+			'/arranger': 'Write a chord chart and hear a bluegrass band play it.'
 		},
 		settings: 'Settings: tips, the music keypad, the bass line, colours and shape.',
 		storage: 'What the app keeps on this device: see it, and delete what you don’t want.',
@@ -29,16 +28,11 @@ export const TIPS = Object.freeze({
 	},
 
 	transcribe: {
-		track: 'Pick a song to slow down.',
 		sounds: {
 			crisp: 'Keeps fast picking sharp and separate. Held notes and bass can get a little grainy.',
 			balanced: 'A middle ground that suits most songs.',
 			smooth: 'Keeps held notes and bass smooth. Fast notes blur a little.'
-		},
-		play: 'Play or pause the song.',
-		position: 'Jump to another place in the song.',
-		speed: 'How fast the song plays: lower is slower. The pitch stays the same.',
-		resetSpeed: 'Back to the song’s own speed.'
+		}
 	},
 
 	todo: {
