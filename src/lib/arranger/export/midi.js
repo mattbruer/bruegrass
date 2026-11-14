@@ -70,12 +70,11 @@ export function velocityFromDb(db) {
  *
  * @param {import('../chart/timeline.js').Section[]} sections
  * @param {{
- *   capo?: number, transpose?: number, bpm?: number, bassDb?: number, strumDb?: number,
+ *   capo?: number, transpose?: number, bpm?: number,
  *   melody?: import('../melody/melody.js').Melody | null, tuneDb?: Record<string, number>,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null,
  *   bassStyle?: import('../instruments/bassStyles.js').BassStyle
  * }} options bass: the edited bass line, or null for the band's own; tuneDb: the Melody's and each harmony part's fader, by channel id,
- *   like bassDb/strumDb for the guitar's parts
  * @returns {Uint8Array}
  */
 export function arrangementToMidi(
@@ -84,8 +83,6 @@ export function arrangementToMidi(
 		capo = 0,
 		transpose = 0,
 		bpm = 120,
-		bassDb = 0,
-		strumDb = 0,
 		melody = null,
 		tuneDb = {},
 		bass: writtenBass = null,
@@ -109,14 +106,12 @@ export function arrangementToMidi(
 	/** @param {number} seconds */
 	const toTicks = (seconds) => Math.round((seconds / quarter) * PPQ);
 
-	const partDb = { bass: bassDb, strum: strumDb };
-
 	/** @type {MidiNote[]} */
 	const guitar = events.map((event) => ({
 		tick: toTicks(event.time),
 		end: toTicks(event.stop),
 		note: midiNote(event.string, event.fret) + GUITAR_OFFSET + tuning.detune,
-		velocity: velocityFromDb(partDb[event.part] + event.levelDb) // includes the player's touch
+		velocity: velocityFromDb(event.levelDb) // the player's touch: booms plucked, strums grazed
 	}));
 
 	// Bass player: the edited line, or its own in the chosen style (bassStyles.js)

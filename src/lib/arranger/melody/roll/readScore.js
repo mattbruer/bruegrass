@@ -6,8 +6,9 @@
  *
  * Each bar remembers where its notes are in the text, so an edit rewrites
  * only those characters and the rest (header, bar lines, repeats, words,
- * harmony parts) stays as typed. Things a rewrite would drop (ornaments,
- * grace notes, slurs, chords in the melody) make the score read-only.
+ * harmony parts) stays as typed. A chord written in the tune (`[DF]`) is a
+ * stack of notes. Things a rewrite would drop (ornaments, grace notes,
+ * slurs) make the score read-only.
  */
 import { tuneKey } from '../harmony/abcPitch.js';
 import { MELODY_CHANNEL, voiceChannels } from '../harmony/partChannels.js';
@@ -50,7 +51,8 @@ export function readScore(abc, tune, voice = 0) {
 	let triplet = 1;
 	/** @type {ScoreBar | null} */
 	let bar = null;
-	let tiedOn = false;
+	/** @type {DrawnNote[]} the notes of the last note or chord, held on by a tie */
+	let tiedOn = [];
 
 	const endBar = () => {
 		if (bar) bars.push(bar);
@@ -76,12 +78,16 @@ export function readScore(abc, tune, voice = 0) {
 
 				for (const chord of chordSymbols(element)) chords.push({ at: tick, name: chord });
 				if (!element.rest) {
-					const midi = pitches.get(element.startChar);
-					const previous = notes.at(-1);
-					if (midi === undefined && tiedOn && previous) previous.length += length;
-					else if (midi !== undefined) notes.push({ midi, start: tick, length });
-					tiedOn = Boolean(element.pitches?.[0]?.startTie);
-				} else tiedOn = false;
+					const sounding = pitches.get(element.startChar);
+					if (!sounding && tiedOn.length) for (const note of tiedOn) note.length += length;
+					else if (sounding) {
+						tiedOn = sounding.map((midi) => ({ midi, start: tick, length }));
+						notes.push(...tiedOn);
+					}
+					const ties = (element.pitches ?? []).map((/** @type {any} */ p) => Boolean(p.startTie));
+					if (ties.some((tie) => tie !== ties[0])) problems.add('a tie from only part of a chord');
+					if (!ties[0]) tiedOn = [];
+				} else tiedOn = [];
 				tick += length;
 			}
 		}
@@ -106,18 +112,26 @@ export function readScore(abc, tune, voice = 0) {
 }
 
 /**
- * The pitch abcjs plays for each written note, by where it starts in the
- * text (a tied note sounds once, from its first part).
+ * The pitches abcjs plays for each written note or chord, low to high, by
+ * where it starts in the text (a tied note sounds once, from its first
+ * part; a repeat plays the same pitches again, so the first pass is kept).
  * @param {any} tune
  * @param {number} voice
  */
 function pitchesByChar(tune, voice) {
-	/** @type {Map<number, number>} */
+	/** @type {Map<number, number[]>} */
 	const pitches = new Map();
+	/** @type {Map<number, number>} when (in the played tune) each written note was first heard */
+	const firstHeard = new Map();
 	const track = tune.setUpAudio({ chordsOff: true }).tracks[voice];
 	for (const item of track ?? []) {
-		if (item.cmd === 'note' && !pitches.has(item.startChar))
-			pitches.set(item.startChar, item.pitch);
+		if (item.cmd !== 'note') continue;
+		const heard = firstHeard.get(item.startChar) ?? item.start;
+		firstHeard.set(item.startChar, heard);
+		if (heard !== item.start) continue;
+		const chord = pitches.get(item.startChar) ?? [];
+		if (!chord.includes(item.pitch)) chord.push(item.pitch);
+		pitches.set(item.startChar, chord.sort((a, b) => a - b));
 	}
 	return pitches;
 }
@@ -127,7 +141,6 @@ function unsupported(element) {
 	const problems = [];
 	if (element.decoration?.length) problems.push('ornaments (like ~ or .)');
 	if (element.gracenotes?.length) problems.push('grace notes');
-	if ((element.pitches?.length ?? 0) > 1) problems.push('chords in the melody');
 	if (
 		element.pitches?.some((/** @type {any} */ p) => p.startSlur || p.endSlur) ||
 		element.startSlur

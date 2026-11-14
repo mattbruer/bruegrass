@@ -36,15 +36,13 @@ let graph = null;
 export const audioTaps = $state({ current: /** @type {AudioTaps | null} */ (null) });
 
 /**
- * The node an instrument should connect its output to: its channel's input,
- * or one of the channel's parts when `part` is given.
+ * The node an instrument should connect its output to: its channel's input.
  * @param {string} id channel id, e.g. 'guitar'
- * @param {string} [part] e.g. 'strum'
  * @returns {Promise<import('tone').ToneAudioNode>}
  */
-export async function getChannel(id, part) {
+export async function getChannel(id) {
 	graph ??= buildLiveGraph();
-	return (await graph).channelInput(id, part);
+	return (await graph).channelInput(id);
 }
 
 /**

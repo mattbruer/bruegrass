@@ -32,9 +32,6 @@ export function downloadArrangementMidi({
 		capo,
 		transpose,
 		bpm,
-		// The file's velocities follow the mixer, so it sounds like what you hear
-		bassDb: guitarPartLevel('bass'),
-		strumDb: guitarPartLevel('strum'),
 		melody,
 		bass,
 		bassStyle,
@@ -52,14 +49,4 @@ export function downloadArrangementMidi({
 function channelLevel(channelId) {
 	const channel = mixer.channels.find((each) => each.id === channelId);
 	return faderGain(channel?.volume ?? 0);
-}
-
-/**
- * One of the guitar's two parts (bass notes or strums), in dB.
- * @param {'bass' | 'strum'} partId
- */
-function guitarPartLevel(partId) {
-	const guitar = mixer.channels.find((each) => each.id === 'guitar');
-	const part = guitar?.parts.find((each) => each.id === partId);
-	return faderGain(part?.volume ?? 0);
 }

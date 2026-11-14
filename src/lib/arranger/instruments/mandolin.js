@@ -5,11 +5,13 @@
  *
  * Samples live in static/samples/mando/{G,D,A,E}{0..14}.mp3, one per course
  * and fret, with the choke already recorded, so each note plays to its end.
+ * A chop is a strum, so it grazes (articulation.js), never plucks.
  */
 import { rootPitchClass } from './guitar.js';
 import { rhythm } from '../chart/timeline.js';
 import { createRng } from './seededRandom.js';
 import { secondsPerQuarter } from '../chart/tempo.js';
+import { ARTICULATIONS } from './articulation.js';
 
 /** Course sample prefixes, G D A E. */
 export const COURSES = ['G', 'D', 'A', 'E'];
@@ -35,6 +37,9 @@ const SHAPES = [
 
 const STROKE_GAP = 0.004; // s between courses on the downstroke (G → E)
 const LEVEL_JITTER_DB = 1.5; // per chop, so it doesn't sound machine-gunned
+
+/** How the pick meets the strings on a chop. */
+export const CHOP_ARTICULATION = ARTICULATIONS.graze;
 
 /**
  * @typedef {{ time: number, course: number, fret: number, pitch: number, levelDb: number }} MandoNote
@@ -84,7 +89,7 @@ export function chopNotes(sections, { capo = 0, bpm = 120 } = {}) {
 		if (beat.role !== 'chuck') return [];
 		const { frets } = chopVoicing(slots[beat.slot].name, capo);
 		const time = beat.time * quarter;
-		const levelDb = (rng() * 2 - 1) * LEVEL_JITTER_DB;
+		const levelDb = CHOP_ARTICULATION.levelDb + (rng() * 2 - 1) * LEVEL_JITTER_DB;
 		return frets.map((fret, course) => ({
 			time: time + course * STROKE_GAP,
 			course,

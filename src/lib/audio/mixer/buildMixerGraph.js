@@ -4,7 +4,7 @@
  * renders a song to a file (export/renderSong.js). Both build it here, so an
  * export sounds exactly like playback.
  *
- *   instrument parts ─▶ input trim ─▶ EQ ─▶ fader/pan/mute ─┬──────────────────────────────▶ mix bus
+ *   instrument ─▶ input trim ─▶ EQ ─▶ fader/pan/mute ─┬──────────────────────────────▶ mix bus
  *                                                           └─ send ─▶ reverb ─▶ EQ ─▶ aux fader ─▶ mix bus
  *   mix bus ─▶ master EQ ─▶ master fader ─▶ output stage (gain, true-peak limiter) ─▶ `output`
  *
@@ -38,10 +38,9 @@ const INPUT_TRIM_DB = -14;
  *   input: import('tone').Volume,
  *   eq: Eq,
  *   channel: import('tone').Channel,
- *   send: import('tone').Gain<'decibels'>,
- *   parts: Map<string, import('tone').Volume>
+ *   send: import('tone').Gain<'decibels'>
  * }} Strip
- *   input: after the parts and the trim, before the EQ (a dry stem taps here)
+ *   input: after the trim, before the EQ (a dry stem taps here)
  * @typedef {Awaited<ReturnType<typeof buildMixerGraph>>} MixerGraph
  */
 
@@ -92,19 +91,14 @@ export async function buildMixerGraph(Tone, settings) {
 		output,
 
 		/**
-		 * The node an instrument plays into: its channel's input, or one of the
-		 * channel's parts when `part` is given.
+		 * The node an instrument plays into: its channel's input.
 		 * @param {string} id channel id, e.g. 'guitar'
-		 * @param {string} [part] e.g. 'strum'
 		 * @returns {import('tone').ToneAudioNode}
 		 */
-		channelInput(id, part) {
+		channelInput(id) {
 			const strip = strips.get(id);
 			if (!strip) throw new Error(`No mixer channel: ${id}`);
-			if (part === undefined) return strip.input;
-			const partNode = strip.parts.get(part);
-			if (!partNode) throw new Error(`No ${part} part on mixer channel: ${id}`);
-			return partNode;
+			return strip.input;
 		},
 
 		/**
@@ -129,10 +123,6 @@ export async function buildMixerGraph(Tone, settings) {
 			strip.channel.pan.value = channel.pan;
 			strip.channel.mute = channel.mute || (soloing && !(/** @type {any} */ (channel).solo));
 			strip.send.gain.value = faderGain(channel.send);
-			for (const part of channel.parts) {
-				const partNode = strip.parts.get(part.id);
-				if (partNode) partNode.volume.value = faderGain(part.volume);
-			}
 		},
 
 		/**
@@ -168,7 +158,7 @@ export async function buildMixerGraph(Tone, settings) {
 }
 
 /**
- * One instrument's channel strip: parts → input trim → EQ → fader/pan → mix bus,
+ * One instrument's channel strip: input trim → EQ → fader/pan → mix bus,
  * with a send to the reverb after the fader.
  * @param {typeof import('tone')} Tone
  * @param {import('../../arranger/mixer/mixer.svelte.js').ChannelSettings} settings
@@ -191,9 +181,5 @@ function buildStrip(Tone, settings, mixBus, reverbInput) {
 	const send = new Tone.Gain({ gain: faderGain(settings.send), units: 'decibels' });
 	channel.connect(send);
 	send.connect(reverbInput);
-
-	const parts = new Map(
-		settings.parts.map((part) => [part.id, new Tone.Volume(faderGain(part.volume)).connect(input)])
-	);
-	return { input, eq, channel, send, parts };
+	return { input, eq, channel, send };
 }

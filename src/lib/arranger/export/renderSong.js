@@ -78,7 +78,7 @@ export async function renderMix(song, mix) {
  */
 export async function renderStems(song, mix, { processed }) {
 	const Tone = await import('tone');
-	const stemMix = processed ? withoutMutes(mix) : dry(mix);
+	const stemMix = withoutMutes(mix);
 	const plan = planRender(song, stemMix);
 	const tuneChannels = channelsInUse(song.melody);
 	// Recorded takes aren't rendered yet, so their tracks get no stem
@@ -233,16 +233,3 @@ function withoutMutes(mix) {
 	return copy;
 }
 
-/**
- * Dry stems: every level at unity (the stems are taken before the EQ,
- * fader, pan and reverb, so only the guitar's part levels matter here).
- * @param {Mix} mix
- * @returns {Mix}
- */
-function dry(mix) {
-	const copy = withoutMutes(mix);
-	for (const channel of copy.channels) {
-		for (const part of channel.parts) part.volume = 0;
-	}
-	return copy;
-}

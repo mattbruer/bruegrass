@@ -10,10 +10,11 @@
  * If the two don't add up to the same length they still start together; the
  * melody is cut at the end of each pass, or leaves a gap.
  */
-import { MAX_FRET, midiNote } from '../instruments/guitar.js';
+import { MAX_FRET, midiNote, strumOffsets } from '../instruments/guitar.js';
 import { rhythm } from '../chart/timeline.js';
 import { MELODY_CHANNEL, voiceChannels } from './harmony/partChannels.js';
 import { secondsPerQuarter } from '../chart/tempo.js';
+import { ARTICULATIONS } from '../instruments/articulation.js';
 
 /*
  * Register. Guitar music is written an octave above where it sounds, so a
@@ -50,8 +51,12 @@ const GATE = 0.95; // fraction of its written length a note rings (unless its st
  *   channel: the mixer channel its voice plays through (see harmony/partChannels.js)
  * @typedef {{ notes: MelodyNote[], pickup: number, length: number }} Melody
  *   pickup: quarters before bar 1; length: quarters from bar 1 to the last note's end
- * @typedef {{ time: number, stop: number, string: number, fret: number, rate: number, levelDb: number, channel: string }} MelodyEvent
- *   seconds; rate: playback rate for notes above the highest sample
+ * @typedef {{
+ *   time: number, stop: number, string: number, fret: number, rate: number, levelDb: number,
+ *   channel: string, articulation: import('../instruments/articulation.js').ArticulationId
+ * }} MelodyEvent
+ *   seconds; rate: playback rate for notes above the highest sample;
+ *   articulation: plucked, or grazed when strummed in a stack
  * @typedef {{ events: MelodyEvent[], intro: MelodyEvent[], leadIn: number, period: number }} MelodyPart
  *   events: one pass, 0 ≤ time < period, sorted; intro: the pickup before
  *   the first pass (negative times); leadIn: seconds the band waits for it
@@ -169,9 +174,12 @@ export function melodyEvents(melody, { sections, offset = 0, bpm = 120, shift = 
 		stop: (note.time + note.length * GATE) * quarter,
 		...fingered[i],
 		channel: note.channel,
+		articulation: /** @type {const} */ ('pluck'),
 		levelDb:
 			MELODY_LEVEL_DB + VELOCITY_DEPTH * 20 * Math.log10(Math.max(1, note.volume) / ACCENT_VELOCITY)
 	}));
+	strumStacks(all, bpm);
+	all.sort((a, b) => a.time - b.time);
 	cutOnStringReuse(all);
 
 	const intro = all.filter((event) => event.time < 0);
@@ -186,6 +194,35 @@ export function melodyEvents(melody, { sections, offset = 0, bpm = 120, shift = 
 	cutOnStringReuse(events);
 
 	return { events, intro, leadIn: intro.length > 0 ? -intro[0].time : 0, period };
+}
+
+/**
+ * Notes that start together in one voice (a double stop, a chord) are
+ * strummed, not struck at once: a downstroke, low string first, by the
+ * same right hand as the band's guitar, so the faster the tempo the
+ * tighter the strum, and grazed, not plucked. Changes the notes in place.
+ * @param {MelodyEvent[]} events sorted by time
+ * @param {number} bpm
+ */
+function strumStacks(events, bpm) {
+	/** @type {Map<string, MelodyEvent[]>} */
+	const stacks = new Map();
+	for (const event of events) {
+		const key = `${event.channel} ${event.time}`;
+		stacks.set(key, [...(stacks.get(key) ?? []), event]);
+	}
+	for (const stack of stacks.values()) {
+		if (stack.length < 2) continue;
+		const offsets = strumOffsets(
+			stack.map((event) => event.string),
+			bpm
+		);
+		stack.forEach((event, i) => {
+			event.time += offsets[i];
+			event.articulation = 'graze';
+			event.levelDb += ARTICULATIONS.graze.levelDb;
+		});
+	}
 }
 
 /**

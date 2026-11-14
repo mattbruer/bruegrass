@@ -3,6 +3,7 @@ import { rhythm, slotPositions } from '../chart/timeline.js';
 import { pickPattern, patternStrokes } from './strumPatterns.js';
 import { createRng } from './seededRandom.js';
 import { secondsPerQuarter } from '../chart/tempo.js';
+import { ARTICULATIONS } from './articulation.js';
 
 /** @typedef {import('../chart/timeline.js').SlotPosition} SlotPosition */
 
@@ -57,7 +58,8 @@ const TOUCH_DB_PER_DOUBLING = -6; // above TOUCH_BASE_BPM
 const TOUCH_BASE_BPM = 120;
 const TOUCH_MIN_DB = -9;
 const TOUCH_BASS_RATIO = 0.5; // bass notes are still picked deliberately
-const TOUCH_FULL_CUTOFF = 16000; // Hz at full touch; falls 10x per -12 dB
+/* Booms are plucked, strums graze (articulation.js); a lighter touch darkens either, 10x per -12 dB */
+const PART_ARTICULATION = { bass: ARTICULATIONS.pluck, strum: ARTICULATIONS.graze };
 const TOUCH_FADE_IN_PER_DB = 0.0005; // s of fade-in per dB lighter (3 ms at -6 dB)
 
 /* A slash chord's bass is found on these strings, low E first, up to this fret */
@@ -203,7 +205,8 @@ export function strumOffsets(strings, bpm, { direction = 'down', steps = 2 } = {
 }
 
 /**
- * How lightly the player is picking at this tempo.
+ * How each part is picked at this tempo: booms plucked, strums grazed
+ * (articulation.js), both lighter as the tempo rises.
  * @param {number} bpm
  */
 export function touch(bpm) {
@@ -211,15 +214,27 @@ export function touch(bpm) {
 		bpm > TOUCH_BASE_BPM
 			? Math.max(TOUCH_MIN_DB, TOUCH_DB_PER_DOUBLING * Math.log2(bpm / TOUCH_BASE_BPM))
 			: 0;
-	const bassDb = strumDb * TOUCH_BASS_RATIO;
-	/** @param {number} db */
-	const cutoff = (db) => TOUCH_FULL_CUTOFF * 10 ** (db / 12);
-	/** @param {number} db */
-	const fadeIn = (db) => -db * TOUCH_FADE_IN_PER_DB;
+	const strum = picked(PART_ARTICULATION.strum, strumDb);
+	const bass = picked(PART_ARTICULATION.bass, strumDb * TOUCH_BASS_RATIO);
 	return {
-		levelDb: { strum: strumDb, bass: bassDb },
-		cutoff: { strum: cutoff(strumDb), bass: cutoff(bassDb) },
-		fadeIn: { strum: fadeIn(strumDb), bass: fadeIn(bassDb) }
+		levelDb: { strum: strum.levelDb, bass: bass.levelDb },
+		cutoff: { strum: strum.cutoff, bass: bass.cutoff },
+		fadeIn: { strum: strum.fadeIn, bass: bass.fadeIn },
+		skip: { strum: strum.skip, bass: bass.skip }
+	};
+}
+
+/**
+ * An articulation played this much lighter.
+ * @param {import('./articulation.js').Articulation} articulation
+ * @param {number} lighterDb 0 or less
+ */
+function picked(articulation, lighterDb) {
+	return {
+		levelDb: articulation.levelDb + lighterDb,
+		cutoff: articulation.brightness * 10 ** (lighterDb / 12),
+		fadeIn: articulation.attack - lighterDb * TOUCH_FADE_IN_PER_DB,
+		skip: articulation.skip
 	};
 }
 

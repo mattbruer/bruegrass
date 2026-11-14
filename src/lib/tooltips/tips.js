@@ -380,10 +380,6 @@ export const TIPS = Object.freeze({
 		listening:
 			'What you’re listening on. Save the EQs for each speaker or pair of headphones, and this device uses them on every song.',
 		stripEq: 'Open this strip’s EQ: shape its tone, from deep bass to bright treble.',
-		part: {
-			bass: 'How loud the guitar’s bass notes (the “boom”) are.',
-			strum: 'How loud the guitar’s strums (the “chuck”) are.'
-		},
 		instrument: 'What this part of the tune plays on. Tap to choose another.',
 		send: 'How much of this instrument goes to the reverb.',
 		pan: 'Where this instrument sits, from left to right.',

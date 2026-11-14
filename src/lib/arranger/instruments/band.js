@@ -8,6 +8,9 @@
 import { createUpright } from './upright.js';
 import { createTuneSynth } from './tuneInstruments.js';
 import { melodyPitch } from '../melody/melody.js';
+import { ARTICULATIONS } from './articulation.js';
+import { soundStart } from './soundStart.js';
+import { CHOP_ARTICULATION } from './mandolin.js';
 
 /** Seconds; avoids clicks when a note is cut off. */
 const FADE_OUT = 0.03;
@@ -45,7 +48,7 @@ export function loadBuffer(Tone, url) {
  * synth and filters).
  * @param {typeof import('tone')} Tone
  * @param {import('./performance.js').Performance} performance
- * @param {(id: string, part?: string) => import('tone').ToneAudioNode | Promise<import('tone').ToneAudioNode>} channelInput
+ * @param {(id: string) => import('tone').ToneAudioNode | Promise<import('tone').ToneAudioNode>} channelInput
  *   where each instrument plays into the mixer
  * @param {{ live?: boolean, instrumentOf?: (channelId: string) => import('./tuneInstruments.js').TuneInstrument }} [options]
  *   live: playing for as long as you listen, so each finished note's player
@@ -64,16 +67,21 @@ export async function createBand(
 	const { guitar, mandolin, bass, melody } = performance;
 
 	// Touch filters: a lighter pick stroke is duller
+	const guitarInput = await channelInput('guitar');
 	/** @param {'bass' | 'strum'} part */
-	const touchFilter = async (part) =>
+	const touchFilter = (part) =>
 		new Tone.Filter({
 			type: 'lowpass',
 			frequency: guitar.feel.cutoff[part],
 			Q: Math.SQRT1_2
-		}).connect(await channelInput('guitar', part));
-	const guitarOut = { bass: await touchFilter('bass'), strum: await touchFilter('strum') };
+		}).connect(guitarInput);
+	const guitarOut = { bass: touchFilter('bass'), strum: touchFilter('strum') };
 	const upright = createUpright(Tone, await channelInput('bass'));
-	const mandolinOut = await channelInput('mandolin');
+	const mandolinOut = new Tone.Filter({
+		type: 'lowpass',
+		frequency: CHOP_ARTICULATION.brightness,
+		Q: Math.SQRT1_2
+	}).connect(await channelInput('mandolin'));
 	/** @type {Map<string, import('tone').ToneAudioNode>} the melody's and each harmony part's channel */
 	const melodyOuts = new Map();
 	for (const note of [...(melody?.events ?? []), ...(melody?.intro ?? [])]) {
@@ -86,6 +94,36 @@ export async function createBand(
 			Promise.all(urls.map((url) => loadBuffer(Tone, url)))
 		)
 	);
+
+	/** A lowpass per tune channel for its grazed notes (a stack is strummed), made when first needed */
+	/** @type {Map<string, import('tone').Filter>} */
+	const grazeOuts = new Map();
+	/** @param {string} channel */
+	const grazeOut = (channel) => {
+		let filter = grazeOuts.get(channel);
+		if (!filter) {
+			filter = new Tone.Filter({
+				type: 'lowpass',
+				frequency: ARTICULATIONS.graze.brightness,
+				Q: Math.SQRT1_2
+			}).connect(/** @type {import('tone').ToneAudioNode} */ (melodyOuts.get(channel)));
+			grazeOuts.set(channel, filter);
+		}
+		return filter;
+	};
+
+	/**
+	 * Start a sample this far past where its sound begins, at the moment it
+	 * would have got there anyway: a graze skips the pick's click, in time.
+	 * @param {import('tone').Player} player
+	 * @param {import('tone').ToneAudioBuffer} buffer
+	 * @param {number} at
+	 * @param {number} skip seconds
+	 */
+	const startSkipping = (player, buffer, at, skip) => {
+		const offset = skip > 0 ? soundStart(buffer) + skip : 0;
+		return player.start(at + offset, offset);
+	};
 
 	/** @type {Set<import('tone').Player>} */
 	const players = new Set();
@@ -130,16 +168,22 @@ export async function createBand(
 			synth.play(melodyPitch(note), note.stop - note.time, at, note.levelDb);
 			return;
 		}
-		track(
+		const grazed = note.articulation === 'graze';
+		const player = track(
 			new Tone.Player({
 				url: buffer,
 				volume: note.levelDb,
+				fadeIn: grazed ? ARTICULATIONS.graze.attack : 0,
 				fadeOut: FADE_OUT,
 				playbackRate: note.rate
-			}).connect(/** @type {import('tone').ToneAudioNode} */ (melodyOuts.get(note.channel)))
-		)
-			.start(at)
-			.stop(at + note.stop - note.time);
+			}).connect(
+				grazed
+					? grazeOut(note.channel)
+					: /** @type {import('tone').ToneAudioNode} */ (melodyOuts.get(note.channel))
+			)
+		);
+		const skip = grazed ? ARTICULATIONS.graze.skip / note.rate : 0;
+		startSkipping(player, buffer, at, skip).stop(at + note.stop - note.time);
 	};
 
 	/** @type {Stream[]} */
@@ -148,8 +192,8 @@ export async function createBand(
 			notes: guitar.events,
 			period: guitar.period,
 			/** @param {import('./guitar.js').NoteEvent} event @param {number} i @param {number} at */
-			play: (event, i, at) =>
-				track(
+			play: (event, i, at) => {
+				const player = track(
 					new Tone.Player({
 						url: guitarSounds[i],
 						volume: event.levelDb,
@@ -157,19 +201,26 @@ export async function createBand(
 						fadeOut: event.fadeOut,
 						playbackRate: guitar.rate
 					}).connect(guitarOut[event.part])
-				)
-					.start(at)
-					.stop(at + event.stop - event.time)
+				);
+				const skip = guitar.feel.skip[event.part] / guitar.rate;
+				startSkipping(player, guitarSounds[i], at, skip).stop(at + event.stop - event.time);
+			}
 		},
 		{
 			notes: mandolin.chops,
 			period: performance.passLength,
 			// Mandolin chops play to the end of each sample (the choke is recorded)
 			/** @param {import('./mandolin.js').MandoNote} chop @param {number} i @param {number} at */
-			play: (chop, i, at) =>
-				track(
-					new Tone.Player({ url: chopSounds[i], volume: chop.levelDb }).connect(mandolinOut)
-				).start(at)
+			play: (chop, i, at) => {
+				const player = track(
+					new Tone.Player({
+						url: chopSounds[i],
+						volume: chop.levelDb,
+						fadeIn: CHOP_ARTICULATION.attack
+					}).connect(mandolinOut)
+				);
+				startSkipping(player, chopSounds[i], at, CHOP_ARTICULATION.skip);
+			}
 		},
 		{
 			notes: bass.notes,
@@ -214,10 +265,13 @@ export async function createBand(
 			upright.stop();
 			for (const synth of tuneSynths.values()) synth.stop();
 			tuneSynths.clear();
-			// Let any fade-outs finish before removing the touch filters
+			// Let any fade-outs finish before removing the touch and graze filters
 			setTimeout(() => {
 				guitarOut.bass.dispose();
 				guitarOut.strum.dispose();
+				mandolinOut.dispose();
+				for (const filter of grazeOuts.values()) filter.dispose();
+				grazeOuts.clear();
 			}, 200);
 		}
 	};

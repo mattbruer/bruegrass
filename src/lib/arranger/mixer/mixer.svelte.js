@@ -45,13 +45,11 @@ const TUNE_INSTRUMENT_DEFAULTS = {
 /**
  * A part is a sub-level inside a channel (e.g. the guitar's bass notes vs.
  * its strums), mixed together before the channel fader.
- * @typedef {{ id: string, name: string, volume: number }} PartSettings
  * @typedef {{
  *   id: string, name: string,
  *   volume: number, pan: number, send: number,
  *   mute: boolean, solo: boolean,
  *   eq: import('../../audio/eq/eqBands.js').EqSettings,
- *   parts: PartSettings[],
  *   instrument?: string
  * }} ChannelSettings
  *   volume, send: dB; pan: -1 (left) to 1 (right); instrument: what a tune
@@ -60,11 +58,11 @@ const TUNE_INSTRUMENT_DEFAULTS = {
 
 /**
  * One instrument's channel, with the defaults most channels share.
- * @param {{ id: string, name: string, pan?: number, send?: number, parts?: PartSettings[] }} channel
+ * @param {{ id: string, name: string, pan?: number, send?: number }} channel
  * @returns {ChannelSettings}
  */
-function channelStrip({ id, name, pan = 0, send = SEND_FULLY, parts = [] }) {
-	return { id, name, volume: 0, pan, send, mute: false, solo: false, eq: flatEq(), parts };
+function channelStrip({ id, name, pan = 0, send = SEND_FULLY }) {
+	return { id, name, volume: 0, pan, send, mute: false, solo: false, eq: flatEq() };
 }
 
 /**
@@ -79,15 +77,7 @@ function tuneStrip({ id, name }) {
 
 export const mixer = $state({
 	channels: [
-		channelStrip({
-			id: 'guitar',
-			name: 'Guitar',
-			pan: PAN_SPREAD,
-			parts: [
-				{ id: 'bass', name: 'Boom', volume: 0 },
-				{ id: 'strum', name: 'Strum', volume: 0 }
-			]
-		}),
+		channelStrip({ id: 'guitar', name: 'Guitar', pan: PAN_SPREAD }),
 		channelStrip({ id: 'mandolin', name: 'Mandolin', pan: -PAN_SPREAD }),
 		channelStrip({ id: 'bass', name: 'Bass', send: SEND_NONE }),
 		tuneStrip({ id: 'melody', name: 'Melody' }),
@@ -153,9 +143,9 @@ export function mixSnapshot() {
 }
 
 /**
- * Put a saved mix back. Channels and parts are matched by id, so a mix
- * saved before an instrument was added (or after one was removed) still
- * loads, and only settings of the right type are taken. Solos are cleared.
+ * Put a saved mix back. Channels are matched by id, so a mix saved
+ * before an instrument was added (or after one was removed) still loads
+ * (older mixes' guitar boom and strum levels are left behind), and only settings of the right type are taken. Solos are cleared.
  * @param {unknown} saved
  */
 export function applyMix(saved) {
@@ -170,10 +160,6 @@ export function applyMix(saved) {
 		const withDefaults = { ...defaultChannel(channel.id), ...stored };
 		copyMatching(channel, withDefaults, ['volume', 'pan', 'send', 'mute', 'instrument']);
 		applyEq(channel.eq, stored.eq);
-		for (const part of channel.parts) {
-			const storedPart = findById(stored.parts, part.id);
-			if (storedPart) copyMatching(part, storedPart, ['volume']);
-		}
 	}
 
 	if (mix.reverb) {

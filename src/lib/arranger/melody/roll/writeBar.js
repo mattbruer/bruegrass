@@ -1,6 +1,6 @@
 /**
- * One bar of the drawn melody as ABC: notes and rests filling the bar,
- * ties where a note crosses a bar line or a chord change, triplets where
+ * One bar of the drawn melody as ABC: notes, chords (a stack of notes that
+ * start together, `[DF]`) and rests filling the bar, ties where a note crosses a bar line or a chord change, triplets where
  * the notes fall on thirds of a beat, and a space between beat groups so
  * the sheet music beams by the beat.
  */
@@ -20,9 +20,10 @@ const STRAIGHT = 6;
  * @typedef {import('./readScore.js').ScoreBar} ScoreBar
  * @typedef {import('./readScore.js').ScoreChord} ScoreChord
  * @typedef {import('../../theory/musicInKey.js').Key} Key
- * @typedef {{ start: number, length: number, midi: number | null, tie: boolean, chord: string | null }} BarEvent
- *   a note (or a rest: midi null) in the bar, start relative to the bar;
- *   tie: held into whatever follows
+ * @typedef {{ start: number, length: number, midis: number[], tie: boolean, chord: string | null }} BarEvent
+ *   a note, a stack of notes (low to high) or a rest (no midis) in the bar,
+ *   start relative to the bar; tie: held into whatever follows;
+ *   chord: a chord symbol written above it
  */
 
 /**
@@ -57,16 +58,15 @@ export function writeBar(bar, events, { key, unit, pickup = false }) {
 
 		const lengths = span
 			? [(piece.length * 3) / 2]
-			: piece.midi === null
+			: isRest(piece)
 				? restValues(piece.start + beatShift, piece.length)
 				: noteValues(piece.length);
-		const pitch =
-			piece.midi === null ? 'z' : abcPitch(key, noteOf(key, piece.midi, previousMidi), accidentals);
-		if (piece.midi !== null) previousMidi = piece.midi;
+		const pitch = isRest(piece) ? 'z' : stackText(key, piece.midis, previousMidi, accidentals);
+		if (!isRest(piece)) previousMidi = piece.midis.at(-1) ?? null;
 
 		lengths.forEach((length, i) => {
 			const last = i === lengths.length - 1;
-			const tied = piece.midi !== null && (!last || piece.tie);
+			const tied = !isRest(piece) && (!last || piece.tie);
 			text += pitch + lengthText(length, unit) + (tied ? '-' : '');
 		});
 	}
@@ -74,9 +74,26 @@ export function writeBar(bar, events, { key, unit, pickup = false }) {
 }
 
 /**
- * The bar as events: the drawn notes in it, rests in the gaps, and every
- * chord symbol on an event of its own (a note held through a chord change
- * is split and tied).
+ * One note as ABC, or a stack as a chord: `[DF]`.
+ * @param {Key} key
+ * @param {number[]} midis low to high
+ * @param {number | null} previous the last note before it (the top of a stack)
+ * @param {Map<number, number>} accidentals
+ */
+function stackText(key, midis, previous, accidentals) {
+	const pitches = midis.map((midi) => abcPitch(key, noteOf(key, midi, previous), accidentals));
+	return pitches.length === 1 ? pitches[0] : `[${pitches.join('')}]`;
+}
+
+/** @param {BarEvent} event */
+function isRest(event) {
+	return event.midis.length === 0;
+}
+
+/**
+ * The bar as events: the drawn notes in it (a stack as one event), rests
+ * in the gaps, and every chord symbol on an event of its own (a note held
+ * through a chord change is split and tied).
  * @param {ScoreBar} bar
  * @param {DrawnNote[]} notes
  * @param {ScoreChord[]} chords
@@ -92,12 +109,13 @@ export function barEvents(bar, notes, chords) {
 			events.push({
 				start: at - bar.start,
 				length: until - at,
-				midi: null,
+				midis: [],
 				tie: false,
 				chord: null
 			});
 	};
-	for (const note of notes) {
+	for (const stack of stacksOf(notes)) {
+		const note = stack[0];
 		const from = Math.max(note.start, bar.start);
 		const to = Math.min(note.start + note.length, end);
 		if (to <= from || from < at) continue;
@@ -105,7 +123,7 @@ export function barEvents(bar, notes, chords) {
 		events.push({
 			start: from - bar.start,
 			length: to - from,
-			midi: note.midi,
+			midis: stack.map((each) => each.midi),
 			tie: note.start + note.length > end,
 			chord: null
 		});
@@ -126,6 +144,23 @@ export function barEvents(bar, notes, chords) {
 }
 
 /**
+ * The notes grouped by where they start, each group low to high, in the
+ * order they come (editNotes.js keeps a stack to one length).
+ * @param {DrawnNote[]} notes sorted by start
+ * @returns {DrawnNote[][]}
+ */
+function stacksOf(notes) {
+	/** @type {DrawnNote[][]} */
+	const stacks = [];
+	for (const note of notes) {
+		const last = stacks.at(-1);
+		if (last && last[0].start === note.start) last.push(note);
+		else stacks.push([note]);
+	}
+	return stacks.map((stack) => stack.toSorted((a, b) => a.midi - b.midi));
+}
+
+/**
  * Split events at these places (relative ticks); a split note is tied.
  * @param {BarEvent[]} events
  * @param {number[]} places
@@ -140,8 +175,8 @@ function splitAt(events, places) {
 		return edges.slice(0, -1).map((start, i) => ({
 			start,
 			length: edges[i + 1] - start,
-			midi: event.midi,
-			tie: i < cuts.length ? event.midi !== null : event.tie,
+			midis: event.midis,
+			tie: i < cuts.length ? !isRest(event) : event.tie,
 			chord: i === 0 ? event.chord : null
 		}));
 	});
