@@ -89,11 +89,13 @@ export function createPartNotes(sampleRate) {
 		 */
 		mixInto(left, right, from, to) {
 			const span = to - from;
-			const playedOn = Math.abs(from - lastTo) < 1e-4 && span > 0 && span < MAX_BLOCK_SECONDS;
+			const jumped = Math.abs(from - lastTo) >= 1e-4;
+			const playing = span > 0 && span < MAX_BLOCK_SECONDS;
 			lastTo = to;
-			if (!playedOn) {
+			if (jumped || !playing) {
 				for (const voice of sounding) voice.releasedAt ??= voice.age;
-			} else {
+			}
+			if (playing) {
 				for (let i = firstFrom(from); i < notes.length && notes[i].start < to; i++) {
 					const at = Math.floor(((notes[i].start - from) / span) * left.length);
 					sounding.push({ note: notes[i], from: at, age: 0, releasedAt: null });
@@ -102,7 +104,7 @@ export function createPartNotes(sampleRate) {
 			for (const voice of sounding) {
 				const { note } = voice;
 				const endsAt =
-					playedOn && note.end < to
+					playing && note.end < to
 						? Math.max(voice.from, Math.floor(((note.end - from) / span) * left.length))
 						: Infinity;
 				const step = (2 * Math.PI * note.hz) / sampleRate;
