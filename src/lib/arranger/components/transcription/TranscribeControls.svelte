@@ -35,7 +35,10 @@
 
 	function togglePlay() {
 		if (player.playing) player.pause();
-		else player.play();
+		else {
+			transcription.cycle.startFromCycle();
+			player.play();
+		}
 	}
 
 	/** Space plays and pauses wherever focus is, except while typing in a text box. */

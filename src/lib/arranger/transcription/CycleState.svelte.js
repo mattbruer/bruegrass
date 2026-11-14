@@ -38,6 +38,17 @@ export class CycleState {
 		this.turn(true);
 	}
 
+	/**
+	 * Before Play: with the cycle on, a playhead outside it starts at the
+	 * cycle's start, so Play runs the cycle; inside it, Play carries on from there.
+	 */
+	startFromCycle() {
+		const span = this.seconds;
+		const player = this.#transcription.player;
+		if (!span || player.playing) return;
+		if (player.time < span.from || player.time >= span.to) player.seek(span.from);
+	}
+
 	clear() {
 		this.region = null;
 		this.on = false;
