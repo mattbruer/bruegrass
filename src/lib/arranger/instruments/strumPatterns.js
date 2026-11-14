@@ -16,7 +16,7 @@ export const STRUM_PATTERNS = {
 };
 
 /** How often each pattern is played. */
-const STRUM_MIX = { boomChuck: 0.5, bumTitty: 0.5 };
+const STRUM_MIX = { boomChuck: 1, bumTitty: 0 };
 
 const HITS = /** @type {const} */ ({ B: 'bass', x: 'strum' });
 
