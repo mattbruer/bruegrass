@@ -52,6 +52,7 @@ import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
 import { keyFieldName, withKeyField } from '../chart/keyField.js';
 import { withBarChords } from '../chart/withBarChords.js';
 import { NO_CHORD } from '../chart/noChord.js';
+import { isKnownChord, unknownChordMessage } from '../chart/knownChords.js';
 import { listArrangements } from '$lib/storage/arrangements.js';
 import { quartersAt, secondsAt } from './tempoMap.js';
 import { barStepTarget } from './barStep.js';
@@ -421,12 +422,14 @@ export class TranscriptionState {
 	 * All of a bar's chords at once, a slot per beat (empty slots: the chord
 	 * before carries on). One name typed on the first beat and nothing else,
 	 * or several there ("G C"), are spread over the bar as the chart would.
+	 * Nothing is written if a chord isn't one the band can play.
 	 * @param {number} number
 	 * @param {(string | null)[]} typed what's in each beat's box
+	 * @returns {string} why it wasn't written ('' when it was)
 	 */
 	setBarChords(number, typed) {
 		const bar = this.bars.find((each) => each.number === number);
-		if (!bar) return;
+		if (!bar) return '';
 		const cleaned = typed.map((text) => (text ?? '').trim() || null);
 		const first = (cleaned[0] ?? '').split(/[\s,|]+/).filter(Boolean);
 		const onlyFirst = cleaned.slice(1).every((slot) => !slot);
@@ -434,10 +437,15 @@ export class TranscriptionState {
 			onlyFirst && first.length > 1
 				? slotsFromTyped(first.join(' '), bar.beats)
 				: slotsOf(cleaned, bar.beats).map((slot) => slot?.split(/[\s,|]+/)[0] ?? null);
+		const unknown = slots.find((slot) => slot && !isKnownChord(slot));
+		if (unknown) return unknownChordMessage(unknown);
 		const place = this.#chartOnBars.places[number];
-		if (!place) return this.#writeChart({ chords: { ...this.chords, [number]: slots } });
-		const cell = isEmptyBar(slots) ? NO_CHORD : chartCell(slots, this.#lastChordBefore(number));
-		this.#changeChart(withBarChords(this.arranger.arrangement.text, place, cell));
+		if (!place) this.#writeChart({ chords: { ...this.chords, [number]: slots } });
+		else {
+			const cell = isEmptyBar(slots) ? NO_CHORD : chartCell(slots, this.#lastChordBefore(number));
+			this.#changeChart(withBarChords(this.arranger.arrangement.text, place, cell));
+		}
+		return '';
 	}
 
 	/**
@@ -724,7 +732,7 @@ export class TranscriptionState {
 	 */
 	#changeChart(chart) {
 		const { arrangement } = this.arranger;
-		if (!this.linked || arrangement.error) return;
+		if (!this.linked || arrangement.readError) return;
 		arrangement.text = chart;
 	}
 

@@ -10,6 +10,8 @@ import { TEMPO_DEFAULT, validTempo } from '../chart/tempo.js';
 import { validCapo } from '../chart/capo.js';
 import { chartAnalysis, functionOnItsOwn, placeId } from '../chart/chartAnalysis.js';
 import { setMark } from '../chart/analysisMarks.js';
+import { unknownChordProblem } from '../chart/knownChords.js';
+import { myChords } from '../voicings/myChords.svelte.js';
 import { settings } from '$lib/settings/settings.svelte.js';
 import { STARTER_SONG } from '../starterSong.js';
 
@@ -26,7 +28,13 @@ export class ArrangementState {
 	/** The text read into sections, or why it can't be. */
 	#read = $derived(readArrangement(this.text));
 	sections = $derived(this.#read.sections);
-	error = $derived(this.#read.error);
+	/** Why the chart can't be read ('' when it can). */
+	readError = $derived(this.#read.error);
+	/** Why the chart can't be played: it can't be read, or a chord isn't one the band knows. */
+	error = $derived.by(() => {
+		void myChords.all; // a shape added under My chords makes its chord known
+		return this.readError || unknownChordProblem(this.sections);
+	});
 	isPlayable = $derived(this.error === '' && this.sections.length > 0);
 
 	bpm = $derived(Number(this.tempo) || TEMPO_DEFAULT);

@@ -5,10 +5,12 @@
 	 * box on each beat: type the chord on the beat where it changes and leave
 	 * the rest empty (the chord before carries on). Tab moves along the
 	 * beats, Enter keeps them, Escape leaves the bar as it was. Typing "G C"
-	 * in the first box alone splits the bar evenly, as a chart does.
+	 * in the first box alone splits the bar evenly, as a chart does. A chord
+	 * the band can't play isn't kept: the bar stays open and says why.
 	 */
 	import { tick } from 'svelte';
 	import { changesIn } from '../../transcription/barChords.js';
+	import { isKnownChord } from '../../chart/knownChords.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -26,6 +28,10 @@
 	let boxes = $state([]);
 	/** @type {HTMLElement | undefined} */
 	let openBar = $state();
+	/** Why the open bar's chords weren't kept ('' : nothing wrong). */
+	let problem = $state('');
+	/** The open bar is on the right of the screen, so its message opens leftward. */
+	let onTheRight = $state(false);
 
 	const first = $derived(transcription.bars[0]?.firstBeat ?? 0);
 	const quarter = $derived(scale.toX(1) - scale.toX(0));
@@ -33,6 +39,7 @@
 	/** @param {import('../../transcription/barPlan.js').Bar} bar */
 	async function open(bar) {
 		editing = bar.number;
+		problem = '';
 		boxes = transcription.slotsOf(bar).map((slot) => slot ?? '');
 		await tick();
 		openBar?.querySelector('input')?.focus();
@@ -40,15 +47,23 @@
 
 	function keep() {
 		if (editing === null) return;
-		const number = editing;
-		editing = null;
-		transcription.setBarChords(number, boxes);
+		problem = transcription.setBarChords(editing, boxes);
+		if (!problem) editing = null;
+		else if (openBar) onTheRight = openBar.getBoundingClientRect().left > window.innerWidth / 2;
+	}
+
+	/** @param {string} box what's typed in one beat's box */
+	function boxIsKnown(box) {
+		return box.split(/[\s,|]+/).every((name) => !name || isKnownChord(name));
 	}
 
 	/** @param {KeyboardEvent} event */
 	function onKey(event) {
 		if (event.key === 'Enter') keep();
-		else if (event.key === 'Escape') editing = null;
+		else if (event.key === 'Escape') {
+			editing = null;
+			problem = '';
+		}
 	}
 
 	/** @param {FocusEvent & { currentTarget: HTMLElement }} event keep when focus leaves the bar's boxes */
@@ -78,11 +93,15 @@
 						placeholder={String(beat + 1)}
 						onkeydown={onKey}
 						aria-label="Beat {beat + 1}"
+						aria-invalid={problem !== '' && !boxIsKnown(boxes[beat])}
 						autocapitalize="characters"
 						autocomplete="off"
 						spellcheck="false"
 					/>
 				{/each}
+				{#if problem}
+					<p class="problem" class:leftward={onTheRight} role="alert">{problem}</p>
+				{/if}
 			</div>
 		{:else}
 			{@const changes = changesIn(transcription.slotsOf(bar))}
@@ -102,6 +121,7 @@
 				{#each changes as change (change.beat)}
 					<span
 						class="chip"
+						class:unknown={!isKnownChord(change.name)}
 						style:left="{change.beat * quarter + 2}px"
 						style:width="{change.beats * quarter - 4}px">{change.name}</span
 					>
@@ -142,6 +162,37 @@
 		border: 1px solid var(--color-line);
 		border-radius: var(--corner-small);
 		background: var(--color-raised);
+	}
+
+	.chip.unknown {
+		color: var(--color-danger);
+		border-color: var(--color-danger);
+		text-decoration: wavy underline;
+	}
+
+	.box[aria-invalid='true'] {
+		border: 2px solid var(--color-danger);
+	}
+
+	.problem {
+		position: absolute;
+		top: calc(100% + 0.3rem);
+		left: 0;
+		width: max-content;
+		max-width: min(22rem, 80vw);
+		padding: 0.4rem 0.6rem;
+		font-size: 0.8rem;
+		color: var(--color-ink);
+		border: 1px solid var(--color-danger);
+		border-left-width: 4px;
+		border-radius: var(--corner-small);
+		background: var(--color-raised);
+		box-shadow: 0 2px 8px var(--shadow-dark-edge);
+	}
+
+	.problem.leftward {
+		left: auto;
+		right: 0;
 	}
 
 	.empty {
