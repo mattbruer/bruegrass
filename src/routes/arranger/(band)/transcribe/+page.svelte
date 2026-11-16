@@ -21,13 +21,10 @@
 	import { gridClicks } from '$lib/arranger/transcription/gridClicks.js';
 	import { timeSignature } from '$lib/arranger/transcription/timeSignatures.js';
 	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
-	import RecordingChoice from '$lib/arranger/components/transcription/RecordingChoice.svelte';
-	import DownbeatPicker from '$lib/arranger/components/transcription/DownbeatPicker.svelte';
-	import AnalysingRecording from '$lib/arranger/components/transcription/AnalysingRecording.svelte';
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
 	import SendToArranger from '$lib/arranger/components/transcription/SendToArranger.svelte';
-	import SectionStep from '$lib/arranger/components/transcription/SectionStep.svelte';
+	import TranscribeWizard from '$lib/arranger/components/transcription/TranscribeWizard.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -121,53 +118,45 @@
 <main class="ui-page-width flex flex-col gap-4 pt-6 pb-16">
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold">Transcribe</h1>
-		{#if transcription.grid && transcription.linked && !transcription.namingSections}
+		{#if !transcription.setupStep && transcription.linked}
 			<SendToArranger />
 		{/if}
 	</div>
 
-	<SongBar />
-
-	<RecordingChoice
-		current={transcription.recording}
-		onChoose={(recording) => transcription.open(recording)}
-	/>
-
-	{#if fileToOpenAgain}
+	{#if fileToOpenAgain && !transcription.recording}
 		<p class="text-sm text-ink-soft">
-			This song was written from <strong>{fileToOpenAgain}</strong>. Open it again (Open a
-			recording…) to carry on.
+			This song was written from <strong>{fileToOpenAgain}</strong>. Open it again to carry on.
 		</p>
 	{/if}
 
-	{#if transcription.recording}
-		{#if transcription.player.loading}
-			<p class="text-ink-soft">Loading…</p>
-		{:else if transcription.finding}
-			<AnalysingRecording />
-		{:else if transcription.settingDownbeat}
-			<TranscribeControls {transcription} />
-			<DownbeatPicker {transcription} />
-		{:else if transcription.grid}
-			<TranscribeControls {transcription} />
-			{#if !transcription.linked}
-				<p class="text-sm text-ink-soft">
-					The song open now isn’t this recording’s.
-					<button
-						type="button"
-						class="ml-2 ui-button px-3 py-1.5"
-						onclick={() => transcription.startSong()}
-						use:tooltip={TIPS.transcription.startSong}>Use it for a new song</button
-					>
-				</p>
-			{/if}
-			{#if transcription.namingSections}
-				<SectionStep {transcription} />
-				<TranscriptionGrid {transcription} />
-			{:else}
-				<TranscriptionGrid {transcription} />
-				<BottomPane {transcription} />
-			{/if}
+	{#if transcription.setupStep}
+		<TranscribeWizard {transcription} />
+	{:else if transcription.recording && transcription.grid}
+		<div class="flex flex-wrap items-center gap-3">
+			<SongBar />
+			<span class="text-sm text-ink-soft"
+				>Recording: <strong>{transcription.recording.name}</strong></span
+			>
+			<button
+				type="button"
+				class="ui-button px-3 py-1.5 text-sm"
+				onclick={() => transcription.chooseRecordingAgain()}
+				use:tooltip={TIPS.transcription.changeRecording}>Change…</button
+			>
+		</div>
+		<TranscribeControls {transcription} />
+		{#if !transcription.linked}
+			<p class="text-sm text-ink-soft">
+				The song open now isn’t this recording’s.
+				<button
+					type="button"
+					class="ml-2 ui-button px-3 py-1.5"
+					onclick={() => transcription.startSong()}
+					use:tooltip={TIPS.transcription.startSong}>Use it for a new song</button
+				>
+			</p>
 		{/if}
+		<TranscriptionGrid {transcription} />
+		<BottomPane {transcription} />
 	{/if}
 </main>

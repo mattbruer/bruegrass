@@ -46,7 +46,7 @@ import {
 	writeTranscriptionDraft
 } from './transcriptionDraft.js';
 import { chartFromBars } from './chartFromBars.js';
-import { readChartOnBars } from './readChartOnBars.js';
+import { readChartOnBars, SECTION_END } from './readChartOnBars.js';
 import { namedSections, withUniqueSectionNames } from './arrangementFromTranscription.js';
 import { chartCell, isEmptyBar, isHeld, slotsFromTyped, slotsOf } from './barChords.js';
 import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
@@ -142,6 +142,24 @@ export class TranscriptionState {
 	settingDownbeat = $state(false);
 	/** Naming the sections comes right after: only named sections can go to the arranger. */
 	namingSections = $state(false);
+	/** Choosing another recording, with one open (the setup's first step again). */
+	pickingRecording = $state(false);
+	/** The bar a part was just marked at, while its name is asked (null: not asking). */
+	askingPartAt = $state(/** @type {number | null} */ (null));
+	/**
+	 * Which step of setting up a transcription is showing (null: set up, the
+	 * workspace shows). The steps are SETUP_STEPS, in order.
+	 * @type {import('./setupSteps.js').SetupStep | null}
+	 */
+	setupStep = $derived(
+		!this.recording || this.pickingRecording
+			? 'recording'
+			: this.settingDownbeat || !this.grid
+				? 'downbeat'
+				: this.namingSections
+					? 'parts'
+					: null
+	);
 	clicksOn = $state(true);
 	/** Logic's cycle: the region the player loops while it's on. */
 	cycle = new CycleState(this);
@@ -268,6 +286,8 @@ export class TranscriptionState {
 		this.downbeat = null;
 		this.settingDownbeat = false;
 		this.namingSections = false;
+		this.pickingRecording = false;
+		this.askingPartAt = null;
 		this.cycle.clear();
 		this.player.setCents(0);
 		this.closeMenus();
@@ -385,8 +405,67 @@ export class TranscriptionState {
 
 	/** Done naming the sections: on to the chords and parts. */
 	doneNamingSections() {
+		this.player.pause();
 		this.closeMenus();
+		this.askingPartAt = null;
 		this.namingSections = false;
+	}
+
+	/** Back to choosing the recording (the open one stays until another is chosen). */
+	chooseRecordingAgain() {
+		this.player.pause();
+		this.closeMenus();
+		this.pickingRecording = true;
+	}
+
+	/** Keep the open recording: back from choosing another. */
+	keepRecording() {
+		this.pickingRecording = false;
+	}
+
+	/** A part starts at the bar line nearest the playhead: it pauses to ask the part's name. */
+	startPartHere() {
+		const bar = this.#barLineNearPlayhead();
+		if (!bar) return;
+		this.player.pause();
+		this.askingPartAt = bar.number;
+	}
+
+	/**
+	 * Name the part just marked, and play on.
+	 * @param {string} name
+	 */
+	namePart(name) {
+		if (this.askingPartAt === null || !name.trim()) return;
+		this.setMarker(this.askingPartAt, name);
+		this.askingPartAt = null;
+		this.player.play();
+	}
+
+	/** Not a part after all: forget the mark, and play on. */
+	cancelPart() {
+		this.askingPartAt = null;
+		this.player.play();
+	}
+
+	/** The part playing ends at the bar line nearest the playhead (no part starts there). */
+	endPartHere() {
+		const bar = this.#barLineNearPlayhead();
+		if (bar) this.setMarker(bar.number, SECTION_END);
+	}
+
+	/** The bar whose start is nearest the playhead (a tap is often a little early or late). */
+	#barLineNearPlayhead() {
+		const grid = this.grid;
+		if (!grid) return null;
+		const beat = this.quartersNow + grid.bars.firstBeat;
+		return this.bars.reduce(
+			(nearest, bar) =>
+				!nearest || Math.abs(bar.firstBeat - beat) < Math.abs(nearest.firstBeat - beat)
+					? bar
+					: nearest,
+			/** @type {import('./barPlan.js').Bar | null} */ (null)
+		);
 	}
 
 	/** Go back to placing beat 1 (the beats stay until they're found again). */
@@ -579,6 +658,17 @@ export class TranscriptionState {
 	setLaneAbc(id, abc) {
 		this.extraLanes = this.extraLanes.map((lane) => (lane.id === id ? { ...lane, abc } : lane));
 		this.#keepDraft();
+	}
+
+	/**
+	 * Play from the start of a bar.
+	 * @param {number} number
+	 */
+	playFromBar(number) {
+		const bar = this.bars.find((each) => each.number === number);
+		if (!bar || !this.grid) return;
+		this.seekToQuarters(bar.firstBeat - this.grid.bars.firstBeat);
+		this.player.play();
 	}
 
 	/** @param {number} quarters play from here in the song (quarters from bar 1) */
