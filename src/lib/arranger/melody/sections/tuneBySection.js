@@ -64,6 +64,23 @@ export function sectionInstances(chart) {
 }
 
 /**
+ * A tune by section as saved, in today's shape (one saved before harmony
+ * parts were kept by section had only the melody's bars, as text).
+ * @param {any} saved
+ * @returns {TuneBySection | null}
+ */
+export function upgradedTune(saved) {
+	if (!saved || typeof saved.header !== 'string') return null;
+	const parts = Object.fromEntries(
+		Object.entries(saved.parts ?? {}).map(([name, part]) => [
+			name,
+			typeof part === 'string' ? { [MELODY_VOICE]: part } : part
+		])
+	);
+	return { header: saved.header, voices: saved.voices ?? [], leads: saved.leads ?? {}, parts };
+}
+
+/**
  * The tune as played: each voice through every section, in the chart's order.
  * @param {TuneBySection} tune
  * @param {SectionInstance[]} instances

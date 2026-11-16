@@ -29,15 +29,15 @@ export function splitPlayedOut(abc, tune, line, instances, chartBars, song) {
 	if (new Set(channels).size !== channels.length)
 		return { tune: null, problem: 'It has voices that aren’t harmony parts.' };
 
+	const pickupTicks = Math.round(line.pickup * TICKS_PER_QUARTER);
 	const { score: blank } = scoreFromChart(
 		chartBars,
 		song.songKey,
 		song.capo,
 		song.spelling,
-		line.pickup
+		pickupTicks / TICKS_PER_QUARTER
 	);
 	const end = blank.bars.at(-1) ? blank.bars.at(-1).start + blank.bars.at(-1).length : 0;
-	const pickupTicks = Math.round(line.pickup * TICKS_PER_QUARTER);
 	const barCounts = instances.map(
 		(_, index) => chartBars.filter((bar) => bar.section === index).length
 	);

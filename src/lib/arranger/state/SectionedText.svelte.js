@@ -11,7 +11,8 @@ import {
 	fromPlayedTune,
 	fromTuneBySectionText,
 	playedTune,
-	tuneBySectionText
+	tuneBySectionText,
+	upgradedTune
 } from '../melody/sections/tuneBySection.js';
 
 /**
@@ -85,7 +86,7 @@ export class SectionedText {
 	 * @param {TuneBySection | null} bySection
 	 */
 	load(abc, bySection) {
-		this.bySection = bySection;
+		this.bySection = upgradedTune(bySection);
 		this.#whole = abc;
 	}
 
