@@ -49,6 +49,12 @@ export class CycleState {
 		if (player.time < span.from || player.time >= span.to) player.seek(span.from);
 	}
 
+	/** After a pause: with the cycle on, back to its start, ready to go round again. */
+	backToStart() {
+		const span = this.seconds;
+		if (span) this.#transcription.player.seek(span.from);
+	}
+
 	clear() {
 		this.region = null;
 		this.on = false;

@@ -37,8 +37,10 @@
 	});
 
 	function togglePlay() {
-		if (player.playing) player.pause();
-		else {
+		if (player.playing) {
+			player.pause();
+			transcription.cycle.backToStart();
+		} else {
 			transcription.cycle.startFromCycle();
 			player.play();
 		}
