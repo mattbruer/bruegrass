@@ -8,6 +8,9 @@
 	 * The notation is at concert pitch before the Key menu. It's drawn as the
 	 * song sounds, or, with a capo or a key change, in the key of the
 	 * guitar's shapes, for reading with the capo on.
+	 *
+	 * `notation` draws other ABC instead of the tune (Transcribe's bass line);
+	 * it isn't followed while playing.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { drawSheetMusic } from '../../melody/drawSheetMusic.js';
@@ -16,6 +19,10 @@
 	import SheetViewToggle from './SheetViewToggle.svelte';
 
 	const { arrangement, melody, player } = useArranger();
+
+	/** @type {{ notation?: string }} */
+	let { notation: otherNotation } = $props();
+	const notation = $derived(otherNotation ?? melody.notation);
 
 	/** Both views are the same with no capo or key change, so the tabs only show when they differ. */
 	let canTranspose = $derived(arrangement.key !== null && arrangement.pitchShift !== 0);
@@ -35,7 +42,7 @@
 
 	// Draw again when the tune, its key on the page or the page's width changes
 	$effect(() => {
-		const notation = melody.notation;
+		const abc = notation;
 		const transpose = drawnTranspose;
 		const target = page;
 		void windowWidth;
@@ -43,7 +50,7 @@
 
 		let replaced = false;
 		const timer = setTimeout(async () => {
-			const drawn = await drawSheetMusic(target, notation, { transpose });
+			const drawn = await drawSheetMusic(target, abc, { transpose });
 			if (!replaced) drawnNotes = drawn;
 		}, REDRAW_DELAY_MS);
 
@@ -55,7 +62,7 @@
 
 	/** The drawn notes on the melody's clock. */
 	let notesOnPage = $derived(
-		drawnNotes && melody.sequence
+		drawnNotes && melody.sequence && otherNotation === undefined
 			? sheetEvents(drawnNotes, playedQuarters(melody.sequence), melody.pickup)
 			: []
 	);
@@ -100,7 +107,7 @@
 
 <svelte:window bind:innerWidth={windowWidth} />
 
-{#if melody.hasNotation}
+{#if notation.trim() !== ''}
 	<section aria-label="Sheet music">
 		{#if canTranspose}
 			<div class="mb-3 flex justify-end">
