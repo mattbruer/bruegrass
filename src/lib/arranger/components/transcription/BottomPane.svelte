@@ -53,17 +53,31 @@
 				label="Show the part as"
 			/>
 			<h2 class="text-sm font-bold">{laneName}</h2>
-			{#if transcription.canAddPickup}
-				<button
-					type="button"
-					class="ui-button px-3 py-1.5 text-sm"
-					onclick={() => transcription.addPickup()}
-					use:tooltip={TIPS.transcription.addPickup}
-					>Add a pickup ({transcription.leadInQuarters}
-					{transcription.leadInQuarters === 1 ? 'beat' : 'beats'})</button
-				>
+			{#if !isBass}
+				<label class="flex items-center gap-1.5 text-sm">
+					<span class="text-ink-soft">Pickup</span>
+					<select
+						class="ui-field px-2 py-1"
+						value={transcription.pickup}
+						onchange={(event) => {
+							transcription.setPickup(Number(event.currentTarget.value));
+							// A refused change leaves the pickup as it was: show that
+							event.currentTarget.value = String(transcription.pickup);
+						}}
+						use:tooltip={TIPS.transcription.pickup}
+					>
+						{#each transcription.pickupChoices as beats (beats)}
+							<option value={beats}
+								>{beats === 0 ? 'None' : `${beats} ${beats === 1 ? 'beat' : 'beats'}`}</option
+							>
+						{/each}
+					</select>
+				</label>
 			{/if}
 		</div>
+		{#if transcription.pickupProblem}
+			<p class="text-sm text-ink-soft" role="status">{transcription.pickupProblem}</p>
+		{/if}
 		{#if settings.transcribe.bottomView === 'sheet'}
 			{#if nothingWritten}
 				<p class="text-sm text-ink-soft">Nothing written yet. Draw it in the piano roll.</p>
@@ -76,7 +90,7 @@
 				lanes={transcription}
 				{clock}
 				bassStartsEmpty
-				pickupQuarters={transcription.leadInQuarters}
+				pickupQuarters={transcription.newTunePickup}
 				keyMenu={false}
 				zoom={settings.transcribe.zoom}
 			/>

@@ -235,8 +235,8 @@ export const TIPS = Object.freeze({
 		laneBass:
 			'Make this lane the song’s bass line. The lane goes; the bass is written from its notes.',
 		laneRemove: 'Take this lane away, with its notes.',
-		addPickup:
-			'The recording has notes before beat 1. Add a short bar before bar 1 to draw them in, in every voice.',
+		pickup:
+			'Notes before beat 1 (a pickup): how many beats of room to draw them in, before bar 1. Every voice gets the same.',
 		bottomViews: {
 			roll: 'Write and edit the picked part as notes on a grid.',
 			sheet: 'See what you’ve written as sheet music.'

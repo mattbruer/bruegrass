@@ -60,7 +60,7 @@ import { channelInstrument } from '../instruments/tuneInstruments.js';
 import { mixer } from '../mixer/mixer.svelte.js';
 import { heardNotes, laneLevels } from './heardParts.js';
 import { CycleState, leadInBefore } from './CycleState.svelte.js';
-import { hasPickup, withPickupBar } from '../melody/roll/pickupBar.js';
+import { pickupLength, withPickupLength } from '../melody/roll/pickupBar.js';
 
 /**
  * @typedef {{ key: string, name: string, source: string | Blob }} Recording
@@ -145,19 +145,25 @@ export class TranscriptionState {
 	/** Where the recording is now, in the song's quarters from bar 1. */
 	quartersNow = $derived(this.grid ? quartersAt(this.grid, this.player.time) : 0);
 	/**
-	 * The tune's pickup (quarters): the recording's lead-in before bar 1, when
-	 * it's shorter than a bar. A whole bar before beat 1 isn't a pickup (ABC
-	 * can't tell it from bar 1): beat 1 is then a bar late, and Move beat 1 fixes it.
+	 * The pickup an unwritten tune starts with (quarters), chosen by you: the
+	 * recording can't tell a pickup from an intro or a kick-off.
 	 */
-	leadInQuarters = $derived.by(() => {
-		const plan = this.grid?.bars;
-		return plan && plan.firstBeat < plan.beatsPerBar ? plan.firstBeat : 0;
-	});
-	/** The tune is written but has no pickup bar, though the recording has a lead-in to draw it in. */
-	canAddPickup = $derived.by(() => {
+	newTunePickup = $state(0);
+	/** @type {{ abc: string, message: string } | null} a pickup change refused, and the tune it was refused on */
+	#pickupRefused = $state(null);
+	/** Why the last pickup change wasn't made, until the tune changes ('' when it was made). */
+	pickupProblem = $derived(
+		this.#pickupRefused?.abc === this.arranger.melody.notation ? this.#pickupRefused.message : ''
+	);
+	/** The tune's pickup now (quarters): the written tune's, or the one an unwritten tune will start with. */
+	pickup = $derived.by(() => {
 		const voices = this.arranger.melody.voices;
-		return this.leadInQuarters > 0 && voices !== null && !hasPickup(voices.map((v) => v.score));
+		return voices ? pickupLength(voices.map((voice) => voice.score)) : this.newTunePickup;
 	});
+	/** The pickups to choose from (quarters): none, up to a beat short of a bar. */
+	pickupChoices = $derived(
+		Array.from({ length: this.grid?.bars.beatsPerBar ?? 4 }, (_, beats) => beats)
+	);
 	/** The written parts' notes, on the recording's time. */
 	heardNotes = $derived(
 		this.grid
@@ -342,12 +348,26 @@ export class TranscriptionState {
 		this.#keepDraft();
 	}
 
-	/** A pickup bar of rest at the front of the tune, as long as the recording's lead-in, to draw its pickup in. */
-	addPickup() {
+	/**
+	 * Make the tune's pickup this long (quarters; 0: none), in every voice.
+	 * Its notes keep their place before bar 1; a change that would cut some off isn't made.
+	 * @param {number} quarters
+	 */
+	setPickup(quarters) {
 		const { melody } = this.arranger;
-		if (!this.canAddPickup || !melody.voices) return;
+		this.#pickupRefused = null;
+		if (!melody.voices) {
+			this.newTunePickup = quarters;
+			return;
+		}
 		const scores = melody.voices.map((voice) => voice.score);
-		melody.notation = withPickupBar(melody.notation, scores, this.leadInQuarters);
+		const result = withPickupLength(melody.notation, scores, quarters);
+		if (result.blocked)
+			this.#pickupRefused = {
+				abc: melody.notation,
+				message: 'Notes are in the way. Move or delete them first, then shorten the pickup.'
+			};
+		else melody.notation = result.abc;
 	}
 
 	/**
