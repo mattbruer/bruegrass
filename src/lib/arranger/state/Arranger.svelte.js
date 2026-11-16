@@ -48,7 +48,8 @@ import { newAbc } from '../melody/roll/scoreToAbc.js';
 import { barsInPlayOrder } from '../chart/chartBars.js';
 import { sectionInstances } from '../melody/sections/tuneBySection.js';
 import { sectionRests } from '../melody/sections/sectionRests.js';
-import { splitTune, unitOfHeader } from '../melody/sections/splitTune.js';
+import { hasRepeats, splitTune, unitOfHeader } from '../melody/sections/splitTune.js';
+import { splitPlayedOut } from '../melody/sections/playedOut.js';
 import { readTuneText, MELODY_VOICE } from '../melody/sections/tuneBySection.js';
 import { renamedParts } from '../melody/sections/renamedParts.js';
 import { generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
@@ -184,11 +185,30 @@ export class Arranger {
 		if (!melody.tune) return 'There is no tune to split yet.';
 		const instances = sectionInstances(arrangement.text);
 		const barCounts = arrangement.sections.map((section) => section.measures.length);
-		const { tune, problem } = splitTune(melody.notation, melody.tune, instances, barCounts);
+		const { tune, problem } = hasRepeats(melody.notation)
+			? this.#splitPlayedOut(instances)
+			: splitTune(melody.notation, melody.tune, instances, barCounts);
 		if (!tune) return `The tune can't be split: ${problem}`;
 		melody.bySection = tune;
 		this.#splitBass();
 		return '';
+	}
+
+	/**
+	 * The tune's repeats and endings played out, then cut into sections.
+	 * @param {import('../melody/sections/tuneBySection.js').SectionInstance[]} instances
+	 */
+	#splitPlayedOut(instances) {
+		const { melody, arrangement } = this;
+		if (!melody.line) return { tune: null, problem: 'It has no notes to play.' };
+		return splitPlayedOut(
+			melody.notation,
+			melody.tune,
+			melody.line,
+			instances,
+			barsInPlayOrder(arrangement.sections),
+			{ songKey: arrangement.key, capo: arrangement.capoFret, spelling: this.melodyKey.spelling }
+		);
 	}
 
 	/** The bass line by section too, unless it was written by ear from nothing. */

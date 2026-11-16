@@ -39,7 +39,7 @@ export function splitTune(abc, tune, instances, barCounts) {
 	const refuse = (/** @type {string} */ problem) => ({ tune: null, problem });
 	const text = readTuneText(abc);
 	if (!text) return refuse('It has no K: line.');
-	if (REPEATS.test(musicLines(abc))) return refuse('It has repeats or endings.');
+	if (hasRepeats(abc)) return refuse('It has repeats or endings.');
 
 	const total = barCounts.reduce((sum, count) => sum + count, 0);
 	/** @type {TuneBySection} */
@@ -49,21 +49,30 @@ export function splitTune(abc, tune, instances, barCounts) {
 		if (problem) return refuse(`It has ${problem}.`);
 		const pickup = score.bars.length > 0 && isPickup(score, 0) ? 1 : 0;
 		if (score.bars.length - pickup > total) return refuse('It has more bars than the chart.');
-		splitVoice(score, pickup, id, instances, barCounts, split);
+		splitScore(score, pickup, id, instances, barCounts, split);
 	}
 	return { tune: split, problem: '' };
 }
 
 /**
+ * Repeats or endings in the music, which a tune must be played out of
+ * before it can be cut (playedOut.js).
+ * @param {string} abc
+ */
+export function hasRepeats(abc) {
+	return REPEATS.test(musicLines(abc));
+}
+
+/**
  * One voice's bars shared out among the sections (into `split`).
- * @param {Score} score
+ * @param {Pick<Score, 'bars' | 'notes' | 'chords' | 'key' | 'unit'>} score
  * @param {number} pickup 1 when the first bar is a pickup
  * @param {string} id the voice
  * @param {import('./tuneBySection.js').SectionInstance[]} instances
  * @param {number[]} barCounts
  * @param {TuneBySection} split
  */
-function splitVoice(score, pickup, id, instances, barCounts, split) {
+export function splitScore(score, pickup, id, instances, barCounts, split) {
 	const write = (/** @type {import('../roll/readScore.js').ScoreBar} */ bar, isPickup = false) =>
 		writeBar(bar, barEvents(bar, score.notes, score.chords), {
 			key: score.key,
@@ -84,7 +93,7 @@ function splitVoice(score, pickup, id, instances, barCounts, split) {
 /**
  * Any notes in these bars (a section of rests has no tune of its own: it
  * plays the chart's rests, and follows the chart's chords).
- * @param {Score} score
+ * @param {Pick<Score, 'notes'>} score
  * @param {import('../roll/readScore.js').ScoreBar[]} bars
  */
 function hasNotes(score, bars) {
