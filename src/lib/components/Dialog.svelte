@@ -81,7 +81,7 @@
 		width: min(30rem, calc(100% - 2rem));
 		max-height: calc(100% - 2rem);
 		overflow-y: auto;
-		border: none;
+		border: 1px solid var(--color-line);
 		border-radius: var(--corner-panel);
 		background: var(--color-surface);
 		color: var(--color-ink);

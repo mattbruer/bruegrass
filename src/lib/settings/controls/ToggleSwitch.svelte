@@ -31,13 +31,13 @@
 		width: 3.25rem;
 		height: 1.85rem;
 		border-radius: 9999px;
-		background: var(--color-surface);
+		background: var(--color-ink-faint);
 		box-shadow: var(--shadow-inset-small);
 		transition: background 0.2s ease;
 	}
 
 	.switch.on {
-		background: var(--color-accent-soft);
+		background: var(--color-accent);
 	}
 
 	.switch:focus-visible {
@@ -52,7 +52,7 @@
 		width: 1.45rem;
 		height: 1.45rem;
 		border-radius: 9999px;
-		background: var(--color-surface);
+		background: var(--color-ink);
 		box-shadow: var(--shadow-raised-small);
 		transition: transform 0.2s ease;
 	}

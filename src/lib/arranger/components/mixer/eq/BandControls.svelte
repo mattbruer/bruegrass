@@ -126,15 +126,18 @@
 		align-items: center;
 		gap: 0.35rem;
 		border-radius: var(--corner-small);
-		background: var(--color-surface);
+		background: var(--color-raised);
+		border: 1px solid var(--color-line);
 		padding: 0.25rem 0.5rem;
 		font-size: 0.7rem;
 		font-weight: 700;
-		box-shadow: var(--shadow-raised-small);
+		box-shadow: 0 1px 3px var(--shadow-dark-edge);
 	}
 
 	.chip.selected {
-		box-shadow: var(--shadow-inset-small);
+		background: color-mix(in oklab, var(--color-accent) 16%, var(--color-raised));
+		border-color: var(--color-accent);
+		box-shadow: none;
 		color: var(--color-accent);
 	}
 

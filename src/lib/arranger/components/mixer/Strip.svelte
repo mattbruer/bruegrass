@@ -39,6 +39,7 @@
 		min-width: 6.5rem;
 		border-radius: var(--corner-card);
 		background: var(--mixer-strip);
+		border: 1px solid var(--color-line);
 		padding: 0.85rem 0.75rem 1rem;
 		box-shadow: var(--shadow-raised-small);
 		/*

@@ -73,9 +73,10 @@
 		align-items: center;
 		gap: 0.75rem;
 		border-radius: var(--corner-control);
-		background: var(--color-surface);
+		background: var(--color-raised);
+		border: 1px solid var(--color-line);
 		padding: 0.6rem 0.75rem;
-		box-shadow: var(--shadow-raised-small);
+		box-shadow: 0 1px 3px var(--shadow-dark-edge);
 	}
 
 	.text {

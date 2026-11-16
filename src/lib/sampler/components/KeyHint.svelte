@@ -14,7 +14,7 @@
 		margin-left: 0.4rem;
 		padding: 0 0.3rem;
 		border-radius: var(--corner-control);
-		box-shadow: var(--shadow-inset-small);
+		border: 1px solid var(--color-line);
 		font-family: inherit;
 		font-size: 0.7rem;
 		font-weight: 500;

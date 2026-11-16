@@ -123,7 +123,8 @@
 	--color-raised: oklch(
 		from var(--theme-background) calc(l + 0.06) c h
 	); /* cards and buttons: lighter than the page */
-	--color-line: oklch(from var(--theme-background) calc(l - 0.1) c h); /* hairline borders */
+	/* hairline borders: a little of the text colour, so they show in dark and light themes */
+	--color-line: color-mix(in oklab, var(--theme-text) 22%, var(--theme-background));
 	--color-ink: var(--theme-text);
 	--color-ink-soft: color-mix(in oklab, var(--theme-text), var(--theme-background) 30%);
 	--color-ink-faint: color-mix(in oklab, var(--theme-text), var(--theme-background) 50%);

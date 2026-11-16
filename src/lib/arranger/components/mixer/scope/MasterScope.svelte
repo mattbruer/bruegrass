@@ -111,6 +111,7 @@
 		gap: 0.6rem;
 		border-radius: var(--corner-card);
 		background: var(--mixer-strip);
+		border: 1px solid var(--color-line);
 		padding: 0.85rem;
 		box-shadow: var(--shadow-raised-small);
 		--color-surface: var(--mixer-strip);

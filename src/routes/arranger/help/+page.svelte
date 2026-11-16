@@ -452,8 +452,10 @@
 	.tip {
 		border-left: 4px solid var(--color-accent);
 		border-radius: var(--corner-control);
-		background: var(--color-surface);
-		box-shadow: var(--shadow-raised-small);
+		background: var(--color-raised);
+		border-top: 1px solid var(--color-line);
+		border-right: 1px solid var(--color-line);
+		border-bottom: 1px solid var(--color-line);
 		padding: 0.6rem 0.9rem;
 		color: var(--color-ink-soft);
 	}
@@ -462,8 +464,9 @@
 		margin-bottom: 1rem;
 		overflow: hidden;
 		border-radius: var(--corner-card);
-		background: var(--color-surface);
-		box-shadow: var(--shadow-raised);
+		background: var(--color-raised);
+		border: 1px solid var(--color-line);
+		box-shadow: 0 2px 8px var(--shadow-dark-edge);
 	}
 
 	.code {

@@ -48,15 +48,17 @@
 	.toggle {
 		width: 2rem;
 		border-radius: var(--corner-small);
-		background: var(--color-surface);
+		background: var(--color-raised);
+		border: 1px solid var(--color-line);
 		padding: 0.2rem 0;
 		font-size: 0.7rem;
 		font-weight: 800;
-		color: var(--color-ink-soft);
-		box-shadow: var(--shadow-raised-small);
+		color: var(--color-ink);
+		box-shadow: 0 1px 3px var(--shadow-dark-edge);
 	}
 
 	.toggle.on {
+		border-color: transparent;
 		box-shadow: var(--shadow-inset-small);
 		color: white;
 	}

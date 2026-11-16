@@ -22,9 +22,9 @@
 		height: 2rem;
 		cursor: pointer;
 		appearance: none;
-		border: none;
+		border: 1px solid var(--color-ink-faint);
 		border-radius: var(--corner-control);
-		background: var(--color-surface);
+		background: var(--color-raised);
 		padding: 0.25rem;
 		box-shadow: var(--shadow-raised-small);
 	}

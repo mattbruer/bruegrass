@@ -5,9 +5,12 @@
  * for what a thing *is* (a card, a button), not how it looks, so changing
  * the visual style later means editing this file, not every component.
  *
- * The current look is soft but with contrast: cards and buttons are a lighter
- * tone than the page with a hairline border and a gentle drop shadow; wells
- * and fields are a slightly darker tone. "On" is a pale accent tint.
+ * The look is plain, with contrast (Soft UI's tone-on-tone is gone): cards and
+ * buttons are a lighter tone than the page with a hairline border that shows
+ * in dark and light themes, and a gentle drop shadow; wells and fields are a
+ * slightly darker tone, also edged. "On" is a pale accent tint with an accent
+ * edge. A control drawn by hand follows the same rule: never a background
+ * and a shadow alone.
  *
  * All values come from tokens.css.
  */

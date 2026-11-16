@@ -327,7 +327,8 @@
 	.readout {
 		min-width: 2.5rem;
 		border-radius: var(--corner-small);
-		background: var(--color-surface);
+		background: var(--color-surface-deep);
+		border: 1px solid var(--color-line);
 		padding: 0.05rem 0.3rem;
 		text-align: center;
 		font-family: ui-monospace, monospace;

@@ -239,14 +239,16 @@
 		min-width: 0;
 		min-height: 2.75rem;
 		border-radius: var(--corner-control);
-		background: var(--color-surface);
+		background: var(--color-raised);
+		border: 1px solid var(--color-line);
 		font-size: 1.05rem;
 		font-weight: 600;
-		color: var(--color-ink-soft);
-		box-shadow: var(--shadow-raised-small);
+		color: var(--color-ink);
+		box-shadow: 0 1px 3px var(--shadow-dark-edge);
 	}
 
 	.key:active {
+		background: var(--color-surface-deep);
 		box-shadow: var(--shadow-inset-small);
 	}
 
@@ -266,7 +268,9 @@
 	}
 
 	.key.active {
-		box-shadow: var(--shadow-inset-small);
+		background: color-mix(in oklab, var(--color-accent) 16%, var(--color-raised));
+		border-color: var(--color-accent);
+		box-shadow: none;
 	}
 
 	.spacer {
@@ -309,14 +313,16 @@
 
 	.letters-bar button {
 		border-radius: var(--corner-control);
-		background: var(--color-surface);
+		background: var(--color-raised);
+		border: 1px solid var(--color-line);
 		padding: 0.5rem 0.9rem;
 		font-weight: 700;
 		color: var(--color-accent);
-		box-shadow: var(--shadow-raised-small);
+		box-shadow: 0 1px 3px var(--shadow-dark-edge);
 	}
 
 	.letters-bar button:active {
+		background: var(--color-surface-deep);
 		box-shadow: var(--shadow-inset-small);
 	}
 </style>

@@ -46,7 +46,8 @@
 		display: flex;
 		width: 100%;
 		border-radius: var(--corner-small);
-		background: var(--color-surface);
+		background: var(--color-surface-deep);
+		border: 1px solid var(--color-line);
 		box-shadow: var(--shadow-inset-small);
 		font-size: 0.65rem;
 		font-weight: 700;
