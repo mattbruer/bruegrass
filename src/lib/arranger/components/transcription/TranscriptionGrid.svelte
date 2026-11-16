@@ -23,6 +23,7 @@
 	import GridMenu from './GridMenu.svelte';
 	import CycleStrip from './CycleStrip.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
+	import LaneVolume from './LaneVolume.svelte';
 	import { mixer } from '../../mixer/mixer.svelte.js';
 	import RecordingLane from './RecordingLane.svelte';
 	import ChordLane from './ChordLane.svelte';
@@ -148,6 +149,7 @@
 		<div class="header recording">
 			<span class="name">Recording</span>
 			<MuteSoloButtons settings={transcription.recordingLane} name="Recording" />
+			<LaneVolume level={transcription.recordingLane} name="Recording" />
 		</div>
 		<RecordingLane {transcription} {scale} />
 
@@ -180,6 +182,7 @@
 					>
 				{:else if channel}
 					<MuteSoloButtons settings={channel} name={lane.name} />
+					<LaneVolume level={channel} name={lane.name} />
 				{/if}
 			</div>
 			<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->

@@ -6,6 +6,7 @@
  */
 import { secondsAt } from './tempoMap.js';
 import { strumOffsets } from '../instruments/guitar.js';
+import { FADER_MIN } from '$lib/audio/mixer/faderTaper.js';
 
 /** A stack is strummed across neighbouring strings, the middle ones (0 = low E). */
 const MIDDLE_STRING = 2.5;
@@ -52,16 +53,24 @@ function strumDelay(notes, note, grid) {
 }
 
 /**
- * Which lanes sound: soloing any silences the ones not soloed; otherwise
- * all but the muted ones.
- * @param {{ id: string, mute: boolean, solo: boolean }[]} lanes
- * @returns {Record<string, number>} 1 heard, 0 not
+ * How loud each lane sounds: at its volume, except that soloing any
+ * silences the ones not soloed, and otherwise the muted ones are silent.
+ * @param {{ id: string, mute: boolean, solo: boolean, volume: number }[]} lanes volume in dB
+ * @returns {Record<string, number>} gain (1 = as it comes, 0 = silent)
  */
 export function laneLevels(lanes) {
 	const soloing = lanes.some((lane) => lane.solo);
 	return Object.fromEntries(
-		lanes.map((lane) => [lane.id, (soloing ? lane.solo : !lane.mute) ? 1 : 0])
+		lanes.map((lane) => {
+			const heard = soloing ? lane.solo : !lane.mute;
+			return [lane.id, heard ? gainOf(lane.volume) : 0];
+		})
 	);
+}
+
+/** @param {number} db a fader's level (its bottom is silence) */
+function gainOf(db) {
+	return db <= FADER_MIN ? 0 : 10 ** (db / 20);
 }
 
 /** @param {number} midi */

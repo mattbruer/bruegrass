@@ -115,8 +115,8 @@ export class TranscriptionState {
 	 * @type {import('../tracks/lanes.js').BandLane[]}
 	 */
 	parts = $state.raw([]);
-	/** The recording's own mute and solo (the parts' are their mixer channels'). */
-	recordingLane = $state({ mute: false, solo: false });
+	/** The recording's own volume (dB), mute and solo (the parts' are their mixer channels'). */
+	recordingLane = $state({ volume: 0, mute: false, solo: false });
 
 	/** @type {Float32Array | null} */
 	peaks = $state.raw(null);
@@ -147,13 +147,18 @@ export class TranscriptionState {
 			? heardNotes(this.parts, this.grid, (lane, pitch) => this.#soundingPitch(lane, pitch))
 			: []
 	);
-	/** How loud the recording and each part are (mute and solo). */
+	/** How loud the recording and each part are (volume, mute and solo). */
 	levels = $derived.by(() => {
 		const lanes = [
 			{ id: RECORDING_LANE, ...this.recordingLane },
 			...this.parts.map((part) => {
 				const channel = mixer.channels.find((each) => each.id === part.id);
-				return { id: part.id, mute: channel?.mute ?? false, solo: channel?.solo ?? false };
+				return {
+					id: part.id,
+					volume: channel?.volume ?? 0,
+					mute: channel?.mute ?? false,
+					solo: channel?.solo ?? false
+				};
 			})
 		];
 		const { [RECORDING_LANE]: recording, ...parts } = laneLevels(lanes);
