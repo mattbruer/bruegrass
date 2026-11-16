@@ -158,21 +158,21 @@ export function degree(note, tonic) {
 
 /**
  * How to show a chord.
- * - shapes: as written (the guitar's shapes, before any capo)
- * - concert: the sounding chord, after capo and transposition
+ * - shapes: the guitar's shape with the capo on (as written, moved by any key change)
+ * - concert: the sounding chord, after capo and key change
  * - nashville: its scale degree in the key (the same in every key)
  * - roman: what it does, which needs the chords around it, so it's worked
  *   out for the whole chart (chart/chartAnalysis.js), not here
  *
  * @param {string} name chord as written
  * @param {{ key: Key | null, shift: number, mode: ChordDisplay }} options
- *   shift = capo + transposition, in semitones
+ *   shift: how far shapes or concert chords are from the chart, in semitones
  */
 export function chordLabel(name, { key, shift, mode }) {
 	const chord = parseChord(name);
-	if (!key || !chord || mode === 'shapes') return name;
+	if (!key || !chord) return name;
 
-	if (mode === 'concert') {
+	if (mode === 'shapes' || mode === 'concert') {
 		if (mod12(shift) === 0) return name;
 		const to = parseNote(keyName(key, shift));
 		const root = noteName(transposeNote(chord.root, key.tonic, to, shift));

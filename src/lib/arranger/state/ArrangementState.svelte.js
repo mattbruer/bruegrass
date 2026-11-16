@@ -41,6 +41,8 @@ export class ArrangementState {
 	capoFret = $derived(validCapo(this.capo));
 	/** How far the sound is from the chords as written: capo plus key change. */
 	pitchShift = $derived(this.capoFret + this.transpose);
+	/** How far the shapes a guitarist plays with this capo are from the chords as written: the key change. */
+	shapesShift = $derived(this.transpose);
 
 	/** The song's key: the chart's [K:], else its first chord (null while there are no chords). */
 	key = $derived(songKey(this.sections));
@@ -66,7 +68,8 @@ export class ArrangementState {
 	 */
 	chordName = (chord, place) => {
 		if (this.chordDisplay !== 'roman') {
-			return chordLabel(chord, { key: this.key, shift: this.pitchShift, mode: this.chordDisplay });
+			const shift = this.chordDisplay === 'shapes' ? this.shapesShift : this.pitchShift;
+			return chordLabel(chord, { key: this.key, shift, mode: this.chordDisplay });
 		}
 		const found = place && this.analysis.get(placeId(place));
 		return found ? (found.mark ?? found.label) : functionOnItsOwn(chord, this.key);

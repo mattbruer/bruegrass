@@ -1,5 +1,5 @@
 <script>
-	/** The capo fret (None, 1 … MAX_CAPO). With a melody, moving it asks first (CapoChoiceDialog). */
+	/** The capo fret (None, 1 … MAX_CAPO). Moving it asks first (CapoChoiceDialog). */
 	import { useArranger } from '../../state/context.js';
 	import { CAPO_CHOICES } from '../../chart/capo.js';
 	import CapoChoiceDialog from './CapoChoiceDialog.svelte';

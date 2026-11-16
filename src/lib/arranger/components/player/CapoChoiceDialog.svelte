@@ -1,6 +1,6 @@
 <script>
 	/**
-	 * Moving the capo with a melody: should the song go up with it (same
+	 * Moving the capo: should the song go up with it (same
 	 * shapes, the melody moves too), or keep its key (new shapes, the melody
 	 * stays)? Closing it leaves the capo where it was.
 	 */
@@ -11,15 +11,15 @@
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const arranger = useArranger();
-	const { arrangement } = arranger;
+	const { arrangement, melody } = arranger;
 
 	let capo = $derived(arranger.capoAsked);
 	let semitones = $derived(capo === null ? 0 : capo - arrangement.capoFret);
 	let key = $derived(arrangement.key);
 	let soundsIn = $derived(key ? keyName(key, arrangement.pitchShift) : '');
 	let raisedTo = $derived(key ? keyName(key, arrangement.pitchShift + semitones) : '');
-	let shapes = $derived(key ? keyName(key) : '');
-	let newShapes = $derived(key ? keyName(key, -semitones) : '');
+	let shapes = $derived(key ? keyName(key, arrangement.shapesShift) : '');
+	let newShapes = $derived(key ? keyName(key, arrangement.shapesShift - semitones) : '');
 	let higher = $derived(semitones > 0 ? 'higher' : 'lower');
 	let distance = $derived(Math.abs(semitones) === 1 ? '1 fret' : `${Math.abs(semitones)} frets`);
 </script>
@@ -30,7 +30,10 @@
 >
 	{#if capo !== null}
 		<div class="flex max-w-md flex-col gap-3 px-6 pt-4 pb-6">
-			<p class="text-sm">The melody has to match the band. Which do you want?</p>
+			<p class="text-sm">
+				{melody.hasNotation ? 'The melody has to match the band.' : 'The capo moves the song.'}
+				Which do you want?
+			</p>
 
 			<button
 				type="button"
@@ -41,7 +44,7 @@
 				<strong class="block">Move the song to {raisedTo || higher}</strong>
 				<span class="text-sm text-ink-soft">
 					Same {shapes} shapes; everything sounds {distance}
-					{higher}, and the melody is rewritten to match.
+					{higher}{melody.hasNotation ? ', and the melody is rewritten to match' : ''}.
 				</span>
 			</button>
 
@@ -53,8 +56,8 @@
 			>
 				<strong class="block">Keep it in {soundsIn || 'the same key'}</strong>
 				<span class="text-sm text-ink-soft">
-					The chords change to {newShapes} shapes, so the song sounds the same. The melody stays as it
-					is.
+					The chords change to {newShapes} shapes, so the song sounds the same.
+					{melody.hasNotation ? 'The melody stays as it is.' : ''}
 				</span>
 			</button>
 		</div>

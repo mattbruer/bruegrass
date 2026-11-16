@@ -9,7 +9,7 @@
 
 	let views = $derived([
 		{ id: 'concert', name: 'Concert', key: keyName(arrangement.key, arrangement.pitchShift) },
-		{ id: 'shapes', name: 'Guitar shapes', key: keyName(arrangement.key) }
+		{ id: 'shapes', name: 'Guitar shapes', key: keyName(arrangement.key, arrangement.shapesShift) }
 	]);
 </script>
 

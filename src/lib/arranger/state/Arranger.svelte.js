@@ -227,15 +227,15 @@ export class Arranger {
 	}
 
 	/**
-	 * Move the capo. With no melody it just moves (the song sounds higher or
-	 * lower). With one, the melody would no longer match the band, so the page
-	 * asks first: raise the song with the capo, or keep its key.
+	 * Move the capo. The page asks first: raise the song with the capo (same
+	 * shapes), or keep its key (new shapes). A chart with no chords yet has
+	 * no key to keep, so the capo just moves.
 	 * @param {number} fret
 	 */
 	setCapo(fret) {
 		const capo = validCapo(fret);
 		if (capo === this.arrangement.capoFret) return;
-		if (this.melody.hasNotation) this.capoAsked = capo;
+		if (this.arrangement.key) this.capoAsked = capo;
 		else this.#moveCapoWithBass(capo);
 	}
 
@@ -255,7 +255,9 @@ export class Arranger {
 		const capo = this.capoAsked;
 		if (capo === null) return;
 		const semitones = capo - this.arrangement.capoFret;
-		this.melody.notation = await transposeAbc(this.melody.notation, semitones);
+		if (this.melody.hasNotation) {
+			this.melody.notation = await transposeAbc(this.melody.notation, semitones);
+		}
 		await this.#moveCapoWithBass(capo);
 		this.capoAsked = null;
 	}

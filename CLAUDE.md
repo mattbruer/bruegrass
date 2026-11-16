@@ -286,7 +286,7 @@ The core of the arranger.
 - The pickup plays before the band (`leadIn` delays the band's start) and again at the end of every pass.
 - A loop region plays the matching melody bars (`loopOffset` in `loop.js`).
 - Pitch: ABC is concert pitch, so a note sounds at written MIDI −12 (guitar sounds an octave below written) + transpose (the Key setting). The capo doesn't move it: the arrangement's shapes + capo reach the tune's concert key.
-- Moving the capo with a melody asks (`components/player/CapoChoiceDialog.svelte`, logic in `Arranger.setCapo`): raise the song (the ABC is rewritten by `melody/transposeAbc.js`, abcjs `strTranspose`) or keep its key (the chart's chords move to new shapes, `chart/transposeChart.js`). Either way the ABC stays at concert pitch, so nothing in the saved shape changed.
+- Moving the capo asks whenever the chart has chords, melody or not (`components/player/CapoChoiceDialog.svelte`, logic in `Arranger.setCapo`): raise the song (the ABC, if any, is rewritten by `melody/transposeAbc.js`, abcjs `strTranspose`) or keep its key (the chart's chords move to new shapes, `chart/transposeChart.js`). Either way the ABC stays at concert pitch, so nothing in the saved shape changed.
 - The sheet music has two views once there's a capo or key change (`SheetViewToggle.svelte`): Concert (as it sounds, the Key menu included) and Guitar shapes (the chart's key, to read with the capo on). Display only, via abcjs `visualTranspose`; that also moves chord symbols, so `drawSheetMusic` reads the chord sequence from an untransposed parse. `finger()` picks strings with a position-playing hand model. Notes above the high-e 12th fret sample are resampled.
 
 ### `abcChords.js`
