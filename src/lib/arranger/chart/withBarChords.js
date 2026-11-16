@@ -5,6 +5,7 @@
  * written, in Chorus.
  */
 import { sectionLineIndex } from './sectionBlocks.js';
+import { chartTokens, isBar } from './chartTokens.js';
 
 /**
  * @param {string} source the chart
@@ -24,8 +25,8 @@ export function withBarChords(source, place, cell) {
 
 /**
  * The section line's bars with one bar's chords swapped. Bars are counted
- * as the parser counts them (a bar with no chords doesn't count); fields
- * like `[2/4]` stay.
+ * as the parser counts them (`isBar`); fields like `[2/4]` stay. An empty
+ * bar gets the chords written into it.
  * @param {string} content
  * @param {number} measure
  * @param {string} cell
@@ -33,14 +34,17 @@ export function withBarChords(source, place, cell) {
 function cellInContent(content, measure, cell) {
 	let at = 0;
 	let hasChords = false;
+	let afterBarline = false;
 	let written = false;
-	const tokens = content.match(/\[[^\]]*\]|\||[^|[]+/g) ?? [];
-	return tokens
+	return chartTokens(content)
 		.map((token) => {
 			if (token === '|') {
-				if (hasChords) at++;
+				const fillEmpty = afterBarline && !hasChords && at === measure && !written;
+				if (fillEmpty) written = true;
+				if (isBar(hasChords, afterBarline)) at++;
 				hasChords = false;
-				return token;
+				afterBarline = true;
+				return fillEmpty ? cell + token : token;
 			}
 			if (token.startsWith('[') || !token.trim()) return token;
 			hasChords = true;

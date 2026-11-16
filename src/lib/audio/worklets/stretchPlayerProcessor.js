@@ -13,7 +13,9 @@
  *               { type: 'notes', notes }  the written parts' notes to play (partNotes.js)
  *               { type: 'levels', recording, parts }  0 to 1: the recording's, and each part's
  *               { type: 'tune', cents }  move the song's pitch a little (fine tuning)
- * Messages out: { type: 'time', seconds } about 40 times a second while playing,
+ * Messages out: { type: 'time', seconds, at, speed } about 40 times a second while
+ *               playing, and at once after a jump: `seconds` into the song is heard
+ *               at audio-clock time `at` (so other sounds can be timed to it),
  *               { type: 'ended' } when the song runs out.
  *
  * Unlike the other processors this one imports its DSP (shared with the
@@ -65,11 +67,12 @@ class StretchPlayerProcessor extends AudioWorkletProcessor {
 			if (this.stretcher) this.startStretcher(this.stretcher.time);
 		} else if (message.type === 'play') {
 			this.playing = true;
+			this.reportNext();
 		} else if (message.type === 'pause') {
 			this.playing = false;
 		} else if (message.type === 'seek') {
 			this.stretcher?.seek(message.seconds);
-			this.report();
+			this.reportNext();
 		} else if (message.type === 'speed') {
 			this.speed = message.speed;
 		} else if (message.type === 'loop') {
@@ -105,7 +108,7 @@ class StretchPlayerProcessor extends AudioWorkletProcessor {
 		if (this.playing) this.clicks.mixInto(left, right, from, stretcher.time);
 		if (this.playing && this.loop && stretcher.time >= this.loop.to) {
 			stretcher.seek(this.loop.from);
-			this.report();
+			this.reportNext();
 		}
 
 		if (this.playing && stretcher.time >= stretcher.duration) {
@@ -163,9 +166,21 @@ class StretchPlayerProcessor extends AudioWorkletProcessor {
 		this.stretcher.seek(seconds);
 	}
 
+	/** Report at the end of the next block, from where the song is then. */
+	reportNext() {
+		this.quantaSinceReport = QUANTA_PER_REPORT;
+	}
+
+	/** Where the song is: the next block starts at `seconds` and is heard at `at`. */
 	report() {
 		this.quantaSinceReport = 0;
-		if (this.stretcher) this.port.postMessage({ type: 'time', seconds: this.stretcher.time });
+		if (!this.stretcher) return;
+		this.port.postMessage({
+			type: 'time',
+			seconds: this.stretcher.time,
+			at: currentTime + 128 / sampleRate,
+			speed: this.speed
+		});
 	}
 }
 

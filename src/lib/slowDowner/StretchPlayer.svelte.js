@@ -4,9 +4,14 @@
  * (stretchPlayerProcessor.js); this class is what the page talks to, with
  * the song's time, length and state as $state for the controls.
  *
- * It owns its own audio context: call `dispose` when the page goes.
+ * It plays in Tone's audio context, the band's, so the band can be timed to
+ * it (`onClock`). Call `dispose` when the page goes.
+ *
+ * @typedef {{ seconds: number, at: number, speed: number }} Clock
+ *   `seconds` into the song is heard at audio-clock time `at`, playing at `speed`
  */
 import { createNativeWorkletNode } from '$lib/audio/worklets/worklets.js';
+import { nativeContextOf } from '$lib/audio/nativeContext.js';
 import { clampSpeed } from './speed.js';
 import { clampCents } from './tuning.js';
 
@@ -20,6 +25,12 @@ export class StretchPlayer {
 	speed = $state(1);
 	/** The song's pitch moved by this much (fine tuning; 0: as recorded). */
 	cents = $state(0);
+
+	/** Told where the song is about 40 times a second while playing, and at once after a jump. */
+	/** @type {(clock: Clock) => void} */
+	onClock = () => {};
+	/** Told when it pauses (or a new song loads). */
+	onPause = () => {};
 
 	/** @type {AudioContext | null} */
 	#context = null;
@@ -131,6 +142,12 @@ export class StretchPlayer {
 	pause() {
 		this.#node?.port.postMessage({ type: 'pause' });
 		this.playing = false;
+		this.onPause();
+	}
+
+	/** The stretch being played over and over (null: none). */
+	get loop() {
+		return this.#loop;
 	}
 
 	/** @param {number} seconds */
@@ -152,17 +169,18 @@ export class StretchPlayer {
 		this.#node?.port.postMessage({ type: 'speed', speed: this.speed });
 	}
 
+	/** Let go of the player (the audio context is the band's, and stays). */
 	dispose() {
 		this.#loadCount++;
+		this.#node?.port.postMessage({ type: 'pause' });
 		this.#node?.disconnect();
-		this.#context?.close();
 		this.#node = null;
 		this.#context = null;
 	}
 
 	async #ensureNode() {
 		if (this.#node) return this.#node;
-		this.#context = new AudioContext();
+		this.#context = nativeContextOf(await import('tone'));
 		const node = await createNativeWorkletNode(this.#context, 'stretch-player', {
 			numberOfInputs: 0,
 			outputChannelCount: [2]
@@ -183,12 +201,17 @@ export class StretchPlayer {
 		return node;
 	}
 
-	/** @param {{ type: string, seconds?: number }} message */
+	/** @param {{ type: string } & Partial<Clock>} message */
 	#receive(message) {
-		if (message.type === 'time' && this.playing) this.time = message.seconds ?? this.time;
+		if (message.type === 'time' && this.playing) {
+			const { seconds = this.time, at = 0, speed = this.speed } = message;
+			this.time = seconds;
+			this.onClock({ seconds, at, speed });
+		}
 		if (message.type === 'ended') {
 			this.playing = false;
 			this.time = this.duration;
+			this.onPause();
 		}
 	}
 }

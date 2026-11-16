@@ -156,6 +156,20 @@
 		<div class="header"><span class="name">Chords</span></div>
 		<ChordLane {transcription} {scale} />
 
+		{#if transcription.band.performance}
+			<div class="header">
+				<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
+				<MuteSoloButtons settings={transcription.band.lane} name="Band" />
+				<LaneVolume level={transcription.band.lane} name="Band" />
+			</div>
+			<div class="part">
+				<BlockLane
+					lane={{ id: 'band', name: 'Band', kind: 'chords', blocks: transcription.band.blocks }}
+					{scale}
+				/>
+			</div>
+		{/if}
+
 		{#each parts as lane (lane.id)}
 			{@const channel = mixer.channels.find((each) => each.id === lane.id)}
 			<div class="header" class:picked-lane={transcription.lane === lane.id}>

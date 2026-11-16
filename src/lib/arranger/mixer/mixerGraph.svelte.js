@@ -7,7 +7,7 @@
  * The graph itself is built the same way for an offline render
  * (export/renderSong.js), so an exported file sounds like playback.
  */
-import { mixer, anyChannelSoloed, mixSnapshot } from './mixer.svelte.js';
+import { mixer, silencedBySolo, mixSnapshot } from './mixer.svelte.js';
 import { buildMixerGraph } from '../../audio/mixer/buildMixerGraph.js';
 import { createSpectrumTap, createStereoTap } from '../../audio/analysis/taps.js';
 import { outputComparison } from './outputStage.svelte.js';
@@ -109,7 +109,7 @@ function followMixerSettings(graph) {
 	$effect.root(() => {
 		for (const settings of mixer.channels) {
 			// Reads only this channel's own levels, so one fader never sets every channel again
-			$effect(() => graph.applyChannel(settings, anyChannelSoloed()));
+			$effect(() => graph.applyChannel(settings, silencedBySolo(settings.id)));
 			$effect(() => {
 				strips.get(settings.id)?.eq.update($state.snapshot(settings.eq));
 			});

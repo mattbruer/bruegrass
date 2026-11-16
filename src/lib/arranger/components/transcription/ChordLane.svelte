@@ -111,11 +111,14 @@
 				style:left="{left}px"
 				style:width="{bar.beats * quarter}px"
 				onclick={() => open(bar)}
-				aria-label="Bar {bar.number} chords: {changes.map((change) => change.name).join(', ') ||
-					'none yet'}"
+				aria-label="Bar {bar.number} chords: {transcription.isHeld(bar)
+					? 'the chord before carries on'
+					: changes.map((change) => change.name).join(', ') || 'none yet'}"
 				use:tooltip={TIPS.transcription.chordBar}
 			>
-				{#if changes.length === 0}
+				{#if transcription.isHeld(bar)}
+					<span class="chip held" style:left="2px" style:width="{bar.beats * quarter - 4}px"></span>
+				{:else if changes.length === 0}
 					<span class="empty">·</span>
 				{/if}
 				{#each changes as change (change.beat)}

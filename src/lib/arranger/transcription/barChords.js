@@ -58,6 +58,16 @@ export function isEmptyBar(slots) {
 }
 
 /**
+ * A bar left empty in the chart (`|G| |`): it holds the chord before.
+ * Stored as slots with no chord in any; a bar with no chord (N.C.) has
+ * nothing stored.
+ * @param {Slots | string | undefined} stored
+ */
+export function isHeld(stored) {
+	return Array.isArray(stored) && isEmptyBar(stored);
+}
+
+/**
  * The bar as the chart writes it ("G", "G,C", "G,C,C,C"). A bar starting
  * with no chord carries on `carried` (the last chord before it).
  * @param {Slots} slots

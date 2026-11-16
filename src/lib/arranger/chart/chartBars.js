@@ -7,10 +7,12 @@ import { barQuarters, meterText, slotPositions } from './timeline.js';
  * @typedef {{ name: string, chord: number, length: number }} BarChord
  * @typedef {{
  *   index: number, section: number, measure: number, sectionName: string, sectionStart: boolean,
- *   meter: string | null, beats: number, start: number, chords: BarChord[]
+ *   meter: string | null, beats: number, start: number, chords: BarChord[], held: boolean
  * }} ChartBar
  *   meter: shown at the first bar and wherever it changes;
- *   start and beats: when the bar plays, in quarter notes from bar 1
+ *   start and beats: when the bar plays, in quarter notes from bar 1;
+ *   held: left empty in the chart, so it holds the chord before and is
+ *   drawn without a chord name (never the first bar: that one names its chord)
  *
  * @param {import('./timeline.js').Section[]} sections
  * @returns {ChartBar[]}
@@ -33,7 +35,8 @@ export function barsInPlayOrder(sections) {
 				meter: bars.length === 0 || meter !== previousMeter ? meter : null,
 				beats: barQuarters(slot.meter),
 				start: slot.barStart,
-				chords: []
+				chords: [],
+				held: bars.length > 0 && (sections[slot.section].held?.[slot.measure] ?? false)
 			};
 			bars.push(bar);
 			previousMeter = meter;

@@ -226,6 +226,8 @@ export const TIPS = Object.freeze({
 		chordBar:
 			'Tap to type this bar’s chords: one box per beat, the chord on the beat where it changes.',
 		partLane: 'Edit this part in the piano roll below.',
+		bandLane:
+			'The band (guitar, mandolin, bass) playing your chords along with the recording. Each instrument’s own level is in the mixer.',
 		addLane:
 			'Add an empty lane to write by ear, for any instrument. Its Bass button makes it the song’s bass line.',
 		laneBass:
@@ -235,7 +237,7 @@ export const TIPS = Object.freeze({
 			'Notes before beat 1 (a pickup): how many beats of room to draw them in, before bar 1. Every voice gets the same.',
 		bottomViews: {
 			roll: 'Write and edit the picked part as notes on a grid.',
-			sheet: 'See what you’ve written as sheet music.'
+			sheet: 'See what you’ve written as a score.'
 		},
 		laneVolume:
 			'How loud this lane plays. Turn the recording down or a part up to hear the part over it. Double-click to put it back.',

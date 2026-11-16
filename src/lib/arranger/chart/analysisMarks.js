@@ -5,6 +5,7 @@
  * the worked-out one (chart/chartAnalysis.js).
  */
 import { sectionLineIndex } from './sectionBlocks.js';
+import { chartTokens, isBar } from './chartTokens.js';
 
 const MARKED = /^(.*?)\s*\{([^}]*)\}\s*$/;
 /* Characters that would break the chart's own syntax */
@@ -49,7 +50,7 @@ export function setMark(source, place, mark) {
 
 /**
  * The section line's bars with one chord's mark changed. Bars and chords
- * are counted as the parser counts them (empty bars don't count).
+ * are counted as the parser counts them (`isBar`).
  * @param {string} content
  * @param {{ measure: number, chord: number }} place
  * @param {string | null} mark
@@ -57,12 +58,13 @@ export function setMark(source, place, mark) {
 function markInContent(content, place, mark) {
 	let measure = 0;
 	let chord = 0;
-	const tokens = content.match(/\[[^\]]*\]|\||[^|[]+/g) ?? [];
-	return tokens
+	let afterBarline = false;
+	return chartTokens(content)
 		.map((token) => {
 			if (token === '|') {
-				if (chord > 0) measure++;
+				if (isBar(chord > 0, afterBarline)) measure++;
 				chord = 0;
+				afterBarline = true;
 				return token;
 			}
 			if (token.startsWith('[')) return token;

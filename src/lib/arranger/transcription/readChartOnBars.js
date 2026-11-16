@@ -52,14 +52,16 @@ export function readChartOnBars(text, sections) {
 
 /**
  * A chart bar's chords on its beats, with any analysis mark kept on the
- * chord ("A7{V7/V}"). A bar that's all N.C. has none (null).
+ * chord ("A7{V7/V}"). A bar that's all N.C. has none (null); a bar left
+ * empty in the chart has slots with no chord in any (barChords.js `isHeld`).
  * @param {import('../chart/chartBars.js').ChartBar} bar
  * @param {import('../chart/timeline.js').Section & { marks?: (string | null)[][] }} section
  */
 function slotsOfChartBar(bar, section) {
-	if (bar.chords.every((chord) => isNoChord(chord.name))) return null;
 	/** @type {import('./barChords.js').Slots} */
 	const slots = Array(bar.beats).fill(null);
+	if (bar.held) return slots;
+	if (bar.chords.every((chord) => isNoChord(chord.name))) return null;
 	let beat = 0;
 	for (const chord of bar.chords) {
 		const mark = section.marks?.[bar.measure]?.[chord.chord] ?? null;

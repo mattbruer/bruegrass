@@ -7,14 +7,14 @@
  * A bar with no chord written is "N.C." (no chord): nothing is assumed, so
  * the song has no key until a chord is written, and the band rests there.
  * A bar whose first beat is empty but has a chord later carries on the
- * chord before it until then.
+ * chord before it until then; a held bar (`isHeld`) is written empty.
  *
  * Each marker starts a section with its name ("Verse", "Banjo solo"), one
  * line of the chart each; the bars before the first marker are "Song".
  * Lyric lines go under the section holding the bar they started on.
  */
 import { NO_CHORD } from '../chart/noChord.js';
-import { chartCell, isEmptyBar, slotsOf } from './barChords.js';
+import { chartCell, isEmptyBar, isHeld, slotsOf } from './barChords.js';
 import { UNMARKED_SECTION } from './readChartOnBars.js';
 
 /**
@@ -30,6 +30,7 @@ export function chartFromBars(bars, time, chords, markers = {}, lyrics = {}) {
 	const cells = bars.map((bar) => {
 		const slots = slotsOf(chords[bar.number], bar.beats);
 		const meter = bar.beats === time.beatsPerBar ? '' : `[${bar.beats}/4]`;
+		if (isHeld(chords[bar.number])) return `${meter} `;
 		if (isEmptyBar(slots)) {
 			carried = NO_CHORD;
 			return `${meter}${NO_CHORD}`;

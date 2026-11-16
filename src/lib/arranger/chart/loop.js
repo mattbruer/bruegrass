@@ -47,12 +47,20 @@ export function loopRegion(sections, { section, from, to }) {
 	for (const { section: s, measure: m } of scope.slice(first - 1, last)) {
 		const source = sections[s];
 		if (s !== lastSource) {
-			region.push({ name: source.name, measures: [], meters: [], barOffset: m, source: s });
+			region.push({
+				name: source.name,
+				measures: [],
+				meters: [],
+				held: [],
+				barOffset: m,
+				source: s
+			});
 			lastSource = s;
 		}
 		const current = /** @type {LoopSection} */ (region.at(-1));
 		current.measures.push(source.measures[m]);
 		current.meters?.push(source.meters?.[m] ?? DEFAULT_METER);
+		current.held?.push(source.held?.[m] ?? false);
 	}
 	return region;
 }

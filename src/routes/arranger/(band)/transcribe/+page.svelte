@@ -17,6 +17,8 @@
 	import { onDestroy, untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { useArranger } from '$lib/arranger/state/context.js';
+	import { soloSafeWhile } from '$lib/arranger/mixer/mixer.svelte.js';
+	import { BAND_CHANNELS } from '$lib/arranger/transcription/TranscribeBand.svelte.js';
 	import { gridClicks } from '$lib/arranger/transcription/gridClicks.js';
 	import { timeSignature } from '$lib/arranger/transcription/timeSignatures.js';
 	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
@@ -35,6 +37,8 @@
 	// The work lives on the arranger, so leaving for another page and coming back carries on
 	const { transcription, song } = useArranger();
 	onDestroy(() => transcription.leave());
+	// The lanes' solos decide whether the band is heard here, not the mixer's
+	onDestroy(soloSafeWhile(BAND_CHANNELS));
 
 	// Arriving with a song written from one of the app's recordings opens it (only when the song
 	// changes: picking another recording here mustn't bring this one back)
@@ -66,7 +70,7 @@
 	});
 
 	$effect(() => {
-		transcription.player.setLevels(transcription.levels);
+		transcription.hearLevels();
 	});
 
 	/** @param {KeyboardEvent} event @returns {(() => void) | undefined} */

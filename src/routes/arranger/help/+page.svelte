@@ -78,7 +78,7 @@
 					{/if}
 					{#each bar.chords as chord, i (i)}
 						<div class="chord" style="width: {chord.length * 2.25}rem">
-							<strong>{chord.name}</strong>
+							<strong>{bar.held ? '\u00a0' : chord.name}</strong>
 							<span class="beats">{'/ '.repeat(chord.length)}</span>
 						</div>
 					{/each}
@@ -143,6 +143,11 @@
 			That's G for two bars, then C for two bars. The <code>|</code> key is above Enter on most keyboards
 			(hold Shift).
 		</p>
+		<p>
+			A chord keeps going until the next one, so you can leave a bar empty: <code>|G| |C| |</code> plays
+			the same as the chart above.
+		</p>
+		{@render example(`"Verse"|G| |C| |`)}
 	</section>
 
 	<section id="two-chords">

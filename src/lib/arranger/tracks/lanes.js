@@ -67,15 +67,22 @@ export function takeLanes(takes, bpm) {
 }
 
 /** @param {import('../chart/timeline.js').Section[]} sections */
-function chordBlocks(sections) {
-	return barsInPlayOrder(sections).flatMap((bar) => {
+export function chordBlocks(sections) {
+	/** @type {{ start: number, length: number, label: string }[]} */
+	const blocks = [];
+	for (const bar of barsInPlayOrder(sections)) {
+		const before = blocks.at(-1);
+		if (bar.held && before) {
+			before.length += bar.beats; // the chord carries on: one block
+			continue;
+		}
 		let start = bar.start;
-		return bar.chords.map((chord) => {
-			const block = { start, length: chord.length, label: chord.name };
+		for (const chord of bar.chords) {
+			blocks.push({ start, length: chord.length, label: chord.name });
 			start += chord.length;
-			return block;
-		});
-	});
+		}
+	}
+	return blocks;
 }
 
 /** @param {import('../instruments/bassline.js').BassNote[]} notes */

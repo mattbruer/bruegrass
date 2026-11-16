@@ -106,7 +106,9 @@
 								{@const place = { ...placeInSong(sections, bar), chord: chord.chord }}
 								{@const text = label(chord.name, place)}
 								<div class="slot" style="width: {chord.length * BEAT_PX}px">
-									{#if onChordTap}
+									{#if bar.held}
+										<span class="chord" aria-hidden="true">&nbsp;</span>
+									{:else if onChordTap}
 										<button
 											type="button"
 											class="chord tappable"

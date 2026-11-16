@@ -5,6 +5,7 @@
  */
 import { chordLabel, keyName, songKey } from './key.js';
 import { isKeyField } from './keyField.js';
+import { chartTokens } from './chartTokens.js';
 import { parseArrangement } from './parseArrangement.js';
 import { splitMark, withMark } from './analysisMarks.js';
 
@@ -28,9 +29,7 @@ export function transposeChart(text, semitones) {
 			const match = line.match(/^(\s*"[^"]+"\s*)(.*)$/);
 			if (!match || match[2].startsWith('as ')) return line;
 			const [, name, content] = match;
-			// Same tokens as the parser: inline fields, bar lines, then chords
-			const tokens = content.match(/\[[^\]]*\]|\||[^|[]+/g) ?? [];
-			const rewritten = tokens.map((token) => {
+			const rewritten = chartTokens(content).map((token) => {
 				if (isKeyField(token)) return `[K:${keyName(key, semitones)}]`;
 				if (token === '|' || token.startsWith('[')) return token;
 				return token.replace(/[^,\s]+/g, moved);

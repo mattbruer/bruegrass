@@ -47,7 +47,7 @@ import {
 } from './transcriptionDraft.js';
 import { chartFromBars } from './chartFromBars.js';
 import { readChartOnBars } from './readChartOnBars.js';
-import { chartCell, isEmptyBar, slotsFromTyped, slotsOf } from './barChords.js';
+import { chartCell, isEmptyBar, isHeld, slotsFromTyped, slotsOf } from './barChords.js';
 import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
 import { keyFieldName, withKeyField } from '../chart/keyField.js';
 import { withBarChords } from '../chart/withBarChords.js';
@@ -70,6 +70,7 @@ import { uprightPitch } from '../instruments/upright.js';
 import { channelInstrument } from '../instruments/tuneInstruments.js';
 import { mixer } from '../mixer/mixer.svelte.js';
 import { heardNotes, laneLevels } from './heardParts.js';
+import { TranscribeBand } from './TranscribeBand.svelte.js';
 import { CycleState, leadInBefore } from './CycleState.svelte.js';
 import { pickupLength, withPickupLength } from '../melody/roll/pickupBar.js';
 
@@ -84,8 +85,9 @@ import { pickupLength, withPickupLength } from '../melody/roll/pickupBar.js';
 export const PEAKS_PER_SECOND = 200;
 /** Onset strength (in its own spread) drawn full height. */
 const HIT_SCALE = 6;
-/** The recording lane's id among the lanes that can be muted and soloed. */
+/** The recording's and the band's lane ids among the lanes that can be muted and soloed. */
 const RECORDING_LANE = 'recording';
+const BAND_LANE = 'band';
 
 export class TranscriptionState {
 	player = new StretchPlayer();
@@ -172,16 +174,21 @@ export class TranscriptionState {
 	pickupChoices = $derived(
 		Array.from({ length: this.grid?.bars.beatsPerBar ?? 4 }, (_, beats) => beats)
 	);
-	/** The written parts' notes, on the recording's time. */
+	/** The written parts' notes, on the recording's time (a written bass plays on the band's upright instead). */
 	heardNotes = $derived(
 		this.grid
-			? heardNotes(this.parts, this.grid, (lane, pitch) => this.#soundingPitch(lane, pitch))
+			? heardNotes(
+					this.band.performance ? this.parts.filter((part) => part.id !== BASS_VOICE) : this.parts,
+					this.grid,
+					(lane, pitch) => this.#soundingPitch(lane, pitch)
+				)
 			: []
 	);
 	/** How loud the recording and each part are (volume, mute and solo). */
 	levels = $derived.by(() => {
 		const lanes = [
 			{ id: RECORDING_LANE, ...this.recordingLane },
+			...(this.band.performance ? [{ id: BAND_LANE, ...this.band.lane }] : []),
 			...this.parts.map((part) => {
 				const channel = mixer.channels.find((each) => each.id === part.id);
 				return {
@@ -192,8 +199,8 @@ export class TranscriptionState {
 				};
 			})
 		];
-		const { [RECORDING_LANE]: recording, ...parts } = laneLevels(lanes);
-		return { recording, parts };
+		const { [RECORDING_LANE]: recording, [BAND_LANE]: band = 0, ...parts } = laneLevels(lanes);
+		return { recording, band, parts };
 	});
 	/** The recording's usual tempo (beats a minute). */
 	tempo = $derived.by(() => {
@@ -210,6 +217,19 @@ export class TranscriptionState {
 	/** @param {import('../state/Arranger.svelte.js').Arranger} arranger */
 	constructor(arranger) {
 		this.arranger = arranger;
+		/** The arranger's band playing the chart along with the recording. */
+		this.band = new TranscribeBand(this);
+		this.player.onClock = (clock) => this.band.follow(clock);
+		this.player.onPause = () => this.band.stop();
+	}
+
+	/** How loud the recording, the band and each part are heard now. */
+	hearLevels() {
+		this.player.setLevels(this.levels);
+		this.band.setLevels(
+			this.levels,
+			this.parts.some((part) => part.id === BASS_VOICE)
+		);
 	}
 
 	/**
@@ -439,9 +459,13 @@ export class TranscriptionState {
 				: slotsOf(cleaned, bar.beats).map((slot) => slot?.split(/[\s,|]+/)[0] ?? null);
 		const unknown = slots.find((slot) => slot && !isKnownChord(slot));
 		if (unknown) return unknownChordMessage(unknown);
+		if (isEmptyBar(slots) && this.isHeld(bar)) return ''; // still holding the chord before
 		const place = this.#chartOnBars.places[number];
-		if (!place) this.#writeChart({ chords: { ...this.chords, [number]: slots } });
-		else {
+		if (!place) {
+			const chords = { ...this.chords, [number]: slots };
+			if (isEmptyBar(slots)) delete chords[number]; // cleared: no chord
+			this.#writeChart({ chords });
+		} else {
 			const cell = isEmptyBar(slots) ? NO_CHORD : chartCell(slots, this.#lastChordBefore(number));
 			this.#changeChart(withBarChords(this.arranger.arrangement.text, place, cell));
 		}
@@ -454,8 +478,17 @@ export class TranscriptionState {
 	 * @param {number} number
 	 */
 	#lastChordBefore(number) {
-		const slots = this.chords[number - 1] ?? [];
-		return slots.findLast(Boolean) ?? NO_CHORD;
+		let before = number - 1;
+		while (isHeld(this.chords[before])) before--;
+		return this.chords[before]?.findLast(Boolean) ?? NO_CHORD;
+	}
+
+	/**
+	 * Left empty in the chart, so it holds the chord before.
+	 * @param {import('./barPlan.js').Bar} bar
+	 */
+	isHeld(bar) {
+		return isHeld(this.chords[bar.number]);
 	}
 
 	/**
@@ -675,6 +708,7 @@ export class TranscriptionState {
 	}
 
 	dispose() {
+		this.band.dispose();
 		this.player.dispose();
 	}
 

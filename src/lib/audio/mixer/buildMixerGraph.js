@@ -114,7 +114,7 @@ export async function buildMixerGraph(Tone, settings) {
 		/**
 		 * One channel's level, pan, mute and send (not its EQ).
 		 * @param {typeof settings['channels'][number]} channel
-		 * @param {boolean} soloing is any channel soloed?
+		 * @param {boolean} soloing is any channel soloed (that this one should give way to)?
 		 */
 		applyChannel(channel, soloing) {
 			const strip = strips.get(channel.id);

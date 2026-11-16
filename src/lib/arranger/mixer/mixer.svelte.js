@@ -8,6 +8,7 @@
  *                                                            (reverb plugin, fader, mute)
  *   master ─▶ output stage (gain to a loudness target, true-peak limiter) ─▶ speakers
  */
+import { SvelteSet } from 'svelte/reactivity';
 import { REVERB_DEFAULTS } from '../../audio/reverb/reverbSettings.js';
 import { FADER_MIN } from '../../audio/mixer/faderTaper.js';
 import { flatEq } from '../../audio/eq/eqBands.js';
@@ -124,6 +125,29 @@ export const DEFAULT_OUTPUT_GAIN = DEFAULT_MIX.output.gain;
 /** Is any channel soloed? (Then only soloed channels are heard, plus the reverb.) */
 export function anyChannelSoloed() {
 	return mixer.channels.some((channel) => channel.solo);
+}
+
+/** Channels the mixer's solo leaves alone, while a page works out solos its own way. */
+const soloSafe = new SvelteSet();
+
+/**
+ * Keep these channels out of the mixer's solo (Transcribe's lanes decide
+ * whether the band is heard), until the returned function is called.
+ * @param {string[]} ids
+ */
+export function soloSafeWhile(ids) {
+	for (const id of ids) soloSafe.add(id);
+	return () => {
+		for (const id of ids) soloSafe.delete(id);
+	};
+}
+
+/**
+ * Does soloing another channel silence this one?
+ * @param {string} id
+ */
+export function silencedBySolo(id) {
+	return anyChannelSoloed() && !soloSafe.has(id);
 }
 
 /** Put every fader, knob, mute and solo back to how the app starts. */

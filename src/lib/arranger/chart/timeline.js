@@ -6,7 +6,7 @@
 
 /**
  * @typedef {{ beats: number, unit: number }} Meter e.g. 3/4 = { beats: 3, unit: 4 }
- * @typedef {{ name?: string, measures: string[][], meters?: Meter[], key?: import('./key.js').Key | null }} Section
+ * @typedef {{ name?: string, measures: string[][], meters?: Meter[], held?: boolean[], key?: import('./key.js').Key | null }} Section
  *   key: as the chart names it with [K:], else null (see key.js songKey)
  * @typedef {{
  *   section: number, measure: number, chord: number, name: string, sectionName: string,
