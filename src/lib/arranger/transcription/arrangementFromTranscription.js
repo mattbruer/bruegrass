@@ -1,6 +1,6 @@
 /**
- * An arrangement made from a transcription: the sections you choose, in
- * the recording's order, each with its chords, words and tune. From there
+ * A new song made from a transcription: the named sections you choose (one
+ * to practise, or several to arrange), in the recording's order, each with its chords, words and tune. From there
  * it's an ordinary song, rearranged in the arranger; its tune is kept by
  * section, so it follows the chart.
  *
@@ -11,13 +11,15 @@
  */
 import { sectionBlocks } from '../chart/sectionBlocks.js';
 import { uniqueName } from '../state/uniqueName.js';
+import { UNMARKED_SECTION } from './readChartOnBars.js';
 
 const SECTION_LINE = /^\s*"([^"]+)"(.*)$/;
 /** Fields at the start of the first section line that last the whole song (`[M:3/4]`, `[K:G]`). */
 const SONG_FIELDS = /^(\s*\[[KM]:[^\]]*\])+/;
 
 /**
- * The chart with each section line named uniquely.
+ * The chart with each named section line named uniquely (bars in no
+ * section stay as they are: they're never taken).
  * @param {string} chart
  */
 export function withUniqueSectionNames(chart) {
@@ -27,12 +29,32 @@ export function withUniqueSectionNames(chart) {
 		.split('\n')
 		.map((line) => {
 			const match = line.match(SECTION_LINE);
-			if (!match) return line;
+			if (!match || match[1] === UNMARKED_SECTION) return line;
 			const name = uniqueName(match[1], taken);
 			taken.push(name);
 			return `"${name}"${match[2]}`;
 		})
 		.join('\n');
+}
+
+/**
+ * The sections you named with markers, which are the ones that can be
+ * taken: bars in no section (before the first marker, after an End) never go.
+ * @param {string} chart a transcription's chart, its names made unique
+ * @param {number[]} barCounts how many bars each section of the chart has
+ * @returns {{ index: number, name: string, words: string, from: number, to: number }[]}
+ *   index: its place in the chart; from, to: its first and last bar
+ */
+export function namedSections(chart, barCounts) {
+	let next = 1;
+	return sectionBlocks(chart)
+		.map((block, index) => {
+			const from = next;
+			next += barCounts[index] ?? 0;
+			const words = (block.lines[0] ?? '').replaceAll('|', ' ').replace(/\s+/g, ' ');
+			return { index, name: block.name, words, from, to: next - 1 };
+		})
+		.filter((section) => section.name !== UNMARKED_SECTION);
 }
 
 /**

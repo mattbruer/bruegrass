@@ -24,8 +24,10 @@ import { sectionBlocks } from '../chart/sectionBlocks.js';
  *   all keyed by bar number; places: where each bar is written in the chart
  */
 
-/** The name chartFromBars gives the bars before the first marker. */
+/** The name chartFromBars gives bars in no section: before the first marker, and after an end. */
 export const UNMARKED_SECTION = 'Song';
+/** The marker that ends a section without starting another: the bars after it are in none. */
+export const SECTION_END = 'End';
 
 /**
  * @param {string} text the chart
@@ -42,8 +44,8 @@ export function readChartOnBars(text, sections) {
 		const slots = slotsOfChartBar(bar, sections[bar.section]);
 		if (slots) read.chords[number] = slots;
 		if (!bar.sectionStart) continue;
-		if (bar.index > 0 || bar.sectionName !== UNMARKED_SECTION)
-			read.markers[number] = bar.sectionName;
+		if (bar.sectionName !== UNMARKED_SECTION) read.markers[number] = bar.sectionName;
+		else if (bar.index > 0) read.markers[number] = SECTION_END;
 		const lines = blocks[bar.section]?.lines ?? [];
 		if (lines.length) read.lyrics[number] = lines;
 	}

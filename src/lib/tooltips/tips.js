@@ -181,8 +181,9 @@ export const TIPS = Object.freeze({
 	},
 
 	transcription: {
-		createArrangement:
-			'Make a new song in the arranger from the sections you choose, with their chords, words and parts, to rearrange there.',
+		sectionEnd:
+			'The section before ends at the start of this bar, and this bar starts no new one: put it after a part you want on its own, like a mando break.',
+		send: 'Take the sections you named to the arranger: one part to practise, or several to build an arrangement from.',
 		song: 'Pick a recording to transcribe. It becomes the open song’s recording.',
 		file: 'Open a recording from this device: an MP3, WAV or any song file.',
 		startSong:

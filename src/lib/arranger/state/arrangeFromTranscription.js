@@ -1,5 +1,5 @@
 /**
- * "Create an arrangement": a new song from the open transcription, with the
+ * "Send to the arranger": a new song from the open transcription, with the
  * sections you chose. The transcription stays as it is, tied to its
  * recording; the arrangement is an ordinary song at the transcription's
  * tempo, its tune and written bass kept by section, so moving its sections
@@ -19,9 +19,10 @@ import {
 /**
  * @param {import('./Arranger.svelte.js').Arranger} arranger
  * @param {number[]} chosen the sections to take, by their place in the chart
+ * @param {string} name what to call the new song (numbered if it's taken)
  * @returns {Promise<string>} why it couldn't be made ('' when it was)
  */
-export async function arrangeFromTranscription(arranger, chosen) {
+export async function arrangeFromTranscription(arranger, chosen, name) {
 	const abcjs = await abcjsReady();
 	const { arrangement, melody, bass, song } = arranger;
 	if (!arrangement.isPlayable) return 'Fix the chords first: the chart can’t be played.';
@@ -37,7 +38,6 @@ export async function arrangeFromTranscription(arranger, chosen) {
 	if (tune && !tune.tune) return `The tune can’t be taken over: ${tune.problem}`;
 	const bassLine = split(bass.notation);
 	const chart = chartOfSections(named, chosen);
-	const name = `${song.name || arranger.title} arrangement`;
 
 	song.startNew({
 		...readSongFields(arranger),

@@ -26,7 +26,7 @@
 	import AnalysingRecording from '$lib/arranger/components/transcription/AnalysingRecording.svelte';
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
-	import CreateArrangement from '$lib/arranger/components/transcription/CreateArrangement.svelte';
+	import SendToArranger from '$lib/arranger/components/transcription/SendToArranger.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -121,7 +121,7 @@
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold">Transcribe</h1>
 		{#if transcription.grid && transcription.linked}
-			<CreateArrangement />
+			<SendToArranger />
 		{/if}
 	</div>
 

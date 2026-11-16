@@ -6,6 +6,7 @@
 	 */
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
 	import { MARKER_NAMES } from '../../transcription/markerNames.js';
+	import { SECTION_END } from '../../transcription/readChartOnBars.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -81,6 +82,13 @@
 					{/each}
 				</datalist>
 			</label>
+			<button
+				type="button"
+				class="ui-button px-3 py-1.5 text-sm"
+				class:ui-button-on={transcription.markers[bar.number] === SECTION_END}
+				onclick={() => transcription.setMarker(bar.number, SECTION_END)}
+				use:tooltip={TIPS.transcription.sectionEnd}>End of section</button
+			>
 			<div class="flex items-center gap-2">
 				<button
 					type="button"

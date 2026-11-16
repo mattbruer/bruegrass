@@ -10,12 +10,13 @@
  * chord before it until then; a held bar (`isHeld`) is written empty.
  *
  * Each marker starts a section with its name ("Verse", "Banjo solo"), one
- * line of the chart each; the bars before the first marker are "Song".
+ * line of the chart each; an End marker ends one without starting another.
+ * Bars in no section (before the first marker, after an End) are "Song".
  * Lyric lines go under the section holding the bar they started on.
  */
 import { NO_CHORD } from '../chart/noChord.js';
 import { chartCell, isEmptyBar, isHeld, slotsOf } from './barChords.js';
-import { UNMARKED_SECTION } from './readChartOnBars.js';
+import { SECTION_END, UNMARKED_SECTION } from './readChartOnBars.js';
 
 /**
  * @param {import('./barPlan.js').Bar[]} bars
@@ -57,7 +58,8 @@ export function chartFromBars(bars, time, chords, markers = {}, lyrics = {}) {
 function sectionsOf(bars, markers) {
 	const starts = bars.flatMap((bar, index) => {
 		const name = markers[bar.number]?.replaceAll('"', '').trim();
-		return name ? [{ name, from: index }] : [];
+		if (!name) return [];
+		return [{ name: name === SECTION_END ? UNMARKED_SECTION : name, from: index }];
 	});
 	if (starts[0]?.from !== 0) starts.unshift({ name: UNMARKED_SECTION, from: 0 });
 	return starts.map((start, i) => ({ ...start, to: starts[i + 1]?.from ?? bars.length }));
