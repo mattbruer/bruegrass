@@ -61,7 +61,7 @@ export function withPickupsLaidIn(base, tune, instances, fill, reading) {
 		.forEach(({ id, index }) => {
 			const { score } = readScore(base, parsed, index);
 			let notes = score.notes;
-			for (const region of regionsOf(score, tune, instances, reading)) {
+			for (const region of regionsOf(score, quartersIn(tune), instances, reading)) {
 				const bar = pickupBar(tune, id, region.source, fill) ?? '';
 				const pickup = pickupNotes(bar, tune.header, reading).map((note) => ({
 					...note,
@@ -100,7 +100,7 @@ export function withPickupsLifted(written, base, tune, instances, reading) {
 		const { score: before } = readScore(base, baseTune, index);
 		if (score.bars.length !== before.bars.length) return null;
 		let notes = score.notes;
-		for (const region of regionsOf(score, tune, instances, reading)) {
+		for (const region of regionsOf(score, quartersIn(tune), instances, reading)) {
 			const bar = barOf(within(notes, region), region, score);
 			(lifted[region.source] ??= {})[ids[index]] ??= bar;
 			const own = before.notes.filter(
@@ -115,14 +115,54 @@ export function withPickupsLifted(written, base, tune, instances, reading) {
 }
 
 /**
+ * A tune written straight through (a transcription's) with each later
+ * section's pickup cut out of the section before: its notes in those beats
+ * become the pickup's bar, and the section before rests there.
+ * @param {string} abc
+ * @param {string[]} ids its voices, in order
+ * @param {Record<string, number>} pickupQuarters each section's pickup length, by name
+ * @param {SectionInstance[]} instances
+ * @param {Reading} reading
+ * @returns {{ text: string, lifted: import('./tuneBySection.js').PickupBars } | null}
+ */
+export function withPickupsCutOut(abc, ids, pickupQuarters, instances, reading) {
+	const parsed = reading.parse(abc);
+	if (!parsed) return null;
+	/** @type {import('./tuneBySection.js').PickupBars} */
+	const lifted = {};
+	let text = abc;
+	for (let index = ids.length - 1; index >= 0; index--) {
+		const { score } = readScore(abc, parsed, index);
+		let notes = score.notes;
+		for (const region of regionsOf(
+			score,
+			(source) => pickupQuarters[source] ?? 0,
+			instances,
+			reading
+		)) {
+			(lifted[region.source] ??= {})[ids[index]] ??= barOf(within(notes, region), region, score);
+			notes = makeWay(notes, region);
+		}
+		notes = sorted(notes);
+		if (!sameNotes(notes, score.notes)) text = rewriteAbc(text, score, notes);
+	}
+	return { text, lifted };
+}
+
+/** @param {TuneBySection} tune */
+function quartersIn(tune) {
+	return (/** @type {string} */ source) => tune.pickups[source]?.quarters ?? 0;
+}
+
+/**
  * The beats each later section's pickup plays in.
  * @param {Score} score a voice of the tune as played
- * @param {TuneBySection} tune
+ * @param {(source: string) => number} quartersOf each section's pickup length
  * @param {SectionInstance[]} instances
  * @param {Reading} reading
  * @returns {Region[]}
  */
-function regionsOf(score, tune, instances, reading) {
+function regionsOf(score, quartersOf, instances, reading) {
 	const lead = score.bars.length > 0 && isPickup(score, 0) ? 1 : 0;
 	/** @type {Region[]} */
 	const regions = [];
@@ -130,7 +170,7 @@ function regionsOf(score, tune, instances, reading) {
 	instances.forEach(({ source }, index) => {
 		const start = score.bars[bar]?.start;
 		bar += reading.barCounts[index] ?? 0;
-		const quarters = tune.pickups[source]?.quarters ?? 0;
+		const quarters = quartersOf(source);
 		if (index === 0 || !quarters || start === undefined) return;
 		const from = Math.max(0, start - quarters * TICKS_PER_QUARTER);
 		regions.push({ source, from, to: start });

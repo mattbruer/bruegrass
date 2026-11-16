@@ -99,6 +99,13 @@ export class TranscriptionState {
 	time = $state(DEFAULT_TIME);
 	/** @type {import('./extraLanes.js').ExtraLane[]} the generic lanes (+ Lane), to write by ear */
 	extraLanes = $state.raw([]);
+	/**
+	 * How early each section's tune starts, in beats before its marker's bar (its
+	 * pickup: "I was…" sung before the verse's first bar). Only the tune: the
+	 * chords and the band keep to the bar lines. Bar number → beats.
+	 * @type {Record<number, number>}
+	 */
+	pickups = $state.raw({});
 	/** The generic lanes' notes, as the grid shows them. */
 	laneNotes = $derived(
 		this.extraLanes.map((lane) => ({
@@ -242,6 +249,7 @@ export class TranscriptionState {
 		this.grid = null;
 		this.time = DEFAULT_TIME;
 		this.extraLanes = [];
+		this.pickups = {};
 		this.peaks = null;
 		this.hits = null;
 		this.downbeat = null;
@@ -274,6 +282,7 @@ export class TranscriptionState {
 			this.grid = draft.downbeat === null ? null : draft.grid;
 			this.time = draft.time;
 			this.extraLanes = draft.lanes;
+			this.pickups = draft.pickups;
 			this.player.setCents(draft.cents);
 			this.downbeat = draft.downbeat;
 			// A song written from it before songs named their recording
@@ -562,6 +571,29 @@ export class TranscriptionState {
 		this.#writeChart({ markers });
 	}
 
+	/**
+	 * How many beats before a marker's bar its section's tune starts (0: on
+	 * the bar). On the first bar that's the tune's own pickup, before bar 1.
+	 * @param {number} number the marker's bar
+	 * @param {number} beats
+	 */
+	setSectionPickup(number, beats) {
+		if (number === this.bars[0]?.number) return this.setPickup(beats);
+		const pickups = { ...this.pickups };
+		if (beats > 0) pickups[number] = beats;
+		else delete pickups[number];
+		this.pickups = pickups;
+		this.#keepDraft();
+	}
+
+	/**
+	 * How many beats before a marker's bar its section's tune starts.
+	 * @param {number} number
+	 */
+	sectionPickup(number) {
+		return number === this.bars[0]?.number ? this.pickup : (this.pickups[number] ?? 0);
+	}
+
 	/** A marker on the bar the playhead is in: its menu opens to name it. */
 	markHere() {
 		const grid = this.grid;
@@ -777,7 +809,8 @@ export class TranscriptionState {
 			time: this.time,
 			lanes: this.extraLanes,
 			cents: this.player.cents,
-			downbeat: this.downbeat
+			downbeat: this.downbeat,
+			pickups: this.pickups
 		});
 	}
 }

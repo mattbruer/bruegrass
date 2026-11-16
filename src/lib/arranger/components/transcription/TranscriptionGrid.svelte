@@ -13,7 +13,11 @@
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { trackScale } from '../../tracks/trackScale.js';
-	import { rulerFromBars, rulerSpanWithRoom } from '../../transcription/rulerFromBars.js';
+	import {
+		markersShown,
+		rulerFromBars,
+		rulerSpanWithRoom
+	} from '../../transcription/rulerFromBars.js';
 	import { partLanes } from '../../transcription/partLanes.js';
 	import { isLaneId } from '../../melody/roll/extraLane.js';
 	import { timeSignature } from '../../transcription/timeSignatures.js';
@@ -54,7 +58,7 @@
 			transcription.bars,
 			beatsPerBar,
 			transcription.grid?.bars.firstBeat ?? 0,
-			transcription.markers
+			markersShown(transcription.markers, transcription.pickups)
 		)
 	);
 	const zoom = $derived(settings.transcribe.zoom);

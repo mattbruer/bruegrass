@@ -181,6 +181,8 @@ export const TIPS = Object.freeze({
 	},
 
 	transcription: {
+		sectionPickup:
+			'Where this section’s tune starts: on the bar, or a beat or more before it, when the singer comes in early (“I was…”). Only the tune: the chords stay on the bar.',
 		sectionEnd:
 			'The section before ends at the start of this bar, and this bar starts no new one: put it after a part you want on its own, like a mando break.',
 		send: 'Take the sections you named to the arranger: one part to practise, or several to build an arrangement from.',

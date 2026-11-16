@@ -54,7 +54,10 @@
 		const practisedName = sections.find((section) => section.index === practised)?.name;
 		const name =
 			purpose === 'practise' ? `${songName} – ${practisedName}` : `${songName} arrangement`;
-		problem = await arrangeFromTranscription(arranger, chosen, name);
+		const pickups = Object.fromEntries(
+			sections.map((section) => [section.index, arranger.transcription.pickups[section.from] ?? 0])
+		);
+		problem = await arrangeFromTranscription(arranger, chosen, name, pickups);
 		if (problem) return;
 		if (purpose === 'practise') settings.musicView = 'sheet';
 		open = false;
