@@ -16,8 +16,9 @@ const VERSION = 3;
  *   grid: import('./beatGrid.js').BeatGrid,
  *   chords: Record<number, import('./barChords.js').Slots>,
  *   key: string | null, time: string, lanes: import('./extraLanes.js').ExtraLane[], written: string,
- *   markers: Record<number, string>, cents: number
+ *   markers: Record<number, string>, cents: number, downbeat: number | null
  * }} Transcription
+ *   downbeat: where you placed beat 1 of bar 1 (seconds; null in an older draft)
  *   cents: the recording's pitch moved by this much (fine tuning)
  *   chords: a slot per beat (an older draft kept typed text; barChords.js slotsOf reads both)
  */
@@ -42,6 +43,7 @@ export function readTranscriptionDraft(recordingKey) {
 		lanes: Array.isArray(value.lanes) ? value.lanes : [],
 		markers: value.markers && typeof value.markers === 'object' ? value.markers : {},
 		cents: typeof value.cents === 'number' ? value.cents : 0,
+		downbeat: typeof value.downbeat === 'number' ? value.downbeat : null,
 		written: value.written ?? ''
 	};
 }

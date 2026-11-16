@@ -3,6 +3,10 @@
  * bluegrass: every strum is a beat (boom on one, chuck on the next), so a
  * 4/4 bar is boom-chuck-boom-chuck.
  *
+ * ONE is placed by hand first: the beats are tracked through it, forward
+ * and back, so it is a beat exactly. The beats before it are the lead-in
+ * (a pickup, or an intro): up to a bar of them are kept.
+ *
  * The usual gap comes from how the hits repeat (estimateTempo.js), then the
  * beats are tracked (trackBeats.js). A song repeats at twice and half its
  * beat too, and fast bluegrass is easily counted on every other strum; so
@@ -10,8 +14,8 @@
  * they're tracked again at half the gap.
  */
 import { estimateBeatFrames } from './estimateTempo.js';
-import { trackBeats } from './trackBeats.js';
-import { secondsAt } from './analyseRecording.js';
+import { trackBeatsThrough } from './trackBeats.js';
+import { frameAt, secondsAt } from './analyseRecording.js';
 
 /** Hits halfway between beats this strong (against the hits on them) mean a beat was missed in between. */
 const HALFWAY_HITS_MEAN_DOUBLE = 0.4;
@@ -20,19 +24,26 @@ const FASTEST_BPM = 360;
 
 /**
  * @param {import('./analyseRecording.js').Analysis} analysis
- * @returns {number[]} seconds into the recording, in order
+ * @param {number} downbeat seconds into the recording: beat 1 of bar 1
+ * @param {number} leadInBeats how many beats before it to keep
+ * @returns {{ beats: number[], firstBeat: number }} beats in seconds, and the index of the downbeat
  */
-export function detectBeats(analysis) {
+export function detectBeats(analysis, downbeat, leadInBeats) {
 	const { strength, framesPerSecond } = analysis;
-	if (strength.length === 0) return [];
+	const anchor = Math.max(0, Math.min(strength.length - 1, frameAt(analysis, downbeat)));
+	if (strength.length === 0) return { beats: [downbeat], firstBeat: 0 };
 	const beatFrames = estimateBeatFrames(strength, framesPerSecond);
-	let frames = trackBeats(strength, beatFrames);
+	let found = trackBeatsThrough(strength, beatFrames, anchor);
 
 	const shortest = (60 / FASTEST_BPM) * framesPerSecond;
-	if (halfwayHits(strength, frames) > HALFWAY_HITS_MEAN_DOUBLE && beatFrames / 2 >= shortest)
-		frames = trackBeats(strength, beatFrames / 2);
+	if (halfwayHits(strength, found.frames) > HALFWAY_HITS_MEAN_DOUBLE && beatFrames / 2 >= shortest)
+		found = trackBeatsThrough(strength, beatFrames / 2, anchor);
 
-	return frames.map((frame) => Math.round(secondsAt(analysis, frame) * 1000) / 1000);
+	const dropped = Math.max(0, found.anchorIndex - leadInBeats);
+	const beats = found.frames
+		.slice(dropped)
+		.map((frame) => Math.round(secondsAt(analysis, frame) * 1000) / 1000);
+	return { beats, firstBeat: found.anchorIndex - dropped };
 }
 
 /**

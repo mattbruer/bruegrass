@@ -212,6 +212,13 @@ export const TIPS = Object.freeze({
 		more: 'Fixes for the whole song’s beats, and how the slowed-down sound is made.',
 		doubleBeats: 'For when the count is half the song’s speed: a beat between every two.',
 		halveBeats: 'For when the count is twice the song’s speed: every other beat.',
+		downbeatStrip: 'The whole recording. Click to move the playhead there.',
+		setDownbeat: 'Beat 1 of bar 1 is where the playhead is. It snaps to the nearest hit.',
+		findFromDownbeat:
+			'Find the beats and bars from the beat 1 you placed. A pickup before it stays as the lead-in.',
+		keepBeats: 'Go back to the beats and bars you have, without finding them again.',
+		moveDownbeat:
+			'Place beat 1 again, then find the beats again. Your fixes to the beats are forgotten.',
 		findAgain:
 			'Find the beats and bars again from the recording. Your fixes to them are forgotten.',
 		ruler:

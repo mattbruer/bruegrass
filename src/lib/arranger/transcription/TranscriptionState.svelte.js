@@ -33,7 +33,6 @@ import {
 } from './beatGrid.js';
 import { analyseRecording } from './beats/analyseRecording.js';
 import { detectBeats } from './beats/detectBeats.js';
-import { findDownbeat } from './beats/findDownbeat.js';
 import { snapToHit } from './beats/snapToHit.js';
 import {
 	clearTranscriptionDraft,
@@ -128,6 +127,10 @@ export class TranscriptionState {
 	/** @type {number | null} the beat whose menu is open (index into the grid's beats) */
 	selectedBeat = $state(null);
 	finding = $state(false);
+	/** Beat 1 of bar 1, in seconds into the recording, as you placed it (null: not yet). */
+	downbeat = $state(/** @type {number | null} */ (null));
+	/** Placing beat 1 comes before finding the beats. */
+	settingDownbeat = $state(false);
 	clicksOn = $state(true);
 	/** Logic's cycle: the region the player loops while it's on. */
 	cycle = new CycleState(this);
@@ -188,6 +191,8 @@ export class TranscriptionState {
 		this.written = '';
 		this.peaks = null;
 		this.hits = null;
+		this.downbeat = null;
+		this.settingDownbeat = false;
 		this.cycle.clear();
 		this.markers = {};
 		this.player.setCents(0);
@@ -208,8 +213,9 @@ export class TranscriptionState {
 		this.finding = false;
 
 		const draft = readTranscriptionDraft(recording.key);
+		// Beats come back only when you placed beat 1; an older draft's were guessed
 		if (draft) {
-			this.grid = draft.grid;
+			this.grid = draft.downbeat === null ? null : draft.grid;
 			this.chords = draft.chords;
 			this.key = draft.key;
 			this.time = draft.time;
@@ -217,8 +223,40 @@ export class TranscriptionState {
 			this.markers = draft.markers;
 			this.player.setCents(draft.cents);
 			this.written = draft.written;
-		} else this.#findBeats();
+			this.downbeat = draft.downbeat;
+		}
+		if (!this.grid) this.settingDownbeat = true;
+		else if (!this.linked) this.startSong();
+	}
+
+	/** Beat 1 of bar 1 is where the playhead is (snapped to the hit nearest). */
+	setDownbeatHere() {
+		if (!this.#analysis) return;
+		this.downbeat = snapToHit(this.player.time, this.#analysis);
+	}
+
+	/** Find the beats and bars through the placed beat 1, and start the song on them. */
+	findBeatsFromDownbeat() {
+		if (this.downbeat === null) return;
+		this.settingDownbeat = false;
+		this.player.pause();
+		this.#findBeats();
+		if (this.recording) clearTranscriptionDraft(this.recording.key);
+		this.#writeChart();
+		this.#keepDraft();
 		if (!this.linked) this.startSong();
+	}
+
+	/** Go back to placing beat 1 (the beats stay until they're found again). */
+	setDownbeatAgain() {
+		this.player.pause();
+		this.closeMenus();
+		this.settingDownbeat = true;
+	}
+
+	/** Leave placing beat 1 without finding the beats again. */
+	cancelSettingDownbeat() {
+		this.settingDownbeat = false;
 	}
 
 	/**
@@ -241,6 +279,7 @@ export class TranscriptionState {
 
 	/** Find the beats and bars again from the recording (forgets any fixes to them). */
 	findBeatsAgain() {
+		if (this.downbeat === null) return this.setDownbeatAgain();
 		this.#findBeats();
 		if (this.recording) clearTranscriptionDraft(this.recording.key);
 		this.#writeChart();
@@ -269,9 +308,7 @@ export class TranscriptionState {
 	setTime(id) {
 		this.time = id;
 		const beatsPerBar = timeSignature(id).beatsPerBar;
-		this.#edit((grid) =>
-			this.#withOneFound({ ...grid, bars: withBeatsPerBar(grid.bars, beatsPerBar) })
-		);
+		this.#edit((grid) => ({ ...grid, bars: withBeatsPerBar(grid.bars, beatsPerBar) }));
 		this.closeMenus();
 	}
 
@@ -416,13 +453,13 @@ export class TranscriptionState {
 
 	/** The beats were counted twice as slow as the song: one more between each. */
 	doubleBeats() {
-		this.#edit((grid) => this.#withOneFound(withBeatsDoubled(grid)));
+		this.#edit(withBeatsDoubled);
 		this.closeMenus();
 	}
 
 	/** The beats were counted twice as fast as the song: every other one. */
 	halveBeats() {
-		this.#edit((grid) => this.#withOneFound(withBeatsHalved(grid)));
+		this.#edit(withBeatsHalved);
 		this.closeMenus();
 	}
 
@@ -530,22 +567,11 @@ export class TranscriptionState {
 	}
 
 	#findBeats() {
-		if (!this.#analysis) return;
+		if (!this.#analysis || this.downbeat === null) return;
 		const beatsPerBar = timeSignature(this.time).beatsPerBar;
-		const beats = detectBeats(this.#analysis);
-		this.grid = newBeatGrid(beats, beatsPerBar, findDownbeat(this.#analysis, beats, beatsPerBar));
+		const { beats, firstBeat } = detectBeats(this.#analysis, this.downbeat, beatsPerBar);
+		this.grid = newBeatGrid(beats, beatsPerBar, firstBeat);
 		this.closeMenus();
-	}
-
-	/**
-	 * The same grid with ONE found again from the recording, for a new count.
-	 * @param {BeatGrid} grid
-	 * @returns {BeatGrid}
-	 */
-	#withOneFound(grid) {
-		if (!this.#analysis) return grid;
-		const firstBeat = findDownbeat(this.#analysis, grid.beats, grid.bars.beatsPerBar);
-		return { ...grid, bars: { ...grid.bars, firstBeat, lengths: {} } };
 	}
 
 	/** @param {(grid: BeatGrid) => BeatGrid} change */
@@ -583,6 +609,7 @@ export class TranscriptionState {
 			lanes: this.extraLanes,
 			markers: this.markers,
 			cents: this.player.cents,
+			downbeat: this.downbeat,
 			written: this.written
 		});
 	}

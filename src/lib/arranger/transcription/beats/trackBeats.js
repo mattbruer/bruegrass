@@ -15,14 +15,40 @@ const TIGHTNESS = 100;
  * @returns {number[]} beat positions, in frames, in order
  */
 export function trackBeats(strength, beatFrames) {
+	return track(strength, beatFrames, false);
+}
+
+/**
+ * Beats that run through a beat you've placed by hand: tracked forward
+ * from it and backward from it, so it is one of them exactly.
+ * @param {Float32Array} strength
+ * @param {number} beatFrames
+ * @param {number} anchor the frame of the beat that must be there
+ * @returns {{ frames: number[], anchorIndex: number }} the beats (frames) and which one is the anchor
+ */
+export function trackBeatsThrough(strength, beatFrames, anchor) {
+	const forward = track(strength.subarray(anchor), beatFrames, true).map((frame) => anchor + frame);
+	const backward = track(strength.slice(0, anchor + 1).reverse(), beatFrames, true)
+		.map((frame) => anchor - frame)
+		.reverse();
+	return { frames: [...backward.slice(0, -1), ...forward], anchorIndex: backward.length - 1 };
+}
+
+/**
+ * @param {Float32Array} strength
+ * @param {number} beatFrames
+ * @param {boolean} startsAtFirstFrame the first beat is the first frame
+ */
+function track(strength, beatFrames, startsAtFirstFrame) {
 	const length = strength.length;
+	if (length === 0) return [];
 	const score = new Float64Array(length);
 	const previous = new Int32Array(length).fill(-1);
 	const nearest = Math.max(1, Math.round(beatFrames / 2));
 	const farthest = Math.round(beatFrames * 2);
 
 	for (let t = 0; t < length; t++) {
-		let best = 0;
+		let best = startsAtFirstFrame ? -Infinity : 0;
 		for (let back = nearest; back <= farthest && back <= t; back++) {
 			const gap = Math.log(back / beatFrames);
 			const candidate = score[t - back] - TIGHTNESS * gap * gap;
@@ -31,10 +57,11 @@ export function trackBeats(strength, beatFrames) {
 				previous[t] = t - back;
 			}
 		}
-		score[t] = strength[t] + best;
+		score[t] = t === 0 || best > -Infinity ? strength[t] + (t === 0 ? 0 : best) : -Infinity;
 	}
 
-	return backtrack(previous, lastBeat(score, beatFrames));
+	const last = lastBeat(score, beatFrames);
+	return score[last] === -Infinity ? [0] : backtrack(previous, last);
 }
 
 /**

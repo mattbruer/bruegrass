@@ -1,8 +1,9 @@
 <script>
 	/**
 	 * Transcribe a song from a recording, Logic's way: open a recording and
-	 * it becomes the open song's recording, its beats and bars found for you
-	 * and the ruler following it. Write the song on those bars in the track
+	 * it becomes the open song's recording: you place beat 1 of bar 1 (a
+	 * pickup stays before it), then its beats and bars are found through it
+	 * and the ruler follows them. Write the song on those bars in the track
 	 * grid (chords by beat in their lane), the tune in the piano roll below.
 	 * No band plays here: this page is for writing the song down; the band
 	 * is for practising. Desktop first; the phone gets its own layout later.
@@ -21,7 +22,8 @@
 	import { timeSignature } from '$lib/arranger/transcription/timeSignatures.js';
 	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
 	import RecordingChoice from '$lib/arranger/components/transcription/RecordingChoice.svelte';
-	import FindingBeats from '$lib/arranger/components/transcription/FindingBeats.svelte';
+	import DownbeatPicker from '$lib/arranger/components/transcription/DownbeatPicker.svelte';
+	import AnalysingRecording from '$lib/arranger/components/transcription/AnalysingRecording.svelte';
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
@@ -84,7 +86,8 @@
 		const inControl =
 			target instanceof Element &&
 			target.closest('input, select, textarea, button, summary, [role="application"]');
-		if (event.defaultPrevented || !transcription.grid || inControl) return;
+		if (event.defaultPrevented || !transcription.grid || transcription.settingDownbeat || inControl)
+			return;
 		const action = keyAction(event);
 		if (!action) return;
 		event.preventDefault();
@@ -121,7 +124,10 @@
 		{#if transcription.player.loading}
 			<p class="text-ink-soft">Loading…</p>
 		{:else if transcription.finding}
-			<FindingBeats />
+			<AnalysingRecording />
+		{:else if transcription.settingDownbeat}
+			<TranscribeControls {transcription} />
+			<DownbeatPicker {transcription} />
 		{:else if transcription.grid}
 			<TranscribeControls {transcription} />
 			{#if !transcription.linked}
