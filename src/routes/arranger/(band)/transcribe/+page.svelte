@@ -27,6 +27,7 @@
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
 	import SendToArranger from '$lib/arranger/components/transcription/SendToArranger.svelte';
+	import SectionStep from '$lib/arranger/components/transcription/SectionStep.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -120,7 +121,7 @@
 <main class="ui-page-width flex flex-col gap-4 pt-6 pb-16">
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold">Transcribe</h1>
-		{#if transcription.grid && transcription.linked}
+		{#if transcription.grid && transcription.linked && !transcription.namingSections}
 			<SendToArranger />
 		{/if}
 	</div>
@@ -160,8 +161,13 @@
 					>
 				</p>
 			{/if}
-			<TranscriptionGrid {transcription} />
-			<BottomPane {transcription} />
+			{#if transcription.namingSections}
+				<SectionStep {transcription} />
+				<TranscriptionGrid {transcription} />
+			{:else}
+				<TranscriptionGrid {transcription} />
+				<BottomPane {transcription} />
+			{/if}
 		{/if}
 	{/if}
 </main>

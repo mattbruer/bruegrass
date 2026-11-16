@@ -12,10 +12,6 @@
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { useArranger } from '../../state/context.js';
 	import { arrangeFromTranscription } from '../../state/arrangeFromTranscription.js';
-	import {
-		namedSections,
-		withUniqueSectionNames
-	} from '../../transcription/arrangementFromTranscription.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -30,12 +26,7 @@
 	/** @type {Record<number, boolean>} the sections to arrange */
 	let ticked = $state({});
 
-	const sections = $derived(
-		namedSections(
-			withUniqueSectionNames(arranger.arrangement.text),
-			arranger.arrangement.sections.map((section) => section.measures.length)
-		)
-	);
+	const sections = $derived(arranger.transcription.sections);
 	const chosen = $derived(
 		purpose === 'practise'
 			? [practised]
@@ -54,9 +45,7 @@
 		const practisedName = sections.find((section) => section.index === practised)?.name;
 		const name =
 			purpose === 'practise' ? `${songName} – ${practisedName}` : `${songName} arrangement`;
-		const pickups = Object.fromEntries(
-			sections.map((section) => [section.index, arranger.transcription.pickups[section.from] ?? 0])
-		);
+		const pickups = Object.fromEntries(sections.map((section) => [section.index, section.pickup]));
 		problem = await arrangeFromTranscription(arranger, chosen, name, pickups);
 		if (problem) return;
 		if (purpose === 'practise') settings.musicView = 'sheet';

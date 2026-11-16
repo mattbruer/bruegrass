@@ -47,6 +47,7 @@ import {
 } from './transcriptionDraft.js';
 import { chartFromBars } from './chartFromBars.js';
 import { readChartOnBars } from './readChartOnBars.js';
+import { namedSections, withUniqueSectionNames } from './arrangementFromTranscription.js';
 import { chartCell, isEmptyBar, isHeld, slotsFromTyped, slotsOf } from './barChords.js';
 import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
 import { keyFieldName, withKeyField } from '../chart/keyField.js';
@@ -139,6 +140,8 @@ export class TranscriptionState {
 	downbeat = $state(/** @type {number | null} */ (null));
 	/** Placing beat 1 comes before finding the beats. */
 	settingDownbeat = $state(false);
+	/** Naming the sections comes right after: only named sections can go to the arranger. */
+	namingSections = $state(false);
 	clicksOn = $state(true);
 	/** Logic's cycle: the region the player loops while it's on. */
 	cycle = new CycleState(this);
@@ -157,6 +160,16 @@ export class TranscriptionState {
 	chords = $derived(this.#chartOnBars.chords);
 	/** @type {Record<number, string>} bar number → the section (marker) starting there */
 	markers = $derived(this.#chartOnBars.markers);
+	/**
+	 * The sections you've named, which are the ones that can go to the
+	 * arranger: each with its bars, its first line of words and its pickup (beats).
+	 */
+	sections = $derived(
+		namedSections(
+			withUniqueSectionNames(this.arranger.arrangement.text),
+			this.arranger.arrangement.sections.map((section) => section.measures.length)
+		).map((section) => ({ ...section, pickup: this.sectionPickup(section.from) }))
+	);
 	/** The key the chart names ("G", "Em"; null: none, guessed from the first chord). */
 	key = $derived(this.linked ? keyFieldName(this.arranger.arrangement.text) : null);
 	/** Where the recording is now, in the song's quarters from bar 1. */
@@ -254,6 +267,7 @@ export class TranscriptionState {
 		this.hits = null;
 		this.downbeat = null;
 		this.settingDownbeat = false;
+		this.namingSections = false;
 		this.cycle.clear();
 		this.player.setCents(0);
 		this.closeMenus();
@@ -291,6 +305,7 @@ export class TranscriptionState {
 		}
 		if (!this.grid) this.settingDownbeat = true;
 		else if (!this.linked) await this.#openSongOrStart();
+		if (this.grid && this.sections.length === 0) this.namingSections = true;
 	}
 
 	/** Open the song last written from this recording, or start one. */
@@ -359,6 +374,19 @@ export class TranscriptionState {
 		this.#writeChart();
 		this.#keepDraft();
 		if (!this.linked) this.#openSongOrStart();
+		this.namingSections = true;
+	}
+
+	/** Go to naming the sections (again). */
+	nameSections() {
+		this.closeMenus();
+		this.namingSections = true;
+	}
+
+	/** Done naming the sections: on to the chords and parts. */
+	doneNamingSections() {
+		this.closeMenus();
+		this.namingSections = false;
 	}
 
 	/** Go back to placing beat 1 (the beats stay until they're found again). */
