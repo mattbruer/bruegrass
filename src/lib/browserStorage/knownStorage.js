@@ -29,6 +29,11 @@ export const KNOWN_KEYS = {
 		name: 'Settings',
 		about: 'Tips, the music keypad, colours, the player’s look, the click.'
 	},
+	'bruegrass.firstPaint': {
+		name: 'Colours for opening the page',
+		about:
+			'A copy of your theme’s colours, so the page opens in them without a flash. Safe to delete.'
+	},
 	'bruegrass.eqPresets': {
 		name: 'EQ presets',
 		about: 'One strip’s EQ, saved by name.',

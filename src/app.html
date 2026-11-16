@@ -11,32 +11,15 @@
 			rel="stylesheet"
 		/>
 		<script>
-			/*
-			 * Apply the user's saved theme before the page first paints, so a dark
-			 * theme doesn't flash light while the app starts. This is a tiny copy of
-			 * applyTheme() in src/lib/theme/theme.js (the app re-applies it properly
-			 * once it's running); keep the two in step.
-			 */
+			// The theme's colours, saved by applyTheme() in src/lib/theme/theme.js,
+			// put back before the first paint so nothing flashes the wrong colour
 			try {
-				const settings = JSON.parse(localStorage.getItem('bruegrass.settings') || '{}');
-				const appearance = settings.appearance || {};
-				const cssVariableFor = {
-					background: '--theme-background',
-					text: '--theme-text',
-					accent: '--theme-accent',
-					depth: '--theme-depth',
-					roundness: '--theme-roundness'
-				};
-				for (const choice in cssVariableFor) {
-					if (appearance[choice] !== undefined) {
-						document.documentElement.style.setProperty(
-							cssVariableFor[choice],
-							String(appearance[choice])
-						);
-					}
+				const variables = JSON.parse(localStorage.getItem('bruegrass.firstPaint') || '{}');
+				for (const variable in variables) {
+					document.documentElement.style.setProperty(variable, variables[variable]);
 				}
 			} catch {
-				// No saved theme (or no storage): the defaults in tokens.css apply
+				// Nothing saved (or no storage): the defaults in tokens.css apply
 			}
 		</script>
 		%sveltekit.head%

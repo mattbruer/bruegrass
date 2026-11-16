@@ -5,9 +5,9 @@
  * tokens.css. Applying a theme just sets those variables on <html>; the
  * CSS works out everything else.
  *
- * Note: src/app.html has a tiny copy of `applyTheme` that runs before the
- * page first paints (so a dark theme doesn't flash light on load). If you
- * add a choice here, add it there too.
+ * Every variable applyTheme sets is also saved (`FIRST_PAINT_KEY`), and
+ * src/app.html puts them back before the page first paints, so the theme
+ * (and the colours worked out from it) never flash wrong on load.
  */
 
 /**
@@ -88,14 +88,32 @@ const CSS_VARIABLE_FOR = {
  * @param {Appearance} appearance
  */
 export function applyTheme(appearance) {
-	const root = document.documentElement;
+	/** @type {Record<string, string>} */
+	const variables = {};
 	for (const [choice, variable] of Object.entries(CSS_VARIABLE_FOR)) {
-		root.style.setProperty(variable, String(appearance[/** @type {keyof Appearance} */ (choice)]));
+		variables[variable] = String(appearance[/** @type {keyof Appearance} */ (choice)]);
 	}
 	// Tell the browser whether the page is light or dark, so its own controls
 	// (the audio player, dropdown menus, scroll bars) match
-	root.style.colorScheme = isDark(appearance.background) ? 'dark' : 'light';
-	applyDerivedColours(appearance.background);
+	variables['color-scheme'] = isDark(appearance.background) ? 'dark' : 'light';
+	Object.assign(variables, derivedColours(appearance.background));
+
+	for (const [variable, value] of Object.entries(variables)) {
+		document.documentElement.style.setProperty(variable, value);
+	}
+	rememberForFirstPaint(variables);
+}
+
+/** Read by src/app.html before the page first paints. */
+const FIRST_PAINT_KEY = 'bruegrass.firstPaint';
+
+/** @param {Record<string, string>} variables */
+function rememberForFirstPaint(variables) {
+	try {
+		localStorage.setItem(FIRST_PAINT_KEY, JSON.stringify(variables));
+	} catch {
+		// No storage: the first paint uses tokens.css until the app applies the theme
+	}
 }
 
 /**
@@ -115,16 +133,18 @@ const DERIVED_COLOURS = {
 	'--color-line': { lightness: -0.1 }
 };
 
-/** @param {string} background #rrggbb */
-function applyDerivedColours(background) {
-	const root = document.documentElement;
+/**
+ * @param {string} background #rrggbb
+ * @returns {Record<string, string>} CSS variable → colour
+ */
+function derivedColours(background) {
 	const [l, c, h] = hexToOklch(background);
-	for (const [variable, { lightness = 0, chroma = 0, alpha = 1 }] of Object.entries(
-		DERIVED_COLOURS
-	)) {
-		const colour = `oklch(${l + lightness} ${Math.max(0, c + chroma)} ${h}${alpha < 1 ? ` / ${alpha}` : ''})`;
-		root.style.setProperty(variable, colour);
-	}
+	return Object.fromEntries(
+		Object.entries(DERIVED_COLOURS).map(([variable, { lightness = 0, chroma = 0, alpha = 1 }]) => [
+			variable,
+			`oklch(${l + lightness} ${Math.max(0, c + chroma)} ${h}${alpha < 1 ? ` / ${alpha}` : ''})`
+		])
+	);
 }
 
 /**
