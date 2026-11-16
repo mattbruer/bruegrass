@@ -60,6 +60,7 @@ import { channelInstrument } from '../instruments/tuneInstruments.js';
 import { mixer } from '../mixer/mixer.svelte.js';
 import { heardNotes, laneLevels } from './heardParts.js';
 import { CycleState, leadInBefore } from './CycleState.svelte.js';
+import { hasPickup, withPickupBar } from '../melody/roll/pickupBar.js';
 
 /**
  * @typedef {{ key: string, name: string, source: string | Blob }} Recording
@@ -143,6 +144,20 @@ export class TranscriptionState {
 	linked = $derived(this.written !== '' && this.arranger.arrangement.text === this.written);
 	/** Where the recording is now, in the song's quarters from bar 1. */
 	quartersNow = $derived(this.grid ? quartersAt(this.grid, this.player.time) : 0);
+	/**
+	 * The tune's pickup (quarters): the recording's lead-in before bar 1, when
+	 * it's shorter than a bar. A whole bar before beat 1 isn't a pickup (ABC
+	 * can't tell it from bar 1): beat 1 is then a bar late, and Move beat 1 fixes it.
+	 */
+	leadInQuarters = $derived.by(() => {
+		const plan = this.grid?.bars;
+		return plan && plan.firstBeat < plan.beatsPerBar ? plan.firstBeat : 0;
+	});
+	/** The tune is written but has no pickup bar, though the recording has a lead-in to draw it in. */
+	canAddPickup = $derived.by(() => {
+		const voices = this.arranger.melody.voices;
+		return this.leadInQuarters > 0 && voices !== null && !hasPickup(voices.map((v) => v.score));
+	});
 	/** The written parts' notes, on the recording's time. */
 	heardNotes = $derived(
 		this.grid
@@ -325,6 +340,14 @@ export class TranscriptionState {
 		if (this.recording) clearTranscriptionDraft(this.recording.key);
 		this.#writeChart();
 		this.#keepDraft();
+	}
+
+	/** A pickup bar of rest at the front of the tune, as long as the recording's lead-in, to draw its pickup in. */
+	addPickup() {
+		const { melody } = this.arranger;
+		if (!this.canAddPickup || !melody.voices) return;
+		const scores = melody.voices.map((voice) => voice.score);
+		melody.notation = withPickupBar(melody.notation, scores, this.leadInQuarters);
 	}
 
 	/**

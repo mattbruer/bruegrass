@@ -11,6 +11,7 @@
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import { BOTTOM_VIEWS } from '../../transcription/bottomViews.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { BASS_VOICE } from '../../bass/readBass.js';
 	import { HARMONY_PARTS } from '../../melody/harmony/harmonyParts.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
@@ -52,12 +53,22 @@
 				label="Show the part as"
 			/>
 			<h2 class="text-sm font-bold">{laneName}</h2>
+			{#if transcription.canAddPickup}
+				<button
+					type="button"
+					class="ui-button px-3 py-1.5 text-sm"
+					onclick={() => transcription.addPickup()}
+					use:tooltip={TIPS.transcription.addPickup}
+					>Add a pickup ({transcription.leadInQuarters}
+					{transcription.leadInQuarters === 1 ? 'beat' : 'beats'})</button
+				>
+			{/if}
 		</div>
 		{#if settings.transcribe.bottomView === 'sheet'}
 			{#if nothingWritten}
 				<p class="text-sm text-ink-soft">Nothing written yet. Draw it in the piano roll.</p>
 			{:else}
-				<SheetMusic notation={sheetNotation} />
+				<SheetMusic notation={sheetNotation} {clock} />
 			{/if}
 		{:else}
 			<MelodyDrawing
@@ -65,6 +76,7 @@
 				lanes={transcription}
 				{clock}
 				bassStartsEmpty
+				pickupQuarters={transcription.leadInQuarters}
 				keyMenu={false}
 				zoom={settings.transcribe.zoom}
 			/>

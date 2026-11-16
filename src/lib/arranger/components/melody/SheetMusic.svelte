@@ -10,7 +10,8 @@
 	 * guitar's shapes, for reading with the capo on.
 	 *
 	 * `notation` draws other ABC instead of the tune (Transcribe's bass line);
-	 * it isn't followed while playing.
+	 * it isn't followed while playing. `clock` follows something other than
+	 * the band (Transcribe's recording), as the piano roll's does.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { drawSheetMusic } from '../../melody/drawSheetMusic.js';
@@ -20,8 +21,10 @@
 
 	const { arrangement, melody, player } = useArranger();
 
-	/** @type {{ notation?: string }} */
-	let { notation: otherNotation } = $props();
+	/** @type {{ notation?: string, clock?: { playing: boolean, quarters: () => number } }} */
+	let { notation: otherNotation, clock } = $props();
+	const playing = $derived(clock ? clock.playing : player.isPlaying);
+	const timeNow = $derived(clock ? clock.quarters : player.melodyTimeNow);
 	const notation = $derived(otherNotation ?? melody.notation);
 
 	/** Both views are the same with no capo or key change, so the tabs only show when they differ. */
@@ -71,12 +74,12 @@
 	$effect(() => {
 		const svg = page?.querySelector('svg');
 		const notes = notesOnPage;
-		if (!player.isPlaying || !svg || notes.length === 0) return;
+		if (!playing || !svg || notes.length === 0) return;
 
 		return followSheetMusic({
 			svg,
 			notes,
-			melodyTimeNow: player.melodyTimeNow,
+			melodyTimeNow: timeNow,
 			onNewLine: scrollLineIntoView
 		});
 	});

@@ -64,6 +64,8 @@ export class MelodyDrawing {
 	 * the band's own line (to change). Transcribe sets this.
 	 */
 	bassStartsEmpty = false;
+	/** A tune not written yet starts with a pickup bar this long (quarters; 0: none). Transcribe sets it from the recording's lead-in. */
+	pickupQuarters = 0;
 	/**
 	 * The generic lanes (+ Lane) and how to read and write them: the
 	 * transcription's, or null on a page without them. Set by the component.
@@ -272,7 +274,7 @@ export class MelodyDrawing {
 
 	/** @returns {Read} */
 	#fromChart() {
-		const { score, lineStarts } = blankScoreForSong(this.arranger);
+		const { score, lineStarts } = blankScoreForSong(this.arranger, this.pickupQuarters);
 		const melodyVoice = { id: MELODY_CHANNEL, name: 'Melody', score, problem: '' };
 		return { voices: [melodyVoice], sequence: null, lineStarts };
 	}

@@ -120,7 +120,7 @@ export function withKeySignature(abc, keyText) {
  * @param {Score} score
  * @param {number} index
  */
-function isPickup(score, index) {
+export function isPickup(score, index) {
 	const bar = score.bars[index];
 	return index === 0 && bar.length < (bar.meter.num * 4 * TICKS_PER_QUARTER) / bar.meter.den;
 }

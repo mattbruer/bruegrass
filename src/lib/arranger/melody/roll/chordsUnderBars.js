@@ -6,6 +6,7 @@
  */
 import { walk } from '../abcChords.js';
 import { TICKS_PER_QUARTER } from './ticks.js';
+import { isPickup } from './scoreToAbc.js';
 
 const EPSILON = 1e-6;
 
@@ -22,8 +23,10 @@ const EPSILON = 1e-6;
  */
 export function chordsUnderBars(score, sequence, chartBars) {
 	const timeOf = sequence ? playedTimes(sequence) : null;
+	// A score from the chart counts from its start; bar 1 comes after any pickup
+	const pickup = score.bars.length > 0 && isPickup(score, 0) ? score.bars[0].length : 0;
 	return score.bars.flatMap((bar) => {
-		const time = timeOf ? timeOf(bar) : bar.start / TICKS_PER_QUARTER;
+		const time = timeOf ? timeOf(bar) : (bar.start - pickup) / TICKS_PER_QUARTER;
 		if (time === null) return [];
 		return chordsBetween(chartBars, time, time + bar.length / TICKS_PER_QUARTER).map((chord) => ({
 			at: bar.start + Math.round((chord.start - time) * TICKS_PER_QUARTER),
