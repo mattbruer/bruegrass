@@ -2,8 +2,10 @@
 	/**
 	 * The part as TAB, under the piano roll and scrolling with it: a line
 	 * per string, top line first, and each note's fret number on its
-	 * string's line, where the note starts. Tap a number to play that note
-	 * on the next string that has it.
+	 * string's line, where the note starts. Tap a number to pick its note
+	 * (the roll's own selection); then type a fret to change the note's
+	 * pitch on that string (two digits typed quickly make 10 and up), or ↑ ↓
+	 * to play it on the string above or below. Other keys go on to the roll.
 	 */
 	import { lineY } from '../../tab/tabLayout.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -16,10 +18,37 @@
 	 *   tickWidth: number,
 	 *   width: number,
 	 *   labelWidth: number,
-	 *   onChoose: (tabNote: import('../../tab/fingering.js').TabNote) => void
+	 *   selected: import('../../melody/roll/editNotes.js').DrawnNote | null,
+	 *   onSelect: (tabNote: import('../../tab/fingering.js').TabNote) => void,
+	 *   onFret: (tabNote: import('../../tab/fingering.js').TabNote, fret: number) => void,
+	 *   onString: (tabNote: import('../../tab/fingering.js').TabNote, direction: -1 | 1) => void
 	 * }}
 	 */
-	let { tabNotes, board, tickWidth, width, labelWidth, onChoose } = $props();
+	let { tabNotes, board, tickWidth, width, labelWidth, selected, onSelect, onFret, onString } =
+		$props();
+
+	/** A second digit this soon after the first makes a two-digit fret. */
+	const TWO_DIGITS_MS = 800;
+	let typed = { digit: '', at: 0 };
+
+	/**
+	 * @param {KeyboardEvent} event
+	 * @param {import('../../tab/fingering.js').TabNote} tabNote
+	 */
+	function key(event, tabNote) {
+		if (/^[0-9]$/.test(event.key)) {
+			const now = performance.now();
+			const both = typed.digit + event.key;
+			const twoDigits =
+				typed.digit && now - typed.at < TWO_DIGITS_MS && Number(both) <= board.frets;
+			onFret(tabNote, Number(twoDigits ? both : event.key));
+			typed = twoDigits ? { digit: '', at: 0 } : { digit: event.key, at: now };
+		} else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+			onString(tabNote, event.key === 'ArrowUp' ? -1 : 1);
+		} else return;
+		event.preventDefault();
+		event.stopPropagation(); // the roll would move the note instead
+	}
 </script>
 
 <div class="names sticky left-0 z-10 shrink-0" style:width="{labelWidth}px">
@@ -36,11 +65,14 @@
 			<button
 				type="button"
 				class="fret"
+				class:picked={tabNote.note === selected}
+				aria-pressed={tabNote.note === selected}
 				style:left="{tabNote.note.start * tickWidth}px"
 				style:top="{lineY(tabNote.place.string)}px"
 				aria-label="Fret {tabNote.place.fret} on the {board.strings[tabNote.place.string]
 					.name} string"
-				onclick={() => onChoose(tabNote)}
+				onclick={() => onSelect(tabNote)}
+				onkeydown={(event) => key(event, tabNote)}
 				use:tooltip={TIPS.melody.tabFret}>{tabNote.place.fret}</button
 			>
 		{/if}
@@ -96,6 +128,10 @@
 		content: '';
 		position: absolute;
 		inset: -0.4rem -0.35rem;
+	}
+	.fret.picked {
+		background: var(--color-accent);
+		color: var(--color-surface);
 	}
 	.fret:focus-visible {
 		outline: 2px solid var(--color-accent);

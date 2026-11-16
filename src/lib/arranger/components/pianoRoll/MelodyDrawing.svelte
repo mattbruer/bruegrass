@@ -27,9 +27,11 @@
 	import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
 	import TabStrip from './TabStrip.svelte';
 	import TabChoice from './TabChoice.svelte';
+	import TabFretBar from './TabFretBar.svelte';
+	import { changeNote } from '../../melody/roll/editNotes.js';
 	import { chooseString, songTab } from '../../tab/songTab.svelte.js';
 	import { fretboard } from '../../tab/fretboards.js';
-	import { nextString, noteKey, tabNotes } from '../../tab/fingering.js';
+	import { noteKey, pitchAt, stringToward, tabNotes } from '../../tab/fingering.js';
 	import { tabHeight } from '../../tab/tabLayout.js';
 
 	/**
@@ -107,9 +109,41 @@
 	const tab = $derived(board && partTab ? tabNotes(drawing.notes, board, partTab.strings) : []);
 	const unplayable = $derived(tab.filter((tabNote) => !tabNote.place).length);
 
+	/** The picked note (the roll's selection) in the TAB, when it's on a string. */
+	const pickedTab = $derived(
+		tab.find((tabNote) => tabNote.note === drawing.notes[drawing.selected] && tabNote.place) ?? null
+	);
+
 	/** @param {import('../../tab/fingering.js').TabNote} tabNote */
-	function playOnNextString(tabNote) {
-		const string = nextString(tabNote);
+	function selectTab(tabNote) {
+		drawing.selected = drawing.notes.indexOf(tabNote.note);
+		sound(tabNote.note.midi);
+	}
+
+	/**
+	 * Change the note to the pitch this fret plays, on the string it's on.
+	 * @param {import('../../tab/fingering.js').TabNote} tabNote
+	 * @param {number} fret
+	 */
+	function setFret({ note, place }, fret) {
+		if (!board || !place || !tabVoice || drawing.problem) return;
+		const midi = pitchAt(board.strings[place.string], fret, board.frets);
+		const index = drawing.notes.indexOf(note);
+		if (midi === null || index < 0) return;
+		const notes = changeNote(drawing.notes, index, { midi }, drawing.end);
+		const changed = notes.find((each) => each.start === note.start && each.midi === midi);
+		chooseString(tabVoice, noteKey({ ...note, midi }), place.string, notes.map(noteKey));
+		drawing.commit(notes);
+		drawing.selected = changed ? notes.indexOf(changed) : -1;
+		sound(midi);
+	}
+
+	/**
+	 * @param {import('../../tab/fingering.js').TabNote} tabNote
+	 * @param {-1 | 1} direction
+	 */
+	function moveString(tabNote, direction) {
+		const string = stringToward(tabNote, direction);
 		if (string === null || !tabVoice) return;
 		chooseString(tabVoice, noteKey(tabNote.note), string, drawing.notes.map(noteKey));
 	}
@@ -164,9 +198,20 @@
 			/** @type {{ tickWidth: number, width: number, labelWidth: number }} */ layout
 		)}
 			{#if board}
-				<TabStrip tabNotes={tab} {board} {...layout} onChoose={playOnNextString} />
+				<TabStrip
+					tabNotes={tab}
+					{board}
+					{...layout}
+					selected={drawing.notes[drawing.selected] ?? null}
+					onSelect={selectTab}
+					onFret={setFret}
+					onString={moveString}
+				/>
 			{/if}
 		{/snippet}
+		{#if pickedTab?.place && board}
+			<TabFretBar tabNote={pickedTab} {board} onFret={setFret} onString={moveString} />
+		{/if}
 		{#if unplayable > 0 && board}
 			<p class="mt-2 text-sm text-ink-soft">
 				{unplayable}

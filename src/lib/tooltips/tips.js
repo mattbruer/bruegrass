@@ -327,7 +327,11 @@ export const TIPS = Object.freeze({
 
 	melody: {
 		tabFret:
-			'Where this note is played: the fret, on its string. Tap to play it on another string instead.',
+			'Where this note is played: the fret, on its string. Pick it, then type a fret to change the note, or ↑ ↓ for another string.',
+		tabFretField:
+			'The fret this note is played at. Type another to change the note, on the same string.',
+		tabStringUp: 'Play this note on the string above, at the fret that gives the same note.',
+		tabStringDown: 'Play this note on the string below, at the fret that gives the same note.',
 		tabInstrument: 'Show this part as TAB, for guitar, mandolin or banjo, under the notes.',
 		views: {
 			draw: 'Draw the tune and its harmony lines on a grid of notes.',

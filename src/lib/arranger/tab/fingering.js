@@ -113,12 +113,29 @@ function lowestOnTheNeck(choices) {
 }
 
 /**
- * The next string that plays this note (round the options, back to the first).
- * @param {TabNote} tabNote
- * @returns {number | null} the string, or null when there's no other
+ * The pitch a fret plays on a string (null: not a fret that string has).
+ * @param {import('./fretboards.js').FretString} string
+ * @param {number} fret
+ * @param {number} frets the board's highest fret
  */
-export function nextString({ place, options }) {
-	if (!place || options.length < 2) return null;
-	const at = options.findIndex((each) => each.string === place.string);
-	return options[(at + 1) % options.length].string;
+export function pitchAt(string, fret, frets) {
+	if (fret === 0) return string.open;
+	const first = string.firstFret ?? 0;
+	return fret > first && fret <= frets ? string.open + fret - first : null;
+}
+
+/**
+ * The nearest string above (-1: toward the top line) or below (+1) that
+ * plays this note.
+ * @param {TabNote} tabNote
+ * @param {-1 | 1} direction
+ * @returns {number | null} null when there's none that way
+ */
+export function stringToward({ place, options }, direction) {
+	if (!place) return null;
+	const strings = options
+		.map((each) => each.string)
+		.filter((string) => (string - place.string) * direction > 0)
+		.toSorted((a, b) => (a - b) * direction);
+	return strings[0] ?? null;
 }
