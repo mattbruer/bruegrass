@@ -35,7 +35,7 @@ const REVERB_LEVEL_DB = -15;
  *     stands apart from the lead and from each other (instruments/tuneInstruments.js).
  */
 const TUNE_INSTRUMENT_DEFAULTS = {
-	melody: GUITAR,
+	melody: 'keys',
 	tenor: 'fiddle',
 	'high-baritone': 'flute',
 	baritone: 'clarinet',
