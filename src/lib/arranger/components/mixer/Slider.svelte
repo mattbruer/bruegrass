@@ -209,17 +209,19 @@
 		box-shadow: 0 0 0 2px var(--color-accent);
 	}
 
-	/* Grooves are pressed into the surface; caps are raised out of it */
+	/* Grooves are pressed into the surface; caps are raised out of it. Both
+	   stand out from any background, in light and dark themes alike. */
 	.groove {
 		position: absolute;
 		border-radius: 9999px;
-		background: var(--color-surface-deep);
+		background: var(--color-ink-faint);
 		box-shadow: var(--shadow-inset-small);
 	}
 
 	.cap {
 		position: absolute;
-		background: var(--color-surface);
+		background: var(--color-raised);
+		border: 1px solid var(--color-ink-soft);
 		box-shadow: var(--shadow-raised-small);
 		cursor: grab;
 		touch-action: none; /* the cap's drag is ours, never a scroll */
@@ -254,14 +256,14 @@
 		border-radius: var(--corner-small);
 		/* A line across the middle marks the level, like a fader cap's */
 		background:
-			linear-gradient(var(--color-ink-faint), var(--color-ink-faint)) center / 70% 2px no-repeat,
-			var(--color-surface);
+			linear-gradient(var(--color-ink-soft), var(--color-ink-soft)) center / 70% 2px no-repeat,
+			var(--color-raised);
 	}
 
 	.master .cap {
 		background:
 			linear-gradient(var(--color-accent), var(--color-accent)) center / 70% 2px no-repeat,
-			var(--color-surface);
+			var(--color-raised);
 	}
 
 	/* A bigger invisible grab area, so the cap is easy to catch with a finger */

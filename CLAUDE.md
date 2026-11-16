@@ -145,7 +145,7 @@ The user wants code they can read and change without help, and that makes the ne
 
 ### Look and theming
 
-- The look started as Soft UI and is moving away from it for contrast: cards and buttons are a lighter tone than the page (`--color-raised`) with a hairline border (`--color-line`) and a light drop shadow; wells and fields are a darker tone; the player bar has its own deeper blue (`--player-bar`). The colours come from five tokens at the top of `src/lib/theme/tokens.css`: background, text, accent, depth and roundness.
+- The look started as Soft UI, which the user has abandoned for contrast. **Every control must stand out clearly from what it sits on, in dark and light themes**: check it in a screenshot before calling it done (faders: a groove in `--color-ink-faint`, a raised cap with an `--color-ink-soft` border, `Slider.svelte`). The look now: cards and buttons are a lighter tone than the page (`--color-raised`) with a hairline border (`--color-line`) and a light drop shadow; wells and fields are a darker tone; the player bar has its own deeper blue (`--player-bar`). The colours come from five tokens at the top of `src/lib/theme/tokens.css`: background, text, accent, depth and roundness.
 - Everything else is derived from those tokens in CSS: softer text colours, the shadow edges (OKLCH lighter/darker of the background, so dark themes work), and the corner sizes.
 - Settings → Appearance changes the same five variables at runtime (`theme.js` `applyTheme`, presets, and the WCAG contrast check).
 - `src/app.html` has a tiny copy of `applyTheme` that runs before first paint. Keep the two in step.
