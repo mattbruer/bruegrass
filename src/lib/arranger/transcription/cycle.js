@@ -57,3 +57,35 @@ export function barAround(quarters, lines) {
 	const at = Math.max(0, index);
 	return lines.length < 2 ? null : { from: lines[at], to: lines[at + 1] };
 }
+
+/**
+ * The cycle slid along the song by some quarters, keeping its length and
+ * staying inside the song.
+ * @param {Cycle} cycle
+ * @param {number} delta
+ * @param {number[]} lines
+ * @param {boolean} snap
+ * @returns {Cycle}
+ */
+export function movedCycle(cycle, delta, lines, snap) {
+	const length = cycle.to - cycle.from;
+	const latestStart = (lines.at(-1) ?? 0) - length;
+	const from = Math.min(latestStart, placeInCycle(cycle.from + delta, lines, snap));
+	return { from, to: from + length };
+}
+
+/**
+ * What a press on the strip grabs of the cycle: its start, its end, its
+ * body, or nothing (a new cycle starts there).
+ * @param {number} x pixels along the strip
+ * @param {{ left: number, right: number } | null} edges the cycle's ends, in pixels
+ * @param {number} grip pixels either side of an end that still grab it
+ * @returns {'from' | 'to' | 'body' | null}
+ */
+export function grabbedPart(x, edges, grip) {
+	if (!edges) return null;
+	const reach = Math.min(grip, (edges.right - edges.left) / 3);
+	if (Math.abs(x - edges.left) <= reach) return 'from';
+	if (Math.abs(x - edges.right) <= reach) return 'to';
+	return x > edges.left && x < edges.right ? 'body' : null;
+}
