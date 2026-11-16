@@ -27,6 +27,7 @@
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
+	import TranscriptionDraftDialog from '$lib/arranger/components/transcription/TranscriptionDraftDialog.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -119,6 +120,7 @@
 		current={transcription.recording}
 		onChoose={(recording) => transcription.open(recording)}
 	/>
+	<TranscriptionDraftDialog {transcription} />
 
 	{#if transcription.recording}
 		{#if transcription.player.loading}

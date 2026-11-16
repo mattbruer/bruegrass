@@ -24,6 +24,7 @@
 	import {
 		drawnLength,
 		grabbedPart,
+		resizeEdge,
 		keyEdit,
 		movedNote,
 		resizedNote,
@@ -227,6 +228,8 @@
 	 */
 	/** @type {Gesture | null} */
 	let gesture = null;
+	/** A note's length is being dragged: the ↔ cursor stays on until it's let go. */
+	let resizing = $state(false);
 	let lastTap = { index: -1, time: 0 };
 
 	/** @param {PointerEvent} event */
@@ -264,6 +267,7 @@
 				...note,
 				now: { ...note }
 			};
+			resizing = gesture.kind === 'resize';
 			surface?.setPointerCapture(event.pointerId);
 			event.preventDefault();
 			return;
@@ -319,6 +323,7 @@
 	function release() {
 		const done = gesture;
 		gesture = null;
+		resizing = false;
 		const edited = preview;
 		preview = null;
 		if (!done) return;
@@ -349,6 +354,7 @@
 
 	function cancel() {
 		gesture = null;
+		resizing = false;
 		preview = null;
 	}
 
@@ -416,6 +422,7 @@
 				bind:this={surface}
 				class="surface relative"
 				class:editable={!readOnly}
+				class:resizing
 				style:width="{width}px"
 				style:height="{height}px"
 				onpointerdown={press}
@@ -464,7 +471,11 @@
 						style:top="{(range.highest - note.midi) * rowHeight}px"
 						style:width="{note.length * tickWidth}px"
 						style:height="{rowHeight}px"
-					></div>
+					>
+						{#if !readOnly}
+							<span class="grip" style:width="{resizeEdge(note, tickWidth)}px"></span>
+						{/if}
+					</div>
 				{/each}
 				<div bind:this={playheadLine} class="playhead"></div>
 				{#if !preview && notes[selected]}
@@ -540,6 +551,21 @@
 	}
 	.surface.editable {
 		cursor: crosshair;
+	}
+	/* Over a note: a hand moves it, and its right end (the grip) stretches it */
+	.surface.editable .note {
+		cursor: grab;
+	}
+	.grip {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		cursor: ew-resize;
+	}
+	.surface.resizing,
+	.surface.resizing * {
+		cursor: ew-resize;
 	}
 	.row {
 		position: absolute;

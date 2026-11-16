@@ -117,6 +117,8 @@ export class TranscriptionState {
 	parts = $state.raw([]);
 	/** The recording's own volume (dB), mute and solo (the parts' are their mixer channels'). */
 	recordingLane = $state({ volume: 0, mute: false, solo: false });
+	/** @type {(import('./transcriptionDraft.js').Transcription & { savedAt: string }) | null} unsaved work on this recording from last time, offered back */
+	draftOffer = $state(null);
 
 	/** @type {Float32Array | null} */
 	peaks = $state.raw(null);
@@ -198,6 +200,7 @@ export class TranscriptionState {
 		this.hits = null;
 		this.downbeat = null;
 		this.settingDownbeat = false;
+		this.draftOffer = null;
 		this.cycle.clear();
 		this.markers = {};
 		this.player.setCents(0);
@@ -218,6 +221,39 @@ export class TranscriptionState {
 		this.finding = false;
 
 		const draft = readTranscriptionDraft(recording.key);
+		if (draft && !this.#isSavedWork(draft)) this.draftOffer = draft;
+		else this.#carryOn(draft);
+	}
+
+	/** Put back the unsaved work offered (draftOffer) on this recording. */
+	restoreDraft() {
+		const draft = this.draftOffer;
+		this.draftOffer = null;
+		this.#carryOn(draft);
+	}
+
+	/** Forget the unsaved work offered on this recording, and start it afresh. */
+	discardDraft() {
+		this.draftOffer = null;
+		if (this.recording) clearTranscriptionDraft(this.recording.key);
+		this.#carryOn(null);
+	}
+
+	/**
+	 * Saved work comes back without asking: the open song is saved, unchanged,
+	 * and is the one last written from this recording.
+	 * @param {import('./transcriptionDraft.js').Transcription} draft
+	 */
+	#isSavedWork(draft) {
+		const { song, arrangement } = this.arranger;
+		return !song.isNew && !song.hasUnsavedChanges && arrangement.text === draft.written;
+	}
+
+	/**
+	 * Go on from the draft (null: none), or place beat 1 first.
+	 * @param {import('./transcriptionDraft.js').Transcription | null} draft
+	 */
+	#carryOn(draft) {
 		// Beats come back only when you placed beat 1; an older draft's were guessed
 		if (draft) {
 			this.grid = draft.downbeat === null ? null : draft.grid;

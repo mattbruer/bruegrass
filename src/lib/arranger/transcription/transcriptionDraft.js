@@ -30,12 +30,14 @@ function draftName(recordingKey) {
 
 /**
  * @param {string} recordingKey
- * @returns {Transcription | null}
+ * @returns {(Transcription & { savedAt: string }) | null} savedAt: when it was last kept
  */
 export function readTranscriptionDraft(recordingKey) {
-	const value = readDraft(draftName(recordingKey))?.value;
+	const draft = readDraft(draftName(recordingKey));
+	const value = draft?.value;
 	if (value?.version !== VERSION || !Array.isArray(value.grid?.beats)) return null;
 	return {
+		savedAt: draft.savedAt,
 		grid: value.grid,
 		chords: value.chords ?? {},
 		key: typeof value.key === 'string' ? value.key : null,

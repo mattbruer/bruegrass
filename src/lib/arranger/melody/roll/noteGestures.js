@@ -15,6 +15,15 @@ const EDGE_MAX = 24;
  */
 
 /**
+ * How much of a note's right end (pixels) resizes it.
+ * @param {NotePlace} note
+ * @param {number} tickWidth
+ */
+export function resizeEdge(note, tickWidth) {
+	return Math.min(EDGE_MAX, Math.max(EDGE_MIN, note.length * tickWidth * 0.35));
+}
+
+/**
  * Pressing a note near its right end resizes it; anywhere else moves it.
  * @param {NotePlace} note
  * @param {number} x where it was pressed, in pixels from the roll's left
@@ -22,8 +31,9 @@ const EDGE_MAX = 24;
  * @returns {'move' | 'resize'}
  */
 export function grabbedPart(note, x, tickWidth) {
-	const edge = Math.min(EDGE_MAX, Math.max(EDGE_MIN, note.length * tickWidth * 0.35));
-	return x > (note.start + note.length) * tickWidth - edge ? 'resize' : 'move';
+	return x > (note.start + note.length) * tickWidth - resizeEdge(note, tickWidth)
+		? 'resize'
+		: 'move';
 }
 
 /**
