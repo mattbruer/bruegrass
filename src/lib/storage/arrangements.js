@@ -5,7 +5,12 @@
  * the arranger edits. Pages only ever go through these functions, never
  * storage directly, so where songs live can change without touching them:
  * today this browser's localStorage (a per-device copy that works offline);
- * later a database, with this copy as an offline draft that syncs up.
+ * later a database too. Every edit is written here, on this device (it
+ * saves itself, arranger/state/autosave.svelte.js); the database is never
+ * written per edit. A sync step will mark songs changed since they were
+ * last sent and send them in one batch now and then (every 30 s or so, on
+ * switching songs, when the page is hidden), and bring down other devices'
+ * changes.
  *
  * Nothing here knows about Svelte, so it can move to a server or a sync
  * worker unchanged. Reading and writing are async already, though

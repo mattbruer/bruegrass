@@ -5,6 +5,10 @@
  *   - A moment after each change (not on every slider tick).
  *   - At once when the page is hidden or goes away: an iPhone may unload a
  *     page in the background without a word, so that's the last chance.
+ *
+ * This only ever writes to this device, never to the network. When songs
+ * have a database, syncing to it is storage's job, on its own slower
+ * schedule (see storage/arrangements.js).
  */
 import {
 	listening,
