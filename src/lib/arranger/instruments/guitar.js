@@ -58,6 +58,7 @@ const TOUCH_DB_PER_DOUBLING = -6; // above TOUCH_BASE_BPM
 const TOUCH_BASE_BPM = 120;
 const TOUCH_MIN_DB = -9;
 const TOUCH_BASS_RATIO = 0.5; // bass notes are still picked deliberately
+const TOUCH_STRUM_RATIO = 0.5; // a graze is already light, so it follows the tempo only half as much
 /* Booms are plucked, strums graze (articulation.js); a lighter touch darkens either, 10x per -12 dB */
 const PART_ARTICULATION = { bass: ARTICULATIONS.pluck, strum: ARTICULATIONS.graze };
 const TOUCH_FADE_IN_PER_DB = 0.0005; // s of fade-in per dB lighter (3 ms at -6 dB)
@@ -214,7 +215,7 @@ export function touch(bpm) {
 		bpm > TOUCH_BASE_BPM
 			? Math.max(TOUCH_MIN_DB, TOUCH_DB_PER_DOUBLING * Math.log2(bpm / TOUCH_BASE_BPM))
 			: 0;
-	const strum = picked(PART_ARTICULATION.strum, strumDb);
+	const strum = picked(PART_ARTICULATION.strum, strumDb * TOUCH_STRUM_RATIO);
 	const bass = picked(PART_ARTICULATION.bass, strumDb * TOUCH_BASS_RATIO);
 	return {
 		levelDb: { strum: strum.levelDb, bass: bass.levelDb },
