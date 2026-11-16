@@ -42,7 +42,7 @@ export function splitPlayedOut(abc, tune, line, instances, chartBars, song) {
 		(_, index) => chartBars.filter((bar) => bar.section === index).length
 	);
 	/** @type {import('./tuneBySection.js').TuneBySection} */
-	const split = { header: text.header, voices: text.voices, leads: {}, parts: {} };
+	const split = { header: text.header, voices: text.voices, leads: {}, parts: {}, pickups: {} };
 
 	text.ids.forEach((id, index) => {
 		const notes = line.notes

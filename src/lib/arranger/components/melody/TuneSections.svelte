@@ -11,6 +11,14 @@
 	import { sectionInstances } from '../../melody/sections/tuneBySection.js';
 	import { sharesItsTune } from '../../melody/sections/makeItsOwn.js';
 
+	/** How long a section's pickup can be, in quarter notes. */
+	const PICKUP_CHOICES = [
+		{ quarters: 0, name: 'None' },
+		{ quarters: 1, name: '1 beat' },
+		{ quarters: 2, name: '2 beats' },
+		{ quarters: 3, name: '3 beats' }
+	];
+
 	const arranger = useArranger();
 	const { melody, arrangement } = arranger;
 
@@ -54,6 +62,24 @@
 							use:tooltip={TIPS.melody.sections.makeItsOwn}
 							onclick={() => arranger.makeSectionItsOwn(index)}>Make it its own</button
 						>
+					{:else}
+						<label class="ml-auto flex items-center gap-1 text-xs text-ink-soft">
+							Pickup
+							<select
+								class="ui-field px-1 py-0.5"
+								value={melody.bySection.pickups[instance.source]?.quarters ?? 0}
+								use:tooltip={TIPS.melody.sections.pickup}
+								onchange={(event) =>
+									arranger.setSectionPickup(
+										instance.source,
+										Number(/** @type {HTMLSelectElement} */ (event.currentTarget).value)
+									)}
+							>
+								{#each PICKUP_CHOICES as choice (choice.quarters)}
+									<option value={choice.quarters}>{choice.name}</option>
+								{/each}
+							</select>
+						</label>
 					{/if}
 				</li>
 			{/each}

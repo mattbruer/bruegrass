@@ -8,8 +8,9 @@
 /**
  * @param {import('./tuneBySection.js').SectionInstance[]} before
  * @param {import('./tuneBySection.js').SectionInstance[]} after
- * @param {import('./tuneBySection.js').TuneBySection['parts']} parts
- * @returns {import('./tuneBySection.js').TuneBySection['parts'] | null} the parts with tunes moved, or null when nothing was renamed
+ * @template T
+ * @param {Record<string, T>} parts a section's tunes, or its pickups, by name
+ * @returns {Record<string, T> | null} the parts with tunes moved, or null when nothing was renamed
  */
 export function renamedParts(before, after, parts) {
 	if (before.length !== after.length) return null;

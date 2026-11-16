@@ -3,8 +3,8 @@
  * sections, in every voice: the chart's bars in play order line up with
  * the tune's bars one for one (bar 1 with bar 1), and each section takes
  * its bars. A section repeated with `as` takes the bars of its first time
- * through. A pickup is kept apart, before the first section: it starts the
- * song, not a section (a section played again mustn't play it again).
+ * through. A pickup at the start is the first section's pickup: wherever
+ * that section plays, it's sung in the beats before it.
  *
  * Only a tune written straight through can be cut this way: repeats and
  * endings would need playing out first. Things the piano roll can't write
@@ -43,7 +43,7 @@ export function splitTune(abc, tune, instances, barCounts) {
 
 	const total = barCounts.reduce((sum, count) => sum + count, 0);
 	/** @type {TuneBySection} */
-	const split = { header: text.header, voices: text.voices, leads: {}, parts: {} };
+	const split = { header: text.header, voices: text.voices, leads: {}, parts: {}, pickups: {} };
 	for (const [index, id] of text.ids.entries()) {
 		const { score, problem } = readScore(abc, tune, index);
 		if (problem) return refuse(`It has ${problem}.`);
@@ -79,7 +79,13 @@ export function splitScore(score, pickup, id, instances, barCounts, split) {
 			unit: score.unit,
 			pickup: isPickup
 		});
-	if (pickup) split.leads[id] = `${write(score.bars[0], true)} |`;
+	const first = instances[0]?.source;
+	if (pickup && first !== undefined) {
+		// A pickup at the start belongs to the first section: it's sung before it wherever it plays
+		const quarters = score.bars[0].length / TICKS_PER_QUARTER;
+		const voices = { ...split.pickups[first]?.voices, [id]: `${write(score.bars[0], true)} |` };
+		split.pickups[first] = { quarters, voices };
+	}
 	let at = pickup;
 	instances.forEach(({ source }, index) => {
 		const bars = score.bars.slice(at, at + barCounts[index]);

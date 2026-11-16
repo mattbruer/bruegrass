@@ -326,6 +326,8 @@ export const TIPS = Object.freeze({
 			split:
 				'Give each section of the chart its own bars of the tune, so the tune follows the chart: copy a section’s line and its tune comes too.',
 			join: 'Keep the tune as one piece of ABC again, as it plays now.',
+			pickup:
+				'The notes before this section’s first bar (“I was…”). Wherever it plays, they’re sung over the last beats of what comes before. Draw them there in the piano roll.',
 			makeItsOwn:
 				'This section plays another section’s tune. Give it its own copy of the chords and tune, to change from there.'
 		},

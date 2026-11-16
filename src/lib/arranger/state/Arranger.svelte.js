@@ -56,6 +56,9 @@ import { generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
 import { bassSongOf } from '../bass/songBassStyle.svelte.js';
 import { madeItsOwn } from '../melody/sections/makeItsOwn.js';
 import { withWordsFromChart } from '../melody/sections/wordsFromChart.js';
+import { tuneReader } from '../melody/abcjs.js';
+import { writeBar } from '../melody/roll/writeBar.js';
+import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
 
 export class Arranger {
 	arrangement = new ArrangementState();
@@ -135,8 +138,31 @@ export class Arranger {
 			spelling: this.melodyKey.spelling,
 			unit
 		};
+		const abcjs = abcjsIfLoaded();
+		const instances = sectionInstances(arrangement.text);
+		const meter = bars[0]?.meter?.split('/').map(Number) ?? [4, 4];
 		return {
-			instances: sectionInstances(arrangement.text),
+			instances,
+			pickupRests: (/** @type {number} */ quarters) => {
+				const length = quarters * TICKS_PER_QUARTER;
+				const bar = {
+					start: 0,
+					length,
+					meter: { num: meter[0], den: meter[1] },
+					from: null,
+					to: null
+				};
+				const rest = [{ start: 0, length, midis: [], tie: false, chord: null }];
+				return `${writeBar(bar, rest, { key: song.spelling, unit, pickup: true })} |`;
+			},
+			reading: abcjs
+				? {
+						parse: tuneReader(abcjs),
+						barCounts: instances.map(
+							(_, index) => bars.filter((bar) => bar.section === index).length
+						)
+					}
+				: null,
 			restsFor: (/** @type {number} */ index) =>
 				sectionRests(
 					bars.filter((bar) => bar.section === index),
@@ -233,8 +259,26 @@ export class Arranger {
 		for (const kept of [this.melody, this.bass]) {
 			const line = kept.bySection;
 			const parts = line && renamedParts(before, after, line.parts);
-			if (line && parts) kept.bySection = { ...line, parts };
+			const pickups = line && renamedParts(before, after, line.pickups);
+			if (line && (parts || pickups))
+				kept.bySection = { ...line, parts: parts ?? line.parts, pickups: pickups ?? line.pickups };
 		}
+	}
+
+	/**
+	 * How long a section's pickup is (quarters; 0: none): the notes before its
+	 * bar 1, sung over the end of whatever plays before it. A new length
+	 * starts it empty.
+	 * @param {string} source the section
+	 * @param {number} quarters
+	 */
+	setSectionPickup(source, quarters) {
+		const tune = this.melody.bySection;
+		if (!tune) return;
+		const pickups = { ...tune.pickups };
+		if (quarters > 0) pickups[source] = { quarters, voices: {} };
+		else delete pickups[source];
+		this.melody.bySection = { ...tune, pickups };
 	}
 
 	/**

@@ -6,10 +6,12 @@
  * tune yet plays rests (the melody's with the chart's chords).
  *
  * Kept as plain data (TuneBySection): the ABC header (X: to K:), the
- * harmony voices (their V: lines), each voice's pickup (the bars before
- * bar 1: it starts the song, not a section, so a section played again
- * doesn't play it again) and each section's bars in each voice, by the
- * section's name. Two texts are made from it, and either can be written back:
+ * harmony voices (their V: lines), each section's bars in each voice, by
+ * the section's name, and each section's pickup: the notes before its bar
+ * 1, which belong to it (a verse's "I was…"), so wherever it plays they're
+ * laid over the last beats of whatever comes before (sectionPickups.js),
+ * and at the song's start they're its pickup bar. (`leads`: a song's
+ * opening pickup kept apart, from before sections had their own.) Two texts are made from it, and either can be written back:
  *
  * - the tune as played (`playedTune`): each voice through every section in
  *   the chart's order, each section under a `P:` line with its name, voice
@@ -28,15 +30,20 @@
  *   header: string,
  *   voices: { id: string, line: string }[],
  *   leads: Record<string, string>,
- *   parts: Record<string, Record<string, string>>
+ *   parts: Record<string, Record<string, string>>,
+ *   pickups: Record<string, { quarters: number, voices: Record<string, string> }>
  * }} TuneBySection
  *   voices: the harmony parts (the melody is MELODY_VOICE); leads: each
- *   voice's pickup; parts: section name → voice id → its bars
+ *   voice's opening pickup; parts: section name → voice id → its bars;
+ *   pickups: section name → how long its pickup is, and its bar in each voice
  * @typedef {{ name: string, source: string }} SectionInstance
  *   a section of the chart in play order, and whose tune it plays (its own
  *   name, or the section it repeats with `as`)
  * @typedef {(index: number) => string} RestsFor
  *   the melody's bars for an instance while its tune has none: rests, with chords
+ * @typedef {{ restsFor: RestsFor, pickupRests?: (quarters: number) => string }} Fill
+ *   what's played where nothing is written: a section's rests, a pickup's rest
+ * @typedef {Record<string, Record<string, string>>} PickupBars section → voice → its pickup bar
  */
 import { sectionBlocks } from '../../chart/sectionBlocks.js';
 
@@ -77,23 +84,33 @@ export function upgradedTune(saved) {
 			typeof part === 'string' ? { [MELODY_VOICE]: part } : part
 		])
 	);
-	return { header: saved.header, voices: saved.voices ?? [], leads: saved.leads ?? {}, parts };
+	return {
+		header: saved.header,
+		voices: saved.voices ?? [],
+		leads: saved.leads ?? {},
+		parts,
+		pickups: saved.pickups ?? {}
+	};
 }
 
 /**
- * The tune as played: each voice through every section, in the chart's order.
+ * The tune as played: each voice through every section, in the chart's
+ * order, the first section's pickup (or the song's) before bar 1. Later
+ * sections' pickups aren't laid in yet: that needs the notes read
+ * (sectionPickups.js `withPickupsLaidIn`).
  * @param {TuneBySection} tune
  * @param {SectionInstance[]} instances
- * @param {RestsFor} restsFor
+ * @param {Fill} fill
  */
-export function playedTune(tune, instances, restsFor) {
+export function playedTune(tune, instances, fill) {
 	const voiced = tune.voices.length > 0;
+	const first = instances[0]?.source;
 	const voice = (/** @type {string} */ id, /** @type {string} */ line) => [
 		...(voiced ? [line] : []),
-		...nonEmpty(tune.leads[id]),
+		...nonEmpty(pickupBar(tune, id, first, fill) ?? tune.leads[id]),
 		...instances.flatMap((instance, index) => [
 			`P:${instance.name}`,
-			partOf(tune, id, instance.source, index, restsFor)
+			partOf(tune, id, instance.source, index, fill)
 		])
 	];
 	return lines([
@@ -104,27 +121,45 @@ export function playedTune(tune, instances, restsFor) {
 }
 
 /**
- * The tune with each section's tune once (its voices under it), in the
- * order they're first played.
+ * A section's pickup bar in a voice (null: it has no pickup): its own, else a rest.
+ * @param {TuneBySection} tune
+ * @param {string} voice
+ * @param {string | undefined} source
+ * @param {Fill} fill
+ * @returns {string | null}
+ */
+export function pickupBar(tune, voice, source, fill) {
+	const pickup = source === undefined ? undefined : tune.pickups[source];
+	if (!pickup?.quarters) return null;
+	return (pickup.voices[voice] ?? fill.pickupRests?.(pickup.quarters) ?? '').trim();
+}
+
+/**
+ * The tune with each section's tune once (its voices under it, each
+ * starting with the section's pickup bar if it has one), in the order
+ * they're first played.
  * @param {TuneBySection} tune
  * @param {SectionInstance[]} instances
- * @param {RestsFor} restsFor
+ * @param {Fill} fill
  */
-export function tuneBySectionText(tune, instances, restsFor) {
+export function tuneBySectionText(tune, instances, fill) {
 	const voiced = tune.voices.length > 0;
 	const ids = [MELODY_VOICE, ...tune.voices.map((voice) => voice.id)];
+	const firstHasPickup = !!tune.pickups[instances[0]?.source]?.quarters;
+	const leadOf = (/** @type {string} */ id) => (firstHasPickup ? [] : nonEmpty(tune.leads[id]));
 	const leads = voiced
 		? [
 				`V:${MELODY_VOICE}`,
-				...nonEmpty(tune.leads[MELODY_VOICE]),
-				...tune.voices.flatMap(({ id, line }) => [line, ...nonEmpty(tune.leads[id])])
+				...leadOf(MELODY_VOICE),
+				...tune.voices.flatMap(({ id, line }) => [line, ...leadOf(id)])
 			]
-		: nonEmpty(tune.leads[MELODY_VOICE]);
+		: leadOf(MELODY_VOICE);
 	const sections = firstOfEach(instances).flatMap(({ source, index }) => [
 		`P:${source}`,
 		...ids.flatMap((id) => [
 			...(voiced ? [`V:${id}`] : []),
-			partOf(tune, id, source, index, restsFor)
+			...nonEmpty(pickupBar(tune, id, source, fill) ?? ''),
+			partOf(tune, id, source, index, fill)
 		])
 	]);
 	return lines([tune.header.trimEnd(), ...leads, ...sections]);
@@ -136,46 +171,91 @@ export function tuneBySectionText(tune, instances, restsFor) {
  * the section it repeats). Null when it can't be read back that way (a
  * voice without every section, as when an edit adds or takes away a
  * section's line), so the caller keeps it as one tune.
- * @param {string} text
+ * @param {string} text with later sections' pickups lifted out (sectionPickups.js)
  * @param {TuneBySection} tune what it was made from
  * @param {SectionInstance[]} instances
- * @param {RestsFor} restsFor
+ * @param {Fill} fill
+ * @param {PickupBars} [lifted] the pickups lifted out of it
  * @returns {TuneBySection | null}
  */
-export function fromPlayedTune(text, tune, instances, restsFor) {
+export function fromPlayedTune(text, tune, instances, fill, lifted = {}) {
 	const read = readTuneText(text);
 	if (!read) return null;
 	const parts = copyParts(tune.parts);
+	const pickups = copyPickups(tune.pickups);
 	for (const id of read.ids) {
 		const sections = read.sections.filter((section) => section.voice === id);
 		if (sections.length !== instances.length) return null;
 		sections.forEach(({ body }, index) => {
 			const { source } = instances[index];
-			if (body !== partOf(tune, id, source, index, restsFor)) setPart(parts, source, id, body);
+			if (body !== partOf(tune, id, source, index, fill)) setPart(parts, source, id, body);
 		});
 	}
-	return { header: read.header, voices: read.voices, leads: read.leads, parts };
+	const first = instances[0]?.source;
+	const opening = first !== undefined && !!tune.pickups[first]?.quarters;
+	const bars = { ...lifted };
+	if (opening) bars[first] = { ...read.leads, ...bars[first] };
+	for (const [source, voices] of Object.entries(bars))
+		for (const [id, bar] of Object.entries(voices)) setPickup(pickups, tune, source, id, bar, fill);
+	return {
+		header: read.header,
+		voices: read.voices,
+		leads: opening ? {} : read.leads,
+		parts,
+		pickups
+	};
 }
 
 /**
  * The tune by section (the ABC view), written back: each section's bars in
- * each voice are that section's tune. A name the chart doesn't have yet is
- * kept for when it does.
+ * each voice are that section's tune (its first bar its pickup, when it has
+ * one). A name the chart doesn't have yet is kept for when it does.
  * @param {string} text
  * @param {TuneBySection} tune
  * @param {SectionInstance[]} instances
- * @param {RestsFor} restsFor
+ * @param {Fill} fill
  * @returns {TuneBySection | null} null when it has no `P:` lines
  */
-export function fromTuneBySectionText(text, tune, instances, restsFor) {
+export function fromTuneBySectionText(text, tune, instances, fill) {
 	const read = readTuneText(text);
 	if (!read || read.sections.length === 0) return null;
 	const parts = copyParts(tune.parts);
+	const pickups = copyPickups(tune.pickups);
 	for (const { name, voice, body } of read.sections) {
 		const index = instances.findIndex((instance) => instance.source === name);
-		if (body !== partOf(tune, voice, name, index, restsFor)) setPart(parts, name, voice, body);
+		const { pickup, rest } = tune.pickups[name]?.quarters
+			? splitFirstBar(body)
+			: { pickup: null, rest: body };
+		if (pickup !== null) setPickup(pickups, tune, name, voice, pickup, fill);
+		if (rest !== partOf(tune, voice, name, index, fill)) setPart(parts, name, voice, rest);
 	}
-	return { header: read.header, voices: read.voices, leads: read.leads, parts };
+	return { header: read.header, voices: read.voices, leads: read.leads, parts, pickups };
+}
+
+/**
+ * A section's bars split after the first bar line: its pickup bar, and the rest.
+ * @param {string} body
+ */
+function splitFirstBar(body) {
+	const at = body.indexOf('|');
+	if (at === -1) return { pickup: null, rest: body };
+	return { pickup: body.slice(0, at + 1).trim(), rest: body.slice(at + 1).trim() };
+}
+
+/**
+ * Keep a pickup bar in a voice, unless it's what plays anyway (a rest).
+ * @param {TuneBySection['pickups']} pickups
+ * @param {TuneBySection} tune
+ * @param {string} source
+ * @param {string} voice
+ * @param {string} bar
+ * @param {Fill} fill
+ */
+function setPickup(pickups, tune, source, voice, bar, fill) {
+	const pickup = pickups[source];
+	if (!pickup?.quarters) return;
+	if (bar.trim() === pickupBar(tune, voice, source, fill)) return;
+	pickups[source] = { ...pickup, voices: { ...pickup.voices, [voice]: bar.trim() } };
 }
 
 /**
@@ -256,13 +336,13 @@ export function readTuneText(text) {
  * @param {string} voice
  * @param {string} source
  * @param {number} index an instance playing it (-1: none)
- * @param {RestsFor} restsFor
+ * @param {Fill} fill
  */
-function partOf(tune, voice, source, index, restsFor) {
+function partOf(tune, voice, source, index, fill) {
 	const own = tune.parts[source]?.[voice];
 	if (own !== undefined) return own.trim();
 	if (index < 0) return '';
-	const rests = restsFor(index).trim();
+	const rests = fill.restsFor(index).trim();
 	return voice === MELODY_VOICE ? rests : rests.replace(/"[^"]*"/g, '');
 }
 
@@ -274,6 +354,16 @@ function partOf(tune, voice, source, index, restsFor) {
  */
 function setPart(parts, section, voice, body) {
 	parts[section] = { ...parts[section], [voice]: body };
+}
+
+/** @param {TuneBySection['pickups']} pickups */
+function copyPickups(pickups) {
+	return Object.fromEntries(
+		Object.entries(pickups).map(([name, pickup]) => [
+			name,
+			{ ...pickup, voices: { ...pickup.voices } }
+		])
+	);
 }
 
 /** @param {TuneBySection['parts']} parts */

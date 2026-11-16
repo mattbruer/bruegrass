@@ -50,7 +50,10 @@ export function madeItsOwn(chart, tune, index) {
 
 	const parts = { ...tune.parts };
 	if (source in tune.parts) parts[ownName] = { ...tune.parts[source] };
-	return { chart: lines.join('\n'), tune: { ...tune, parts }, name: ownName };
+	const pickups = { ...tune.pickups };
+	const pickup = tune.pickups?.[source];
+	if (pickup) pickups[ownName] = { ...pickup, voices: { ...pickup.voices } };
+	return { chart: lines.join('\n'), tune: { ...tune, parts, pickups }, name: ownName };
 }
 
 /**

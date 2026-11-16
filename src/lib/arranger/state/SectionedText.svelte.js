@@ -14,15 +14,24 @@ import {
 	tuneBySectionText,
 	upgradedTune
 } from '../melody/sections/tuneBySection.js';
+import {
+	hasLaterPickups,
+	withPickupsLaidIn,
+	withPickupsLifted
+} from '../melody/sections/sectionPickups.js';
 
 /**
  * @typedef {import('../melody/sections/tuneBySection.js').TuneBySection} TuneBySection
  * @typedef {{
  *   instances: import('../melody/sections/tuneBySection.js').SectionInstance[],
  *   restsFor: import('../melody/sections/tuneBySection.js').RestsFor,
+ *   pickupRests?: (quarters: number) => string,
+ *   reading?: import('../melody/sections/sectionPickups.js').Reading | null,
  *   withWords?: (abc: string) => string
  * }} Layout the chart's sections in play order, what a section with nothing
- *   of its own plays, and the music as played with the chart's words under it
+ *   of its own plays (and an empty pickup), abcjs and the chart's bars to
+ *   lay pickups in with (none: no section pickups), and the music as played
+ *   with the chart's words under it
  * @typedef {(bySection: TuneBySection) => Layout} LayoutOf
  */
 
@@ -34,11 +43,18 @@ export class SectionedText {
 	/** @type {LayoutOf} */
 	#layoutOf;
 	#layout = $derived(this.bySection ? this.#layoutOf(this.bySection) : null);
-	#played = $derived(
+	/** As played, before later sections' pickups are laid in. */
+	#base = $derived(
 		this.bySection && this.#layout
-			? playedTune(this.bySection, this.#layout.instances, this.#layout.restsFor)
+			? playedTune(this.bySection, this.#layout.instances, this.#layout)
 			: this.#whole
 	);
+	#played = $derived.by(() => {
+		const layout = this.#layout;
+		if (!this.bySection || !layout?.reading) return this.#base;
+		if (!hasLaterPickups(this.bySection, layout.instances)) return this.#base;
+		return withPickupsLaidIn(this.#base, this.bySection, layout.instances, layout, layout.reading);
+	});
 	#heard = $derived(this.#layout?.withWords ? this.#layout.withWords(this.#played) : this.#played);
 
 	/**
@@ -60,15 +76,23 @@ export class SectionedText {
 			this.#whole = abc;
 			return;
 		}
-		const { instances, restsFor } = this.#layout;
-		this.#keep(fromPlayedTune(abc, this.bySection, instances, restsFor), abc);
+		const layout = this.#layout;
+		const { instances } = layout;
+		if (layout.reading && hasLaterPickups(this.bySection, instances)) {
+			const lifted = withPickupsLifted(abc, this.#base, this.bySection, instances, layout.reading);
+			this.#keep(
+				lifted && fromPlayedTune(lifted.text, this.bySection, instances, layout, lifted.lifted),
+				abc
+			);
+			return;
+		}
+		this.#keep(fromPlayedTune(abc, this.bySection, instances, layout), abc);
 	}
 
 	/** As the ABC view shows it: whole, or each section's music once. */
 	get view() {
 		if (!this.bySection || !this.#layout) return this.#whole;
-		const { instances, restsFor } = this.#layout;
-		return tuneBySectionText(this.bySection, instances, restsFor);
+		return tuneBySectionText(this.bySection, this.#layout.instances, this.#layout);
 	}
 
 	set view(text) {
@@ -76,8 +100,10 @@ export class SectionedText {
 			this.#whole = text;
 			return;
 		}
-		const { instances, restsFor } = this.#layout;
-		this.#keep(fromTuneBySectionText(text, this.bySection, instances, restsFor), text);
+		this.#keep(
+			fromTuneBySectionText(text, this.bySection, this.#layout.instances, this.#layout),
+			text
+		);
 	}
 
 	/**
@@ -104,9 +130,9 @@ export class SectionedText {
 	 * @returns {boolean} whether it could be read that way
 	 */
 	splitAsPlayed(empty) {
-		const { instances, restsFor } = this.#layoutOf(empty);
+		const layout = this.#layoutOf(empty);
 		const read = this.#whole.trim()
-			? fromPlayedTune(this.#whole, empty, instances, restsFor)
+			? fromPlayedTune(this.#whole, empty, layout.instances, layout)
 			: empty;
 		if (read) this.bySection = read;
 		return !!read;

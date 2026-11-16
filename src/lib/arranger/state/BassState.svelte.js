@@ -65,7 +65,7 @@ export class BassState {
 	 * @param {string} header the band's own line's header
 	 */
 	split(header) {
-		return this.#line.splitAsPlayed({ header, voices: [], leads: {}, parts: {} });
+		return this.#line.splitAsPlayed({ header, voices: [], leads: {}, parts: {}, pickups: {} });
 	}
 
 	/** Keep the line whole again, as it plays now. */
