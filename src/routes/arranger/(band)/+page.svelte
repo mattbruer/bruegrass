@@ -14,7 +14,6 @@
 	import PlayerCard from '$lib/arranger/components/player/PlayerCard.svelte';
 	import SheetMusic from '$lib/arranger/components/melody/SheetMusic.svelte';
 	import ChartLink from '$lib/arranger/components/lyricChart/ChartLink.svelte';
-	import TranscribeLink from '$lib/arranger/components/transcription/TranscribeLink.svelte';
 	import TracksLink from '$lib/arranger/components/tracks/TracksLink.svelte';
 	import { shownMusicView } from '$lib/arranger/components/page/musicView.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
@@ -33,7 +32,6 @@
 	<div class="mb-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
 		<h1 class="text-2xl font-bold sm:text-3xl">Bluegrass Arranger</h1>
 		<div class="flex gap-2">
-			<TranscribeLink />
 			<TracksLink />
 			<ChartLink />
 		</div>

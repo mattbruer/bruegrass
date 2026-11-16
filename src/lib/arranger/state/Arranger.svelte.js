@@ -54,7 +54,6 @@ import { readTuneText, MELODY_VOICE } from '../melody/sections/tuneBySection.js'
 import { renamedParts } from '../melody/sections/renamedParts.js';
 import { generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
 import { bassSongOf } from '../bass/songBassStyle.svelte.js';
-import { madeItsOwn } from '../melody/sections/makeItsOwn.js';
 import { withWordsFromChart } from '../melody/sections/wordsFromChart.js';
 import { tuneReader } from '../melody/abcjs.js';
 import { writeBar } from '../melody/roll/writeBar.js';
@@ -206,7 +205,8 @@ export class Arranger {
 	async splitTuneIntoSections() {
 		await abcjsReady();
 		const { melody, arrangement } = this;
-		if (melody.bySection) return '';
+		// A transcription's tune follows the recording bar for bar: arranging it is a new song
+		if (melody.bySection || this.song.recording) return '';
 		if (!arrangement.isPlayable) return 'Fix the chart first.';
 		if (!melody.tune) return 'There is no tune to split yet.';
 		const instances = sectionInstances(arrangement.text);
@@ -244,12 +244,6 @@ export class Arranger {
 		this.bass.split(own.header);
 	}
 
-	/** Keep the tune (and the bass line) whole again, as they play now. */
-	joinTune() {
-		this.melody.join();
-		if (this.bass.bySection) this.bass.join();
-	}
-
 	/**
 	 * A section renamed in the chart keeps its tune and bass line.
 	 * @param {import('../melody/sections/tuneBySection.js').SectionInstance[]} before the chart's sections before the edit
@@ -263,39 +257,6 @@ export class Arranger {
 			if (line && (parts || pickups))
 				kept.bySection = { ...line, parts: parts ?? line.parts, pickups: pickups ?? line.pickups };
 		}
-	}
-
-	/**
-	 * How long a section's pickup is (quarters; 0: none): the notes before its
-	 * bar 1, sung over the end of whatever plays before it. A new length
-	 * starts it empty.
-	 * @param {string} source the section
-	 * @param {number} quarters
-	 */
-	setSectionPickup(source, quarters) {
-		const tune = this.melody.bySection;
-		if (!tune) return;
-		const pickups = { ...tune.pickups };
-		if (quarters > 0) pickups[source] = { quarters, voices: {} };
-		else delete pickups[source];
-		this.melody.bySection = { ...tune, pickups };
-	}
-
-	/**
-	 * A section playing another's tune gets its own copy of that section's
-	 * chords and tune, to change from there.
-	 * @param {number} index the section, in the chart's order
-	 */
-	makeSectionItsOwn(index) {
-		const { melody, arrangement } = this;
-		if (!melody.bySection) return;
-		const chart = arrangement.text;
-		const made = madeItsOwn(chart, melody.bySection, index);
-		if (!made) return;
-		const bass = this.bass.bySection && madeItsOwn(chart, this.bass.bySection, index);
-		arrangement.text = made.chart;
-		melody.bySection = made.tune;
-		if (bass) this.bass.bySection = bass.tune;
 	}
 
 	/** What the melody's words and harmony parts are written from. */

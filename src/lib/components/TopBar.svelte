@@ -23,7 +23,8 @@
 
 	const PAGES = /** @type {const} */ ([
 		{ path: '/', name: 'Songs' },
-		{ path: '/arranger', name: 'Arranger' }
+		{ path: '/arranger', name: 'Arranger' },
+		{ path: '/arranger/transcribe', name: 'Transcribe' }
 	]);
 
 	/**
@@ -43,7 +44,13 @@
 	 */
 	function isCurrentSection(path) {
 		if (path === '/') return page.url.pathname === '/';
-		return page.url.pathname.startsWith(path);
+		const here = page.url.pathname;
+		const within = (/** @type {string} */ each) => here.startsWith(each);
+		// The most specific section wins: Transcribe, not the Arranger it's inside
+		const longest = PAGES.filter((each) => each.path !== '/' && within(each.path)).sort(
+			(a, b) => b.path.length - a.path.length
+		)[0];
+		return longest ? longest.path === path : within(path);
 	}
 </script>
 

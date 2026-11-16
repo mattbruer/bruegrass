@@ -8,7 +8,6 @@
 	import MelodyWarnings from './MelodyWarnings.svelte';
 	import ChordConversion from './ChordConversion.svelte';
 	import HarmonyParts from './HarmonyParts.svelte';
-	import TuneSections from './TuneSections.svelte';
 	import MelodyDrawing from '../pianoRoll/MelodyDrawing.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -48,7 +47,6 @@
 	<div class="mb-3">
 		<TabSwitch tabs={VIEWS} bind:value={view} tips={TIPS.melody.views} label="Melody" />
 	</div>
-	<TuneSections />
 
 	{#if view === 'draw'}
 		<p class="mb-2 text-sm text-ink-soft">

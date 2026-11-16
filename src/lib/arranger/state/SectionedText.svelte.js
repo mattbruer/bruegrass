@@ -116,13 +116,6 @@ export class SectionedText {
 		this.#whole = abc;
 	}
 
-	/** Keep it whole again, as it plays now. */
-	join() {
-		const played = this.#heard;
-		this.bySection = null;
-		this.#whole = played;
-	}
-
 	/**
 	 * Keep it by section, reading what it plays now: each section's bars that
 	 * differ from what the section would play with nothing of its own.

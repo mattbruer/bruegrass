@@ -13,7 +13,9 @@ export const TIPS = Object.freeze({
 		home: 'Back to the song list.',
 		pages: {
 			'/': 'Your recorded songs: play one, or play them all.',
-			'/arranger': 'Write a chord chart and hear a bluegrass band play it.'
+			'/arranger': 'Write a chord chart and hear a bluegrass band play it.',
+			'/arranger/transcribe':
+				'Write a song down from a recording: its bars are found for you, then you write the chords and parts on them.'
 		},
 		settings: 'Settings: tips, the music keypad, the bass line, colours and shape.',
 		storage: 'What the app keeps on this device: see it, and delete what you don’t want.',
@@ -179,8 +181,8 @@ export const TIPS = Object.freeze({
 	},
 
 	transcription: {
-		open: 'Write a song down from a recording: its bars are found for you, then you write the chords and tune on them.',
-		back: 'Back to the arranger. The song comes with you.',
+		createArrangement:
+			'Make a new song in the arranger from the sections you choose, with their chords, words and parts, to rearrange there.',
 		song: 'Pick a recording to transcribe. It becomes the open song’s recording.',
 		file: 'Open a recording from this device: an MP3, WAV or any song file.',
 		startSong:
@@ -322,15 +324,6 @@ export const TIPS = Object.freeze({
 	},
 
 	melody: {
-		sections: {
-			split:
-				'Give each section of the chart its own bars of the tune, so the tune follows the chart: copy a section’s line and its tune comes too.',
-			join: 'Keep the tune as one piece of ABC again, as it plays now.',
-			pickup:
-				'The notes before this section’s first bar (“I was…”). Wherever it plays, they’re sung over the last beats of what comes before. Draw them there in the piano roll.',
-			makeItsOwn:
-				'This section plays another section’s tune. Give it its own copy of the chords and tune, to change from there.'
-		},
 		tabFret:
 			'Where this note is played: the fret, on its string. Pick it, then type a fret to change the note, or ↑ ↓ for another string.',
 		tabFretField:

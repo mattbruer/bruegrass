@@ -68,13 +68,6 @@ export class BassState {
 		return this.#line.splitAsPlayed({ header, voices: [], leads: {}, parts: {}, pickups: {} });
 	}
 
-	/** Keep the line whole again, as it plays now. */
-	join() {
-		const played = this.notation;
-		this.#line.bySection = null;
-		this.#line.text = played;
-	}
-
 	/** Go back to the band's own bass line, written from the chart. */
 	rewriteFromChart() {
 		this.notation = '';

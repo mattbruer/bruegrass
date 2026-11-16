@@ -15,7 +15,6 @@
 	 * goes back to the start, comma and full stop a bar back or on (Logic's).
 	 */
 	import { onDestroy, untrack } from 'svelte';
-	import { resolve } from '$app/paths';
 	import { useArranger } from '$lib/arranger/state/context.js';
 	import { soloSafeWhile } from '$lib/arranger/mixer/mixer.svelte.js';
 	import { BAND_CHANNELS } from '$lib/arranger/transcription/TranscribeBand.svelte.js';
@@ -27,6 +26,7 @@
 	import AnalysingRecording from '$lib/arranger/components/transcription/AnalysingRecording.svelte';
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
+	import CreateArrangement from '$lib/arranger/components/transcription/CreateArrangement.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -118,15 +118,11 @@
 <svelte:window onkeydown={onKeydown} />
 
 <main class="ui-page-width flex flex-col gap-4 pt-6 pb-16">
-	<div class="flex flex-wrap items-center gap-3">
-		<a
-			href={resolve('/arranger')}
-			class="ui-button px-4 py-2 text-sm"
-			use:tooltip={TIPS.transcription.back}
-		>
-			‹ Arranger
-		</a>
+	<div class="flex flex-wrap items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold">Transcribe</h1>
+		{#if transcription.grid && transcription.linked}
+			<CreateArrangement />
+		{/if}
 	</div>
 
 	<SongBar />

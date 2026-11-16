@@ -58,11 +58,6 @@ export class MelodyState {
 		this.#tune.load(abc, bySection);
 	}
 
-	/** Keep the tune whole again, as it plays now. */
-	join() {
-		this.#tune.join();
-	}
-
 	/** How the sheet music is drawn: as it sounds, or in the key of the guitar's shapes (for reading with a capo). */
 	sheetView = $state(/** @type {'concert' | 'shapes'} */ ('concert'));
 
