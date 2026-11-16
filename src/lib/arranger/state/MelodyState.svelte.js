@@ -28,8 +28,10 @@ import { unitOfHeader } from '../melody/sections/splitTune.js';
  * @typedef {import('../melody/sections/tuneBySection.js').TuneBySection} TuneBySection
  * @typedef {(unit: number) => {
  *   instances: import('../melody/sections/tuneBySection.js').SectionInstance[],
- *   restsFor: import('../melody/sections/tuneBySection.js').RestsFor
- * }} TuneLayout the chart's sections in play order, and what a section with no tune plays
+ *   restsFor: import('../melody/sections/tuneBySection.js').RestsFor,
+ *   withWords: (abc: string) => string
+ * }} TuneLayout the chart's sections in play order, what a section with no
+ *   tune plays, and the tune as played with the chart's words under it
  */
 
 export class MelodyState {
@@ -43,9 +45,13 @@ export class MelodyState {
 			? playedTune(this.bySection, this.#layout.instances, this.#layout.restsFor)
 			: this.#whole
 	);
+	/** The tune as played, with the chart's words under it when kept by section. */
+	#heard = $derived(
+		this.bySection && this.#layout ? this.#layout.withWords(this.#played) : this.#played
+	);
 
 	/** @param {TuneLayout} layoutOf */
-	constructor(layoutOf = () => ({ instances: [], restsFor: () => '' })) {
+	constructor(layoutOf = () => ({ instances: [], restsFor: () => '', withWords: (abc) => abc })) {
 		this.#layoutOf = layoutOf;
 	}
 
@@ -54,7 +60,7 @@ export class MelodyState {
 
 	/** The tune in ABC notation, as played. */
 	get notation() {
-		return this.#played;
+		return this.#heard;
 	}
 
 	set notation(abc) {
@@ -94,7 +100,7 @@ export class MelodyState {
 
 	/** Keep the tune whole again, as it plays now. */
 	join() {
-		const played = this.#played;
+		const played = this.#heard;
 		this.bySection = null;
 		this.#whole = played;
 	}

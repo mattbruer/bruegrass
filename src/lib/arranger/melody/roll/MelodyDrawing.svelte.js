@@ -221,6 +221,8 @@ export class MelodyDrawing {
 			newTune,
 			abcjs: abcjsIfLoaded()
 		});
+		// A tune drawn from the chart starts kept by section
+		if (newTune) this.arranger.splitTuneIntoSections();
 	}
 
 	/**

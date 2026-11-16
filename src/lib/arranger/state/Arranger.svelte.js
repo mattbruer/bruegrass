@@ -27,7 +27,7 @@ import { SongState } from './SongState.svelte.js';
 import { RecordingState } from './RecordingState.svelte.js';
 import { ReceiveState } from './ReceiveState.svelte.js';
 import { TranscriptionState } from '../transcription/TranscriptionState.svelte.js';
-import { abcjsReady } from './abcjsLoaded.svelte.js';
+import { abcjsIfLoaded, abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc } from '../melody/abcChords.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
 import { respellBass } from '../bass/respellBass.js';
@@ -50,6 +50,7 @@ import { sectionInstances } from '../melody/sections/tuneBySection.js';
 import { sectionRests } from '../melody/sections/sectionRests.js';
 import { splitTune } from '../melody/sections/splitTune.js';
 import { madeItsOwn } from '../melody/sections/makeItsOwn.js';
+import { withWordsFromChart } from '../melody/sections/wordsFromChart.js';
 
 export class Arranger {
 	arrangement = new ArrangementState();
@@ -135,6 +136,13 @@ export class Arranger {
 				sectionRests(
 					bars.filter((bar) => bar.section === index),
 					song
+				),
+			withWords: (/** @type {string} */ abc) =>
+				withWordsFromChart(
+					abc,
+					abcjsIfLoaded(),
+					arrangement.readError ? [] : arrangement.sections,
+					readLyrics(arrangement.text)
 				)
 		};
 	}
@@ -221,6 +229,7 @@ export class Arranger {
 			keyText: this.melodyKey.keyText,
 			lineStarts
 		});
+		this.splitTuneIntoSections();
 	}
 
 	/** Write the arrangement's chords (at concert pitch) into a melody that has none. */

@@ -49,7 +49,7 @@ export function madeItsOwn(chart, tune, index) {
 	lines[lineIndex] = `"${ownName}"${written.content}`;
 
 	const parts = { ...tune.parts };
-	if (source in tune.parts) parts[ownName] = tune.parts[source];
+	if (source in tune.parts) parts[ownName] = { ...tune.parts[source] };
 	return { chart: lines.join('\n'), tune: { ...tune, parts }, name: ownName };
 }
 
