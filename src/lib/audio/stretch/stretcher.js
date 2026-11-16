@@ -66,6 +66,7 @@ export function createStretcher({
 	let sourcePosition = 0;
 	// Where a jump asked to start; frames begin there on the next render
 	let startAt = 0;
+	let startSeconds = 0;
 	let fresh = true;
 	// Where in the source each recent frame was taken, to know what's being heard
 	const recentCentres = new Float64Array(OVERLAP / 2 + 1);
@@ -191,6 +192,7 @@ export function createStretcher({
 		 * @param {number} seconds
 		 */
 		seek(seconds) {
+			startSeconds = seconds;
 			startAt = Math.round(seconds * sampleRate);
 			pendingLeft.fill(0);
 			pendingRight.fill(0);
@@ -203,6 +205,8 @@ export function createStretcher({
 
 		/** Where in the source (seconds) the sample about to be read comes from. */
 		get time() {
+			// Until the jump is rendered, exactly where it asked to go (the first sample heard)
+			if (fresh) return startSeconds;
 			return (readySource + readyIndex * readySpeed) / sampleRate;
 		},
 
