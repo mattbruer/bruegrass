@@ -39,7 +39,7 @@ import {
 import { ANALYSIS_VERSION, analyseRecording } from './beats/analyseRecording.js';
 import { readRecordingAnalysis, writeRecordingAnalysis } from '$lib/storage/recordingAnalyses.js';
 import { detectBeats } from './beats/detectBeats.js';
-import { snapToHit } from './beats/snapToHit.js';
+import { snapToHit, tapToHit } from './beats/snapToHit.js';
 import {
 	clearTranscriptionDraft,
 	readTranscriptionDraft,
@@ -86,6 +86,8 @@ import { pickupLength, withPickupLength } from '../melody/roll/pickupBar.js';
 export const PEAKS_PER_SECOND = 200;
 /** Onset strength (in its own spread) drawn full height. */
 const HIT_SCALE = 6;
+/** Hearing beat 1 starts this long before it, so the count leads into it. */
+const LISTEN_BEFORE_SECONDS = 2.5;
 /** The recording's and the band's lane ids among the lanes that can be muted and soloed. */
 const RECORDING_LANE = 'recording';
 const BAND_LANE = 'band';
@@ -140,6 +142,8 @@ export class TranscriptionState {
 	downbeat = $state(/** @type {number | null} */ (null));
 	/** Placing beat 1 comes before finding the beats. */
 	settingDownbeat = $state(false);
+	/** Beat 1 was just tapped: hearing it with the count, to say whether it's right. */
+	checkingDownbeat = $state(false);
 	/** Naming the sections comes right after: only named sections can go to the arranger. */
 	namingSections = $state(false);
 	/** Choosing another recording, with one open (the setup's first step again). */
@@ -285,6 +289,7 @@ export class TranscriptionState {
 		this.hits = null;
 		this.downbeat = null;
 		this.settingDownbeat = false;
+		this.checkingDownbeat = false;
 		this.namingSections = false;
 		this.pickingRecording = false;
 		this.askingPartAt = null;
@@ -378,23 +383,48 @@ export class TranscriptionState {
 		return this.recording ? { key: this.recording.key, name: this.recording.name } : null;
 	}
 
-	/** Beat 1 of bar 1 is where the playhead is (snapped to the hit nearest). */
-	setDownbeatHere() {
+	/**
+	 * Beat 1 is the hit just tapped (while it plays): the beats and bars are
+	 * found through it at once, to check by ear (listenToDownbeat).
+	 */
+	tapDownbeat() {
 		if (!this.#analysis) return;
-		this.downbeat = snapToHit(this.player.time, this.#analysis);
+		this.player.pause();
+		this.downbeat = tapToHit(this.player.time, this.#analysis);
+		this.#findBeatsFromDownbeat();
+		this.checkingDownbeat = true;
 	}
 
-	/** Find the beats and bars through the placed beat 1, and start the song on them. */
-	findBeatsFromDownbeat() {
+	/** Hear beat 1 with the count: from a little before it, a click on every beat, higher on ONE. */
+	listenToDownbeat() {
 		if (this.downbeat === null) return;
-		this.settingDownbeat = false;
+		this.clicksOn = true;
+		this.player.seek(Math.max(0, this.downbeat - LISTEN_BEFORE_SECONDS));
+		this.player.play();
+	}
+
+	/** Not right: tap again. */
+	tapDownbeatAgain() {
 		this.player.pause();
+		this.checkingDownbeat = false;
+	}
+
+	/** Beat 1 sounds right: on to marking the parts. */
+	downbeatSoundsRight() {
+		this.player.pause();
+		this.checkingDownbeat = false;
+		this.settingDownbeat = false;
+		if (!this.linked) this.#openSongOrStart();
+		this.namingSections = true;
+	}
+
+	/** The beats and bars found through the placed beat 1, and the chart written on them. */
+	#findBeatsFromDownbeat() {
+		if (this.downbeat === null) return;
 		this.#findBeats();
 		if (this.recording) clearTranscriptionDraft(this.recording.key);
 		this.#writeChart();
 		this.#keepDraft();
-		if (!this.linked) this.#openSongOrStart();
-		this.namingSections = true;
 	}
 
 	/** Go to naming the sections (again). */
@@ -477,6 +507,8 @@ export class TranscriptionState {
 
 	/** Leave placing beat 1 without finding the beats again. */
 	cancelSettingDownbeat() {
+		this.player.pause();
+		this.checkingDownbeat = false;
 		this.settingDownbeat = false;
 	}
 

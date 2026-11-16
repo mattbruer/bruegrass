@@ -8,8 +8,7 @@
 	import { SETUP_STEPS } from '../../transcription/setupSteps.js';
 	import RecordingChoice from './RecordingChoice.svelte';
 	import AnalysingRecording from './AnalysingRecording.svelte';
-	import TranscribeControls from './TranscribeControls.svelte';
-	import DownbeatPicker from './DownbeatPicker.svelte';
+	import DownbeatStep from './DownbeatStep.svelte';
 	import TranscriptionGrid from './TranscriptionGrid.svelte';
 	import PartsStep from './PartsStep.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -65,8 +64,7 @@
 		{:else if transcription.finding}
 			<AnalysingRecording />
 		{:else}
-			<TranscribeControls {transcription} />
-			<DownbeatPicker {transcription} />
+			<DownbeatStep {transcription} />
 		{/if}
 	{:else if step === 'parts'}
 		<PartsStep {transcription} />
