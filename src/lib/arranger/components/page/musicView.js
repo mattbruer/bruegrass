@@ -7,7 +7,7 @@
 
 export const MUSIC_VIEWS = /** @type {const} */ ([
 	{ id: 'chords', name: 'Chords' },
-	{ id: 'sheet', name: 'Sheet music' }
+	{ id: 'sheet', name: 'Melody' }
 ]);
 
 /**

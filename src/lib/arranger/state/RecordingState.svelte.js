@@ -99,8 +99,9 @@ export class RecordingState {
 
 	async record() {
 		const { player, song, arrangement, loop } = this.#arranger;
-		if (this.isRecording || !song.savedId) return;
-		const songId = song.savedId;
+		if (this.isRecording) return;
+		await song.keepAsYourOwn(); // a take belongs to a song: a template becomes yours here
+		const songId = /** @type {string} */ (song.savedId);
 		const trackId = this.trackId;
 		this.problem = '';
 		this.status = 'starting';
@@ -222,7 +223,7 @@ export class RecordingState {
 	 */
 	async addFromFile(file) {
 		const { song, arrangement } = this.#arranger;
-		if (!song.savedId) return;
+		await song.keepAsYourOwn();
 		this.problem = '';
 		try {
 			const Tone = await import('tone');

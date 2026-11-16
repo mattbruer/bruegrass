@@ -16,6 +16,7 @@
 	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
 	import TuningControl from './TuningControl.svelte';
 	import { songKeyChoices } from '../../chart/keyChoices.js';
+	import SongKeyOptions from '../chart/SongKeyOptions.svelte';
 	import { TIME_SIGNATURES } from '../../transcription/timeSignatures.js';
 	import { MIN_SPEED, MAX_SPEED, SPEED_STEP } from '$lib/slowDowner/speed.js';
 	import { SOUNDS, soundById } from '$lib/slowDowner/sounds.js';
@@ -155,9 +156,7 @@
 				use:tooltip={TIPS.transcription.key}
 			>
 				<option value={NOT_NAMED}>Not known yet</option>
-				{#each keyChoices as choice (choice.value)}
-					<option value={choice.value}>{choice.name}</option>
-				{/each}
+				<SongKeyOptions choices={keyChoices} />
 			</select>
 		</label>
 	{/if}

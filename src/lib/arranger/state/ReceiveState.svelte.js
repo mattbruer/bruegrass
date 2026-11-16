@@ -10,7 +10,6 @@ import { hasSharedSong, songFromLink } from '../share/shareLink.js';
 import { readSongFile } from '../share/songFile.js';
 import { receiveSong, yourCopyOf } from '../share/receiveSong.js';
 import { ShareProblem } from '../share/songPackage.js';
-import { forgetSongMix } from './songMixMemory.svelte.js';
 
 /**
  * @typedef {{
@@ -58,7 +57,7 @@ export class ReceiveState {
 	}
 
 	/**
-	 * Save it among your songs and open it. (Ask about unsaved changes first.)
+	 * Save it among your songs and open it.
 	 * @param {{ asNewSong: boolean }} options
 	 */
 	async accept({ asNewSong }) {
@@ -69,7 +68,6 @@ export class ReceiveState {
 			const received = await receiveSong(this.offer.songPackage, this.offer.audioFiles, {
 				asNewSong
 			});
-			forgetSongMix(received.songId); // the mix that came with it, not one remembered here
 			await song.open(received.songId);
 			await song.refreshSavedSongs();
 			await recording.refreshTakes();

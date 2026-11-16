@@ -3,7 +3,7 @@
 	 * Which recording to transcribe: one of the app's songs, or a file from this
 	 * device (an MP3, WAV or anything the browser plays).
 	 */
-	import { songs } from '$lib/playlist/songs.js';
+	import { BUNDLED_RECORDINGS, bundledRecording } from '../../transcription/bundledRecordings.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -15,15 +15,13 @@
 	 */
 	let { current, onChoose } = $props();
 
-	const tracks = songs.toSorted((a, b) => a.title.localeCompare(b.title));
-
 	/** @type {HTMLInputElement | undefined} */
 	let fileInput = $state();
 
-	/** @param {string} src */
-	function chooseSong(src) {
-		const song = tracks.find((track) => track.src === src);
-		if (song) onChoose({ key: song.src, name: song.title.trim(), source: song.src });
+	/** @param {string} key */
+	function chooseSong(key) {
+		const recording = bundledRecording(key);
+		if (recording) onChoose(recording);
 	}
 
 	/** @param {Event & { currentTarget: HTMLInputElement }} event */
@@ -45,8 +43,8 @@
 		<option value="" disabled>
 			{current?.key.startsWith('file:') ? current.name : 'Pick a song…'}
 		</option>
-		{#each tracks as track (track.src)}
-			<option value={track.src}>{track.title.trim()}</option>
+		{#each BUNDLED_RECORDINGS as recording (recording.key)}
+			<option value={recording.key}>{recording.name}</option>
 		{/each}
 	</select>
 	<button

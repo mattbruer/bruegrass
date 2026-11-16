@@ -50,8 +50,9 @@
 
 	{#if view === 'draw'}
 		<p class="mb-2 text-sm text-ink-soft">
-			Draw the tune on the grid: higher rows are higher notes, and the lighter rows are the notes in
-			the key. Each note plays as you draw it. The ABC tab shows the same tune as text.
+			Draw the tune on the grid: the rows are a piano's keys, higher notes higher. The notes in the
+			song's key have the clearest names. Each note plays as you draw it. The ABC tab shows the same
+			tune as text.
 		</p>
 		<HarmonyParts />
 		<MelodyDrawing />

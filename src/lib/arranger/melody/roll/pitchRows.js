@@ -1,7 +1,8 @@
 /**
  * The piano roll's rows, high to low: each pitch the guitar plays a melody
- * on, whether it's in the key (shaded, so a tune drawn on those rows stays
- * in tune), whether it's the home note, and its name spelled in the key.
+ * on, laid out like a piano's keys whatever the song's key (black or white),
+ * plus whether it's in the key (marked on its name, so a tune can stay in
+ * tune), and its name spelled in the key.
  */
 import { melodyNote, spell } from '../../theory/musicInKey.js';
 import { isInKey } from './melodyKey.js';
@@ -17,20 +18,25 @@ export const BASS_ROWS = { lowest: 36, highest: 62 };
 /** Generic lanes: any instrument, from the bass's lowest to the melody's highest. */
 export const LANE_ROWS = { lowest: BASS_ROWS.lowest, highest: MELODY_ROWS.highest };
 const MIDDLE_C = 60;
+/** C♯, D♯, F♯, G♯, A♯ (pitch classes). */
+const BLACK_KEYS = new Set([1, 3, 6, 8, 10]);
+/** C and F: white keys with a white key just below (B, E), no black key between. */
+const WHITE_KEY_BELOW = new Set([0, 5]);
 
 /**
  * @param {import('../../theory/musicInKey.js').Key} spelling the key signature's major key
- * @param {number} tonic the home note's pitch class
  * @param {RowRange} [range]
- * @returns {{ midi: number, inKey: boolean, home: boolean, name: string }[]}
+ * @returns {{ midi: number, black: boolean, whiteKeyBelow: boolean, inKey: boolean, name: string }[]}
  */
-export function pitchRows(spelling, tonic, range = MELODY_ROWS) {
+export function pitchRows(spelling, range = MELODY_ROWS) {
 	const rows = [];
 	for (let midi = range.highest; midi >= range.lowest; midi--) {
+		const pitchClass = ((midi % 12) + 12) % 12;
 		rows.push({
 			midi,
+			black: BLACK_KEYS.has(pitchClass),
+			whiteKeyBelow: WHITE_KEY_BELOW.has(pitchClass),
 			inKey: isInKey(spelling, midi),
-			home: ((midi % 12) + 12) % 12 === tonic,
 			name: noteName(spelling, midi)
 		});
 	}

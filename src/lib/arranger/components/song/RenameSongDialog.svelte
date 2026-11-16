@@ -1,8 +1,5 @@
 <script>
-	/**
-	 * Asks for a name the first time a song is saved (suggesting the tune's
-	 * title), then saves it.
-	 */
+	/** Give the open song a name of your own (songs save themselves, named for their tune). */
 	import NameDialog from '$lib/components/NameDialog.svelte';
 	import { useArranger } from '../../state/context.js';
 
@@ -14,7 +11,7 @@
 
 <NameDialog
 	bind:open
-	title="Save song"
-	suggestedName={song.suggestedName}
-	onsave={(name) => song.save(name).catch(console.error)}
+	title="Rename song"
+	suggestedName={song.name || song.suggestedName}
+	onsave={(name) => song.rename(name).catch(console.error)}
 />

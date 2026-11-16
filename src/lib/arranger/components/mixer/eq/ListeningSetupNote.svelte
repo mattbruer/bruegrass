@@ -3,20 +3,13 @@
 	 * At the foot of the EQ window: a reminder of what EQ is for here. Every
 	 * speaker and pair of headphones sounds different, so you're meant to
 	 * tune the EQs for what you're listening on and keep them as a listening
-	 * setup. While a setup is in use, its unsaved changes can be saved right
-	 * here, without going back to the mixer; otherwise it opens the listening
-	 * setups dialog. On a phone it shrinks to one line, so the EQ window fits.
+	 * setup. While a setup is in use, changes here save into it; otherwise
+	 * it opens the listening setups dialog. On a phone it shrinks to one line, so the EQ window fits.
 	 */
-	import {
-		listening,
-		saveSetupChanges,
-		setupHasUnsavedChanges
-	} from '../../../mixer/listeningSetup.svelte.js';
+	import { listening } from '../../../mixer/listeningSetup.svelte.js';
 	import { openListeningDialog } from '../listening/listeningDialogState.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
-
-	let changed = $derived(setupHasUnsavedChanges());
 </script>
 
 <!-- On a phone it's one short line, so the EQ window fits; the full explanation is in the setups dialog -->
@@ -28,19 +21,6 @@
 				>, your listening setup on this device. It stays on for every song.</span
 			><span class="sm:hidden">, on every song.</span>
 		</p>
-		{#if changed}
-			<div class="mt-2 flex items-center justify-between gap-3">
-				<span class="text-ink-soft">Unsaved changes</span>
-				<button
-					type="button"
-					class="ui-button px-3 py-1.5 ui-button-primary"
-					onclick={saveSetupChanges}
-					use:tooltip={TIPS.eq.saveToSetup}
-				>
-					Save to {listening.setup.name}
-				</button>
-			</div>
-		{/if}
 	{:else}
 		<div class="flex items-center justify-between gap-3 max-sm:gap-2">
 			<p>

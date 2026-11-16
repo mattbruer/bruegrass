@@ -2,19 +2,16 @@
 	/**
 	 * A song someone sent (state/ReceiveState.svelte.js): what's in it, and
 	 * Open it. If you already have it (sent before, or it's yours), Update
-	 * your copy or Keep both. Afterwards, anything worth knowing. It waits
-	 * while last time's drafts are being offered, so only one asks at a time.
+	 * your copy or Keep both. Afterwards, anything worth knowing.
 	 */
 	import Dialog from '$lib/components/Dialog.svelte';
 	import { useArranger } from '../../state/context.js';
-	import { okToDiscardChanges } from '../../state/guardUnsavedChanges.svelte.js';
-	import { drafts } from '../../state/drafts.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	const { receive, song } = useArranger();
+	const { receive } = useArranger();
 
-	let open = $derived(receive.showing && !drafts.offer);
+	let open = $derived(receive.showing);
 	let offer = $derived(receive.offer);
 	let takeCount = $derived(offer?.songPackage.takes.length ?? 0);
 	let title = $derived(
@@ -24,7 +21,6 @@
 
 	/** @param {boolean} asNewSong */
 	function openIt(asNewSong) {
-		if (!okToDiscardChanges(song)) return;
 		receive.accept({ asNewSong });
 	}
 </script>

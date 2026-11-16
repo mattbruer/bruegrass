@@ -16,12 +16,13 @@ export const KNOWN_KEYS = {
 	},
 	'bruegrass.drafts': {
 		name: 'Drafts of unsaved work',
-		about: 'Changes you hadn’t saved yet, offered back on your next visit.',
+		about:
+			'Work in progress that isn’t a song yet: transcriptions of recordings, a chord shape you’re typing.',
 		items: ['draft', 'drafts']
 	},
 	'bruegrass.songMixes': {
-		name: 'Each song’s mix between saves',
-		about: 'The mixer as you left it for each song, so it comes back when you open the song.',
+		name: 'Each song’s mix between saves (no longer used)',
+		about: 'From before songs saved themselves. Safe to delete.',
 		items: ['mix', 'mixes']
 	},
 	'bruegrass.settings': {
@@ -46,7 +47,7 @@ export const KNOWN_KEYS = {
 	'bruegrass.thisDevice': {
 		name: 'This device’s choices',
 		about:
-			'Which listening setup and audio input this device uses. Never shared with other devices.'
+			'Which listening setup and audio input this device uses, and the song it had open. Never shared with other devices.'
 	},
 	'sveltekit:scroll': {
 		name: 'Scroll positions',
@@ -72,6 +73,12 @@ export const KNOWN_DATABASES = {
 		name: 'Recorded takes',
 		about: 'Takes you recorded along with the band, or added from a file, kept with their song.',
 		stores: { takes: 'Take details', takeAudio: 'Take audio' }
+	},
+	'bruegrass.recordingAnalyses': {
+		name: 'Recordings worked out for Transcribe',
+		about:
+			'Where each recording’s beats, bass and chords fall, so a recording opens without working it out again. Safe to delete: it’s worked out again when needed.',
+		stores: { analyses: 'Recordings' }
 	},
 	'bruegrass.sampler': {
 		name: 'Sampling sessions',

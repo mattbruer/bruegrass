@@ -1,14 +1,12 @@
 <script>
 	/**
 	 * Your saved songs, newest first: open one, or delete it.
-	 * Opening replaces what's on the page, so it asks first if that has
-	 * unsaved changes. "Open a song file" opens one someone sent (Export →
+	 * The open song is already saved, so opening another loses nothing. "Open a song file" opens one someone sent (Export →
 	 * Share with a bandmate); the receive dialog takes it from there.
 	 * Any file can be picked (an iPhone greys out file types it doesn't know).
 	 */
 	import Dialog from '$lib/components/Dialog.svelte';
 	import { useArranger } from '../../state/context.js';
-	import { okToDiscardChanges } from '../../state/guardUnsavedChanges.svelte.js';
 	import { formatSavedDate } from './formatSavedDate.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -36,7 +34,6 @@
 
 	/** @param {string} id */
 	function openSong(id) {
-		if (!okToDiscardChanges(song)) return;
 		song.open(id).catch(console.error);
 		open = false;
 	}
@@ -52,7 +49,7 @@
 	<div class="px-6 pt-5 pb-6">
 		{#if song.savedSongs.length === 0}
 			<p class="ui-well p-4 text-sm text-ink-soft">
-				No saved songs yet. Press Save to keep the song you're working on.
+				No songs yet. Change anything in a song and it’s kept here.
 			</p>
 		{:else}
 			<ul class="flex flex-col gap-3">

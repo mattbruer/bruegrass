@@ -1,59 +1,30 @@
 <script>
 	/**
-	 * The song that's open: its name, whether it has unsaved changes, and
-	 * New, Open and Save. Cmd/Ctrl+S saves too.
+	 * The song that's open: its name, and New, Open and Rename. Songs save
+	 * themselves (state/autosave.svelte.js), so there's no Save.
 	 */
 	import { useArranger } from '../../state/context.js';
-	import { okToDiscardChanges } from '../../state/guardUnsavedChanges.svelte.js';
-	import SaveSongDialog from './SaveSongDialog.svelte';
+	import RenameSongDialog from './RenameSongDialog.svelte';
 	import OpenSongDialog from './OpenSongDialog.svelte';
 	import ExampleSongSelect from './ExampleSongSelect.svelte';
 	import ExportButton from '../export/ExportButton.svelte';
-	import UnsavedDot from '$lib/components/UnsavedDot.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	const { song } = useArranger();
 
-	let saveDialogOpen = $state(false);
+	let renameDialogOpen = $state(false);
 	let openDialogOpen = $state(false);
 
-	let displayName = $derived(song.isNew ? 'New song' : song.name);
-	let status = $derived.by(() => {
-		if (song.isNew) return 'Not saved yet';
-		return song.hasUnsavedChanges ? 'Unsaved changes' : 'Saved';
-	});
-	/** Nothing to save: a saved song with no changes. */
-	let nothingToSave = $derived(!song.isNew && !song.hasUnsavedChanges);
-
-	function startNewSong() {
-		if (okToDiscardChanges(song)) song.startNew();
-	}
-
-	/** A new song needs a name first; a saved one just saves. */
-	function save() {
-		if (song.isNew) saveDialogOpen = true;
-		else song.save().catch(console.error);
-	}
-
-	function saveOnShortcut(/** @type {KeyboardEvent} */ event) {
-		const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's';
-		if (!isSaveShortcut) return;
-		event.preventDefault(); // not the browser's "Save page"
-		save();
-	}
+	let displayName = $derived(song.name || song.suggestedName);
+	let status = $derived(
+		song.isNew ? 'Change anything to make it your own song' : 'Saved on this device'
+	);
 </script>
-
-<svelte:window onkeydown={saveOnShortcut} />
 
 <section class="mb-6 flex flex-wrap items-center gap-3" aria-label="Song">
 	<div class="mr-auto min-w-0">
-		<h2 class="flex items-center gap-2 truncate text-lg font-bold">
-			{#if song.hasUnsavedChanges}
-				<UnsavedDot />
-			{/if}
-			{displayName}
-		</h2>
+		<h2 class="truncate text-lg font-bold">{displayName}</h2>
 		<p class="text-sm text-ink-soft" aria-live="polite">{status}</p>
 	</div>
 
@@ -62,7 +33,7 @@
 	<button
 		type="button"
 		class="ui-button px-4 py-2"
-		onclick={startNewSong}
+		onclick={() => song.startNew()}
 		use:tooltip={TIPS.song.new}>New</button
 	>
 	<button
@@ -75,14 +46,13 @@
 	</button>
 	<button
 		type="button"
-		class="ui-button px-5 py-2 ui-button-primary"
-		disabled={nothingToSave}
-		onclick={save}
-		use:tooltip={TIPS.song.save}
+		class="ui-button px-4 py-2"
+		onclick={() => (renameDialogOpen = true)}
+		use:tooltip={TIPS.song.rename}
 	>
-		Save
+		Rename
 	</button>
 </section>
 
-<SaveSongDialog bind:open={saveDialogOpen} />
+<RenameSongDialog bind:open={renameDialogOpen} />
 <OpenSongDialog bind:open={openDialogOpen} />

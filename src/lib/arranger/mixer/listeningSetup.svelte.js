@@ -10,9 +10,8 @@
  * While a setup is in use, the EQs belong to the setup, not to the song:
  *   - Opening a song (or New) leaves the EQs as they are; the song's own
  *     EQs are put aside, and saved back with the song unchanged.
- *   - Changing an EQ changes the setup. It's only kept when you save the
- *     setup (like songs, nothing saves by itself), and leaving the page asks
- *     first if there are changes.
+ *   - Changing an EQ changes the setup, and it saves itself (like songs,
+ *     state/autosave.svelte.js); switching to another setup saves it first.
  *   - Stopping the setup ("Each song's own EQ") puts the song's EQs back.
  * With no setup in use, EQs are saved with each song, as before.
  */
@@ -83,11 +82,6 @@ function thisDevicesSpeaker() {
 	return null;
 }
 
-/** The question to ask before the setup's unsaved EQ changes are lost. */
-export function setupDiscardQuestion() {
-	return `Your EQ changes for “${listening.setup?.name}” haven’t been saved. Discard them?`;
-}
-
 /** Once the page is running in the browser: put this device's setup on, if it has one. */
 export function startThisDevicesSetup() {
 	refreshSetups();
@@ -108,6 +102,7 @@ export function chooseSetup(id) {
 
 /** Stop using a setup on this device: each song's own EQs again. */
 export function useEachSongsOwnEq() {
+	saveSetupChanges();
 	if (listening.songEqs) applyEqs(listening.songEqs);
 	listening.songEqs = null;
 	listening.setup = null;
@@ -124,9 +119,9 @@ export function saveAsNewSetup(name) {
 	useSetup(saved);
 }
 
-/** Save the EQs as they are now into the setup in use. */
+/** Save the EQs as they are now into the setup in use (if they've changed). */
 export function saveSetupChanges() {
-	if (!listening.setup) return;
+	if (!listening.setup || !setupHasUnsavedChanges()) return;
 	listening.setup = saveListeningSetup({ ...listening.setup, eqs: eqsSnapshot() });
 	refreshSetups();
 }
@@ -193,6 +188,7 @@ const songMix = $derived.by(() => {
 
 /** @param {import('$lib/storage/listeningSetups.js').ListeningSetup} setup */
 function useSetup(setup) {
+	saveSetupChanges(); // the one in use, before its EQs are replaced
 	if (!listening.setup) listening.songEqs = eqsSnapshot(); // put the song's EQs aside
 	listening.setup = setup;
 	applyEqs(setup.eqs);

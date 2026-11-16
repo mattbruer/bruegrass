@@ -86,18 +86,14 @@ export const TIPS = Object.freeze({
 	},
 
 	song: {
-		new: 'Start a new song from the starter tune. Asks first if you have unsaved changes.',
-		examples: 'Start a new song from an example. Asks first if you have unsaved changes.',
+		new: 'Start a new song from the starter tune. The song open now is already saved.',
+		examples:
+			'Start a new song from an example, or from a recording you write down in Transcribe. The song open now is already saved.',
 		open: 'Open one of your saved songs.',
-		save: 'Save this song on this device (⌘S / Ctrl+S). The first save asks for a name.',
+		rename: 'Give this song a name of your own. Songs save themselves as you work.',
 		openSaved: 'Open this song.',
 		openFile: 'Open a song file someone sent you from this app.',
 		deleteSaved: 'Delete this song for good.'
-	},
-
-	drafts: {
-		restore: 'Put last time’s unsaved changes back, so you can keep working and Save.',
-		discard: 'Throw last time’s unsaved changes away.'
 	},
 
 	recording: {
@@ -241,8 +237,6 @@ export const TIPS = Object.freeze({
 			roll: 'Write and edit the picked part as notes on a grid.',
 			sheet: 'See what you’ve written as sheet music.'
 		},
-		draftRestore: 'Put back the beats, chords and lanes you had on this recording last time.',
-		draftDiscard: 'Forget last time’s unsaved work on this recording and start from beat 1.',
 		laneVolume:
 			'How loud this lane plays. Turn the recording down or a part up to hear the part over it. Double-click to put it back.',
 		fewerBeats: 'This bar has a beat fewer. The bars after it move along.',
@@ -446,7 +440,6 @@ export const TIPS = Object.freeze({
 		preset: 'Load a saved EQ onto this strip. Presets from other strips work too.',
 		savePreset: 'Save this strip’s EQ as a preset, to use again on any strip.',
 		deletePreset: 'Delete this preset.',
-		saveToSetup: 'Save the EQ changes to your listening setup, so they come back on every song.',
 		openSetups:
 			'Save every strip’s EQ for what you’re listening on, so this device uses it on every song.'
 	},
@@ -454,7 +447,6 @@ export const TIPS = Object.freeze({
 	listening: {
 		choose: 'Use this setup on this device, for every song.',
 		none: 'Use each song’s own EQ instead of a setup.',
-		save: 'Save your EQ changes into this setup.',
 		saveNew: 'Save every strip’s EQ as a new setup, named for what you’re listening on.',
 		delete: 'Delete this setup.'
 	},

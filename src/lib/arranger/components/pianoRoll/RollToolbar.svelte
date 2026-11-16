@@ -6,6 +6,7 @@
 	import { useArranger } from '../../state/context.js';
 	import { GRIDS } from '../../melody/roll/ticks.js';
 	import { songKeyChoices } from '../../chart/keyChoices.js';
+	import SongKeyOptions from '../chart/SongKeyOptions.svelte';
 	import { guessedKey, keyName } from '../../chart/key.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -71,9 +72,7 @@
 				<option value={GUESS}>
 					{guess ? `${guessName}, from the first chord` : 'Not known yet (no chords)'}
 				</option>
-				{#each choices as choice (choice.value)}
-					<option value={choice.value}>{choice.name}</option>
-				{/each}
+				<SongKeyOptions {choices} />
 			</select>
 		</label>
 	{/if}

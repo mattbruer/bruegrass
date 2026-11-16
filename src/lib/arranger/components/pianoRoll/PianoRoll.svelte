@@ -1,7 +1,8 @@
 <script>
 	/**
-	 * The piano roll: time across, pitch up. Notes in the key are on the
-	 * lighter rows; the chart's chords run along the bottom.
+	 * The piano roll: time across, pitch up, the rows a piano's keys (black
+	 * keys dark) whatever the song's key; the key's notes are marked on their
+	 * names. The chart's chords run along the bottom.
 	 *
 	 * Mouse: drag on an empty spot to draw a note as long as you drag; drag a
 	 * note to move it, or its right end to make it longer or shorter;
@@ -134,7 +135,7 @@
 		const box = event.currentTarget.getBoundingClientRect();
 		onSeek?.((event.clientX - box.left) / tickWidth);
 	}
-	let rows = $derived(pitchRows(spelling, tonic, range));
+	let rows = $derived(pitchRows(spelling, range));
 	let shown = $derived(preview ?? notes);
 	let width = $derived(end * tickWidth);
 	let height = $derived(rows.length * rowHeight);
@@ -419,8 +420,13 @@
 		<div class="flex">
 			<div class="labels sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px">
 				{#each rows as row (row.midi)}
-					<div class="label" class:home={row.home} style:height="{rowHeight}px">
-						{row.inKey ? row.name : ''}
+					<div
+						class="label"
+						class:in-key={row.inKey}
+						class:white-key-below={row.whiteKeyBelow}
+						style:height="{rowHeight}px"
+					>
+						{row.name}
 					</div>
 				{/each}
 			</div>
@@ -441,8 +447,8 @@
 				{#each rows as row, i (row.midi)}
 					<div
 						class="row"
-						class:in-key={row.inKey}
-						class:home={row.home}
+						class:black={row.black}
+						class:white-key-below={row.whiteKeyBelow}
 						style:top="{i * rowHeight}px"
 						style:height="{rowHeight}px"
 					></div>
@@ -556,12 +562,15 @@
 		justify-content: flex-end;
 		padding-right: 0.35rem;
 		font-size: 0.7rem;
-		color: var(--color-ink-soft);
+		color: var(--color-ink-faint);
 		border-bottom: 1px solid transparent;
 	}
-	.label.home {
-		font-weight: 700;
+	/* The song's key is shown on the names, never by the rows (they're the piano's) */
+	.label.in-key {
 		color: var(--color-ink);
+	}
+	.label.white-key-below {
+		border-bottom-color: color-mix(in oklab, var(--color-ink) 35%, transparent);
 	}
 	.surface.editable {
 		cursor: crosshair;
@@ -585,14 +594,15 @@
 		position: absolute;
 		left: 0;
 		right: 0;
-		background: var(--color-surface-deep);
+		background: var(--color-raised);
 		border-bottom: 1px solid color-mix(in oklab, var(--color-line) 50%, transparent);
 	}
-	.row.in-key {
-		background: var(--color-raised);
+	.row.black {
+		background: var(--color-surface-deep);
 	}
-	.row.home {
-		background: color-mix(in oklab, var(--color-accent-soft) 45%, var(--color-raised));
+	/* Logic's line between B and C, and E and F: two white keys side by side */
+	.row.white-key-below {
+		border-bottom-color: color-mix(in oklab, var(--color-ink) 35%, transparent);
 	}
 	.bar {
 		position: absolute;

@@ -3,8 +3,8 @@
 	 * "What are you listening on?": your listening setups. Each one is every
 	 * strip's EQ, tuned for one speaker or pair of headphones. Choose the one
 	 * for what you're listening on now (this device remembers it and puts it
-	 * on every song), save changes to it, save the EQs as a new one, or
-	 * delete one.
+	 * on every song; changes to it save themselves), save the EQs as a new
+	 * one, or delete one.
 	 *
 	 * The wording says plainly what setups are for and that you should make
 	 * one for each thing you listen on, because that's the whole point.
@@ -16,9 +16,6 @@
 		deleteSetup,
 		listening,
 		saveAsNewSetup,
-		saveSetupChanges,
-		setupDiscardQuestion,
-		setupHasUnsavedChanges,
 		suggestedSetupNames,
 		useEachSongsOwnEq
 	} from '../../../mixer/listeningSetup.svelte.js';
@@ -26,22 +23,16 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	let changed = $derived(setupHasUnsavedChanges());
 	let nameDialogOpen = $state(false);
 	let freeNames = $derived(suggestedSetupNames());
 
-	/** Switching away from a setup with unsaved changes asks first. */
-	function okToSwitch() {
-		return !changed || confirm(setupDiscardQuestion());
-	}
-
 	/** @param {string} id */
 	function choose(id) {
-		if (id !== listening.setup?.id && okToSwitch()) chooseSetup(id);
+		if (id !== listening.setup?.id) chooseSetup(id);
 	}
 
 	function chooseNone() {
-		if (listening.setup && okToSwitch()) useEachSongsOwnEq();
+		if (listening.setup) useEachSongsOwnEq();
 	}
 
 	/** @param {import('$lib/storage/listeningSetups.js').ListeningSetup} setup */
@@ -63,20 +54,6 @@
 		<p class="mt-2 max-w-md text-sm text-ink-soft">
 			This device remembers its setup and puts it on every song you open. Each device keeps its own.
 		</p>
-
-		{#if listening.setup && changed}
-			<div class="mt-4 flex items-center justify-between gap-3 ui-well px-4 py-3 text-sm">
-				<span>Unsaved EQ changes to <strong>{listening.setup.name}</strong></span>
-				<button
-					type="button"
-					class="ui-button px-4 py-1.5 ui-button-primary"
-					onclick={saveSetupChanges}
-					use:tooltip={TIPS.listening.save}
-				>
-					Save
-				</button>
-			</div>
-		{/if}
 
 		<ul class="mt-4 flex flex-col gap-3">
 			{#each listening.setups as setup (setup.id)}

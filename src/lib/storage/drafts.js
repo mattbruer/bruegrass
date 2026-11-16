@@ -4,9 +4,9 @@
  * Why: on a Mac, leaving the page with unsaved changes asks first. An
  * iPhone never asks: switch apps and iOS may quietly unload the page, or a
  * swipe closes the tab, and the changes are gone. So anything with unsaved
- * changes keeps a draft here as you work, and the next visit offers to
- * restore it. Saving for real still only happens when you press Save; a
- * draft is just a safety net, and is cleared once the work is saved.
+ * changes keeps a draft here as you work, and gets it back next time.
+ * (Songs don't need this: they save themselves, see
+ * arranger/state/autosave.svelte.js.)
  *
  * Use it for anything you can change and then lose: write a draft while
  * there are unsaved changes, clear it when there aren't, and offer drafts

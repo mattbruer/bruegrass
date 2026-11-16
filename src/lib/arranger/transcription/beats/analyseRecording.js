@@ -11,6 +11,9 @@
  */
 import { createFft } from '../../../audio/stretch/fft.js';
 
+/** Raise it when the analysis changes, so analyses kept on devices are worked out again. */
+export const ANALYSIS_VERSION = 1;
+
 const FRAME_SECONDS = 0.046;
 const HOP_SECONDS = 0.0058;
 /** How much the log scale lifts quiet sounds. */

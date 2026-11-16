@@ -26,20 +26,27 @@ export function keyChoicesFor(key, capo) {
 	return choices;
 }
 
+/** The song-key menus' groups, each starting from C. */
+export const KEY_GROUPS = /** @type {const} */ ([
+	{ name: 'Major', from: 'C' },
+	{ name: 'Minor', from: 'Cm' }
+]);
+
 /**
- * Every major and minor key, to name the song's key ([K:] in the chart).
- * Each is named as it sounds, with the guitar's shapes when there's a capo,
- * the way a player says it: "A (G shapes, capo 2)".
+ * Every major and minor key, to name the song's key ([K:] in the chart),
+ * grouped as KEY_GROUPS. Each is named as it sounds, with the guitar's
+ * shapes when there's a capo, the way a player says it: "A (G shapes, capo 2)".
  * @param {number} capo
- * @returns {{ value: string, name: string }[]} value: the shapes key, as [K:] writes it
+ * @returns {{ group: string, value: string, name: string }[]} value: the shapes key, as [K:] writes it
  */
 export function songKeyChoices(capo) {
-	const tonics = [parseKeyName('C'), parseKeyName('Am')];
-	return tonics.flatMap((tonic) =>
-		Array.from({ length: 12 }, (_, semitones) => {
-			const shapes = keyName(/** @type {import('./key.js').Key} */ (tonic), semitones);
-			const sounds = keyName(/** @type {import('./key.js').Key} */ (tonic), semitones + capo);
-			return { value: shapes, name: capo ? `${sounds} (${shapes} shapes, capo ${capo})` : sounds };
-		})
-	);
+	return KEY_GROUPS.flatMap(({ name: group, from }) => {
+		const tonic = /** @type {import('./key.js').Key} */ (parseKeyName(from));
+		return Array.from({ length: 12 }, (_, semitones) => {
+			const shapes = keyName(tonic, semitones);
+			const sounds = keyName(tonic, semitones + capo);
+			const name = capo ? `${sounds} (${shapes} shapes, capo ${capo})` : sounds;
+			return { group, value: shapes, name };
+		});
+	});
 }

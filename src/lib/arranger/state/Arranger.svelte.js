@@ -10,9 +10,10 @@
  *   arranger.bass          the bass line, once it's been edited
  *   arranger.player        play/stop, and problems to show
  *   arranger.layout        mixer drawer and phone keypad (what covers the screen)
- *   arranger.song          which song is open; New, Open, Save
+ *   arranger.song          which song is open; New, Open, Rename; it saves itself
  *   arranger.recording     recording along with the band, and the song's takes
  *   arranger.receive       a song someone sent (a share link or song file), waiting to be opened
+ *   arranger.transcription the Transcribe page's work on a recording (kept while you visit the other pages)
  *   arranger.conversionReport  what the last conversion between chart and melody (chords, words) wants you to know
  *   arranger.capoAsked     a capo change waiting for "raise the song or keep its key?"
  */
@@ -25,6 +26,7 @@ import { PageLayoutState } from './PageLayoutState.svelte.js';
 import { SongState } from './SongState.svelte.js';
 import { RecordingState } from './RecordingState.svelte.js';
 import { ReceiveState } from './ReceiveState.svelte.js';
+import { TranscriptionState } from '../transcription/TranscriptionState.svelte.js';
 import { abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc } from '../melody/abcChords.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
@@ -57,6 +59,8 @@ export class Arranger {
 	recording = new RecordingState(this);
 	/** A song someone sent, waiting to be opened. */
 	receive = new ReceiveState(this);
+	/** Transcribing a recording: kept while you visit the other pages, so coming back carries on. */
+	transcription = new TranscriptionState(this);
 
 	/** @type {{ title: string, notes: string[] } | null} */
 	conversionReport = $state(null);

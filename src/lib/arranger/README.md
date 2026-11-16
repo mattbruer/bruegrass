@@ -81,7 +81,7 @@ object (`state/Arranger.svelte.js`) made of small pieces:
 | `arranger.bass`        | `state/BassState.svelte.js`        | the edited bass line's ABC, its score and the notes the band plays  |
 | `arranger.player`      | `state/PlayerState.svelte.js`      | play/stop, and a problem to show                                    |
 | `arranger.layout`      | `state/PageLayoutState.svelte.js`  | the player bar, which drawer is open (edit/mixer), the keypad       |
-| `arranger.song`        | `state/SongState.svelte.js`        | which song is open; New, Open, Save, unsaved changes                |
+| `arranger.song`        | `state/SongState.svelte.js`        | which song is open; New, Open, Rename, saving itself                |
 | `arranger.recording`   | `state/RecordingState.svelte.js`   | recording along with the band, and the open song's takes            |
 | `arranger.receive`     | `state/ReceiveState.svelte.js`     | a song someone sent, waiting to be opened                           |
 
@@ -92,7 +92,7 @@ passed down through layers.
 starter song as a new song until you save it (the song bar in
 `components/song/` has New, Open and Save). `state/songFields.js` moves a
 song between the page and a saved document, and
-`state/guardUnsavedChanges.svelte.js` asks before unsaved changes are lost.
+`state/autosave.svelte.js` saves the open song and the listening setup as they change: nothing ever asks about unsaved changes.
 
 **Each of the song's three texts is read in one place.** The chart is parsed
 in `ArrangementState`, the tune in `MelodyState` (`melody/readTune.js`) and
@@ -118,7 +118,7 @@ Only the sheet music draws the tune (`components/melody/SheetMusic.svelte`).
   strip's EQ can also be saved as a preset (`mixer/eqPresets.svelte.js`).
 
 - **The starter song** (what a new visitor sees) is in `starterSong.js`: a chord chart and its ABC melody. Swap both to change it.
-- **Example songs** (the Examples menu in the song bar, `components/song/ExampleSongSelect.svelte`) are listed in `exampleSongs.js`; a new one is one entry.
+- **Example songs** (the "New from…" menu in the song bar, with "A recording…" for Transcribe; `components/song/ExampleSongSelect.svelte`) are listed in `exampleSongs.js`; a new one is one entry.
 
 - **All musical time is in quarter notes** from bar 1, so every part lines up.
   `chart/timeline.js` is the single source of truth; never assume a fixed bar length.

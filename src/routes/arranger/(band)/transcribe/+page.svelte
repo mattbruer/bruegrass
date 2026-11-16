@@ -14,10 +14,9 @@
 	 * and off (Logic's), Escape closes the menu, Home
 	 * goes back to the start, comma and full stop a bar back or on (Logic's).
 	 */
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { useArranger } from '$lib/arranger/state/context.js';
-	import { TranscriptionState } from '$lib/arranger/transcription/TranscriptionState.svelte.js';
 	import { gridClicks } from '$lib/arranger/transcription/gridClicks.js';
 	import { timeSignature } from '$lib/arranger/transcription/timeSignatures.js';
 	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
@@ -27,15 +26,27 @@
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
-	import TranscriptionDraftDialog from '$lib/arranger/components/transcription/TranscriptionDraftDialog.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** Alt+arrow moves the picked beat by this much. */
 	const NUDGE_SECONDS = 0.005;
 
-	const transcription = new TranscriptionState(useArranger());
-	onDestroy(() => transcription.dispose());
+	// The work lives on the arranger, so leaving for another page and coming back carries on
+	const { transcription, song } = useArranger();
+	onDestroy(() => transcription.leave());
+
+	// Arriving with a song written from one of the app's recordings opens it (only when the song
+	// changes: picking another recording here mustn't bring this one back)
+	$effect(() => {
+		if (song.ready && song.recording) untrack(() => transcription.reopenSongsRecording());
+	});
+	/** A file from this device can't be reopened by the page: its name, to pick it again. */
+	const fileToOpenAgain = $derived(
+		song.recording?.key.startsWith('file:') && transcription.recording?.key !== song.recording.key
+			? song.recording.name
+			: null
+	);
 
 	$effect(() => {
 		const grid = transcription.grid;
@@ -120,7 +131,13 @@
 		current={transcription.recording}
 		onChoose={(recording) => transcription.open(recording)}
 	/>
-	<TranscriptionDraftDialog {transcription} />
+
+	{#if fileToOpenAgain}
+		<p class="text-sm text-ink-soft">
+			This song was written from <strong>{fileToOpenAgain}</strong>. Open it again (Open a
+			recording…) to carry on.
+		</p>
+	{/if}
 
 	{#if transcription.recording}
 		{#if transcription.player.loading}

@@ -15,7 +15,9 @@
  * (beats/analyseRecording.js). The transcription is kept as a draft per
  * recording (transcriptionDraft.js), so nothing is lost on leaving.
  *
- * Call `dispose` when the page goes (the player has its own audio context).
+ * It lives on the Arranger, so the work stays while you visit its other
+ * pages: `leave` when the Transcribe page goes (the recording stops),
+ * `dispose` when the arranger goes (the player has its own audio context).
  */
 import { StretchPlayer } from '$lib/slowDowner/StretchPlayer.svelte.js';
 import { waveformPeaks } from '../takes/waveformPeaks.js';
@@ -31,7 +33,8 @@ import {
 	withBeatsHalved,
 	tempoAt
 } from './beatGrid.js';
-import { analyseRecording } from './beats/analyseRecording.js';
+import { ANALYSIS_VERSION, analyseRecording } from './beats/analyseRecording.js';
+import { readRecordingAnalysis, writeRecordingAnalysis } from '$lib/storage/recordingAnalyses.js';
 import { detectBeats } from './beats/detectBeats.js';
 import { snapToHit } from './beats/snapToHit.js';
 import {
@@ -47,8 +50,8 @@ import { quartersAt, secondsAt } from './tempoMap.js';
 import { barStepTarget } from './barStep.js';
 import { findTuning } from '$lib/slowDowner/findTuning.js';
 import { clampCents } from '$lib/slowDowner/tuning.js';
+import { bundledRecording } from './bundledRecordings.js';
 import { STARTER_SONG } from '../starterSong.js';
-import { okToDiscardChanges } from '../state/guardUnsavedChanges.svelte.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { BASS_VOICE, readBassScore, writtenBassNotes } from '../bass/readBass.js';
 import { blankBassAbc } from '../bass/bassAbc.js';
@@ -118,8 +121,6 @@ export class TranscriptionState {
 	parts = $state.raw([]);
 	/** The recording's own volume (dB), mute and solo (the parts' are their mixer channels'). */
 	recordingLane = $state({ volume: 0, mute: false, solo: false });
-	/** @type {(import('./transcriptionDraft.js').Transcription & { savedAt: string }) | null} unsaved work on this recording from last time, offered back */
-	draftOffer = $state(null);
 
 	/** @type {Float32Array | null} */
 	peaks = $state.raw(null);
@@ -221,7 +222,6 @@ export class TranscriptionState {
 		this.hits = null;
 		this.downbeat = null;
 		this.settingDownbeat = false;
-		this.draftOffer = null;
 		this.cycle.clear();
 		this.markers = {};
 		this.player.setCents(0);
@@ -233,41 +233,12 @@ export class TranscriptionState {
 		this.#audio = audio;
 		this.peaks = waveformPeaks(channelsOf(audio), audio.sampleRate, PEAKS_PER_SECOND);
 
-		this.finding = true;
-		// Let "Finding the beats…" show: the analysis takes a second or two
-		await new Promise((done) => setTimeout(done, 30));
-		if (this.#audio !== audio) return;
-		this.#analysis = analyseRecording(channelsOf(audio), audio.sampleRate);
-		this.hits = hitsOf(this.#analysis);
-		this.finding = false;
+		const analysis = await this.#analysisOf(recording, audio);
+		if (!analysis || this.#audio !== audio) return;
+		this.#analysis = analysis;
+		this.hits = hitsOf(analysis);
 
-		const draft = readTranscriptionDraft(recording.key);
-		if (draft && !this.#isSavedWork(draft)) this.draftOffer = draft;
-		else this.#carryOn(draft);
-	}
-
-	/** Put back the unsaved work offered (draftOffer) on this recording. */
-	restoreDraft() {
-		const draft = this.draftOffer;
-		this.draftOffer = null;
-		this.#carryOn(draft);
-	}
-
-	/** Forget the unsaved work offered on this recording, and start it afresh. */
-	discardDraft() {
-		this.draftOffer = null;
-		if (this.recording) clearTranscriptionDraft(this.recording.key);
-		this.#carryOn(null);
-	}
-
-	/**
-	 * Saved work comes back without asking: the open song is saved, unchanged,
-	 * and is the one last written from this recording.
-	 * @param {import('./transcriptionDraft.js').Transcription} draft
-	 */
-	#isSavedWork(draft) {
-		const { song, arrangement } = this.arranger;
-		return !song.isNew && !song.hasUnsavedChanges && arrangement.text === draft.written;
+		this.#carryOn(readTranscriptionDraft(recording.key));
 	}
 
 	/**
@@ -289,6 +260,47 @@ export class TranscriptionState {
 		}
 		if (!this.grid) this.settingDownbeat = true;
 		else if (!this.linked) this.startSong();
+		else this.arranger.song.recording = this.#songsRecording(); // a song written from it before songs knew
+	}
+
+	/**
+	 * What the recording's sound does (hits, bass, chords): kept on this device
+	 * after the first time, since it depends only on the audio. Null if another
+	 * recording was opened meanwhile.
+	 * @param {Recording} recording
+	 * @param {AudioBuffer} audio
+	 */
+	async #analysisOf(recording, audio) {
+		const stamp = {
+			version: ANALYSIS_VERSION,
+			samples: audio.length,
+			sampleRate: audio.sampleRate
+		};
+		const kept = await readRecordingAnalysis(recording.key, stamp).catch(() => null);
+		if (kept || this.#audio !== audio) return kept;
+
+		this.finding = true;
+		// Let "Listening to the recording…" show: the analysis takes a second or two
+		await new Promise((done) => setTimeout(done, 30));
+		const analysis =
+			this.#audio === audio ? analyseRecording(channelsOf(audio), audio.sampleRate) : null;
+		this.finding = false;
+		if (!analysis) return null;
+		writeRecordingAnalysis(recording.key, stamp, analysis).catch(console.error);
+		return analysis;
+	}
+
+	/** Open the recording the open song was written from, if it's one of the app's own and isn't open. */
+	reopenSongsRecording() {
+		const wanted = this.arranger.song.recording;
+		if (!wanted || this.recording?.key === wanted.key) return;
+		const recording = bundledRecording(wanted.key);
+		if (recording) this.open(recording);
+	}
+
+	/** The open recording as the song keeps it: its key and name. */
+	#songsRecording() {
+		return this.recording ? { key: this.recording.key, name: this.recording.name } : null;
 	}
 
 	/** Beat 1 of bar 1 is where the playhead is (snapped to the hit nearest). */
@@ -322,19 +334,25 @@ export class TranscriptionState {
 	}
 
 	/**
-	 * A new song on the recording's bars, at its tempo, with no tune yet.
-	 * (Asks before discarding unsaved changes to the open song.)
+	 * A new song on the recording's bars, at its tempo, with no tune yet,
+	 * named for the recording and saved at once (the open song is saved first).
 	 */
 	startSong() {
-		if (!this.grid || !okToDiscardChanges(this.arranger.song)) return;
+		if (!this.grid) return;
 		const chart = this.#chart();
-		this.arranger.song.startNew({
-			...STARTER_SONG,
-			arrangement: chart,
-			abc: '',
-			bass: '',
-			tempo: this.tempo || STARTER_SONG.tempo
-		});
+		const { song } = this.arranger;
+		song.startNew(
+			{
+				...STARTER_SONG,
+				arrangement: chart,
+				abc: '',
+				bass: '',
+				tempo: this.tempo || STARTER_SONG.tempo,
+				recording: this.#songsRecording()
+			},
+			this.recording?.name ?? ''
+		);
+		song.keepAsYourOwn().catch(console.error);
 		this.written = chart;
 		this.#keepDraft();
 	}
@@ -630,6 +648,12 @@ export class TranscriptionState {
 		const beat = this.selectedBeat;
 		if (beat === null) return;
 		this.#edit((grid) => withBeatRemoved(grid, beat));
+		this.closeMenus();
+	}
+
+	/** Leaving the page for another of the arranger's: the recording stops, the work stays. */
+	leave() {
+		this.player.pause();
 		this.closeMenus();
 	}
 
