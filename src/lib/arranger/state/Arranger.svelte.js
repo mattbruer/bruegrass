@@ -48,15 +48,19 @@ import { newAbc } from '../melody/roll/scoreToAbc.js';
 import { barsInPlayOrder } from '../chart/chartBars.js';
 import { sectionInstances } from '../melody/sections/tuneBySection.js';
 import { sectionRests } from '../melody/sections/sectionRests.js';
-import { splitTune } from '../melody/sections/splitTune.js';
+import { splitTune, unitOfHeader } from '../melody/sections/splitTune.js';
+import { readTuneText, MELODY_VOICE } from '../melody/sections/tuneBySection.js';
+import { renamedParts } from '../melody/sections/renamedParts.js';
+import { generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
+import { bassSongOf } from '../bass/songBassStyle.svelte.js';
 import { madeItsOwn } from '../melody/sections/makeItsOwn.js';
 import { withWordsFromChart } from '../melody/sections/wordsFromChart.js';
 
 export class Arranger {
 	arrangement = new ArrangementState();
 	loop = new LoopState(this.arrangement);
-	melody = new MelodyState((unit) => this.#tuneLayout(unit));
-	bass = new BassState();
+	melody = new MelodyState((tune) => this.#tuneLayout(unitOfHeader(tune.header)));
+	bass = new BassState(() => this.#bassLayout());
 	player = new PlayerState(this.arrangement, this.loop, this.melody, this.bass);
 	layout = new PageLayoutState();
 	/** Which song is open, and saving it (created last: it reads all of the above). */
@@ -148,6 +152,26 @@ export class Arranger {
 	}
 
 	/**
+	 * The band's own bass line, read by section: what a section of a bass
+	 * line kept by section plays while nobody has edited it.
+	 */
+	#bassLayout() {
+		const { arrangement } = this;
+		const instances = sectionInstances(arrangement.text);
+		const own = this.#bandsOwnBass();
+		const bodies = (own?.sections ?? [])
+			.filter((section) => section.voice === MELODY_VOICE)
+			.map((section) => section.body);
+		return { instances, restsFor: (/** @type {number} */ index) => bodies[index] ?? '' };
+	}
+
+	/** The band's own bass line, read as voices and sections (null: the chart can't be played). */
+	#bandsOwnBass() {
+		if (!this.arrangement.isPlayable) return null;
+		return readTuneText(generatedBassAbc(bassSongOf(this)));
+	}
+
+	/**
 	 * Keep the tune by section: cut the whole tune at the chart's sections,
 	 * so each section owns its bars from now on.
 	 * @returns {Promise<string>} why it couldn't be ('' when it was)
@@ -163,7 +187,34 @@ export class Arranger {
 		const { tune, problem } = splitTune(melody.notation, melody.tune, instances, barCounts);
 		if (!tune) return `The tune can't be split: ${problem}`;
 		melody.bySection = tune;
+		this.#splitBass();
 		return '';
+	}
+
+	/** The bass line by section too, unless it was written by ear from nothing. */
+	#splitBass() {
+		const own = this.#bandsOwnBass();
+		if (!own || this.bass.bySection || isAsPlayed(this.bass.notation)) return;
+		this.bass.split(own.header);
+	}
+
+	/** Keep the tune (and the bass line) whole again, as they play now. */
+	joinTune() {
+		this.melody.join();
+		if (this.bass.bySection) this.bass.join();
+	}
+
+	/**
+	 * A section renamed in the chart keeps its tune and bass line.
+	 * @param {import('../melody/sections/tuneBySection.js').SectionInstance[]} before the chart's sections before the edit
+	 */
+	followRenames(before) {
+		const after = sectionInstances(this.arrangement.text);
+		for (const kept of [this.melody, this.bass]) {
+			const line = kept.bySection;
+			const parts = line && renamedParts(before, after, line.parts);
+			if (line && parts) kept.bySection = { ...line, parts };
+		}
 	}
 
 	/**
@@ -174,10 +225,13 @@ export class Arranger {
 	makeSectionItsOwn(index) {
 		const { melody, arrangement } = this;
 		if (!melody.bySection) return;
-		const made = madeItsOwn(arrangement.text, melody.bySection, index);
+		const chart = arrangement.text;
+		const made = madeItsOwn(chart, melody.bySection, index);
 		if (!made) return;
+		const bass = this.bass.bySection && madeItsOwn(chart, this.bass.bySection, index);
 		arrangement.text = made.chart;
 		melody.bySection = made.tune;
+		if (bass) this.bass.bySection = bass.tune;
 	}
 
 	/** What the melody's words and harmony parts are written from. */

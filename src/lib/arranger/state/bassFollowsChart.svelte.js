@@ -23,6 +23,8 @@ export function keepBassWithChart(arranger) {
 		void arranger.melodyKey;
 		const abcjs = abcjsIfLoaded();
 		if (!arranger.arrangement.isPlayable) return;
+		// Kept by section, it follows the chart by itself
+		if (untrack(() => arranger.bass.bySection)) return;
 		const written = untrack(() => arranger.bass.notation);
 		const old = untrack(() => arranger.bass.read);
 		// A line written by ear (as played) is left as written

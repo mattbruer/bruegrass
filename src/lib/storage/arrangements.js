@@ -42,6 +42,7 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   abc: string,
  *   tune: import('$lib/arranger/melody/sections/tuneBySection.js').TuneBySection | null,
  *   bass: string,
+ *   bassTune: import('$lib/arranger/melody/sections/tuneBySection.js').TuneBySection | null,
  *   bassStyle: string,
  *   tab: Record<string, import('$lib/arranger/tab/songTab.svelte.js').PartTab>,
  *   recording: { key: string, name: string } | null,
@@ -55,7 +56,8 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   title: the song's name; arrangement: the chord chart text; abc: the
  *   melody in ABC notation (as played); tune: the melody kept by section,
  *   each section's bars (null: kept whole, in abc); bass: the bass line in ABC once it's been
- *   edited ('' while the band writes it from the chart); bassStyle: how the band
+ *   edited ('' while the band writes it from the chart); bassTune: the bass line kept by
+ *   section (null: kept whole, in bass); bassStyle: how the band
  *   writes its own bass line, an id in BASS_STYLES; tab: each part's TAB instrument
  *   and the strings chosen for its notes (tab/songTab.svelte.js); recording: the
  *   recording it was transcribed from (its key and name), if any; transpose: semitones from the Key setting;
@@ -76,6 +78,7 @@ export function createArrangement(fields = {}) {
 		abc: '',
 		tune: null,
 		bass: '',
+		bassTune: null,
 		bassStyle: DEFAULT_BASS_STYLE,
 		tab: {},
 		recording: null,
@@ -145,7 +148,7 @@ function allSongs() {
  * version 3 `bassStyle` (it was a device setting before: older songs get the default);
  * version 4 `tab` (older songs have none); version 5 `recording` (none: a
  * song transcribed earlier gets it when its recording is opened again); version 6
- * `tune` (older songs keep their tune whole).
+ * `tune` and `bassTune` (older songs keep their tune and bass line whole).
  * @param {Arrangement} song
  * @returns {Arrangement}
  */

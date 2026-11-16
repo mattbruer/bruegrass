@@ -23,7 +23,7 @@
 
 	function join() {
 		problem = '';
-		melody.join();
+		arranger.joinTune();
 	}
 </script>
 
