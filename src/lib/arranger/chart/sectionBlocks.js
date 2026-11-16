@@ -24,3 +24,21 @@ export function sectionBlocks(source) {
 	}
 	return blocks;
 }
+
+/**
+ * Which line holds a section's chords, following `as` to the section it repeats.
+ * @param {string} source
+ * @param {number} section
+ */
+export function sectionLineIndex(source, section) {
+	const blocks = sectionBlocks(source);
+	const block = blocks[section];
+	if (!block) return -1;
+	const written = block.content.startsWith('as ')
+		? blocks.findIndex((other) => other.name === block.content.slice(3).trim())
+		: section;
+	let count = -1;
+	return source
+		.split('\n')
+		.findIndex((line) => /^"[^"]+"/.test(line.trim()) && ++count === written);
+}

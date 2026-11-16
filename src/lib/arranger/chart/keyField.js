@@ -35,3 +35,11 @@ export function withKeyField(text, name) {
 	if (!field) return text;
 	return text.replace(/^(\s*"[^"]+")/m, `$1 ${field}`);
 }
+
+/**
+ * The key the chart names ("G", "Em"), or null when it names none.
+ * @param {string} text
+ */
+export function keyFieldName(text) {
+	return text.match(KEY_FIELD)?.[1].trim() || null;
+}

@@ -11,21 +11,21 @@
  *
  * Each marker starts a section with its name ("Verse", "Banjo solo"), one
  * line of the chart each; the bars before the first marker are "Song".
+ * Lyric lines go under the section holding the bar they started on.
  */
 import { NO_CHORD } from '../chart/noChord.js';
 import { chartCell, isEmptyBar, slotsOf } from './barChords.js';
-
-/** The bars before the first marker. */
-const UNMARKED_SECTION = 'Song';
+import { UNMARKED_SECTION } from './readChartOnBars.js';
 
 /**
  * @param {import('./barPlan.js').Bar[]} bars
  * @param {{ id: string, beatsPerBar: number }} time from timeSignatures.js
  * @param {Record<number, import('./barChords.js').Slots | string>} chords bar number → its slots
  * @param {Record<number, string>} [markers] bar number → the name of the section starting there
+ * @param {Record<number, string[]>} [lyrics] bar number → lyric lines starting there
  * @returns {string}
  */
-export function chartFromBars(bars, time, chords, markers = {}) {
+export function chartFromBars(bars, time, chords, markers = {}, lyrics = {}) {
 	let carried = NO_CHORD;
 	const cells = bars.map((bar) => {
 		const slots = slotsOf(chords[bar.number], bar.beats);
@@ -42,7 +42,8 @@ export function chartFromBars(bars, time, chords, markers = {}) {
 	return sectionsOf(bars, markers)
 		.map(({ name, from, to }, index) => {
 			const meter = index === 0 ? songMeter : '';
-			return `"${name}"${meter}|${cells.slice(from, to).join('|')}|`;
+			const words = bars.slice(from, to).flatMap((bar) => lyrics[bar.number] ?? []);
+			return [`"${name}"${meter}|${cells.slice(from, to).join('|')}|`, ...words].join('\n');
 		})
 		.join('\n');
 }

@@ -4,7 +4,7 @@
  * shares, and the band ignores it. The Roman display shows it instead of
  * the worked-out one (chart/chartAnalysis.js).
  */
-import { sectionBlocks } from './sectionBlocks.js';
+import { sectionLineIndex } from './sectionBlocks.js';
 
 const MARKED = /^(.*?)\s*\{([^}]*)\}\s*$/;
 /* Characters that would break the chart's own syntax */
@@ -45,24 +45,6 @@ export function setMark(source, place, mark) {
 	const [, name, content] = match;
 	lines[lineIndex] = name + markInContent(content, place, mark);
 	return lines.join('\n');
-}
-
-/**
- * Which line holds a section's chords, following `as` to the section it repeats.
- * @param {string} source
- * @param {number} section
- */
-function sectionLineIndex(source, section) {
-	const blocks = sectionBlocks(source);
-	const block = blocks[section];
-	if (!block) return -1;
-	const written = block.content.startsWith('as ')
-		? blocks.findIndex((other) => other.name === block.content.slice(3).trim())
-		: section;
-	let count = -1;
-	return source
-		.split('\n')
-		.findIndex((line) => /^"[^"]+"/.test(line.trim()) && ++count === written);
 }
 
 /**

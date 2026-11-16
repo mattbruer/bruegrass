@@ -4,10 +4,13 @@
  * follows the recording), then the song is written on those bars in a
  * track grid, chords in their lane and the tune in the piano roll below.
  *
- * Opening a recording makes it the open song's recording: a new song on
- * its bars (asking first if the open song has unsaved changes), unless the
- * open song is already the one written from it. From then on, every change
- * to the bars, chords, key or time writes the chart again (chartFromBars.js).
+ * Opening a recording opens the song written from it (the song names its
+ * recording), else makes a new song on its bars. The song's chart is the
+ * one place its chords, sections and key live, wherever they were typed:
+ * Transcribe reads them from the chart on the recording's bars
+ * (readChartOnBars.js), a chord typed here is written into its bar of the
+ * chart in place (chart/withBarChords.js), and a change to the bars, time
+ * or markers writes the chart again on the new bars (chartFromBars.js).
  * Notes drawn in the roll go into the song's tune, as they do anywhere.
  *
  * The grid is plain data (beatGrid.js) and every change goes through its
@@ -43,9 +46,13 @@ import {
 	writeTranscriptionDraft
 } from './transcriptionDraft.js';
 import { chartFromBars } from './chartFromBars.js';
-import { slotsFromTyped, slotsOf } from './barChords.js';
+import { readChartOnBars } from './readChartOnBars.js';
+import { chartCell, isEmptyBar, slotsFromTyped, slotsOf } from './barChords.js';
 import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
-import { withKeyField } from '../chart/keyField.js';
+import { keyFieldName, withKeyField } from '../chart/keyField.js';
+import { withBarChords } from '../chart/withBarChords.js';
+import { NO_CHORD } from '../chart/noChord.js';
+import { listArrangements } from '$lib/storage/arrangements.js';
 import { quartersAt, secondsAt } from './tempoMap.js';
 import { barStepTarget } from './barStep.js';
 import { findTuning } from '$lib/slowDowner/findTuning.js';
@@ -85,15 +92,6 @@ export class TranscriptionState {
 	recording = $state.raw(null);
 	/** @type {BeatGrid | null} */
 	grid = $state.raw(null);
-	/** @type {Record<number, Slots>} bar number → its chords, a slot per beat */
-	chords = $state.raw({});
-	/**
-	 * The song's key as you named it ("G", "Em"; null: not named, so it's
-	 * guessed from the first chord). Written into the chart, and the tune is
-	 * spelled in it.
-	 * @type {string | null}
-	 */
-	key = $state(null);
 	/** The time signature's id (timeSignatures.js). */
 	time = $state(DEFAULT_TIME);
 	/** @type {import('./extraLanes.js').ExtraLane[]} the generic lanes (+ Lane), to write by ear */
@@ -106,12 +104,8 @@ export class TranscriptionState {
 			notes: writtenBassNotes(readBassScore(this.laneAbc(lane), abcjsIfLoaded()))
 		}))
 	);
-	/** The chart last written into the song from here ('' : none yet). */
-	written = $state('');
 	/** The part the piano roll edits (a voice id). */
 	lane = $state(MELODY_CHANNEL);
-	/** @type {Record<number, string>} bar number → the section (marker) starting there */
-	markers = $state.raw({});
 	/** The open bar's menu is for naming its marker (its name box takes the keys). */
 	naming = $state(false);
 	/**
@@ -141,8 +135,20 @@ export class TranscriptionState {
 
 	bars = $derived(this.grid ? layOutBars(this.grid.beats.length, this.grid.bars) : []);
 	bar = $derived(this.bars.find((bar) => bar.number === this.openBar) ?? null);
-	/** The song open now is the one written from here (its chart hasn't been changed elsewhere). */
-	linked = $derived(this.written !== '' && this.arranger.arrangement.text === this.written);
+	/** The song open now is the one written from this recording. */
+	linked = $derived(!!this.recording && this.arranger.song.recording?.key === this.recording.key);
+	/** The open song's chart on the recording's bars (nothing while another song is open). */
+	#chartOnBars = $derived(
+		this.linked
+			? readChartOnBars(this.arranger.arrangement.text, this.arranger.arrangement.sections)
+			: readChartOnBars('', [])
+	);
+	/** @type {Record<number, Slots>} bar number → its chords, a slot per beat */
+	chords = $derived(this.#chartOnBars.chords);
+	/** @type {Record<number, string>} bar number → the section (marker) starting there */
+	markers = $derived(this.#chartOnBars.markers);
+	/** The key the chart names ("G", "Em"; null: none, guessed from the first chord). */
+	key = $derived(this.linked ? keyFieldName(this.arranger.arrangement.text) : null);
 	/** Where the recording is now, in the song's quarters from bar 1. */
 	quartersNow = $derived(this.grid ? quartersAt(this.grid, this.player.time) : 0);
 	/**
@@ -213,17 +219,13 @@ export class TranscriptionState {
 	async open(recording) {
 		this.recording = recording;
 		this.grid = null;
-		this.chords = {};
-		this.key = null;
 		this.time = DEFAULT_TIME;
 		this.extraLanes = [];
-		this.written = '';
 		this.peaks = null;
 		this.hits = null;
 		this.downbeat = null;
 		this.settingDownbeat = false;
 		this.cycle.clear();
-		this.markers = {};
 		this.player.setCents(0);
 		this.closeMenus();
 		this.#audio = null;
@@ -238,29 +240,37 @@ export class TranscriptionState {
 		this.#analysis = analysis;
 		this.hits = hitsOf(analysis);
 
-		this.#carryOn(readTranscriptionDraft(recording.key));
+		await this.#carryOn(readTranscriptionDraft(recording.key));
 	}
 
 	/**
 	 * Go on from the draft (null: none), or place beat 1 first.
 	 * @param {import('./transcriptionDraft.js').Transcription | null} draft
 	 */
-	#carryOn(draft) {
+	async #carryOn(draft) {
 		// Beats come back only when you placed beat 1; an older draft's were guessed
 		if (draft) {
 			this.grid = draft.downbeat === null ? null : draft.grid;
-			this.chords = draft.chords;
-			this.key = draft.key;
 			this.time = draft.time;
 			this.extraLanes = draft.lanes;
-			this.markers = draft.markers;
 			this.player.setCents(draft.cents);
-			this.written = draft.written;
 			this.downbeat = draft.downbeat;
+			// A song written from it before songs named their recording
+			if (draft.written && draft.written === this.arranger.arrangement.text)
+				this.arranger.song.recording = this.#songsRecording();
 		}
 		if (!this.grid) this.settingDownbeat = true;
-		else if (!this.linked) this.startSong();
-		else this.arranger.song.recording = this.#songsRecording(); // a song written from it before songs knew
+		else if (!this.linked) await this.#openSongOrStart();
+	}
+
+	/** Open the song last written from this recording, or start one. */
+	async #openSongOrStart() {
+		const key = this.recording?.key;
+		const songs = await listArrangements();
+		const written = songs.find((song) => song.recording?.key === key);
+		if (this.recording?.key !== key) return;
+		if (written) await this.arranger.song.open(written.id);
+		else this.startSong();
 	}
 
 	/**
@@ -318,7 +328,7 @@ export class TranscriptionState {
 		if (this.recording) clearTranscriptionDraft(this.recording.key);
 		this.#writeChart();
 		this.#keepDraft();
-		if (!this.linked) this.startSong();
+		if (!this.linked) this.#openSongOrStart();
 	}
 
 	/** Go back to placing beat 1 (the beats stay until they're found again). */
@@ -339,7 +349,7 @@ export class TranscriptionState {
 	 */
 	startSong() {
 		if (!this.grid) return;
-		const chart = this.#chart();
+		const chart = chartFromBars(this.bars, timeSignature(this.time), {});
 		const { song } = this.arranger;
 		song.startNew(
 			{
@@ -353,7 +363,6 @@ export class TranscriptionState {
 			this.recording?.name ?? ''
 		);
 		song.keepAsYourOwn().catch(console.error);
-		this.written = chart;
 		this.#keepDraft();
 	}
 
@@ -394,13 +403,7 @@ export class TranscriptionState {
 	 * @param {string | null} name
 	 */
 	async setKey(name) {
-		this.key = name;
-		this.#keepDraft();
-		if (!this.linked) return;
-		this.#writeChart();
-		await this.arranger.nameSongKey(name);
-		this.written = this.arranger.arrangement.text;
-		this.#keepDraft();
+		if (this.linked) await this.arranger.nameSongKey(name);
 	}
 
 	/**
@@ -431,12 +434,20 @@ export class TranscriptionState {
 			onlyFirst && first.length > 1
 				? slotsFromTyped(first.join(' '), bar.beats)
 				: slotsOf(cleaned, bar.beats).map((slot) => slot?.split(/[\s,|]+/)[0] ?? null);
-		const chords = { ...this.chords };
-		if (slots.some(Boolean)) chords[number] = slots;
-		else delete chords[number];
-		this.chords = chords;
-		this.#keepDraft();
-		this.#writeChart();
+		const place = this.#chartOnBars.places[number];
+		if (!place) return this.#writeChart({ chords: { ...this.chords, [number]: slots } });
+		const cell = isEmptyBar(slots) ? NO_CHORD : chartCell(slots, this.#lastChordBefore(number));
+		this.#changeChart(withBarChords(this.arranger.arrangement.text, place, cell));
+	}
+
+	/**
+	 * The chord sounding at the end of the bar before (what a bar starting
+	 * with an empty beat carries on).
+	 * @param {number} number
+	 */
+	#lastChordBefore(number) {
+		const slots = this.chords[number - 1] ?? [];
+		return slots.findLast(Boolean) ?? NO_CHORD;
 	}
 
 	/**
@@ -507,9 +518,7 @@ export class TranscriptionState {
 		const cleaned = name.replaceAll('"', '').trim();
 		if (cleaned) markers[number] = cleaned;
 		else delete markers[number];
-		this.markers = markers;
-		this.#keepDraft();
-		this.#writeChart();
+		this.#writeChart({ markers });
 	}
 
 	/** A marker on the bar the playhead is in: its menu opens to name it. */
@@ -690,35 +699,43 @@ export class TranscriptionState {
 		this.#writeChart();
 	}
 
-	#chart() {
-		return withKeyField(
-			chartFromBars(this.bars, timeSignature(this.time), this.chords, this.markers),
-			this.key
+	/**
+	 * Write the song's chart again on the recording's bars as they are now,
+	 * with its chords, sections, words and key (or the changed ones given).
+	 * Bars past the recording's end are dropped, and repeats are written out.
+	 * @param {{ chords?: Record<number, Slots>, markers?: Record<number, string> }} [changed]
+	 */
+	#writeChart(changed = {}) {
+		const { chords = this.chords, markers = this.markers } = changed;
+		const bars = chartFromBars(
+			this.bars,
+			timeSignature(this.time),
+			chords,
+			markers,
+			this.#chartOnBars.lyrics
 		);
+		this.#changeChart(withKeyField(bars, this.key));
 	}
 
-	/** The song written from here gets the bars, chords, key and time as they are now. */
-	#writeChart() {
-		if (!this.linked) return;
-		const chart = this.#chart();
-		if (chart === this.written) return;
-		this.written = chart;
-		this.arranger.arrangement.text = chart;
-		this.#keepDraft();
+	/**
+	 * The song's chart, changed from here. Nothing is written while another
+	 * song is open, or while the chart can't be read (it would be lost).
+	 * @param {string} chart
+	 */
+	#changeChart(chart) {
+		const { arrangement } = this.arranger;
+		if (!this.linked || arrangement.error) return;
+		arrangement.text = chart;
 	}
 
 	#keepDraft() {
 		if (!this.recording || !this.grid) return;
 		writeTranscriptionDraft(this.recording.key, {
 			grid: this.grid,
-			chords: this.chords,
-			key: this.key,
 			time: this.time,
 			lanes: this.extraLanes,
-			markers: this.markers,
 			cents: this.player.cents,
-			downbeat: this.downbeat,
-			written: this.written
+			downbeat: this.downbeat
 		});
 	}
 }
