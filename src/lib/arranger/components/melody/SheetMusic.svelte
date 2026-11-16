@@ -17,6 +17,7 @@
 	import { drawSheetMusic } from '../../melody/drawSheetMusic.js';
 	import { playedQuarters, sheetEvents } from '../../melody/follow.js';
 	import { followSheetMusic } from '../../melody/followSheetMusic.js';
+	import { withPickupDoubleBar } from '../../melody/roll/pickupBar.js';
 	import SheetViewToggle from './SheetViewToggle.svelte';
 
 	const { arrangement, melody, player } = useArranger();
@@ -25,7 +26,15 @@
 	let { notation: otherNotation, clock } = $props();
 	const playing = $derived(clock ? clock.playing : player.isPlaying);
 	const timeNow = $derived(clock ? clock.quarters : player.melodyTimeNow);
-	const notation = $derived(otherNotation ?? melody.notation);
+	const notation = $derived(
+		otherNotation ??
+			(melody.voices
+				? withPickupDoubleBar(
+						melody.notation,
+						melody.voices.map((voice) => voice.score)
+					)
+				: melody.notation)
+	);
 
 	/** Both views are the same with no capo or key change, so the tabs only show when they differ. */
 	let canTranspose = $derived(arrangement.key !== null && arrangement.pitchShift !== 0);

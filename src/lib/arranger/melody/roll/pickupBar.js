@@ -98,3 +98,26 @@ function afterBarLine(abc, at) {
 	const barLine = abc.slice(at).match(/^\s*\|(?![:|\]])\s*/);
 	return barLine ? at + barLine[0].length : at;
 }
+
+/**
+ * The tune as sheet music shows it: the pickup ends with a double bar line
+ * (`||`), so it stands apart from bar 1. Only a plain bar line is changed; a
+ * repeat sign after the pickup stays.
+ * @param {string} abc
+ * @param {Score[]} scores each voice's score, read from abc
+ */
+export function withPickupDoubleBar(abc, scores) {
+	let text = abc;
+	const ends = scores
+		.filter((score) => score.bars.length > 0 && isPickup(score, 0) && score.bars[0].to !== null)
+		.map((score) => /** @type {number} */ (score.bars[0].to))
+		.toSorted((a, b) => b - a);
+	for (const end of ends) {
+		const barLine = text.slice(end).match(/^\s*\|(?![:|\]])/);
+		if (barLine) {
+			const at = end + barLine[0].length;
+			text = `${text.slice(0, at)}|${text.slice(at)}`;
+		}
+	}
+	return text;
+}
