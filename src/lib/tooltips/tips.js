@@ -326,6 +326,9 @@ export const TIPS = Object.freeze({
 	},
 
 	melody: {
+		tabFret:
+			'Where this note is played: the fret, on its string. Tap to play it on another string instead.',
+		tabInstrument: 'Show this part as TAB, for guitar, mandolin or banjo, under the notes.',
 		views: {
 			draw: 'Draw the tune and its harmony lines on a grid of notes.',
 			abc: 'The same tune as ABC notation, to read, paste or type.'

@@ -69,8 +69,12 @@
 	 *   onCommit: (notes: import('../../melody/roll/editNotes.js').DrawnNote[], length?: number) => void,
 	 *   onSound: (midi: number) => void,
 	 *   onSeek?: (ticks: number) => void,
-	 *   zoom?: { across: number, down: number }
+	 *   zoom?: { across: number, down: number },
+	 *   under?: import('svelte').Snippet<[{ tickWidth: number, width: number, labelWidth: number }]>,
+	 *   underHeight?: number
 	 * }}
+	 *   under: drawn below the chords, scrolling sideways with the roll (the TAB);
+	 *   underHeight: its height in pixels, added to the roll's
 	 */
 	let {
 		score,
@@ -93,7 +97,9 @@
 		onCommit,
 		onSound,
 		onSeek,
-		zoom = { across: 1, down: 1 }
+		zoom = { across: 1, down: 1 },
+		under,
+		underHeight = 0
 	} = $props();
 
 	let touchScreen = $state(false);
@@ -385,6 +391,7 @@
 <div
 	bind:this={scroller}
 	class="roll relative h-72 overflow-auto ui-well outline-offset-2 pointer-coarse:h-80"
+	style:height={underHeight ? `calc(${touchScreen ? 20 : 18}rem + ${underHeight}px)` : undefined}
 	role="application"
 	aria-label="Piano roll: draw the melody"
 	tabindex="0"
@@ -497,17 +504,24 @@
 			</div>
 		</div>
 
-		<div class="sticky bottom-0 z-20 flex" style:height="{CHORD_HEIGHT}px">
-			<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
-			<div class="chords relative" style:width="{width}px">
-				{#each chordsUnder as chord, index (index)}
-					<span
-						class="chord"
-						style:left="{chord.at * tickWidth}px"
-						style:width="{chord.length * tickWidth}px">{chordName(chord.name)}</span
-					>
-				{/each}
+		<div class="sticky bottom-0 z-20">
+			<div class="flex" style:height="{CHORD_HEIGHT}px">
+				<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
+				<div class="chords relative" style:width="{width}px">
+					{#each chordsUnder as chord, index (index)}
+						<span
+							class="chord"
+							style:left="{chord.at * tickWidth}px"
+							style:width="{chord.length * tickWidth}px">{chordName(chord.name)}</span
+						>
+					{/each}
+				</div>
 			</div>
+			{#if under}
+				<div class="flex" style:height="{underHeight}px">
+					{@render under({ tickWidth, width, labelWidth: LABEL_WIDTH })}
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>

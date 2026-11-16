@@ -25,6 +25,12 @@
 	import BassLineNote from './BassLineNote.svelte';
 	import { songBassStyle } from '../../bass/songBassStyle.svelte.js';
 	import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
+	import TabStrip from './TabStrip.svelte';
+	import TabChoice from './TabChoice.svelte';
+	import { chooseString, songTab } from '../../tab/songTab.svelte.js';
+	import { fretboard } from '../../tab/fretboards.js';
+	import { nextString, noteKey, tabNotes } from '../../tab/fingering.js';
+	import { tabHeight } from '../../tab/tabLayout.js';
 
 	/**
 	 * @type {{
@@ -94,6 +100,20 @@
 		drawing.commit(notes);
 	}
 
+	/* TAB: the part being edited, for the instrument chosen for it (not the bass yet) */
+	const tabVoice = $derived(drawing.isBass ? null : (drawing.current?.id ?? null));
+	const partTab = $derived(tabVoice ? (songTab.parts[tabVoice] ?? null) : null);
+	const board = $derived(partTab ? fretboard(partTab.instrument) : null);
+	const tab = $derived(board && partTab ? tabNotes(drawing.notes, board, partTab.strings) : []);
+	const unplayable = $derived(tab.filter((tabNote) => !tabNote.place).length);
+
+	/** @param {import('../../tab/fingering.js').TabNote} tabNote */
+	function playOnNextString(tabNote) {
+		const string = nextString(tabNote);
+		if (string === null || !tabVoice) return;
+		chooseString(tabVoice, noteKey(tabNote.note), string, drawing.notes.map(noteKey));
+	}
+
 	/** @param {number} midi */
 	function sound(midi) {
 		const heard = drawing.isBass
@@ -109,7 +129,12 @@
 			<VoicePicker {drawing} />
 		{/if}
 		<HarmonyOptions {drawing} />
-		<RollToolbar {drawing} {keyMenu} />
+		<div class="flex flex-wrap items-start gap-x-3">
+			<RollToolbar {drawing} {keyMenu} />
+			{#if tabVoice}
+				<TabChoice voice={tabVoice} />
+			{/if}
+		</div>
 		<PianoRoll
 			score={drawing.score}
 			notes={drawing.notes}
@@ -132,7 +157,23 @@
 			onSound={sound}
 			onSeek={clock?.seek ? seek : undefined}
 			{zoom}
+			under={board ? tabUnder : undefined}
+			underHeight={board ? tabHeight(board) : 0}
 		/>
+		{#snippet tabUnder(
+			/** @type {{ tickWidth: number, width: number, labelWidth: number }} */ layout
+		)}
+			{#if board}
+				<TabStrip tabNotes={tab} {board} {...layout} onChoose={playOnNextString} />
+			{/if}
+		{/snippet}
+		{#if unplayable > 0 && board}
+			<p class="mt-2 text-sm text-ink-soft">
+				{unplayable}
+				{unplayable === 1 ? 'note is' : 'notes are'} out of the {board.name.toLowerCase()}'s range,
+				so not in the TAB.
+			</p>
+		{/if}
 		{#if drawing.problem}
 			<p class="mt-2 text-sm text-ink-soft">{drawing.problem}</p>
 		{:else}
