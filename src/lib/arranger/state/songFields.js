@@ -10,7 +10,7 @@ import { songTab, tabSnapshot } from '../tab/songTab.svelte.js';
 
 /**
  * @typedef {Pick<import('$lib/storage/arrangements.js').Arrangement,
- *   'arrangement' | 'abc' | 'bass' | 'bassStyle' | 'tab' | 'recording' | 'tempo' | 'capo' | 'transpose' | 'mix'>} SongFields
+ *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassStyle' | 'tab' | 'recording' | 'tempo' | 'capo' | 'transpose' | 'mix'>} SongFields
  *   what a song is made of (its name is kept separately)
  */
 
@@ -23,6 +23,7 @@ export function readSongFields(arranger) {
 	return {
 		arrangement: arranger.arrangement.text,
 		abc: arranger.melody.notation,
+		tune: arranger.melody.bySection,
 		bass: arranger.bass.notation,
 		bassStyle: songBassStyle.id,
 		tab: tabSnapshot(),
@@ -48,7 +49,7 @@ export function loadSongIntoPage(arranger, song) {
 	arranger.arrangement.tempo = song.tempo;
 	arranger.arrangement.capo = validCapo(song.capo);
 	arranger.arrangement.transpose = song.transpose;
-	arranger.melody.notation = song.abc;
+	arranger.melody.load(song.abc, song.tune ?? null); // songs from before the tune could be kept by section
 	arranger.bass.notation = song.bass ?? ''; // drafts from before the bass could be edited
 	songBassStyle.id = song.bassStyle ?? DEFAULT_BASS_STYLE; // examples, and drafts from before
 	songTab.parts = song.tab ?? {};

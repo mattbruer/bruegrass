@@ -8,6 +8,7 @@
 	import MelodyWarnings from './MelodyWarnings.svelte';
 	import ChordConversion from './ChordConversion.svelte';
 	import HarmonyParts from './HarmonyParts.svelte';
+	import TuneSections from './TuneSections.svelte';
 	import MelodyDrawing from '../pianoRoll/MelodyDrawing.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -47,6 +48,7 @@
 	<div class="mb-3">
 		<TabSwitch tabs={VIEWS} bind:value={view} tips={TIPS.melody.views} label="Melody" />
 	</div>
+	<TuneSections />
 
 	{#if view === 'draw'}
 		<p class="mb-2 text-sm text-ink-soft">
@@ -102,7 +104,7 @@
 
 		<textarea
 			id="abc-notation"
-			bind:value={melody.notation}
+			bind:value={melody.abcView}
 			aria-label="ABC notation"
 			placeholder={EXAMPLE_NOTATION}
 			class="h-56 w-full ui-field p-4 font-mono text-sm pointer-coarse:text-base"

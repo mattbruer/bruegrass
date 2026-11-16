@@ -322,6 +322,13 @@ export const TIPS = Object.freeze({
 	},
 
 	melody: {
+		sections: {
+			split:
+				'Give each section of the chart its own bars of the tune, so the tune follows the chart: copy a section’s line and its tune comes too.',
+			join: 'Keep the tune as one piece of ABC again, as it plays now.',
+			makeItsOwn:
+				'This section plays another section’s tune. Give it its own copy of the chords and tune, to change from there.'
+		},
 		tabFret:
 			'Where this note is played: the fret, on its string. Pick it, then type a fret to change the note, or ↑ ↓ for another string.',
 		tabFretField:

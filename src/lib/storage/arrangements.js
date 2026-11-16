@@ -22,7 +22,7 @@ import { newId } from './newId.js';
 import { DEFAULT_BASS_STYLE } from '$lib/arranger/instruments/bassStyles.js';
 
 /** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
-export const ARRANGEMENT_VERSION = 5;
+export const ARRANGEMENT_VERSION = 6;
 
 /** Where every saved song is kept, as { [id]: Arrangement }. */
 const SONGS_KEY = 'bruegrass.arrangements';
@@ -40,6 +40,7 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   title: string,
  *   arrangement: string,
  *   abc: string,
+ *   tune: import('$lib/arranger/melody/sections/tuneBySection.js').TuneBySection | null,
  *   bass: string,
  *   bassStyle: string,
  *   tab: Record<string, import('$lib/arranger/tab/songTab.svelte.js').PartTab>,
@@ -52,7 +53,8 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   updatedAt: string
  * }} Arrangement
  *   title: the song's name; arrangement: the chord chart text; abc: the
- *   melody in ABC notation; bass: the bass line in ABC once it's been
+ *   melody in ABC notation (as played); tune: the melody kept by section,
+ *   each section's bars (null: kept whole, in abc); bass: the bass line in ABC once it's been
  *   edited ('' while the band writes it from the chart); bassStyle: how the band
  *   writes its own bass line, an id in BASS_STYLES; tab: each part's TAB instrument
  *   and the strings chosen for its notes (tab/songTab.svelte.js); recording: the
@@ -72,6 +74,7 @@ export function createArrangement(fields = {}) {
 		title: '',
 		arrangement: '',
 		abc: '',
+		tune: null,
 		bass: '',
 		bassStyle: DEFAULT_BASS_STYLE,
 		tab: {},
@@ -141,7 +144,8 @@ function allSongs() {
  * `bass` (the defaults fill it in: older songs play the generated bass);
  * version 3 `bassStyle` (it was a device setting before: older songs get the default);
  * version 4 `tab` (older songs have none); version 5 `recording` (none: a
- * song transcribed earlier gets it when its recording is opened again).
+ * song transcribed earlier gets it when its recording is opened again); version 6
+ * `tune` (older songs keep their tune whole).
  * @param {Arrangement} song
  * @returns {Arrangement}
  */

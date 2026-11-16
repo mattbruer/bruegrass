@@ -45,11 +45,16 @@ import { respellDrawnMelody } from '../melody/roll/drawnMelody.js';
 import { melodyKey } from '../melody/roll/melodyKey.js';
 import { blankScoreForSong } from '../melody/roll/scoreFromChart.js';
 import { newAbc } from '../melody/roll/scoreToAbc.js';
+import { barsInPlayOrder } from '../chart/chartBars.js';
+import { sectionInstances } from '../melody/sections/tuneBySection.js';
+import { sectionRests } from '../melody/sections/sectionRests.js';
+import { splitTune } from '../melody/sections/splitTune.js';
+import { madeItsOwn } from '../melody/sections/makeItsOwn.js';
 
 export class Arranger {
 	arrangement = new ArrangementState();
 	loop = new LoopState(this.arrangement);
-	melody = new MelodyState();
+	melody = new MelodyState((unit) => this.#tuneLayout(unit));
 	bass = new BassState();
 	player = new PlayerState(this.arrangement, this.loop, this.melody, this.bass);
 	layout = new PageLayoutState();
@@ -108,6 +113,63 @@ export class Arranger {
 			title: `Arrangement written from the melody's chords${withCapo}.`,
 			notes: written.notes
 		};
+	}
+
+	/**
+	 * The chart's sections in play order, for a tune kept by section, and
+	 * the rests (with the chart's chords) a section with no tune yet plays.
+	 * @param {number} unit ticks in the tune's unit note length
+	 */
+	#tuneLayout(unit) {
+		const { arrangement } = this;
+		const bars = arrangement.readError ? [] : barsInPlayOrder(arrangement.sections);
+		const song = {
+			songKey: arrangement.key,
+			capo: arrangement.capoFret,
+			spelling: this.melodyKey.spelling,
+			unit
+		};
+		return {
+			instances: sectionInstances(arrangement.text),
+			restsFor: (/** @type {number} */ index) =>
+				sectionRests(
+					bars.filter((bar) => bar.section === index),
+					song
+				)
+		};
+	}
+
+	/**
+	 * Keep the tune by section: cut the whole tune at the chart's sections,
+	 * so each section owns its bars from now on.
+	 * @returns {Promise<string>} why it couldn't be ('' when it was)
+	 */
+	async splitTuneIntoSections() {
+		await abcjsReady();
+		const { melody, arrangement } = this;
+		if (melody.bySection) return '';
+		if (!arrangement.isPlayable) return 'Fix the chart first.';
+		if (!melody.tune) return 'There is no tune to split yet.';
+		const instances = sectionInstances(arrangement.text);
+		const barCounts = arrangement.sections.map((section) => section.measures.length);
+		const { tune, problem } = splitTune(melody.notation, melody.tune, instances, barCounts);
+		if (!tune) return `The tune can't be split: ${problem}`;
+		melody.bySection = tune;
+		return '';
+	}
+
+	/**
+	 * A section playing another's tune gets its own copy of that section's
+	 * chords and tune, to change from there.
+	 * @param {number} index the section, in the chart's order
+	 */
+	makeSectionItsOwn(index) {
+		const { melody, arrangement } = this;
+		if (!melody.bySection) return;
+		const made = madeItsOwn(arrangement.text, melody.bySection, index);
+		if (!made) return;
+		arrangement.text = made.chart;
+		melody.bySection = made.tune;
 	}
 
 	/** What the melody's words and harmony parts are written from. */
