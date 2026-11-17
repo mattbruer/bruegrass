@@ -104,13 +104,13 @@
 	});
 
 	/**
-	 * A click on a bar's number opens its menu; anywhere else plays from that spot.
+	 * A click on a bar's number opens its menu (in the workspace); anywhere else plays from that spot.
 	 * @param {MouseEvent & { currentTarget: HTMLElement }} event
 	 */
 	function clickRuler(event) {
 		const number = /** @type {HTMLElement} */ (event.target).closest('[data-bar]');
 		const bar = Number(/** @type {HTMLElement | null} */ (number)?.dataset.bar);
-		if (bar > 0) return transcription.openBarMenu(bar);
+		if (bar > 0 && view === 'full') return transcription.openBarMenu(bar);
 		const box = event.currentTarget.getBoundingClientRect();
 		transcription.seekToQuarters(scale.toQuarters(event.clientX - box.left) + scale.start);
 	}

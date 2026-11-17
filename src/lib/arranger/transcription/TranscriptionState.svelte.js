@@ -46,7 +46,7 @@ import {
 	writeTranscriptionDraft
 } from './transcriptionDraft.js';
 import { chartFromBars } from './chartFromBars.js';
-import { readChartOnBars, SECTION_END } from './readChartOnBars.js';
+import { readChartOnBars } from './readChartOnBars.js';
 import { namedSections, withUniqueSectionNames } from './arrangementFromTranscription.js';
 import { chartCell, isEmptyBar, isHeld, slotsFromTyped, slotsOf } from './barChords.js';
 import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
@@ -493,21 +493,6 @@ export class TranscriptionState {
 		this.pickingRecording = false;
 	}
 
-	/** Whether the song's first bar has a part named (every bar is in a part after it). */
-	get firstPartNamed() {
-		const first = this.bars[0]?.number;
-		const name = first === undefined ? undefined : this.markers[first];
-		return !!name && name !== SECTION_END;
-	}
-
-	/** Open bar 1's menu to name the part the song starts with. */
-	nameFirstPart() {
-		const first = this.bars[0]?.number;
-		if (first === undefined) return;
-		this.openBarMenu(first);
-		this.naming = true;
-	}
-
 	/** The bar whose start is nearest the playhead (a tap is often a little early or late). */
 	#barLineNearPlayhead() {
 		const grid = this.grid;
@@ -714,17 +699,6 @@ export class TranscriptionState {
 	setLaneAbc(id, abc) {
 		this.extraLanes = this.extraLanes.map((lane) => (lane.id === id ? { ...lane, abc } : lane));
 		this.#keepDraft();
-	}
-
-	/**
-	 * Play from the start of a bar.
-	 * @param {number} number
-	 */
-	playFromBar(number) {
-		const bar = this.bars.find((each) => each.number === number);
-		if (!bar) return;
-		this.#seekToBar(bar);
-		this.player.play();
 	}
 
 	/** @param {import('./barPlan.js').Bar} bar the playhead to its first beat */
