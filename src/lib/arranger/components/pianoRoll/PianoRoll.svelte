@@ -33,6 +33,7 @@
 	} from '../../melody/roll/noteGestures.js';
 	import { followScroll, middlePitch } from '../../melody/roll/followView.js';
 	import { pitchRows } from '../../melody/roll/pitchRows.js';
+	import { barLabel, isShortBar, tickWidthFor } from '../../melody/roll/rollLayout.js';
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 
 	/* Size */
@@ -40,8 +41,6 @@
 	const RULER_HEIGHT = 22;
 	const CHORD_HEIGHT = 28;
 	const ROW_HEIGHT = { mouse: 22, touch: 32 };
-	/** Pixels per quarter note: wider when the grid is finer. */
-	const QUARTER_WIDTH = { coarse: 64, fine: 96 };
 	/* Gestures */
 	const MOVE_THRESHOLD = 6; // px before a press counts as a drag
 	const DOUBLE_TAP_MS = 350;
@@ -70,12 +69,8 @@
 	 *   onCommit: (notes: import('../../melody/roll/editNotes.js').DrawnNote[], length?: number) => void,
 	 *   onSound: (midi: number) => void,
 	 *   onSeek?: (ticks: number) => void,
-	 *   zoom?: { across: number, down: number },
-	 *   under?: import('svelte').Snippet<[{ tickWidth: number, width: number, labelWidth: number }]>,
-	 *   underHeight?: number
+	 *   zoom?: { across: number, down: number }
 	 * }}
-	 *   under: drawn below the chords, scrolling sideways with the roll (the TAB);
-	 *   underHeight: its height in pixels, added to the roll's
 	 */
 	let {
 		score,
@@ -98,9 +93,7 @@
 		onCommit,
 		onSound,
 		onSeek,
-		zoom = { across: 1, down: 1 },
-		under,
-		underHeight = 0
+		zoom = { across: 1, down: 1 }
 	} = $props();
 
 	let touchScreen = $state(false);
@@ -112,10 +105,7 @@
 	let preview = $state.raw(/** @type {typeof notes | null} */ (null));
 
 	let rowHeight = $derived((touchScreen ? ROW_HEIGHT.touch : ROW_HEIGHT.mouse) * zoom.down);
-	let tickWidth = $derived(
-		((gridStep < TICKS_PER_QUARTER / 2 ? QUARTER_WIDTH.fine : QUARTER_WIDTH.coarse) * zoom.across) /
-			TICKS_PER_QUARTER
-	);
+	let tickWidth = $derived(tickWidthFor(gridStep, zoom.across));
 
 	// Zooming keeps the middle of the view where it was
 	let shownSize = { tickWidth, rowHeight };
@@ -139,7 +129,7 @@
 	let shown = $derived(preview ?? notes);
 	let width = $derived(end * tickWidth);
 	let height = $derived(rows.length * rowHeight);
-	let firstIsPickup = $derived(isShort(score.bars[0]));
+	let firstIsPickup = $derived(isShortBar(score.bars[0]));
 	let grid = $derived({ tickWidth, rowHeight, gridStep, end, range });
 
 	onMount(() => {
@@ -203,17 +193,6 @@
 		const middle = middlePitch(notes, tonic);
 		const y = (range.highest - middle) * rowHeight + RULER_HEIGHT - scroller.clientHeight / 2;
 		scroller.scrollTop = Math.max(0, y);
-	}
-
-	/** @param {import('../../melody/roll/readScore.js').ScoreBar | undefined} bar */
-	function isShort(bar) {
-		return Boolean(bar) && bar.length < (bar.meter.num * 4 * TICKS_PER_QUARTER) / bar.meter.den;
-	}
-
-	/** @param {number} index */
-	function barNumber(index) {
-		if (firstIsPickup && index === 0) return '';
-		return String(firstIsPickup ? index : index + 1);
 	}
 
 	/** @param {PointerEvent} event */
@@ -392,7 +371,6 @@
 <div
 	bind:this={scroller}
 	class="roll relative h-72 overflow-auto ui-well outline-offset-2 pointer-coarse:h-80"
-	style:height={underHeight ? `calc(${touchScreen ? 20 : 18}rem + ${underHeight}px)` : undefined}
 	role="application"
 	aria-label="Piano roll: draw the melody"
 	tabindex="0"
@@ -412,7 +390,9 @@
 				onclick={onSeek ? seekFromRuler : undefined}
 			>
 				{#each score.bars as bar, index (index)}
-					<span class="bar-number" style:left="{bar.start * tickWidth}px">{barNumber(index)}</span>
+					<span class="bar-number" style:left="{bar.start * tickWidth}px"
+						>{barLabel(score.bars, index)}</span
+					>
 				{/each}
 			</div>
 		</div>
@@ -510,24 +490,17 @@
 			</div>
 		</div>
 
-		<div class="sticky bottom-0 z-20">
-			<div class="flex" style:height="{CHORD_HEIGHT}px">
-				<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
-				<div class="chords relative" style:width="{width}px">
-					{#each chordsUnder as chord, index (index)}
-						<span
-							class="chord"
-							style:left="{chord.at * tickWidth}px"
-							style:width="{chord.length * tickWidth}px">{chordName(chord.name)}</span
-						>
-					{/each}
-				</div>
+		<div class="sticky bottom-0 z-20 flex" style:height="{CHORD_HEIGHT}px">
+			<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
+			<div class="chords relative" style:width="{width}px">
+				{#each chordsUnder as chord, index (index)}
+					<span
+						class="chord"
+						style:left="{chord.at * tickWidth}px"
+						style:width="{chord.length * tickWidth}px">{chordName(chord.name)}</span
+					>
+				{/each}
 			</div>
-			{#if under}
-				<div class="flex" style:height="{underHeight}px">
-					{@render under({ tickWidth, width, labelWidth: LABEL_WIDTH })}
-				</div>
-			{/if}
 		</div>
 	</div>
 </div>

@@ -4,7 +4,8 @@
 	 * the part picked in the grid, follows the recording while it plays, and
 	 * starts an unwritten bass empty, to write by ear. The key is named in
 	 * the row above, so the roll's own Key menu is left out. Or the same
-	 * part as sheet music (the tune with all its voices, or the bass line).
+	 * part as sheet music (the tune with all its voices, or the bass line),
+	 * or as TAB.
 	 */
 	import MelodyDrawing from '../pianoRoll/MelodyDrawing.svelte';
 	import SheetMusic from '../melody/SheetMusic.svelte';
@@ -93,6 +94,7 @@
 				pickupQuarters={transcription.newTunePickup}
 				keyMenu={false}
 				zoom={settings.transcribe.zoom}
+				view={settings.transcribe.bottomView === 'tab' ? 'tab' : 'roll'}
 			/>
 		{/if}
 	</section>

@@ -62,7 +62,7 @@ export const settings = $state({
 	transcribe: {
 		/** How the slowed-down song is stretched: an id in transcribe/sounds.js. */
 		sound: 'balanced',
-		/** The bottom pane shows the picked part as a piano roll or as sheet music: an id in transcription/bottomViews.js. */
+		/** The bottom pane shows the picked part as a piano roll, sheet music or TAB: an id in transcription/bottomViews.js. */
 		bottomView: 'roll',
 		/** Cycle ends snap to sixteenth notes (off: drag and tap to any spot). */
 		snapCycle: true,

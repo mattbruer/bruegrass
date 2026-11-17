@@ -258,7 +258,8 @@ export const TIPS = Object.freeze({
 			'Notes before beat 1 (a pickup): how many beats of room to draw them in, before bar 1. Every voice gets the same.',
 		bottomViews: {
 			roll: 'Write and edit the picked part as notes on a grid.',
-			sheet: 'See what you’ve written as a score.'
+			sheet: 'See what you’ve written as a score.',
+			tab: 'The picked part as TAB, for guitar, mandolin or banjo: pick a number to change its fret or string.'
 		},
 		laneVolume:
 			'How loud this lane plays. Turn the recording down or a part up to hear the part over it. Double-click to put it back.',
@@ -349,9 +350,10 @@ export const TIPS = Object.freeze({
 			'The fret this note is played at. Type another to change the note, on the same string.',
 		tabStringUp: 'Play this note on the string above, at the fret that gives the same note.',
 		tabStringDown: 'Play this note on the string below, at the fret that gives the same note.',
-		tabInstrument: 'Show this part as TAB, for guitar, mandolin or banjo, under the notes.',
+		tabInstrument: 'The instrument this part’s TAB is written for.',
 		views: {
 			draw: 'Draw the tune and its harmony lines on a grid of notes.',
+			tab: 'The picked part as TAB, for guitar, mandolin or banjo: pick a number to change its fret or string.',
 			abc: 'The same tune as ABC notation, to read, paste or type.'
 		},
 		harmonyOptions: {

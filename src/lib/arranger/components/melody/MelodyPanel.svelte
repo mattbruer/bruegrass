@@ -23,9 +23,10 @@
 		'GABc dedB|dedB dedB|'
 	].join('\n');
 
-	/** Two ways to write the same tune: draw it, or type it in ABC. */
+	/** Ways to write the same tune: draw it, fix its TAB, or type it in ABC. */
 	const VIEWS = [
 		{ id: 'draw', name: 'Draw' },
+		{ id: 'tab', name: 'TAB' },
 		{ id: 'abc', name: 'ABC' }
 	];
 
@@ -57,6 +58,8 @@
 		<HarmonyParts />
 		<MelodyDrawing />
 		<MelodyFitNote />
+	{:else if view === 'tab'}
+		<MelodyDrawing view="tab" />
 	{:else}
 		<p class="mb-2 text-sm text-ink-soft">
 			Paste or write a tune in
