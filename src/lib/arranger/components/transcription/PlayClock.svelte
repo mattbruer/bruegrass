@@ -1,9 +1,10 @@
 <script>
 	/**
-	 * Where the recording is, with tenths (and how long it is, if asked). The
-	 * time sits in a box as wide as the longest time this recording can show,
-	 * lined up on its right, so it never changes width while it counts: the
-	 * slash and the length after it stay put, and nothing beside it moves.
+	 * Where the recording is, with tenths (and how long it is, if asked). It
+	 * never changes width while it counts: every digit sits centred in a cell
+	 * of the same width (the app's font has digits of different widths), and
+	 * the time sits in a box as wide as the longest this recording can show,
+	 * lined up on its right, so the slash and the length after it stay put.
 	 */
 	import { formatClock } from '$lib/utils/formatClock.js';
 
@@ -12,14 +13,19 @@
 
 	/** Every digit the longest time has, as zeros: the widest it can be. */
 	const widest = $derived(formatClock(duration, { tenths: true }).replace(/\d/g, '0'));
+	const now = $derived(formatClock(time, { tenths: true }));
 </script>
 
-<span class="clock tabular-nums {className}"
-	><span class="time"
-		><span class="sizer" aria-hidden="true">{widest}</span><span class="now"
-			>{formatClock(time, { tenths: true })}</span
+{#snippet cells(/** @type {string} */ text)}
+	{#each text as char, index (index)}<span class:digit={/\d/.test(char)}>{char}</span>{/each}
+{/snippet}
+
+<span class="clock {className}" aria-label={withLength ? `${now} of ${formatClock(duration)}` : now}
+	><span class="time" aria-hidden="true"
+		><span class="sizer">{@render cells(widest)}</span><span class="now">{@render cells(now)}</span
 		></span
-	>{#if withLength}&nbsp;/ {formatClock(duration)}{/if}</span
+	>{#if withLength}<span aria-hidden="true">&nbsp;/ {@render cells(formatClock(duration))}</span
+		>{/if}</span
 >
 
 <style>
@@ -37,5 +43,10 @@
 	}
 	.sizer {
 		visibility: hidden;
+	}
+	.digit {
+		display: inline-block;
+		width: 1ch;
+		text-align: center;
 	}
 </style>
