@@ -9,6 +9,8 @@
 	 * song sounds, or, with a capo or a key change, in the key of the
 	 * guitar's shapes, for reading with the capo on.
 	 *
+	 * A chord symbol shows only where the chord changes (chordChangesOnPaper.js).
+	 *
 	 * `notation` draws other ABC instead of the tune (Transcribe's bass line);
 	 * it isn't followed while playing. `clock` follows something other than
 	 * the band (Transcribe's recording), as the piano roll's does.
@@ -18,6 +20,7 @@
 	import { playedQuarters, sheetEvents } from '../../melody/follow.js';
 	import { followSheetMusic } from '../../melody/followSheetMusic.js';
 	import { pickupsOnPaper } from '../../melody/roll/pickupBar.js';
+	import { chordChangesOnly } from '../../melody/chordChangesOnPaper.js';
 	import SheetViewToggle from './SheetViewToggle.svelte';
 
 	const { arrangement, melody, player } = useArranger();
@@ -27,13 +30,15 @@
 	const playing = $derived(clock ? clock.playing : player.isPlaying);
 	const timeNow = $derived(clock ? clock.quarters : player.melodyTimeNow);
 	const notation = $derived(
-		otherNotation ??
-			(melody.voices
-				? pickupsOnPaper(
-						melody.notation,
-						melody.voices.map((voice) => voice.score)
-					)
-				: melody.notation)
+		chordChangesOnly(
+			otherNotation ??
+				(melody.voices
+					? pickupsOnPaper(
+							melody.notation,
+							melody.voices.map((voice) => voice.score)
+						)
+					: melody.notation)
+		)
 	);
 
 	/** Both views are the same with no capo or key change, so the tabs only show when they differ. */

@@ -20,6 +20,7 @@
 	 */
 	let { sections, playback, label = (chord) => chord, onChordTap } = $props();
 
+	import { namesChord } from '../../chart/chordChanges.js';
 	import { barsInPlayOrder } from '../../chart/chartBars.js';
 	import { placeInSong } from '../../chart/loop.js';
 	import GlassPlayhead from './GlassPlayhead.svelte';
@@ -102,11 +103,11 @@
 									{#if bar.meter}<span class="meter">{bar.meter}</span>{/if}
 								</span>
 							{/if}
-							{#each bar.chords as chord (chord.chord)}
+							{#each bar.chords as chord, slot (chord.chord)}
 								{@const place = { ...placeInSong(sections, bar), chord: chord.chord }}
 								{@const text = label(chord.name, place)}
 								<div class="slot" style="width: {chord.length * BEAT_PX}px">
-									{#if bar.held}
+									{#if !namesChord(measures, bar.index, slot)}
 										<span class="chord" aria-hidden="true">&nbsp;</span>
 									{:else if onChordTap}
 										<button
