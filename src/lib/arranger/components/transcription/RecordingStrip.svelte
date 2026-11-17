@@ -3,7 +3,8 @@
 	 * The whole recording on one lane: its waveform, its hits, a time every
 	 * few seconds, the playhead (it follows playing, and the lane scrolls to
 	 * keep it in view), and beat 1 once it's marked. Click to move the
-	 * playhead there. Zoom is the transcription's own.
+	 * playhead there, or drag it (by its handle, or anywhere with a mouse).
+	 * Zoom is the transcription's own.
 	 */
 	import { waveformPath } from '../../takes/waveformPeaks.js';
 	import { spikesPath } from '../../transcription/recordingShape.js';
@@ -87,21 +88,55 @@
 		return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 	}
 
-	/** @param {MouseEvent & { currentTarget: HTMLElement }} event */
+	/** @type {HTMLDivElement | undefined} */
+	let strip = $state();
+	let dragging = $state(false);
+
+	/** @param {PointerEvent | MouseEvent} event */
 	function moveTo(event) {
-		const box = event.currentTarget.getBoundingClientRect();
-		player.seek((event.clientX - box.left) / pixelsPerSecond);
+		if (!strip) return;
+		const box = strip.getBoundingClientRect();
+		player.seek(Math.max(0, (event.clientX - box.left) / pixelsPerSecond));
+	}
+
+	/**
+	 * Drag the playhead: by its handle with anything, anywhere on the lane
+	 * with a mouse (a finger elsewhere scrolls the lane; a tap moves it).
+	 * @param {PointerEvent & { currentTarget: HTMLElement }} event
+	 */
+	function startDrag(event) {
+		if (event.pointerType !== 'mouse' && !event.currentTarget.classList.contains('handle')) return;
+		event.stopPropagation();
+		strip?.setPointerCapture(event.pointerId);
+		dragging = true;
+		moveTo(event);
+	}
+
+	/** @param {PointerEvent} event */
+	function drag(event) {
+		if (dragging) moveTo(event);
+	}
+
+	function endDrag() {
+		dragging = false;
 	}
 </script>
 
+<p class="text-sm text-ink-soft">↔ Drag the playhead, or click the recording, to move it.</p>
 <div bind:this={scroller} class="scroller ui-well">
 	<!-- svelte-ignore a11y_click_events_have_key_events (Space plays; the button below finds the beats) -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
+		bind:this={strip}
 		class="strip"
+		class:dragging
 		style:width="{width}px"
 		style:height="{height}px"
 		onclick={moveTo}
+		onpointerdown={startDrag}
+		onpointermove={drag}
+		onpointerup={endDrag}
+		onpointercancel={endDrag}
 		use:tooltip={TIPS.transcription.downbeatStrip}
 	>
 		{#each ticks as tick (tick)}
@@ -131,7 +166,9 @@
 				><b>1</b></span
 			>
 		{/if}
-		<span class="playhead" style:left="{playheadX}px"></span>
+		<span class="playhead" style:left="{playheadX}px">
+			<span class="handle" onpointerdown={startDrag} aria-hidden="true"></span>
+		</span>
 	</div>
 </div>
 
@@ -197,6 +234,25 @@
 	}
 
 	.playhead {
-		border-left: 1px solid var(--color-ink);
+		border-left: 2px solid var(--color-ink);
+	}
+
+	/* A knob on top of the playhead, to grab it by */
+	.handle {
+		position: absolute;
+		top: 0;
+		left: -0.6rem;
+		width: 1.1rem;
+		height: 1.1rem;
+		border-radius: 0 0 50% 50%;
+		background: var(--color-ink);
+		cursor: grab;
+		pointer-events: auto;
+		touch-action: none;
+	}
+
+	.dragging,
+	.dragging .handle {
+		cursor: grabbing;
 	}
 </style>
