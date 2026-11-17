@@ -3,7 +3,8 @@
  * sections you chose. The transcription stays as it is, tied to its
  * recording; the arrangement is an ordinary song at the transcription's
  * tempo, its tune and written bass kept by section, so moving its sections
- * in the arranger moves their music too.
+ * in the arranger moves their music too. It remembers the recording it was
+ * made from (`madeFrom`), so Transcribe can take you back to it.
  *
  * A section whose tune starts early (a pickup) takes those notes from the
  * end of the section before, in every voice of the tune, so they go with
@@ -56,6 +57,7 @@ export async function arrangeFromTranscription(arranger, chosen, name, pickups) 
 	}
 	const bassLine = split(bass.notation);
 	const chart = chartOfSections(named, chosen);
+	const madeFrom = song.recording;
 
 	song.startNew({
 		...readSongFields(arranger),
@@ -64,7 +66,8 @@ export async function arrangeFromTranscription(arranger, chosen, name, pickups) 
 		tune: tune?.tune ? tuneOfChart(tune.tune, chart) : null,
 		bass: '',
 		bassTune: bassLine?.tune ? tuneOfChart(bassLine.tune, chart) : null,
-		recording: null
+		recording: null,
+		madeFrom
 	});
 	song.name = name;
 	await song.keepAsYourOwn();

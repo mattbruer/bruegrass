@@ -22,7 +22,7 @@ import { newId } from './newId.js';
 import { DEFAULT_BASS_STYLE } from '$lib/arranger/instruments/bassStyles.js';
 
 /** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
-export const ARRANGEMENT_VERSION = 6;
+export const ARRANGEMENT_VERSION = 7;
 
 /** Where every saved song is kept, as { [id]: Arrangement }. */
 const SONGS_KEY = 'bruegrass.arrangements';
@@ -46,6 +46,7 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   bassStyle: string,
  *   tab: Record<string, import('$lib/arranger/tab/songTab.svelte.js').PartTab>,
  *   recording: { key: string, name: string } | null,
+ *   madeFrom: { key: string, name: string } | null,
  *   tempo: number,
  *   capo: number,
  *   transpose: number,
@@ -60,7 +61,8 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   section (null: kept whole, in bass); bassStyle: how the band
  *   writes its own bass line, an id in BASS_STYLES; tab: each part's TAB instrument
  *   and the strings chosen for its notes, and its tuning if not standard (tab/songTab.svelte.js); recording: the
- *   recording it was transcribed from (its key and name), if any; transpose: semitones from the Key setting;
+ *   recording it was transcribed from (its key and name), if any (this song is that transcription);
+ *   madeFrom: the recording whose transcription it was sent from (Send to the arranger), if any; transpose: semitones from the Key setting;
  *   mix: the mixer's settings (see mixSnapshot in mixer.svelte.js);
  *   dates are ISO strings
  */
@@ -82,6 +84,7 @@ export function createArrangement(fields = {}) {
 		bassStyle: DEFAULT_BASS_STYLE,
 		tab: {},
 		recording: null,
+		madeFrom: null,
 		tempo: 120,
 		capo: 0,
 		transpose: 0,
@@ -148,7 +151,8 @@ function allSongs() {
  * version 3 `bassStyle` (it was a device setting before: older songs get the default);
  * version 4 `tab` (older songs have none); version 5 `recording` (none: a
  * song transcribed earlier gets it when its recording is opened again); version 6
- * `tune` and `bassTune` (older songs keep their tune and bass line whole).
+ * `tune` and `bassTune` (older songs keep their tune and bass line whole); version 7
+ * `madeFrom` (none: an arrangement sent earlier isn't linked back to its transcription).
  * @param {Arrangement} song
  * @returns {Arrangement}
  */

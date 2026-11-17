@@ -192,6 +192,7 @@ export const TIPS = Object.freeze({
 		send: 'Take the sections you named to the arranger: one part to practise, or several to build an arrangement from.',
 		song: 'Pick a recording to transcribe. It becomes the open song’s recording.',
 		file: 'Open a recording from this device: an MP3, WAV or any song file.',
+		backToArranger: 'Go back to the song you came from, in the arranger.',
 		startSong:
 			'A new song on this recording’s bars, at its tempo, to write the chords and tune on.',
 		play: 'Play or pause the recording (Space).',

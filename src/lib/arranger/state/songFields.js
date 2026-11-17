@@ -10,7 +10,7 @@ import { songTab, tabSnapshot } from '../tab/songTab.svelte.js';
 
 /**
  * @typedef {Pick<import('$lib/storage/arrangements.js').Arrangement,
- *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'bassStyle' | 'tab' | 'recording' | 'tempo' | 'capo' | 'transpose' | 'mix'>} SongFields
+ *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'bassStyle' | 'tab' | 'recording' | 'madeFrom' | 'tempo' | 'capo' | 'transpose' | 'mix'>} SongFields
  *   what a song is made of (its name is kept separately)
  */
 
@@ -29,6 +29,7 @@ export function readSongFields(arranger) {
 		bassStyle: songBassStyle.id,
 		tab: tabSnapshot(),
 		recording: arranger.song.recording,
+		madeFrom: arranger.song.madeFrom,
 		tempo: arranger.arrangement.bpm,
 		capo: arranger.arrangement.capoFret,
 		transpose: arranger.arrangement.transpose,
@@ -56,6 +57,7 @@ export function loadSongIntoPage(arranger, song) {
 	songBassStyle.id = song.bassStyle ?? DEFAULT_BASS_STYLE; // examples, and drafts from before
 	songTab.parts = song.tab ?? {};
 	arranger.song.recording = song.recording ?? null; // examples, and songs from before
+	arranger.song.madeFrom = song.madeFrom ?? null;
 
 	applySongMix(song.mix); // keeps this device's listening setup on, if it has one
 

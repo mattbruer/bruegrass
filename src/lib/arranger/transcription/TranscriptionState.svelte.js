@@ -148,6 +148,8 @@ export class TranscriptionState {
 	timeChosen = $state(false);
 	/** Beat 1 was just tapped: hearing it with the count, to say whether it's right. */
 	checkingDownbeat = $state(false);
+	/** The song you came from (sent from this transcription), to go back to in the arranger; null: none. */
+	returnTo = /** @type {{ id: string, name: string } | null} */ ($state.raw(null));
 	/** Choosing another recording, with one open. */
 	pickingRecording = $state(false);
 	/**
@@ -371,6 +373,21 @@ export class TranscriptionState {
 		if (!analysis) return null;
 		writeRecordingAnalysis(recording.key, stamp, analysis).catch(console.error);
 		return analysis;
+	}
+
+	/**
+	 * Arriving with a song sent from a transcription (Send to the arranger):
+	 * open that recording and its own song, and remember the way back.
+	 */
+	async openWhatItWasMadeFrom() {
+		const { song } = this.arranger;
+		const from = song.madeFrom;
+		if (!from) return;
+		this.returnTo = song.savedId ? { id: song.savedId, name: song.name } : null;
+		if (this.recording?.key !== from.key) {
+			const recording = bundledRecording(from.key);
+			if (recording) await this.open(recording);
+		} else if (this.grid && !this.linked) await this.#openSongOrStart();
 	}
 
 	/** Open the recording the open song was written from, if it's one of the app's own and isn't open. */

@@ -15,6 +15,8 @@
 	 * goes back to the start, comma and full stop a bar back or on (Logic's).
 	 */
 	import { onDestroy, untrack } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { useArranger } from '$lib/arranger/state/context.js';
 	import { soloSafeWhile } from '$lib/arranger/mixer/mixer.svelte.js';
 	import { BAND_CHANNELS } from '$lib/arranger/transcription/TranscribeBand.svelte.js';
@@ -40,15 +42,28 @@
 
 	// Arriving with a song written from one of the app's recordings opens it (only when the song
 	// changes: picking another recording here mustn't bring this one back)
+	// A song sent from a transcription brings that transcription back
 	$effect(() => {
-		if (song.ready && song.recording) untrack(() => transcription.reopenSongsRecording());
+		if (!song.ready) return;
+		if (song.recording) untrack(() => transcription.reopenSongsRecording());
+		else if (song.madeFrom) untrack(() => transcription.openWhatItWasMadeFrom());
 	});
 	/** A file from this device can't be reopened by the page: its name, to pick it again. */
-	const fileToOpenAgain = $derived(
-		song.recording?.key.startsWith('file:') && transcription.recording?.key !== song.recording.key
-			? song.recording.name
-			: null
-	);
+	const fileToOpenAgain = $derived.by(() => {
+		const wanted = song.recording ?? song.madeFrom;
+		return wanted?.key.startsWith('file:') && transcription.recording?.key !== wanted.key
+			? wanted.name
+			: null;
+	});
+
+	// Leave first: opening it here would bring its transcription straight back
+	async function backToArranger() {
+		const back = transcription.returnTo;
+		if (!back) return;
+		transcription.returnTo = null;
+		await goto(resolve('/arranger'));
+		await song.open(back.id);
+	}
 
 	$effect(() => {
 		const grid = transcription.grid;
@@ -118,9 +133,20 @@
 <main class="ui-page-width flex flex-col gap-4 pt-6 pb-16">
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold">Transcribe</h1>
-		{#if !transcription.setupStep && transcription.linked}
-			<SendToArranger />
-		{/if}
+		<div class="flex flex-wrap items-center gap-2">
+			{#if transcription.returnTo}
+				<button
+					type="button"
+					class="ui-button px-4 py-2 text-sm"
+					onclick={backToArranger}
+					use:tooltip={TIPS.transcription.backToArranger}
+					>‹ Back to {transcription.returnTo.name}</button
+				>
+			{/if}
+			{#if !transcription.setupStep && transcription.linked}
+				<SendToArranger />
+			{/if}
+		</div>
 	</div>
 
 	{#if fileToOpenAgain && !transcription.recording}
