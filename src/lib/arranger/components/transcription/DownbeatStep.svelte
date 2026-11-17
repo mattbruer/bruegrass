@@ -1,13 +1,17 @@
 <script>
 	/**
-	 * Setup's second step: find beat 1. Play, and tap the big button on the
-	 * first beat of the first full bar; the tap is moved back onto the hit it
-	 * meant, and the beats are found through it at once. Then listen: a
+	 * Setup's second step: find beat 1. The recording on a lane with its
+	 * playhead: play it (slowed down if you like), click the lane to move the
+	 * playhead, and press Beat 1 is here: paused, on the playhead (snapped to
+	 * the hit nearest); playing, as a tap (moved back onto the hit just
+	 * before it). The beats are found through it at once. Then listen: a
 	 * click on every beat, higher on ONE. Sounds right goes on; Try again
-	 * taps again. Slowing it down helps catch it (and the listening plays at
-	 * the same speed).
+	 * goes back to marking it.
 	 */
+	import RecordingStrip from './RecordingStrip.svelte';
 	import SpeedControl from './SpeedControl.svelte';
+	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
+	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -15,6 +19,13 @@
 	let { transcription } = $props();
 
 	const player = $derived(transcription.player);
+	const checking = $derived(transcription.checkingDownbeat);
+
+	function playOrPause() {
+		if (player.playing) player.pause();
+		else if (checking) transcription.listenToDownbeat();
+		else player.play();
+	}
 
 	/** @param {number} seconds */
 	function clock(seconds) {
@@ -23,81 +34,77 @@
 	}
 </script>
 
-<div class="flex flex-col gap-5">
-	{#if transcription.checkingDownbeat}
+<div class="flex flex-col gap-4">
+	{#if checking}
 		<p class="text-lg">
 			The bars and beats are found. Listen: the high click should land on the first beat of every
 			bar, where you’d count “one”.
 		</p>
-		<div class="flex flex-wrap gap-3">
-			<button
-				type="button"
-				class="big ui-button"
-				onclick={() => (player.playing ? player.pause() : transcription.listenToDownbeat())}
-				use:tooltip={TIPS.transcription.listenDownbeat}
-			>
-				{player.playing ? '❚❚ Pause' : '▶ Listen'}
-			</button>
-		</div>
-		<div class="flex flex-wrap gap-3">
-			<button
-				type="button"
-				class="big ui-button ui-button-primary"
-				onclick={() => transcription.downbeatSoundsRight()}>Sounds right</button
-			>
-			<button type="button" class="big ui-button" onclick={() => transcription.tapDownbeatAgain()}
-				>Try again</button
-			>
-		</div>
 	{:else}
 		<div class="flex flex-col gap-2">
 			<p class="text-lg">
-				Play the song. Tap the button on the very first beat of the first full bar, where you’d
-				count “one”.
+				Find the very first beat of the first full bar, where you’d count “one”, and press Beat 1 is
+				here: with the playhead on it, or as a tap while it plays.
 			</p>
 			<p class="text-ink-soft">
 				From that one beat, the bars and beats of the whole song are found for you.
 			</p>
 			<p class="text-ink-soft">
-				If a few notes come before the first full bar (a pickup), skip them and tap the “one” after
+				If a few notes come before the first full bar (a pickup), skip them and mark the “one” after
 				them. A pickup can be added later.
 			</p>
 		</div>
-		<div class="flex flex-wrap items-center gap-3">
-			<button
-				type="button"
-				class="big ui-button"
-				onclick={() => (player.playing ? player.pause() : player.play())}
-			>
-				{player.playing ? '❚❚ Pause' : '▶ Play'}
-			</button>
-			<button
-				type="button"
-				class="ui-button px-4 py-2"
-				onclick={() => player.seek(0)}
-				use:tooltip={TIPS.transcription.fromTheStart}>⏮ From the start</button
-			>
-			<span class="text-lg text-ink-soft tabular-nums">{clock(player.time)}</span>
-			<SpeedControl {player} />
-		</div>
-		<div>
+	{/if}
+
+	<div class="flex flex-wrap items-center gap-3">
+		<button
+			type="button"
+			class="big ui-button"
+			onclick={playOrPause}
+			use:tooltip={checking ? TIPS.transcription.listenDownbeat : TIPS.transcription.play}
+		>
+			{player.playing ? '❚❚ Pause' : checking ? '▶ Listen' : '▶ Play'}
+		</button>
+		<button
+			type="button"
+			class="ui-button px-4 py-2"
+			onclick={() => player.seek(0)}
+			use:tooltip={TIPS.transcription.fromTheStart}>⏮ From the start</button
+		>
+		<span class="text-lg text-ink-soft tabular-nums">{clock(player.time)}</span>
+		<SpeedControl {player} />
+		<ZoomControl zoom={settings.transcribe.zoom} />
+	</div>
+
+	<RecordingStrip {transcription} />
+
+	<div class="flex flex-wrap gap-3">
+		{#if checking}
 			<button
 				type="button"
 				class="big ui-button ui-button-primary"
-				onclick={() => transcription.tapDownbeat()}>That’s “one”</button
+				onclick={() => transcription.downbeatSoundsRight()}>Sounds right</button
 			>
-		</div>
-		{#if transcription.grid && transcription.sections.length > 0}
-			<div>
+			<button type="button" class="big ui-button" onclick={() => transcription.tryDownbeatAgain()}
+				>Try again</button
+			>
+		{:else}
+			<button
+				type="button"
+				class="big ui-button ui-button-primary"
+				onclick={() => transcription.markDownbeatHere()}
+				use:tooltip={TIPS.transcription.markDownbeat}>Beat 1 is here</button
+			>
+			{#if transcription.grid && transcription.sections.length > 0}
 				<button
 					type="button"
 					class="ui-button px-4 py-2"
 					onclick={() => transcription.cancelSettingDownbeat()}
 					use:tooltip={TIPS.transcription.keepBeats}>Keep the beats I have</button
 				>
-			</div>
+			{/if}
 		{/if}
-	{/if}
+	</div>
 </div>
 
 <style>
