@@ -142,6 +142,8 @@ export class TranscriptionState {
 	downbeat = $state(/** @type {number | null} */ (null));
 	/** Placing beat 1 comes before finding the beats. */
 	settingDownbeat = $state(false);
+	/** How the song is counted comes first: the bars can't be found without it. */
+	choosingTime = $state(false);
 	/** Beat 1 was just tapped: hearing it with the count, to say whether it's right. */
 	checkingDownbeat = $state(false);
 	/** Naming the sections comes right after: only named sections can go to the arranger. */
@@ -158,11 +160,13 @@ export class TranscriptionState {
 	setupStep = $derived(
 		!this.recording || this.pickingRecording
 			? 'recording'
-			: this.settingDownbeat || !this.grid
-				? 'downbeat'
-				: this.namingSections
-					? 'parts'
-					: null
+			: this.choosingTime
+				? 'time'
+				: this.settingDownbeat || !this.grid
+					? 'downbeat'
+					: this.namingSections
+						? 'parts'
+						: null
 	);
 	clicksOn = $state(true);
 	/** Logic's cycle: the region the player loops while it's on. */
@@ -295,6 +299,8 @@ export class TranscriptionState {
 		this.downbeat = null;
 		this.settingDownbeat = false;
 		this.checkingDownbeat = false;
+		// A new recording is asked how it's counted first, while it loads
+		this.choosingTime = (readTranscriptionDraft(recording.key)?.downbeat ?? null) === null;
 		this.namingSections = false;
 		this.pickingRecording = false;
 		this.askingPartAt = null;
@@ -456,6 +462,24 @@ export class TranscriptionState {
 		this.player.pause();
 		this.closeMenus();
 		this.pickingRecording = true;
+	}
+
+	/**
+	 * How the song is counted (setup's step): beats in a bar, the same all
+	 * through. A bar with more or fewer is fixed later, in its own menu.
+	 * @param {string} id
+	 */
+	chooseTime(id) {
+		if (this.grid) this.setTime(id);
+		else this.time = id;
+		this.choosingTime = false;
+	}
+
+	/** Back to how the song is counted. */
+	chooseTimeAgain() {
+		this.player.pause();
+		this.closeMenus();
+		this.choosingTime = true;
 	}
 
 	/** Keep the open recording: back from choosing another. */
