@@ -42,11 +42,14 @@
 
 	// Arriving with a song written from one of the app's recordings opens it (only when the song
 	// changes: picking another recording here mustn't bring this one back)
-	// A song sent from a transcription brings that transcription back
+	// Arriving with a song sent from a transcription brings that transcription back (only on
+	// arriving: Send to the arranger opens the song it makes while still here)
+	let arrived = false;
 	$effect(() => {
 		if (!song.ready) return;
 		if (song.recording) untrack(() => transcription.reopenSongsRecording());
-		else if (song.madeFrom) untrack(() => transcription.openWhatItWasMadeFrom());
+		else if (!arrived && song.madeFrom) untrack(() => transcription.openWhatItWasMadeFrom());
+		arrived = true;
 	});
 	/** A file from this device can't be reopened by the page: its name, to pick it again. */
 	const fileToOpenAgain = $derived.by(() => {
