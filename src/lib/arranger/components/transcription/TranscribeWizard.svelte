@@ -1,14 +1,13 @@
 <script>
 	/**
 	 * Setting up a transcription, one step at a time (setupSteps.js): choose
-	 * a recording, how it's counted, find beat 1, name the parts. Where you are shows at the
+	 * a recording, beat 1 and the time signature, name the parts. Where you are shows at the
 	 * top, Back goes a step back, and the last step's own Done opens the
 	 * workspace. Each step's own screen does the work.
 	 */
 	import { SETUP_STEPS } from '../../transcription/setupSteps.js';
 	import RecordingChoice from './RecordingChoice.svelte';
 	import AnalysingRecording from './AnalysingRecording.svelte';
-	import TimeStep from './TimeStep.svelte';
 	import DownbeatStep from './DownbeatStep.svelte';
 	import TranscriptionGrid from './TranscriptionGrid.svelte';
 	import PartsStep from './PartsStep.svelte';
@@ -22,8 +21,7 @@
 	const stepIndex = $derived(SETUP_STEPS.findIndex((each) => each.id === step));
 
 	function back() {
-		if (step === 'time') transcription.chooseRecordingAgain();
-		if (step === 'downbeat') transcription.chooseTimeAgain();
+		if (step === 'downbeat') transcription.chooseRecordingAgain();
 		if (step === 'parts') transcription.setDownbeatAgain();
 	}
 </script>
@@ -60,8 +58,6 @@
 				>
 			</div>
 		{/if}
-	{:else if step === 'time'}
-		<TimeStep {transcription} />
 	{:else if step === 'downbeat'}
 		{#if transcription.player.loading}
 			<p class="text-ink-soft">Loading the recording…</p>

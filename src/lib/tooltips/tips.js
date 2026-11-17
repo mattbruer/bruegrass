@@ -223,6 +223,7 @@ export const TIPS = Object.freeze({
 		halveBeats: 'For when the count is twice the song’s speed: every other beat.',
 		listenDownbeat: 'Play from just before beat 1 with a click on every beat, higher on “one”.',
 		fromTheStart: 'Back to the start of the recording.',
+		timeHelp: 'What the time signatures mean, and how each is counted.',
 		markDownbeat:
 			'Beat 1 is exactly where the playhead is. While it plays, press it on the beat like a tap.',
 		laneZoomIn: 'Zoom in on the recording, to put the playhead exactly on a beat.',

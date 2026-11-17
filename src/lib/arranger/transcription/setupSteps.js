@@ -5,12 +5,11 @@
  * TranscriptionState.setupStep, and its screen in TranscribeWizard.svelte.
  */
 
-/** @typedef {'recording' | 'time' | 'downbeat' | 'parts'} SetupStep */
+/** @typedef {'recording' | 'downbeat' | 'parts'} SetupStep */
 
 export const SETUP_STEPS = /** @type {const} */ ([
 	{ id: 'recording', name: 'Choose a recording' },
-	{ id: 'time', name: 'Count the beats' },
-	{ id: 'downbeat', name: 'Find beat 1' },
+	{ id: 'downbeat', name: 'Beat 1 and time' },
 	{ id: 'parts', name: 'Name the parts' }
 ]);
 
