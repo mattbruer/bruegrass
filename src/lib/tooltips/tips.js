@@ -225,6 +225,8 @@ export const TIPS = Object.freeze({
 		fromTheStart: 'Back to the start of the recording.',
 		markDownbeat:
 			'Beat 1 is exactly where the playhead is. While it plays, press it on the beat like a tap.',
+		laneZoomIn: 'Zoom in on the recording, to put the playhead exactly on a beat.',
+		laneZoomOut: 'Zoom out, to see more of the recording.',
 		downbeatStrip: 'The whole recording. Click or drag to move the playhead.',
 		keepBeats: 'Go back to the beats and bars you have, without finding them again.',
 		moveDownbeat:

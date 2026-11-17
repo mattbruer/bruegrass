@@ -252,7 +252,12 @@ export class TranscriptionState {
 	});
 
 	/** @type {AudioBuffer | null} */
-	#audio = null;
+	#audio = $state.raw(null);
+
+	/** The recording's audio, decoded (null until it's loaded): for drawing it in detail. */
+	get audio() {
+		return this.#audio;
+	}
 	/** @type {import('./beats/analyseRecording.js').Analysis | null} */
 	#analysis = null;
 

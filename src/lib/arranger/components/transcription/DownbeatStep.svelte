@@ -10,8 +10,6 @@
 	 */
 	import RecordingStrip from './RecordingStrip.svelte';
 	import SpeedControl from './SpeedControl.svelte';
-	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
-	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -52,7 +50,8 @@
 			</p>
 			<p class="text-ink-soft">
 				For a more exact beat 1: slow it down with Speed, so the beat is easier to catch, and zoom
-				in (Zoom +), so the hits spread out and you can put the playhead right on one.
+				in (Zoom +) as far as you like, so the hits spread out and you can put the playhead right on
+				one.
 			</p>
 			<p class="text-ink-soft">
 				If a few notes come before the first full bar (a pickup), skip them and mark the “one” after
@@ -78,7 +77,6 @@
 		>
 		<span class="text-lg text-ink-soft tabular-nums">{clock(player.time)}</span>
 		<SpeedControl {player} />
-		<ZoomControl zoom={settings.transcribe.zoom} />
 	</div>
 
 	<RecordingStrip {transcription} />
