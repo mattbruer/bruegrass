@@ -109,7 +109,8 @@
 	<PlayClock
 		time={player.time}
 		duration={player.duration}
-		withLength
+		beat={transcription.quartersNow + (transcription.grid?.bars.firstBeat ?? 0)}
+		bars={transcription.bars}
 		class="text-sm text-ink-soft"
 	/>
 

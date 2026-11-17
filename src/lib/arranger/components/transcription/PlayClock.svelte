@@ -1,52 +1,74 @@
 <script>
 	/**
-	 * Where the recording is, with tenths (and how long it is, if asked). It
-	 * never changes width while it counts: every digit sits centred in a cell
-	 * of the same width (the app's font has digits of different widths), and
-	 * the time sits in a box as wide as the longest this recording can show,
-	 * lined up on its right, so the slash and the length after it stay put.
+	 * Where the recording is: as bars and beats (Logic's transport: bar, beat,
+	 * sixteenth), or as a clock to the hundredth of a second with its length.
+	 * Click it to switch (`settings.transcribe.clock`; bars and beats unless
+	 * there are no bars yet). It never changes width while it counts.
 	 */
+	import SteadyText from './SteadyText.svelte';
 	import { formatClock } from '$lib/utils/formatClock.js';
+	import { barsAndBeats, barsAndBeatsText } from '../../transcription/barsAndBeats.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/** @type {{ time: number, duration: number, withLength?: boolean, class?: string }} */
-	let { time, duration, withLength = false, class: className = '' } = $props();
+	/**
+	 * @type {{
+	 *   time: number, duration: number,
+	 *   beat?: number, bars?: import('../../transcription/barPlan.js').Bar[],
+	 *   class?: string
+	 * }} beat and bars: where the playhead is in beats, and the bars (none: a clock only)
+	 */
+	let { time, duration, beat = 0, bars = [], class: className = '' } = $props();
 
-	/** Every digit the longest time has, as zeros: the widest it can be. */
-	const widest = $derived(formatClock(duration, { tenths: true }).replace(/\d/g, '0'));
-	const now = $derived(formatClock(time, { tenths: true }));
+	const DECIMALS = 2;
+	const showBars = $derived(bars.length > 0 && settings.transcribe.clock === 'bars');
+	const place = $derived(barsAndBeats(beat, bars));
+	const text = $derived(
+		showBars ? barsAndBeatsText(place) : formatClock(time, { decimals: DECIMALS })
+	);
+	const widest = $derived(
+		showBars
+			? barsAndBeatsText({ bar: bars.at(-1)?.number ?? 0, beat: 0, division: 0 })
+			: formatClock(duration, { decimals: DECIMALS })
+	);
+	const spoken = $derived(
+		showBars ? `Bar ${place.bar}, beat ${place.beat}` : `${text} of ${formatClock(duration)}`
+	);
+
+	function toggle() {
+		settings.transcribe.clock = settings.transcribe.clock === 'bars' ? 'time' : 'bars';
+	}
 </script>
 
-{#snippet cells(/** @type {string} */ text)}
-	{#each text as char, index (index)}<span class:digit={/\d/.test(char)}>{char}</span>{/each}
-{/snippet}
-
-<span class="clock {className}" aria-label={withLength ? `${now} of ${formatClock(duration)}` : now}
-	><span class="time" aria-hidden="true"
-		><span class="sizer">{@render cells(widest)}</span><span class="now">{@render cells(now)}</span
-		></span
-	>{#if withLength}<span aria-hidden="true">&nbsp;/ {@render cells(formatClock(duration))}</span
-		>{/if}</span
->
+{#if bars.length > 0}
+	<button
+		type="button"
+		class="clock {className}"
+		onclick={toggle}
+		aria-label="{spoken}. Show {showBars ? 'the time' : 'bars and beats'}"
+		use:tooltip={TIPS.transcription.clock}
+	>
+		<SteadyText {text} {widest} />{#if !showBars}<span aria-hidden="true"
+				>&nbsp;/ {formatClock(duration)}</span
+			>{/if}
+	</button>
+{:else}
+	<span class="clock {className}" aria-label={spoken}><SteadyText {text} {widest} /></span>
+{/if}
 
 <style>
 	.clock {
 		white-space: nowrap;
 	}
-	/* The hidden widest time sets the width; the real one sits over it, on the right */
-	.time {
-		display: inline-grid;
-		justify-items: end;
+	button.clock {
+		cursor: pointer;
+		border-radius: var(--corner-small);
+		padding: 0.15rem 0.35rem;
 	}
-	.sizer,
-	.now {
-		grid-area: 1 / 1;
-	}
-	.sizer {
-		visibility: hidden;
-	}
-	.digit {
-		display: inline-block;
-		width: 1ch;
-		text-align: center;
+	@media (hover: hover) {
+		button.clock:hover {
+			background: var(--color-surface-deep);
+		}
 	}
 </style>
