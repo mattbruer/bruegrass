@@ -36,6 +36,7 @@
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
+	import HitsCheckbox from './HitsCheckbox.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -171,6 +172,7 @@
 			<span class="name">Recording</span>
 			<MuteSoloButtons settings={transcription.recordingLane} name="Recording" />
 			<LaneVolume level={transcription.recordingLane} name="Recording" />
+			<HitsCheckbox />
 		</div>
 		<RecordingLane {transcription} {scale} />
 

@@ -259,6 +259,8 @@ export const TIPS = Object.freeze({
 			sheet: 'See what you’ve written as a score.',
 			tab: 'The picked part as TAB, for guitar, mandolin or banjo: pick a number to change its fret or string.'
 		},
+		showHits:
+			'Show the hits: where each pick or strum starts, drawn over the waveform. Handy for putting beats right on them.',
 		laneVolume:
 			'How loud this lane plays. Turn the recording down or a part up to hear the part over it. Double-click to put it back.',
 		fewerBeats: 'This bar has a beat fewer. The bars after it move along.',

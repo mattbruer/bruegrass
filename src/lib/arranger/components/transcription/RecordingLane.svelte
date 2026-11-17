@@ -1,15 +1,17 @@
 <script>
 	/**
 	 * The recording on the song's bars, like an audio region in Logic after
-	 * "Apply Region Tempo to Project Tempo": its waveform (faint) and its hits
-	 * (accent), bent so every beat is a quarter on the ruler. When the beats
-	 * are right, the hits sit on the beat lines. Tap to play from there.
+	 * "Apply Region Tempo to Project Tempo": its waveform, and its hits
+	 * (accent) when they're turned on, bent so every beat is a quarter on the
+	 * ruler. When the beats are right, the hits sit on the beat lines. Tap
+	 * to play from there.
 	 */
 	import { waveformPath } from '../../takes/waveformPeaks.js';
 	import { bentWaveform, spikesPath } from '../../transcription/recordingShape.js';
 	import { PEAKS_PER_SECOND } from '../../transcription/TranscriptionState.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
 
 	/**
 	 * @type {{
@@ -54,6 +56,7 @@
 	{#each pieces as piece, index (index)}
 		<svg
 			class="wave"
+			class:behind-hits={settings.transcribe.showHits}
 			style:left="{piece.left}px"
 			style:width="{piece.width}px"
 			viewBox="0 -1 {piece.columns} 2"
@@ -62,16 +65,18 @@
 		>
 			<path d={piece.wave} />
 		</svg>
-		<svg
-			class="hits"
-			style:left="{piece.left}px"
-			style:width="{piece.width}px"
-			viewBox="0 0 {piece.columns} 1"
-			preserveAspectRatio="none"
-			aria-hidden="true"
-		>
-			<path d={piece.hits} />
-		</svg>
+		{#if settings.transcribe.showHits}
+			<svg
+				class="hits"
+				style:left="{piece.left}px"
+				style:width="{piece.width}px"
+				viewBox="0 0 {piece.columns} 1"
+				preserveAspectRatio="none"
+				aria-hidden="true"
+			>
+				<path d={piece.hits} />
+			</svg>
+		{/if}
 	{/each}
 </div>
 
@@ -99,6 +104,9 @@
 
 	.wave {
 		fill: var(--color-ink-soft);
+		opacity: 0.6;
+	}
+	.wave.behind-hits {
 		opacity: 0.3;
 	}
 
