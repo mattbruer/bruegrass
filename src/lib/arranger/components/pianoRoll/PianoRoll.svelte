@@ -460,6 +460,7 @@
 						class="note voice-colour"
 						style:--voice={colour}
 						class:selected={!preview && index === selected}
+						class:echo={'echo' in note && note.echo}
 						style:left="{note.start * tickWidth}px"
 						style:top="{(range.highest - note.midi) * rowHeight}px"
 						style:width="{note.length * tickWidth}px"
@@ -617,6 +618,11 @@
 		z-index: 3;
 		pointer-events: none;
 		background: var(--color-ink);
+	}
+	/* The pickup again, leading back to bar 1: the same notes, edited either place */
+	.note.echo {
+		border: 2px dashed var(--color-ink);
+		background-color: color-mix(in oklab, var(--voice-colour) 65%, var(--color-raised));
 	}
 	.note.other {
 		opacity: 0.3;

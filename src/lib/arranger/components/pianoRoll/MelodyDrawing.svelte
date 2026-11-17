@@ -36,6 +36,7 @@
 	import { chooseString, setTabInstrument, songTab } from '../../tab/songTab.svelte.js';
 	import { fretboard } from '../../tab/fretboards.js';
 	import { tunedBoard } from '../../tab/tunings.js';
+	import { ownNote } from '../../melody/roll/pickupEcho.js';
 	import { noteKey, pitchAt, stringToward, tabNotes } from '../../tab/fingering.js';
 
 	/**
@@ -117,7 +118,25 @@
 	const tabInstrument = $derived(partTab?.instrument ?? DEFAULT_TAB_INSTRUMENT);
 	const standardBoard = $derived(tabVoice ? fretboard(tabInstrument) : null);
 	const board = $derived(standardBoard ? tunedBoard(standardBoard, partTab?.tuning) : null);
-	const tab = $derived(board ? tabNotes(drawing.notes, board, partTab?.strings ?? {}) : []);
+	/** The strings you chose, for the notes as shown: an echoed pickup note takes its pickup note's. */
+	const chosenStrings = $derived.by(() => {
+		const strings = partTab?.strings ?? {};
+		return Object.fromEntries(
+			drawing.notes.flatMap((note) => {
+				const string = strings[stringKey(note)];
+				return string === undefined ? [] : [[noteKey(note), string]];
+			})
+		);
+	});
+	const tab = $derived(board ? tabNotes(drawing.notes, board, chosenStrings) : []);
+
+	/**
+	 * The key a note's string is saved under: its own, or for an echo its pickup note's.
+	 * @param {import('../../melody/roll/pickupEcho.js').RollNote} note
+	 */
+	function stringKey(note) {
+		return noteKey(ownNote(note, drawing.echo));
+	}
 	const unplayable = $derived(tab.filter((tabNote) => !tabNote.place).length);
 
 	/** The picked note (the roll's selection) in the TAB, when it's on a string. */
@@ -144,7 +163,7 @@
 		const notes = changeNote(drawing.notes, index, { midi }, drawing.end);
 		const changed = notes.find((each) => each.start === note.start && each.midi === midi);
 		setTabInstrument(tabVoice, tabInstrument);
-		chooseString(tabVoice, noteKey({ ...note, midi }), place.string, notes.map(noteKey));
+		chooseString(tabVoice, stringKey({ ...note, midi }), place.string, notes.map(stringKey));
 		drawing.commit(notes);
 		drawing.selected = changed ? notes.indexOf(changed) : -1;
 		sound(midi);
@@ -158,7 +177,7 @@
 		const string = stringToward(tabNote, direction);
 		if (string === null || !tabVoice) return;
 		setTabInstrument(tabVoice, tabInstrument);
-		chooseString(tabVoice, noteKey(tabNote.note), string, drawing.notes.map(noteKey));
+		chooseString(tabVoice, stringKey(tabNote.note), string, drawing.notes.map(stringKey));
 	}
 
 	/** @param {import('../../tab/fingering.js').TabNote} tabNote */

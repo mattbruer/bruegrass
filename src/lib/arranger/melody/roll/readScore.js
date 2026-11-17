@@ -131,7 +131,10 @@ function pitchesByChar(tune, voice) {
 		if (heard !== item.start) continue;
 		const chord = pitches.get(item.startChar) ?? [];
 		if (!chord.includes(item.pitch)) chord.push(item.pitch);
-		pitches.set(item.startChar, chord.sort((a, b) => a - b));
+		pitches.set(
+			item.startChar,
+			chord.sort((a, b) => a - b)
+		);
 	}
 	return pitches;
 }
