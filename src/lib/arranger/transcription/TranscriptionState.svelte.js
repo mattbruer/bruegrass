@@ -458,7 +458,7 @@ export class TranscriptionState {
 		this.pickingRecording = false;
 	}
 
-	/** A part starts at the bar line nearest the playhead: it pauses to ask the part's name. */
+	/** A new part starts at the bar line nearest the playhead: it pauses to ask which part. */
 	startPartHere() {
 		const bar = this.#barLineNearPlayhead();
 		if (!bar) return;
@@ -477,16 +477,26 @@ export class TranscriptionState {
 		this.player.play();
 	}
 
+	/** Whether the song's first bar has a part named (every bar is in a part after it). */
+	get firstPartNamed() {
+		const first = this.bars[0]?.number;
+		const name = first === undefined ? undefined : this.markers[first];
+		return !!name && name !== SECTION_END;
+	}
+
+	/**
+	 * Name the part the song starts with (it starts at bar 1).
+	 * @param {string} name
+	 */
+	nameFirstPart(name) {
+		const first = this.bars[0]?.number;
+		if (first !== undefined && name.trim()) this.setMarker(first, name);
+	}
+
 	/** Not a part after all: forget the mark, and play on. */
 	cancelPart() {
 		this.askingPartAt = null;
 		this.player.play();
-	}
-
-	/** The part playing ends at the bar line nearest the playhead (no part starts there). */
-	endPartHere() {
-		const bar = this.#barLineNearPlayhead();
-		if (bar) this.setMarker(bar.number, SECTION_END);
 	}
 
 	/** The bar whose start is nearest the playhead (a tap is often a little early or late). */

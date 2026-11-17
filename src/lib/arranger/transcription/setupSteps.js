@@ -1,6 +1,7 @@
 /**
  * Setting up a transcription, as a wizard: one step at a time, in this
- * order, then the workspace. A new step is one entry here, one in
+ * order, then the workspace. Every part of the song gets a name, start to
+ * end (the user's call, while trying it out: easy to loosen later). A new step is one entry here, one in
  * TranscriptionState.setupStep, and its screen in TranscribeWizard.svelte.
  */
 
@@ -9,7 +10,7 @@
 export const SETUP_STEPS = /** @type {const} */ ([
 	{ id: 'recording', name: 'Choose a recording' },
 	{ id: 'downbeat', name: 'Find beat 1' },
-	{ id: 'parts', name: 'Mark the parts' }
+	{ id: 'parts', name: 'Name the parts' }
 ]);
 
 /** The names offered for a part, biggest first; anything else can be typed. */

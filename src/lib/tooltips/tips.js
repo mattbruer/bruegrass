@@ -183,13 +183,12 @@ export const TIPS = Object.freeze({
 	transcription: {
 		sectionPickup:
 			'Where this section’s tune starts: on the bar, or a beat or more before it, when the singer comes in early (“I was…”). Only the tune: the chords stay on the bar.',
-		doneNaming: 'Done marking the parts: on to writing the chords and notes.',
-		nameSections: 'Mark the song’s parts again: where each starts and ends.',
+		doneNaming: 'Every part has a name: on to the chords and notes.',
+		nameSections: 'Name the song’s parts again.',
 		setupBack: 'Go back a step.',
 		changeRecording: 'Work out a different recording.',
-		partStarts: 'A part you want starts here: it stops and asks which part.',
-		partEnds: 'The part playing ends here, with nothing you want straight after it.',
-		notAPart: 'Forget this mark and keep playing.',
+		partStarts: 'Press when a new part of the song starts. It stops and asks which part.',
+		notAPart: 'Pressed by mistake: no new part here. It plays on.',
 		hearPart: 'Play from the start of this part.',
 		removePart: 'Take this part away. Its bars join the part before.',
 		sectionEnd:

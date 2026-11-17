@@ -2,7 +2,7 @@
 	/**
 	 * Setting up a transcription, one step at a time (setupSteps.js): choose
 	 * a recording, find beat 1, mark the parts. Where you are shows at the
-	 * top, Back goes a step back, and the last step's Done opens the
+	 * top, Back goes a step back, and the last step's own Done opens the
 	 * workspace. Each step's own screen does the work.
 	 */
 	import { SETUP_STEPS } from '../../transcription/setupSteps.js';
@@ -68,7 +68,7 @@
 		{/if}
 	{:else if step === 'parts'}
 		<PartsStep {transcription} />
-		{#if transcription.askingPartAt === null}
+		{#if transcription.firstPartNamed && transcription.askingPartAt === null}
 			<TranscriptionGrid {transcription} />
 		{/if}
 	{/if}
@@ -80,14 +80,6 @@
 				class="ui-button px-5 py-2"
 				onclick={back}
 				use:tooltip={TIPS.transcription.setupBack}>‹ Back</button
-			>
-		{/if}
-		{#if step === 'parts' && transcription.askingPartAt === null}
-			<button
-				type="button"
-				class="ml-auto ui-button px-6 py-2 text-lg ui-button-primary"
-				onclick={() => transcription.doneNamingSections()}
-				use:tooltip={TIPS.transcription.doneNaming}>Done</button
 			>
 		{/if}
 	</div>
