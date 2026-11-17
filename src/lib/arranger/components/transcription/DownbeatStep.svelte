@@ -28,7 +28,8 @@
 <div class="flex flex-col gap-5">
 	{#if transcription.checkingDownbeat}
 		<p class="text-lg">
-			Listen. The high click should land on the first beat of every bar, where you’d count “one”.
+			The bars and beats are found. Listen: the high click should land on the first beat of every
+			bar, where you’d count “one”.
 		</p>
 		<div class="flex flex-wrap gap-3">
 			<button
@@ -51,10 +52,19 @@
 			>
 		</div>
 	{:else}
-		<p class="text-lg">
-			Play the song. Tap the button on the very first beat of the first full bar, where you’d count
-			“one”.
-		</p>
+		<div class="flex flex-col gap-2">
+			<p class="text-lg">
+				Play the song. Tap the button on the very first beat of the first full bar, where you’d
+				count “one”.
+			</p>
+			<p class="text-ink-soft">
+				From that one beat, the bars and beats of the whole song are found for you.
+			</p>
+			<p class="text-ink-soft">
+				If a few notes come before the first full bar (a pickup), skip them and tap the “one” after
+				them. A pickup can be added later.
+			</p>
+		</div>
 		<div class="flex flex-wrap items-center gap-3">
 			<button
 				type="button"
