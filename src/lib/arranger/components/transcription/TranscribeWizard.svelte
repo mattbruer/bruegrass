@@ -1,7 +1,7 @@
 <script>
 	/**
 	 * Setting up a transcription, one step at a time (setupSteps.js): choose
-	 * a recording, beat 1 and the time signature, name the parts. Where you are shows at the
+	 * a recording, beat 1 and the time signature, check the bars, name the parts. Where you are shows at the
 	 * top, Back goes a step back, and the last step's own Done opens the
 	 * workspace. Each step's own screen does the work.
 	 */
@@ -9,6 +9,7 @@
 	import RecordingChoice from './RecordingChoice.svelte';
 	import AnalysingRecording from './AnalysingRecording.svelte';
 	import DownbeatStep from './DownbeatStep.svelte';
+	import BarsStep from './BarsStep.svelte';
 	import PartsStep from './PartsStep.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -21,7 +22,8 @@
 
 	function back() {
 		if (step === 'downbeat') transcription.chooseRecordingAgain();
-		if (step === 'parts') transcription.setDownbeatAgain();
+		if (step === 'bars') transcription.setDownbeatAgain();
+		if (step === 'parts') transcription.checkBars();
 	}
 </script>
 
@@ -65,6 +67,8 @@
 		{:else}
 			<DownbeatStep {transcription} />
 		{/if}
+	{:else if step === 'bars'}
+		<BarsStep {transcription} />
 	{:else if step === 'parts'}
 		<PartsStep {transcription} />
 	{/if}

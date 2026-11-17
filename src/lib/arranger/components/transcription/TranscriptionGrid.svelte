@@ -38,11 +38,10 @@
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
-	 * markersOnly: just the ruler and the recording, and bar menus with only
-	 * the marker (the setup's naming step).
-	 * @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState, markersOnly?: boolean }}
+	 * view: which lanes show (gridViews.js); the setup's steps show only what they need.
+	 * @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState, view?: import('../../transcription/gridViews.js').GridView }}
 	 */
-	let { transcription, markersOnly = false } = $props();
+	let { transcription, view = 'full' } = $props();
 
 	const { melody, bass } = useArranger();
 
@@ -115,7 +114,7 @@
 <div class="scroller" bind:this={scroller}>
 	<div
 		class="tracks"
-		class:markers-only={markersOnly}
+		class:setup-view={view !== 'full'}
 		bind:clientHeight={lanesHeight}
 		style:--header-width="{HEADER_WIDTH}px"
 		style:--lanes-width="{scale.width}px"
@@ -124,7 +123,7 @@
 		style:--zoom-down={zoom.down}
 		style:--grid-offset="{scale.toX(0)}px"
 	>
-		{#if !markersOnly}
+		{#if view === 'full'}
 			<div class="header cycle-header">
 				<button
 					type="button"
@@ -154,7 +153,7 @@
 			<TrackRuler bars={ruler} {scale} />
 		</div>
 
-		{#if !markersOnly}
+		{#if view !== 'markers'}
 			<div class="header quiet"><span class="name">Beats</span></div>
 			<BeatDots {transcription} {scale} />
 		{/if}
@@ -166,7 +165,7 @@
 		</div>
 		<RecordingLane {transcription} {scale} />
 
-		{#if !markersOnly}
+		{#if view === 'full'}
 			<div class="header"><span class="name">Chords</span></div>
 			<ChordLane {transcription} {scale} />
 
@@ -245,7 +244,7 @@
 			></div>
 		{/if}
 		<div class="playhead" style:left="calc(var(--header-width) + {playheadX}px)"></div>
-		<GridMenu {transcription} {scale} {markersOnly} />
+		<GridMenu {transcription} {scale} {view} />
 	</div>
 </div>
 
@@ -358,8 +357,8 @@
 		pointer-events: none;
 	}
 
-	/* Room under the recording for a bar's marker box (the lanes below are hidden) */
-	.tracks.markers-only {
+	/* Room under the recording for a bar's menu (the lanes below are hidden) */
+	.tracks.setup-view {
 		padding-bottom: 4rem;
 	}
 </style>

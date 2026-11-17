@@ -146,7 +146,9 @@ export class TranscriptionState {
 	timeChosen = $state(false);
 	/** Beat 1 was just tapped: hearing it with the count, to say whether it's right. */
 	checkingDownbeat = $state(false);
-	/** Naming the sections comes right after: only named sections can go to the arranger. */
+	/** Checking the bars comes next: a crooked bar or a change of time is fixed before parts are named on them. */
+	checkingBars = $state(false);
+	/** Naming the sections comes after: only named sections can go to the arranger. */
 	namingSections = $state(false);
 	/** Choosing another recording, with one open (the setup's first step again). */
 	pickingRecording = $state(false);
@@ -160,9 +162,11 @@ export class TranscriptionState {
 			? 'recording'
 			: this.settingDownbeat || !this.grid
 				? 'downbeat'
-				: this.namingSections
-					? 'parts'
-					: null
+				: this.checkingBars
+					? 'bars'
+					: this.namingSections
+						? 'parts'
+						: null
 	);
 	clicksOn = $state(true);
 	/** Logic's cycle: the region the player loops while it's on. */
@@ -296,6 +300,7 @@ export class TranscriptionState {
 		this.settingDownbeat = false;
 		this.checkingDownbeat = false;
 		this.timeChosen = (readTranscriptionDraft(recording.key)?.downbeat ?? null) !== null;
+		this.checkingBars = false;
 		this.namingSections = false;
 		this.pickingRecording = false;
 		this.cycle.clear();
@@ -425,7 +430,34 @@ export class TranscriptionState {
 		this.checkingDownbeat = false;
 		this.settingDownbeat = false;
 		if (!this.linked) this.#openSongOrStart();
+		this.checkBars();
+	}
+
+	/** Go to checking the bars (again): the count clicks on, to hear where each bar starts. */
+	checkBars() {
+		this.closeMenus();
+		this.clicksOn = true;
+		this.checkingBars = true;
+	}
+
+	/** The bars are right: on to naming the parts. */
+	doneCheckingBars() {
+		this.player.pause();
+		this.closeMenus();
+		this.checkingBars = false;
 		this.namingSections = true;
+	}
+
+	/** Pause and open the menu of the bar the playhead is in, to fix its beats. */
+	fixBarHere() {
+		const grid = this.grid;
+		if (!grid) return;
+		this.player.pause();
+		const beat = Math.max(grid.bars.firstBeat, Math.floor(this.quartersNow + grid.bars.firstBeat));
+		const bar = this.bars.find(
+			(each) => beat >= each.firstBeat && beat < each.firstBeat + each.beats
+		);
+		if (bar) this.openBarMenu(bar.number);
 	}
 
 	/** The beats and bars found through the placed beat 1, and the chart written on them. */

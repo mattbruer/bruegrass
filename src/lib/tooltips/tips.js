@@ -187,6 +187,9 @@ export const TIPS = Object.freeze({
 		nameSections: 'Name the song’s parts again.',
 		setupBack: 'Go back a step.',
 		changeRecording: 'Work out a different recording.',
+		fixBar: 'Pause and open the bar the playhead is in, to give it more or fewer beats.',
+		barsRight: 'Every bar starts on “one”: on to naming the parts.',
+		checkBars: 'Listen to the bars again and fix any that start in the wrong place.',
 		markHere:
 			'Put a marker where the playhead is (on the nearest bar line), and type the part’s name.',
 		hearPart: 'Play from the start of this part.',

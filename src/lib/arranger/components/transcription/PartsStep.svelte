@@ -79,7 +79,7 @@
 		>
 	</div>
 
-	<TranscriptionGrid {transcription} markersOnly />
+	<TranscriptionGrid {transcription} view="markers" />
 
 	{#if transcription.sections.length > 0}
 		<ol class="flex flex-col divide-y divide-line ui-well">

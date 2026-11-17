@@ -1,7 +1,7 @@
 <script>
 	/**
 	 * The small menu over the grid for what you tapped: a bar number (its
-	 * marker, beats − / +, cycle it) or a beat's dot (a bar starts here, add a beat after,
+	 * marker, beats − / +, cycle it; the setup's views show only some) or a beat's dot (a bar starts here, add a beat after,
 	 * remove it). It sits by what it's about; Escape or ✕ closes it.
 	 */
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
@@ -17,10 +17,10 @@
 	 * @type {{
 	 *   transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState,
 	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>,
-	 *   markersOnly?: boolean
-	 * }} markersOnly: a bar's menu is only its marker (the setup's naming step)
+	 *   view?: import('../../transcription/gridViews.js').GridView
+	 * }} view: what a bar's menu shows (gridViews.js)
 	 */
-	let { transcription, scale, markersOnly = false } = $props();
+	let { transcription, scale, view = 'full' } = $props();
 
 	const firstBeat = $derived(transcription.grid?.bars.firstBeat ?? 0);
 	const beat = $derived(transcription.selectedBeat);
@@ -50,7 +50,8 @@
 {#if anchor !== null}
 	<div
 		class="menu ui-card"
-		class:markers-only={markersOnly}
+		class:markers-view={view === 'markers'}
+		class:bars-view={view === 'bars'}
 		style:left="calc(var(--header-width) + {scale.toX(anchor - firstBeat)}px)"
 	>
 		{#if transcription.bar}
@@ -65,32 +66,34 @@
 					use:tooltip={TIPS.transcription.closeMenu}>✕</button
 				>
 			</div>
-			<label class="flex items-center gap-2">
-				<span>Marker</span>
-				<input
-					type="text"
-					class="min-w-0 flex-1 ui-field px-2 py-1"
-					list="marker-names"
-					placeholder="Verse, Banjo solo…"
-					value={transcription.markers[bar.number] ?? ''}
-					onchange={(event) => transcription.setMarker(bar.number, event.currentTarget.value)}
-					onkeydown={(event) => {
-						if (event.key === 'Enter') {
-							event.currentTarget.blur();
-							transcription.finishMarker();
-						}
-						if (event.key === 'Escape') transcription.closeMenus();
-					}}
-					use:focusWhen={transcription.naming}
-					use:tooltip={TIPS.transcription.marker}
-				/>
-				<datalist id="marker-names">
-					{#each MARKER_NAMES as name (name)}
-						<option value={name}></option>
-					{/each}
-				</datalist>
-			</label>
-			{#if !markersOnly}
+			{#if view !== 'bars'}
+				<label class="flex items-center gap-2">
+					<span>Marker</span>
+					<input
+						type="text"
+						class="min-w-0 flex-1 ui-field px-2 py-1"
+						list="marker-names"
+						placeholder="Verse, Banjo solo…"
+						value={transcription.markers[bar.number] ?? ''}
+						onchange={(event) => transcription.setMarker(bar.number, event.currentTarget.value)}
+						onkeydown={(event) => {
+							if (event.key === 'Enter') {
+								event.currentTarget.blur();
+								transcription.finishMarker();
+							}
+							if (event.key === 'Escape') transcription.closeMenus();
+						}}
+						use:focusWhen={transcription.naming}
+						use:tooltip={TIPS.transcription.marker}
+					/>
+					<datalist id="marker-names">
+						{#each MARKER_NAMES as name (name)}
+							<option value={name}></option>
+						{/each}
+					</datalist>
+				</label>
+			{/if}
+			{#if view === 'full'}
 				{#if transcription.markers[bar.number] && transcription.markers[bar.number] !== SECTION_END}
 					<label class="flex items-center gap-2">
 						<span>Tune starts</span>
@@ -118,6 +121,8 @@
 					onclick={() => transcription.setMarker(bar.number, SECTION_END)}
 					use:tooltip={TIPS.transcription.sectionEnd}>End of section</button
 				>
+			{/if}
+			{#if view !== 'markers'}
 				<div class="flex items-center gap-2">
 					<button
 						type="button"
@@ -136,6 +141,11 @@
 						use:tooltip={TIPS.transcription.moreBeats}>+</button
 					>
 				</div>
+				{#if view === 'bars'}
+					<p class="text-xs text-ink-soft">The bars after it move along.</p>
+				{/if}
+			{/if}
+			{#if view === 'full'}
 				<div class="flex items-center gap-2">
 					<ToggleSwitch
 						bind:on={
@@ -195,8 +205,12 @@
 		font-size: 0.85rem;
 	}
 
-	/* No cycle strip or beats row above it in the naming step */
-	.menu.markers-only {
+	/* The setup's views have no cycle strip above the ruler (and naming, no beats row) */
+	.menu.bars-view {
+		top: calc(var(--ruler-height) + var(--beats-row-height) + 0.25rem);
+	}
+
+	.menu.markers-view {
 		top: calc(var(--ruler-height) + 0.25rem);
 	}
 </style>
