@@ -3,10 +3,9 @@
 	 * Setup's last step: listen through with the count clicks (higher on
 	 * ONE). Where "one" drifts (a crooked bar in a live solo, or a beat the
 	 * finder got wrong), put the playhead on the real "one", or tap it while
-	 * it plays, and press "One" is here: nothing to count. For the whole song,
-	 * + New part marks where each part starts (type its name), and Done waits
-	 * for every part to be named, start to end. For one part, it's already
-	 * named: Done whenever it sounds right.
+	 * it plays, and press "One" is here: nothing to count. + New part marks
+	 * where each part starts (type its name), and Done waits for every part
+	 * to be named, start to end.
 	 */
 	import { onMount } from 'svelte';
 	import TranscriptionGrid from './TranscriptionGrid.svelte';
@@ -24,7 +23,6 @@
 	let { transcription } = $props();
 
 	const player = $derived(transcription.player);
-	const wholeSong = $derived(!transcription.focus);
 
 	// Named before (coming back to fix things): no need to play it all again
 	let furthest = $state(transcription.sections.length > 1 ? Infinity : 0);
@@ -34,7 +32,7 @@
 	const heardToTheEnd = $derived(furthest >= player.duration - END_SECONDS);
 
 	onMount(() => {
-		if (!transcription.focus && !transcription.firstPartNamed) transcription.nameFirstPart();
+		if (!transcription.firstPartNamed) transcription.nameFirstPart();
 	});
 </script>
 
@@ -45,9 +43,7 @@
 			Where it doesn’t, put the playhead on the real “one”, or tap it while it plays, and press
 			“One” is here.
 		</p>
-		{#if wholeSong}
-			<p>Where a new part starts, press + New part and type its name.</p>
-		{/if}
+		<p>Where a new part starts, press + New part and type its name.</p>
 	</div>
 
 	<div class="flex flex-wrap items-center gap-3">
@@ -62,7 +58,7 @@
 		<button
 			type="button"
 			class="ui-button px-4 py-2"
-			onclick={() => player.seek(transcription.focus?.from ?? 0)}
+			onclick={() => player.seek(0)}
 			use:tooltip={TIPS.transcription.fromTheStart}>⏮ From the start</button
 		>
 		<span class="text-lg text-ink-soft tabular-nums"
@@ -79,19 +75,17 @@
 			onclick={() => transcription.oneIsHere()}
 			use:tooltip={TIPS.transcription.oneIsHere}>“One” is here</button
 		>
-		{#if wholeSong}
-			<button
-				type="button"
-				class="big ui-button"
-				onclick={() => transcription.markHere()}
-				use:tooltip={TIPS.transcription.markHere}>+ New part</button
-			>
-		{/if}
+		<button
+			type="button"
+			class="big ui-button"
+			onclick={() => transcription.markHere()}
+			use:tooltip={TIPS.transcription.markHere}>+ New part</button
+		>
 	</div>
 
 	<TranscriptionGrid {transcription} view="setup" />
 
-	{#if wholeSong && transcription.sections.length > 0}
+	{#if transcription.sections.length > 0}
 		<ol class="flex flex-col divide-y divide-line ui-well">
 			{#each transcription.sections as section (section.index)}
 				<li class="flex flex-wrap items-center gap-3 px-4 py-2">
@@ -125,7 +119,7 @@
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-end gap-3 border-t border-line pt-4">
-		{#if !wholeSong || (transcription.firstPartNamed && heardToTheEnd)}
+		{#if transcription.firstPartNamed && heardToTheEnd}
 			<button
 				type="button"
 				class="big ui-button ui-button-primary"

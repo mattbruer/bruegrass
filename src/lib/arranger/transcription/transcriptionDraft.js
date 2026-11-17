@@ -19,13 +19,11 @@ const READABLE = [3, VERSION];
  *   grid: import('./beatGrid.js').BeatGrid,
  *   time: string, lanes: import('./extraLanes.js').ExtraLane[],
  *   cents: number, downbeat: number | null,
- *   pickups: Record<number, number>,
- *   focus: { name: string, from: number, to: number } | null
+ *   pickups: Record<number, number>
  * }} Transcription
  *   downbeat: where you placed beat 1 of bar 1 (seconds; null in an older draft)
  *   cents: the recording's pitch moved by this much (fine tuning)
  *   pickups: bar number → how many beats before it its section's tune starts (a marker's pickup)
- *   focus: the one part being worked on (seconds into the recording), or null for the whole song
  */
 
 /** @param {string} recordingKey */
@@ -50,7 +48,6 @@ export function readTranscriptionDraft(recordingKey) {
 		cents: typeof value.cents === 'number' ? value.cents : 0,
 		downbeat: typeof value.downbeat === 'number' ? value.downbeat : null,
 		pickups: value.pickups && typeof value.pickups === 'object' ? value.pickups : {},
-		focus: isFocus(value.focus) ? value.focus : null,
 		written: typeof value.written === 'string' ? value.written : ''
 	};
 }
@@ -66,14 +63,4 @@ export function writeTranscriptionDraft(recordingKey, transcription) {
 /** @param {string} recordingKey */
 export function clearTranscriptionDraft(recordingKey) {
 	clearDraft(draftName(recordingKey));
-}
-
-/** @param {any} focus */
-function isFocus(focus) {
-	return (
-		!!focus &&
-		typeof focus.name === 'string' &&
-		typeof focus.from === 'number' &&
-		typeof focus.to === 'number'
-	);
 }

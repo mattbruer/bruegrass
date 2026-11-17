@@ -186,14 +186,9 @@ export const TIPS = Object.freeze({
 		doneNaming: 'Done: on to the chords and notes.',
 		setupBack: 'Go back a step.',
 		changeRecording: 'Work out a different recording.',
-		wholeSong: 'Set up the whole song, every part of it, to build an arrangement from.',
-		onePart: 'Set up just one part, like a solo, to learn or practise it.',
-		partFrom: 'The part starts where the playhead is.',
-		partTo: 'The part ends where the playhead is.',
 		oneIsHere:
 			'A bar starts on the beat at the playhead (or the one you tap while it plays). The bars after it line up again.',
 		listenThrough: 'Listen through again: fix where “one” falls, and name the parts.',
-		changeFocus: 'Work on the whole song, or a different part of it.',
 		markHere:
 			'Put a marker where the playhead is (on the nearest bar line), and type the part’s name.',
 		hearPart: 'Play from the start of this part.',
@@ -245,6 +240,8 @@ export const TIPS = Object.freeze({
 			'Click anywhere to play from there. Click a bar’s number for its menu: its beats, and Loop.',
 		beatDot:
 			'A beat. If its hit sits off the line below, drag the dot onto the hit; it snaps. Tap it for more.',
+		tempoLane:
+			'The tempo the beats found say the band plays at. Orange: each bar, its BPM above; red: a bar far from the usual tempo (dashed), worth a listen. The faint line is beat by beat.',
 		recordingLane:
 			'The recording, fitted to the bars. Its hits (orange) should sit on the beat lines. Tap to play from there.',
 		chordBar:

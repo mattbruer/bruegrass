@@ -12,15 +12,8 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/**
-	 * region: a stretch to shade (the part being chosen), seconds; showDownbeat: beat 1's mark.
-	 * @type {{
-	 *   transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState,
-	 *   region?: { from: number | null, to: number | null },
-	 *   showDownbeat?: boolean
-	 * }}
-	 */
-	let { transcription, region, showDownbeat = true } = $props();
+	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
+	let { transcription } = $props();
 
 	/** Zoom 1. */
 	const BASE_PIXELS_PER_SECOND = 100;
@@ -186,17 +179,7 @@
 			style:left="{scrollLeft}px"
 			aria-hidden="true"
 		></canvas>
-		{#if region && region.from !== null}
-			<span
-				class="region"
-				style:left="{region.from * pixelsPerSecond}px"
-				style:width="{Math.max(
-					0,
-					((region.to ?? player.duration) - region.from) * pixelsPerSecond
-				)}px"
-			></span>
-		{/if}
-		{#if showDownbeat && transcription.downbeat !== null}
+		{#if transcription.downbeat !== null}
 			<span class="downbeat" style:left="{transcription.downbeat * pixelsPerSecond}px"
 				><b>1</b></span
 			>
@@ -223,15 +206,6 @@
 	.picture {
 		position: absolute;
 		top: 0;
-		pointer-events: none;
-	}
-
-	.region {
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		background: color-mix(in oklab, var(--color-accent) 18%, transparent);
-		border-inline: 2px solid var(--color-accent);
 		pointer-events: none;
 	}
 

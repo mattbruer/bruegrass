@@ -146,16 +146,7 @@ export class TranscriptionState {
 	timeChosen = $state(false);
 	/** Beat 1 was just tapped: hearing it with the count, to say whether it's right. */
 	checkingDownbeat = $state(false);
-	/**
-	 * The part being worked on (a mandolin solo, say), seconds into the
-	 * recording, or null for the whole song. Most people want one part: its
-	 * beats and bars are the only ones found, and it's the chart's one section.
-	 * @type {{ name: string, from: number, to: number } | null}
-	 */
-	focus = $state.raw(null);
-	/** Choosing the whole song or one part comes first, for a new recording. */
-	choosingFocus = $state(false);
-	/** Listening through comes last: "one" fixed where it drifts (and, for the whole song, every part named). */
+	/** Listening through comes last: "one" fixed where it drifts, and every part named. */
 	listening = $state(false);
 	/** Choosing another recording, with one open (the setup's first step again). */
 	pickingRecording = $state(false);
@@ -167,13 +158,11 @@ export class TranscriptionState {
 	setupStep = $derived(
 		!this.recording || this.pickingRecording
 			? 'recording'
-			: this.choosingFocus
-				? 'focus'
-				: this.settingDownbeat || !this.grid
-					? 'downbeat'
-					: this.listening
-						? 'listen'
-						: null
+			: this.settingDownbeat || !this.grid
+				? 'downbeat'
+				: this.listening
+					? 'listen'
+					: null
 	);
 	clicksOn = $state(true);
 	/** Logic's cycle: the region the player loops while it's on. */
@@ -308,8 +297,6 @@ export class TranscriptionState {
 		this.checkingDownbeat = false;
 		const placed = (readTranscriptionDraft(recording.key)?.downbeat ?? null) !== null;
 		this.timeChosen = placed;
-		this.focus = null;
-		this.choosingFocus = !placed;
 		this.listening = false;
 		this.pickingRecording = false;
 		this.cycle.clear();
@@ -343,7 +330,6 @@ export class TranscriptionState {
 			this.pickups = draft.pickups;
 			this.player.setCents(draft.cents);
 			this.downbeat = draft.downbeat;
-			this.focus = draft.focus;
 			// A song written from it before songs named their recording
 			if (draft.written && draft.written === this.arranger.arrangement.text)
 				this.arranger.song.recording = this.#songsRecording();
@@ -443,31 +429,11 @@ export class TranscriptionState {
 		this.listenThrough();
 	}
 
-	/**
-	 * Work on the whole song (null) or one part of it: its beats and bars are
-	 * found again, from its beat 1.
-	 * @param {{ name: string, from: number, to: number } | null} focus
-	 */
-	chooseFocus(focus) {
-		this.focus = focus && focus.to > focus.from ? { ...focus, name: focus.name.trim() } : null;
-		this.choosingFocus = false;
-		this.player.pause();
-		this.player.seek(this.focus?.from ?? 0);
-		this.setDownbeatAgain();
-	}
-
-	/** Back to choosing the whole song or one part. */
-	chooseFocusAgain() {
-		this.player.pause();
-		this.closeMenus();
-		this.choosingFocus = true;
-	}
-
 	/** Go to listening through (again): the count clicks on, to hear where each bar starts. */
 	listenThrough() {
 		this.closeMenus();
 		this.clicksOn = true;
-		this.player.seek(this.focus?.from ?? 0);
+		this.player.seek(0);
 		this.listening = true;
 	}
 
@@ -499,15 +465,8 @@ export class TranscriptionState {
 		if (this.downbeat === null) return;
 		this.#findBeats();
 		if (this.recording) clearTranscriptionDraft(this.recording.key);
-		this.#writeChart({ markers: this.#markersNow() });
+		this.#writeChart();
 		this.#keepDraft();
-	}
-
-	/** The markers to write: one part's own name on its first bar, else the ones made. */
-	#markersNow() {
-		const first = this.bars[0]?.number;
-		if (!this.focus?.name || first === undefined) return this.markers;
-		return { [first]: this.focus.name };
 	}
 
 	/** Back to choosing the recording (the open one stays until another is chosen). */
@@ -583,12 +542,7 @@ export class TranscriptionState {
 	 */
 	startSong() {
 		if (!this.grid) return;
-		const chart = chartFromBars(
-			this.bars,
-			timeSignature(this.time),
-			{},
-			this.focus ? this.#markersNow() : {}
-		);
+		const chart = chartFromBars(this.bars, timeSignature(this.time), {}, {});
 		const { song } = this.arranger;
 		song.startNew(
 			{
@@ -997,12 +951,7 @@ export class TranscriptionState {
 		if (!this.#analysis || this.downbeat === null) return;
 		const beatsPerBar = timeSignature(this.time).beatsPerBar;
 		const { beats, firstBeat } = detectBeats(this.#analysis, this.downbeat, beatsPerBar);
-		const end = this.focus?.to ?? Infinity;
-		this.grid = newBeatGrid(
-			beats.filter((seconds) => seconds < end),
-			beatsPerBar,
-			firstBeat
-		);
+		this.grid = newBeatGrid(beats, beatsPerBar, firstBeat);
 		this.closeMenus();
 	}
 
@@ -1051,8 +1000,7 @@ export class TranscriptionState {
 			lanes: this.extraLanes,
 			cents: this.player.cents,
 			downbeat: this.downbeat,
-			pickups: this.pickups,
-			focus: this.focus
+			pickups: this.pickups
 		});
 	}
 }

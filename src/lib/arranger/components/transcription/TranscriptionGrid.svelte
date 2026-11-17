@@ -24,6 +24,8 @@
 	import TrackRuler from '../tracks/TrackRuler.svelte';
 	import BlockLane from '../tracks/BlockLane.svelte';
 	import BeatDots from './BeatDots.svelte';
+	import TempoLane from './TempoLane.svelte';
+	import { tempoByBar, usualTempo } from '../../transcription/beats/tempoCurve.js';
 	import GridMenu from './GridMenu.svelte';
 	import CycleStrip from './CycleStrip.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
@@ -63,6 +65,9 @@
 			transcription.grid?.bars.firstBeat ?? 0,
 			markersShown(transcription.markers, transcription.pickups)
 		)
+	);
+	const usualBpm = $derived(
+		usualTempo(tempoByBar(transcription.grid?.beats ?? [], transcription.bars))
 	);
 	const zoom = $derived(settings.transcribe.zoom);
 	const pixelsPerQuarter = $derived(PIXELS_PER_QUARTER * zoom.across);
@@ -155,6 +160,12 @@
 
 		<div class="header quiet"><span class="name">Beats</span></div>
 		<BeatDots {transcription} {scale} />
+
+		<div class="header quiet">
+			<span class="name">Tempo</span>
+			{#if usualBpm}<span class="text-xs text-ink-soft">≈ {Math.round(usualBpm)}</span>{/if}
+		</div>
+		<TempoLane {transcription} {scale} />
 
 		<div class="header recording">
 			<span class="name">Recording</span>
