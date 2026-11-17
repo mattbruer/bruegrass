@@ -38,7 +38,7 @@
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
-	 * view: which lanes show (gridViews.js); the setup's steps show only what they need.
+	 * view: which lanes show (gridViews.js); the setup's listening step shows only what it needs.
 	 * @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState, view?: import('../../transcription/gridViews.js').GridView }}
 	 */
 	let { transcription, view = 'full' } = $props();
@@ -153,10 +153,8 @@
 			<TrackRuler bars={ruler} {scale} />
 		</div>
 
-		{#if view !== 'markers'}
-			<div class="header quiet"><span class="name">Beats</span></div>
-			<BeatDots {transcription} {scale} />
-		{/if}
+		<div class="header quiet"><span class="name">Beats</span></div>
+		<BeatDots {transcription} {scale} />
 
 		<div class="header recording">
 			<span class="name">Recording</span>

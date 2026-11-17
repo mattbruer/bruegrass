@@ -143,6 +143,15 @@
 				onclick={() => transcription.chooseRecordingAgain()}
 				use:tooltip={TIPS.transcription.changeRecording}>Change…</button
 			>
+			<span class="text-sm text-ink-soft"
+				>Working on: <strong>{transcription.focus?.name || 'the whole song'}</strong></span
+			>
+			<button
+				type="button"
+				class="ui-button px-3 py-1.5 text-sm"
+				onclick={() => transcription.chooseFocusAgain()}
+				use:tooltip={TIPS.transcription.changeFocus}>Change…</button
+			>
 		</div>
 		<TranscribeControls {transcription} />
 		{#if !transcription.linked}

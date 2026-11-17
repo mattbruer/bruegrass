@@ -50,8 +50,7 @@
 {#if anchor !== null}
 	<div
 		class="menu ui-card"
-		class:markers-view={view === 'markers'}
-		class:bars-view={view === 'bars'}
+		class:setup-view={view === 'setup'}
 		style:left="calc(var(--header-width) + {scale.toX(anchor - firstBeat)}px)"
 	>
 		{#if transcription.bar}
@@ -66,33 +65,31 @@
 					use:tooltip={TIPS.transcription.closeMenu}>✕</button
 				>
 			</div>
-			{#if view !== 'bars'}
-				<label class="flex items-center gap-2">
-					<span>Marker</span>
-					<input
-						type="text"
-						class="min-w-0 flex-1 ui-field px-2 py-1"
-						list="marker-names"
-						placeholder="Verse, Banjo solo…"
-						value={transcription.markers[bar.number] ?? ''}
-						onchange={(event) => transcription.setMarker(bar.number, event.currentTarget.value)}
-						onkeydown={(event) => {
-							if (event.key === 'Enter') {
-								event.currentTarget.blur();
-								transcription.finishMarker();
-							}
-							if (event.key === 'Escape') transcription.closeMenus();
-						}}
-						use:focusWhen={transcription.naming}
-						use:tooltip={TIPS.transcription.marker}
-					/>
-					<datalist id="marker-names">
-						{#each MARKER_NAMES as name (name)}
-							<option value={name}></option>
-						{/each}
-					</datalist>
-				</label>
-			{/if}
+			<label class="flex items-center gap-2">
+				<span>Marker</span>
+				<input
+					type="text"
+					class="min-w-0 flex-1 ui-field px-2 py-1"
+					list="marker-names"
+					placeholder="Verse, Banjo solo…"
+					value={transcription.markers[bar.number] ?? ''}
+					onchange={(event) => transcription.setMarker(bar.number, event.currentTarget.value)}
+					onkeydown={(event) => {
+						if (event.key === 'Enter') {
+							event.currentTarget.blur();
+							transcription.finishMarker();
+						}
+						if (event.key === 'Escape') transcription.closeMenus();
+					}}
+					use:focusWhen={transcription.naming}
+					use:tooltip={TIPS.transcription.marker}
+				/>
+				<datalist id="marker-names">
+					{#each MARKER_NAMES as name (name)}
+						<option value={name}></option>
+					{/each}
+				</datalist>
+			</label>
 			{#if view === 'full'}
 				{#if transcription.markers[bar.number] && transcription.markers[bar.number] !== SECTION_END}
 					<label class="flex items-center gap-2">
@@ -122,7 +119,7 @@
 					use:tooltip={TIPS.transcription.sectionEnd}>End of section</button
 				>
 			{/if}
-			{#if view !== 'markers'}
+			{#if view === 'full'}
 				<div class="flex items-center gap-2">
 					<button
 						type="button"
@@ -141,9 +138,6 @@
 						use:tooltip={TIPS.transcription.moreBeats}>+</button
 					>
 				</div>
-				{#if view === 'bars'}
-					<p class="text-xs text-ink-soft">The bars after it move along.</p>
-				{/if}
 			{/if}
 			{#if view === 'full'}
 				<div class="flex items-center gap-2">
@@ -205,12 +199,8 @@
 		font-size: 0.85rem;
 	}
 
-	/* The setup's views have no cycle strip above the ruler (and naming, no beats row) */
-	.menu.bars-view {
+	/* The setup's view has no cycle strip above the ruler */
+	.menu.setup-view {
 		top: calc(var(--ruler-height) + var(--beats-row-height) + 0.25rem);
-	}
-
-	.menu.markers-view {
-		top: calc(var(--ruler-height) + 0.25rem);
 	}
 </style>

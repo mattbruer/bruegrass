@@ -146,10 +146,17 @@ export class TranscriptionState {
 	timeChosen = $state(false);
 	/** Beat 1 was just tapped: hearing it with the count, to say whether it's right. */
 	checkingDownbeat = $state(false);
-	/** Checking the bars comes next: a crooked bar or a change of time is fixed before parts are named on them. */
-	checkingBars = $state(false);
-	/** Naming the sections comes after: only named sections can go to the arranger. */
-	namingSections = $state(false);
+	/**
+	 * The part being worked on (a mandolin solo, say), seconds into the
+	 * recording, or null for the whole song. Most people want one part: its
+	 * beats and bars are the only ones found, and it's the chart's one section.
+	 * @type {{ name: string, from: number, to: number } | null}
+	 */
+	focus = $state.raw(null);
+	/** Choosing the whole song or one part comes first, for a new recording. */
+	choosingFocus = $state(false);
+	/** Listening through comes last: "one" fixed where it drifts (and, for the whole song, every part named). */
+	listening = $state(false);
 	/** Choosing another recording, with one open (the setup's first step again). */
 	pickingRecording = $state(false);
 	/**
@@ -160,12 +167,12 @@ export class TranscriptionState {
 	setupStep = $derived(
 		!this.recording || this.pickingRecording
 			? 'recording'
-			: this.settingDownbeat || !this.grid
-				? 'downbeat'
-				: this.checkingBars
-					? 'bars'
-					: this.namingSections
-						? 'parts'
+			: this.choosingFocus
+				? 'focus'
+				: this.settingDownbeat || !this.grid
+					? 'downbeat'
+					: this.listening
+						? 'listen'
 						: null
 	);
 	clicksOn = $state(true);
@@ -299,9 +306,11 @@ export class TranscriptionState {
 		this.downbeat = null;
 		this.settingDownbeat = false;
 		this.checkingDownbeat = false;
-		this.timeChosen = (readTranscriptionDraft(recording.key)?.downbeat ?? null) !== null;
-		this.checkingBars = false;
-		this.namingSections = false;
+		const placed = (readTranscriptionDraft(recording.key)?.downbeat ?? null) !== null;
+		this.timeChosen = placed;
+		this.focus = null;
+		this.choosingFocus = !placed;
+		this.listening = false;
 		this.pickingRecording = false;
 		this.cycle.clear();
 		this.player.setCents(0);
@@ -334,13 +343,14 @@ export class TranscriptionState {
 			this.pickups = draft.pickups;
 			this.player.setCents(draft.cents);
 			this.downbeat = draft.downbeat;
+			this.focus = draft.focus;
 			// A song written from it before songs named their recording
 			if (draft.written && draft.written === this.arranger.arrangement.text)
 				this.arranger.song.recording = this.#songsRecording();
 		}
 		if (!this.grid) this.settingDownbeat = true;
 		else if (!this.linked) await this.#openSongOrStart();
-		if (this.grid && this.sections.length === 0) this.namingSections = true;
+		if (this.grid && this.sections.length === 0) this.listenThrough();
 	}
 
 	/** Open the song last written from this recording, or start one. */
@@ -424,40 +434,64 @@ export class TranscriptionState {
 		if (this.downbeat !== null) this.player.seek(this.downbeat);
 	}
 
-	/** Beat 1 sounds right: on to marking the parts. */
+	/** Beat 1 sounds right: on to listening through. */
 	downbeatSoundsRight() {
 		this.player.pause();
 		this.checkingDownbeat = false;
 		this.settingDownbeat = false;
 		if (!this.linked) this.#openSongOrStart();
-		this.checkBars();
+		this.listenThrough();
 	}
 
-	/** Go to checking the bars (again): the count clicks on, to hear where each bar starts. */
-	checkBars() {
+	/**
+	 * Work on the whole song (null) or one part of it: its beats and bars are
+	 * found again, from its beat 1.
+	 * @param {{ name: string, from: number, to: number } | null} focus
+	 */
+	chooseFocus(focus) {
+		this.focus = focus && focus.to > focus.from ? { ...focus, name: focus.name.trim() } : null;
+		this.choosingFocus = false;
+		this.player.pause();
+		this.player.seek(this.focus?.from ?? 0);
+		this.setDownbeatAgain();
+	}
+
+	/** Back to choosing the whole song or one part. */
+	chooseFocusAgain() {
+		this.player.pause();
+		this.closeMenus();
+		this.choosingFocus = true;
+	}
+
+	/** Go to listening through (again): the count clicks on, to hear where each bar starts. */
+	listenThrough() {
 		this.closeMenus();
 		this.clicksOn = true;
-		this.checkingBars = true;
+		this.player.seek(this.focus?.from ?? 0);
+		this.listening = true;
 	}
 
-	/** The bars are right: on to naming the parts. */
-	doneCheckingBars() {
+	/** Done listening through: on to the chords and parts. */
+	doneListening() {
 		this.player.pause();
 		this.closeMenus();
-		this.checkingBars = false;
-		this.namingSections = true;
+		this.listening = false;
 	}
 
-	/** Pause and open the menu of the bar the playhead is in, to fix its beats. */
-	fixBarHere() {
+	/**
+	 * "One" is here: a bar starts on the beat nearest the playhead (or, tapped
+	 * while it plays, the beat just before the tap). The bar before gets
+	 * whatever beats it had, so the bars after line up again; nothing to count.
+	 */
+	oneIsHere() {
 		const grid = this.grid;
-		if (!grid) return;
-		this.player.pause();
-		const beat = Math.max(grid.bars.firstBeat, Math.floor(this.quartersNow + grid.bars.firstBeat));
-		const bar = this.bars.find(
-			(each) => beat >= each.firstBeat && beat < each.firstBeat + each.beats
-		);
-		if (bar) this.openBarMenu(bar.number);
+		if (!grid || !this.#analysis) return;
+		const tapped = this.player.playing;
+		const seconds = tapped ? tapToHit(this.player.time, this.#analysis) : this.player.time;
+		const beat = nearestBeat(grid.beats, seconds);
+		if (beat === -1) return;
+		this.#edit((each) => withOneAt(each, beat));
+		if (!tapped) this.player.seek(grid.beats[beat]);
 	}
 
 	/** The beats and bars found through the placed beat 1, and the chart written on them. */
@@ -465,21 +499,15 @@ export class TranscriptionState {
 		if (this.downbeat === null) return;
 		this.#findBeats();
 		if (this.recording) clearTranscriptionDraft(this.recording.key);
-		this.#writeChart();
+		this.#writeChart({ markers: this.#markersNow() });
 		this.#keepDraft();
 	}
 
-	/** Go to naming the sections (again). */
-	nameSections() {
-		this.closeMenus();
-		this.namingSections = true;
-	}
-
-	/** Done naming the sections: on to the chords and parts. */
-	doneNamingSections() {
-		this.player.pause();
-		this.closeMenus();
-		this.namingSections = false;
+	/** The markers to write: one part's own name on its first bar, else the ones made. */
+	#markersNow() {
+		const first = this.bars[0]?.number;
+		if (!this.focus?.name || first === undefined) return this.markers;
+		return { [first]: this.focus.name };
 	}
 
 	/** Back to choosing the recording (the open one stays until another is chosen). */
@@ -555,7 +583,12 @@ export class TranscriptionState {
 	 */
 	startSong() {
 		if (!this.grid) return;
-		const chart = chartFromBars(this.bars, timeSignature(this.time), {});
+		const chart = chartFromBars(
+			this.bars,
+			timeSignature(this.time),
+			{},
+			this.focus ? this.#markersNow() : {}
+		);
 		const { song } = this.arranger;
 		song.startNew(
 			{
@@ -964,7 +997,12 @@ export class TranscriptionState {
 		if (!this.#analysis || this.downbeat === null) return;
 		const beatsPerBar = timeSignature(this.time).beatsPerBar;
 		const { beats, firstBeat } = detectBeats(this.#analysis, this.downbeat, beatsPerBar);
-		this.grid = newBeatGrid(beats, beatsPerBar, firstBeat);
+		const end = this.focus?.to ?? Infinity;
+		this.grid = newBeatGrid(
+			beats.filter((seconds) => seconds < end),
+			beatsPerBar,
+			firstBeat
+		);
 		this.closeMenus();
 	}
 
@@ -1013,7 +1051,8 @@ export class TranscriptionState {
 			lanes: this.extraLanes,
 			cents: this.player.cents,
 			downbeat: this.downbeat,
-			pickups: this.pickups
+			pickups: this.pickups,
+			focus: this.focus
 		});
 	}
 }

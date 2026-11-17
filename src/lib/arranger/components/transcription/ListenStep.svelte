@@ -1,12 +1,12 @@
 <script>
 	/**
-	 * Setup's last step: name every part of the song, start to end, on the
-	 * track lane. Play and listen; + Marker puts a marker on the bar line
-	 * nearest the playhead and opens its box to type the part's name (the
-	 * same markers as the workspace, here with only the name in the bar's
-	 * menu). Bar 1's box opens first, for what the song starts with. Each
-	 * part lasts until the next. Done shows once the song has been played to
-	 * the end (or its parts were named before), so none is left unnamed.
+	 * Setup's last step: listen through with the count clicks (higher on
+	 * ONE). Where "one" drifts (a crooked bar in a live solo, or a beat the
+	 * finder got wrong), put the playhead on the real "one", or tap it while
+	 * it plays, and press "One" is here: nothing to count. For the whole song,
+	 * + New part marks where each part starts (type its name), and Done waits
+	 * for every part to be named, start to end. For one part, it's already
+	 * named: Done whenever it sounds right.
 	 */
 	import { onMount } from 'svelte';
 	import TranscriptionGrid from './TranscriptionGrid.svelte';
@@ -24,8 +24,9 @@
 	let { transcription } = $props();
 
 	const player = $derived(transcription.player);
+	const wholeSong = $derived(!transcription.focus);
 
-	// Named before (coming back to fix them): no need to play it all again
+	// Named before (coming back to fix things): no need to play it all again
 	let furthest = $state(transcription.sections.length > 1 ? Infinity : 0);
 	$effect(() => {
 		if (player.time > furthest) furthest = player.time;
@@ -33,15 +34,21 @@
 	const heardToTheEnd = $derived(furthest >= player.duration - END_SECONDS);
 
 	onMount(() => {
-		if (!transcription.firstPartNamed) transcription.nameFirstPart();
+		if (!transcription.focus && !transcription.firstPartNamed) transcription.nameFirstPart();
 	});
 </script>
 
 <div class="flex flex-col gap-4">
-	<p class="text-lg">
-		Play the song. Where each part starts, press + Marker and type its name: Intro, Verse, Chorus,
-		Fiddle solo…
-	</p>
+	<div class="flex flex-col gap-1 text-lg">
+		<p>Play and listen. The high click should land on “one” of every bar.</p>
+		<p>
+			Where it doesn’t, put the playhead on the real “one”, or tap it while it plays, and press
+			“One” is here.
+		</p>
+		{#if wholeSong}
+			<p>Where a new part starts, press + New part and type its name.</p>
+		{/if}
+	</div>
 
 	<div class="flex flex-wrap items-center gap-3">
 		<button
@@ -55,7 +62,7 @@
 		<button
 			type="button"
 			class="ui-button px-4 py-2"
-			onclick={() => player.seek(0)}
+			onclick={() => player.seek(transcription.focus?.from ?? 0)}
 			use:tooltip={TIPS.transcription.fromTheStart}>⏮ From the start</button
 		>
 		<span class="text-lg text-ink-soft tabular-nums"
@@ -65,18 +72,26 @@
 		<ZoomControl zoom={settings.transcribe.zoom} />
 	</div>
 
-	<div>
+	<div class="flex flex-wrap gap-3">
 		<button
 			type="button"
-			class="big ui-button ui-button-primary"
-			onclick={() => transcription.markHere()}
-			use:tooltip={TIPS.transcription.markHere}>+ Marker</button
+			class="big ui-button"
+			onclick={() => transcription.oneIsHere()}
+			use:tooltip={TIPS.transcription.oneIsHere}>“One” is here</button
 		>
+		{#if wholeSong}
+			<button
+				type="button"
+				class="big ui-button"
+				onclick={() => transcription.markHere()}
+				use:tooltip={TIPS.transcription.markHere}>+ New part</button
+			>
+		{/if}
 	</div>
 
-	<TranscriptionGrid {transcription} view="markers" />
+	<TranscriptionGrid {transcription} view="setup" />
 
-	{#if transcription.sections.length > 0}
+	{#if wholeSong && transcription.sections.length > 0}
 		<ol class="flex flex-col divide-y divide-line ui-well">
 			{#each transcription.sections as section (section.index)}
 				<li class="flex flex-wrap items-center gap-3 px-4 py-2">
@@ -110,12 +125,11 @@
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-end gap-3 border-t border-line pt-4">
-		{#if transcription.firstPartNamed && heardToTheEnd}
-			<span class="text-lg">Every part named?</span>
+		{#if !wholeSong || (transcription.firstPartNamed && heardToTheEnd)}
 			<button
 				type="button"
 				class="big ui-button ui-button-primary"
-				onclick={() => transcription.doneNamingSections()}
+				onclick={() => transcription.doneListening()}
 				use:tooltip={TIPS.transcription.doneNaming}>Done</button
 			>
 		{:else if !transcription.firstPartNamed}

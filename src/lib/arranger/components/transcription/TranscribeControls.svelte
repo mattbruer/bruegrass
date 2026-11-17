@@ -3,7 +3,7 @@
 	 * Transcribe's one row of controls: play, start over and a bar back or
 	 * forward (or click the ruler for any spot), + Marker (name the section
 	 * the playhead is in, at its bar), where you are, speed (the
-	 * pitch stays), fine tuning (TuningControl), Count along (a click on every beat, higher on ONE), Move beat 1, Check the bars, Name the parts (each back to that step of the setup), the
+	 * pitch stays), fine tuning (TuningControl), Count along (a click on every beat, higher on ONE), Move beat 1, Listen through (each back to that step of the setup), the
 	 * song's key and time signature (both can be set at any time), zoom for
 	 * the grid and the piano roll (across and down), and More:
 	 * the whole song's beats counted twice or half as fast, finding them
@@ -146,14 +146,8 @@
 	<button
 		type="button"
 		class="ui-button px-3 py-1.5 text-sm"
-		onclick={() => transcription.checkBars()}
-		use:tooltip={TIPS.transcription.checkBars}>Check the bars…</button
-	>
-	<button
-		type="button"
-		class="ui-button px-3 py-1.5 text-sm"
-		onclick={() => transcription.nameSections()}
-		use:tooltip={TIPS.transcription.nameSections}>Name the parts…</button
+		onclick={() => transcription.listenThrough()}
+		use:tooltip={TIPS.transcription.listenThrough}>Listen through…</button
 	>
 
 	<div class="flex items-center gap-1" role="group" aria-label="Time signature">

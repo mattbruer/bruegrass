@@ -1,7 +1,8 @@
 <script>
 	/**
 	 * Setting up a transcription, one step at a time (setupSteps.js): choose
-	 * a recording, beat 1 and the time signature, check the bars, name the parts. Where you are shows at the
+	 * a recording, the whole song or one part, beat 1 and the time signature,
+	 * listen through. Where you are shows at the
 	 * top, Back goes a step back, and the last step's own Done opens the
 	 * workspace. Each step's own screen does the work.
 	 */
@@ -9,8 +10,8 @@
 	import RecordingChoice from './RecordingChoice.svelte';
 	import AnalysingRecording from './AnalysingRecording.svelte';
 	import DownbeatStep from './DownbeatStep.svelte';
-	import BarsStep from './BarsStep.svelte';
-	import PartsStep from './PartsStep.svelte';
+	import FocusStep from './FocusStep.svelte';
+	import ListenStep from './ListenStep.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -21,9 +22,9 @@
 	const stepIndex = $derived(SETUP_STEPS.findIndex((each) => each.id === step));
 
 	function back() {
-		if (step === 'downbeat') transcription.chooseRecordingAgain();
-		if (step === 'bars') transcription.setDownbeatAgain();
-		if (step === 'parts') transcription.checkBars();
+		if (step === 'focus') transcription.chooseRecordingAgain();
+		if (step === 'downbeat') transcription.chooseFocusAgain();
+		if (step === 'listen') transcription.setDownbeatAgain();
 	}
 </script>
 
@@ -59,6 +60,8 @@
 				>
 			</div>
 		{/if}
+	{:else if step === 'focus'}
+		<FocusStep {transcription} />
 	{:else if step === 'downbeat'}
 		{#if transcription.player.loading}
 			<p class="text-ink-soft">Loading the recording…</p>
@@ -67,10 +70,8 @@
 		{:else}
 			<DownbeatStep {transcription} />
 		{/if}
-	{:else if step === 'bars'}
-		<BarsStep {transcription} />
-	{:else if step === 'parts'}
-		<PartsStep {transcription} />
+	{:else if step === 'listen'}
+		<ListenStep {transcription} />
 	{/if}
 
 	<div class="flex flex-wrap items-center gap-3 border-t border-line pt-4">
