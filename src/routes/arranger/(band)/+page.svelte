@@ -5,7 +5,7 @@
 	 * folder's +layout.svelte, and each part is a component in
 	 * $lib/arranger/components.
 	 *
-	 * The music (the chords scrolling past, or the sheet music) fills the page. Playback sits in a
+	 * The music (the chords scrolling past, the piano roll or the sheet music) fills the page. Playback sits in a
 	 * bar fixed to the bottom of the screen, and the editor and mixer slide up
 	 * above it, one at a time, the same on phone and desktop.
 	 */
@@ -13,14 +13,14 @@
 	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
 	import PlayerCard from '$lib/arranger/components/player/PlayerCard.svelte';
 	import SheetMusic from '$lib/arranger/components/melody/SheetMusic.svelte';
+	import MelodyDrawing from '$lib/arranger/components/pianoRoll/MelodyDrawing.svelte';
 	import ChartLink from '$lib/arranger/components/lyricChart/ChartLink.svelte';
 	import TracksLink from '$lib/arranger/components/tracks/TracksLink.svelte';
 	import { shownMusicView } from '$lib/arranger/components/page/musicView.js';
-	import { settings } from '$lib/settings/settings.svelte.js';
 
 	const { layout, melody } = useArranger();
 
-	let view = $derived(shownMusicView(settings.musicView, melody.hasNotation));
+	let view = $derived(shownMusicView(layout.musicView, melody.hasNotation));
 </script>
 
 <svelte:head>
@@ -41,5 +41,9 @@
 	<PlayerCard showChords={view === 'chords'} />
 	{#if view === 'sheet'}
 		<SheetMusic />
+	{:else if view === 'roll'}
+		<section class="ui-card p-4" aria-label="Piano roll">
+			<MelodyDrawing />
+		</section>
 	{/if}
 </main>

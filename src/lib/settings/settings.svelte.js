@@ -50,13 +50,6 @@ export const settings = $state({
 		countInBars: 2
 	},
 
-	// The arranger page: set from its player card
-
-	/** Whether the page shows the chords scrolling past or the sheet music (see musicView.js). */
-	musicView: /** @type {import('$lib/arranger/components/page/musicView.js').MusicView} */ (
-		'sheet'
-	),
-
 	// The transcribe page: set from its player
 
 	transcribe: {

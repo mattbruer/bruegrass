@@ -1,5 +1,7 @@
 /**
- * What covers the bottom of the screen: the player bar (always), one drawer
+ * What the page shows (musicView.js: the chords, unless you chose the piano
+ * roll or sheet music this visit; not remembered, so every visit starts on
+ * the chords), and what covers the bottom of the screen: the player bar (always), one drawer
  * above it at a time (the editor or the mixer), and the phone keypad while
  * writing. The page leaves room below its content so nothing is stuck
  * underneath them.
@@ -11,6 +13,8 @@ const BREATHING_ROOM_PX = 32;
 /** @typedef {'edit' | 'mixer'} DrawerId */
 
 export class PageLayoutState {
+	/** @type {import('../components/page/musicView.js').MusicView} */
+	musicView = $state('chords');
 	/** The drawer that's open above the player bar, or null. */
 	drawer = $state(/** @type {DrawerId | null} */ (null));
 	/** Height of the open drawer, measured by the drawer itself. */

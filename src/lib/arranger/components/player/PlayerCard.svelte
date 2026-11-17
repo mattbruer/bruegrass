@@ -14,14 +14,13 @@
 	import ArrangementStrip from '../chart/ArrangementStrip.svelte';
 	import ChordTutorDialog from '../chordTutor/ChordTutorDialog.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
-	import { settings } from '$lib/settings/settings.svelte.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
-	import { MUSIC_VIEWS } from '../page/musicView.js';
+	import { musicViewsFor, shownMusicView } from '../page/musicView.js';
 
 	/** @type {{ showChords: boolean }} */
 	let { showChords } = $props();
 
-	const { arrangement, loop, melody, player } = useArranger();
+	const { arrangement, layout, loop, melody, player } = useArranger();
 
 	/** The chord the tutor is open on (null: none). */
 	/** @type {import('../../chart/chartAnalysis.js').ChordPlace | null} */
@@ -30,14 +29,15 @@
 
 <section class="mb-4 ui-card p-4" aria-label="Chart">
 	<div class="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-		{#if melody.hasNotation}
-			<TabSwitch
-				tabs={MUSIC_VIEWS}
-				bind:value={settings.musicView}
-				tips={TIPS.player.musicView}
-				label="Show"
-			/>
-		{/if}
+		<TabSwitch
+			tabs={musicViewsFor(melody.hasNotation)}
+			bind:value={
+				() => shownMusicView(layout.musicView, melody.hasNotation),
+				(id) => (layout.musicView = /** @type {import('../page/musicView.js').MusicView} */ (id))
+			}
+			tips={TIPS.player.musicView}
+			label="Show"
+		/>
 		<CapoSelect />
 		<KeySelect />
 		{#if showChords}

@@ -9,7 +9,6 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import Dialog from '$lib/components/Dialog.svelte';
-	import { settings } from '$lib/settings/settings.svelte.js';
 	import { useArranger } from '../../state/context.js';
 	import { arrangeFromTranscription } from '../../state/arrangeFromTranscription.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -48,7 +47,6 @@
 		const pickups = Object.fromEntries(sections.map((section) => [section.index, section.pickup]));
 		problem = await arrangeFromTranscription(arranger, chosen, name, pickups);
 		if (problem) return;
-		if (purpose === 'practise') settings.musicView = 'sheet';
 		open = false;
 		goto(resolve('/arranger'));
 	}

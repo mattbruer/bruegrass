@@ -135,6 +135,7 @@ export const TIPS = Object.freeze({
 		export: 'Download the song: the full mix or stems as WAV files, or a MIDI file.',
 		musicView: {
 			chords: 'Show the chords scrolling past as the band plays.',
+			roll: 'Show the tune on a piano roll, to draw and change its notes.',
 			sheet: 'Show the tune as sheet music, with the chords over it.'
 		},
 		loopSection: 'Choose which part of the song repeats while it plays.',
