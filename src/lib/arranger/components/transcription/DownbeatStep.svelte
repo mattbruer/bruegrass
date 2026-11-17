@@ -51,8 +51,8 @@
 	{:else}
 		<div class="flex flex-col gap-2">
 			<p class="text-lg">
-				Choose the time signature. Then find the very first beat of the first full bar, where you’d
-				count “one”, and press Beat 1 is here: with the playhead on it, or as a tap while it plays.
+				Find the very first beat of the first full bar, where you’d count “one”, and press Beat 1 is
+				here: with the playhead on it, or as a tap while it plays.
 			</p>
 			<p class="text-ink-soft">
 				From that one beat, the bars and beats of the whole song are found for you, so the closer it
