@@ -24,7 +24,7 @@
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
 	import SendToArranger from '$lib/arranger/components/transcription/SendToArranger.svelte';
-	import TranscribeWizard from '$lib/arranger/components/transcription/TranscribeWizard.svelte';
+	import TranscribeSetup from '$lib/arranger/components/transcription/TranscribeSetup.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -130,7 +130,7 @@
 	{/if}
 
 	{#if transcription.setupStep}
-		<TranscribeWizard {transcription} />
+		<TranscribeSetup {transcription} />
 	{:else if transcription.recording && transcription.grid}
 		<div class="flex flex-wrap items-center gap-3">
 			<SongBar />

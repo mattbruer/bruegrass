@@ -142,27 +142,25 @@ export class TranscriptionState {
 	downbeat = $state(/** @type {number | null} */ (null));
 	/** Placing beat 1 comes before finding the beats. */
 	settingDownbeat = $state(false);
+	/** Placing it again from the workspace (Move beat 1…), so the beats it had can be kept. */
+	movingDownbeat = $state(false);
 	/** Whether the time signature was chosen (a new recording's must be, with beat 1, before its bars are found). */
 	timeChosen = $state(false);
 	/** Beat 1 was just tapped: hearing it with the count, to say whether it's right. */
 	checkingDownbeat = $state(false);
-	/** Listening through comes last: "one" fixed where it drifts, and every part named. */
-	listening = $state(false);
-	/** Choosing another recording, with one open (the setup's first step again). */
+	/** Choosing another recording, with one open. */
 	pickingRecording = $state(false);
 	/**
-	 * Which step of setting up a transcription is showing (null: set up, the
-	 * workspace shows). The steps are SETUP_STEPS, in order.
-	 * @type {import('./setupSteps.js').SetupStep | null}
+	 * What has to happen before the workspace (null: nothing, it shows):
+	 * choosing a recording, then placing its beat 1.
+	 * @type {'recording' | 'downbeat' | null}
 	 */
 	setupStep = $derived(
 		!this.recording || this.pickingRecording
 			? 'recording'
 			: this.settingDownbeat || !this.grid
 				? 'downbeat'
-				: this.listening
-					? 'listen'
-					: null
+				: null
 	);
 	clicksOn = $state(true);
 	/** Logic's cycle: the region the player loops while it's on. */
@@ -294,10 +292,10 @@ export class TranscriptionState {
 		this.hits = null;
 		this.downbeat = null;
 		this.settingDownbeat = false;
+		this.movingDownbeat = false;
 		this.checkingDownbeat = false;
 		const placed = (readTranscriptionDraft(recording.key)?.downbeat ?? null) !== null;
 		this.timeChosen = placed;
-		this.listening = false;
 		this.pickingRecording = false;
 		this.cycle.clear();
 		this.player.setCents(0);
@@ -336,7 +334,6 @@ export class TranscriptionState {
 		}
 		if (!this.grid) this.settingDownbeat = true;
 		else if (!this.linked) await this.#openSongOrStart();
-		if (this.grid && this.sections.length === 0) this.listenThrough();
 	}
 
 	/** Open the song last written from this recording, or start one. */
@@ -420,44 +417,15 @@ export class TranscriptionState {
 		if (this.downbeat !== null) this.player.seek(this.downbeat);
 	}
 
-	/** Beat 1 sounds right: on to listening through. */
+	/** Beat 1 sounds right: on to the workspace. */
 	downbeatSoundsRight() {
 		this.player.pause();
+		this.player.seek(0);
+		this.closeMenus();
 		this.checkingDownbeat = false;
 		this.settingDownbeat = false;
+		this.movingDownbeat = false;
 		if (!this.linked) this.#openSongOrStart();
-		this.listenThrough();
-	}
-
-	/** Go to listening through (again): the count clicks on, to hear where each bar starts. */
-	listenThrough() {
-		this.closeMenus();
-		this.clicksOn = true;
-		this.player.seek(0);
-		this.listening = true;
-	}
-
-	/** Done listening through: on to the chords and parts. */
-	doneListening() {
-		this.player.pause();
-		this.closeMenus();
-		this.listening = false;
-	}
-
-	/**
-	 * "One" is here: a bar starts on the beat nearest the playhead (or, tapped
-	 * while it plays, the beat just before the tap). The bar before gets
-	 * whatever beats it had, so the bars after line up again; nothing to count.
-	 */
-	oneIsHere() {
-		const grid = this.grid;
-		if (!grid || !this.#analysis) return;
-		const tapped = this.player.playing;
-		const seconds = tapped ? tapToHit(this.player.time, this.#analysis) : this.player.time;
-		const beat = nearestBeat(grid.beats, seconds);
-		if (beat === -1) return;
-		this.#edit((each) => withOneAt(each, beat));
-		if (!tapped) this.player.seek(grid.beats[beat]);
 	}
 
 	/** The beats and bars found through the placed beat 1, and the chart written on them. */
@@ -512,6 +480,7 @@ export class TranscriptionState {
 		this.player.pause();
 		this.closeMenus();
 		this.settingDownbeat = true;
+		this.movingDownbeat = true;
 	}
 
 	/** Leave placing beat 1 without finding the beats again. */
@@ -519,6 +488,7 @@ export class TranscriptionState {
 		this.player.pause();
 		this.checkingDownbeat = false;
 		this.settingDownbeat = false;
+		this.movingDownbeat = false;
 	}
 
 	/**

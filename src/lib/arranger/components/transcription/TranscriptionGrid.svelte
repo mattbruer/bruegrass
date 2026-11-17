@@ -41,10 +41,9 @@
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
-	 * view: which lanes show (gridViews.js); the setup's listening step shows only what it needs.
-	 * @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState, view?: import('../../transcription/gridViews.js').GridView }}
+	 * @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }}
 	 */
-	let { transcription, view = 'full' } = $props();
+	let { transcription } = $props();
 
 	const { melody, bass } = useArranger();
 
@@ -105,13 +104,13 @@
 	});
 
 	/**
-	 * A click on a bar's number opens its menu (in the workspace); anywhere else plays from that spot.
+	 * A click on a bar's number opens its menu; anywhere else plays from that spot.
 	 * @param {MouseEvent & { currentTarget: HTMLElement }} event
 	 */
 	function clickRuler(event) {
 		const number = /** @type {HTMLElement} */ (event.target).closest('[data-bar]');
 		const bar = Number(/** @type {HTMLElement | null} */ (number)?.dataset.bar);
-		if (bar > 0 && view === 'full') return transcription.openBarMenu(bar);
+		if (bar > 0) return transcription.openBarMenu(bar);
 		const box = event.currentTarget.getBoundingClientRect();
 		transcription.seekToQuarters(scale.toQuarters(event.clientX - box.left) + scale.start);
 	}
@@ -120,7 +119,6 @@
 <div class="scroller" bind:this={scroller}>
 	<div
 		class="tracks"
-		class:setup-view={view !== 'full'}
 		bind:clientHeight={lanesHeight}
 		style:--header-width="{HEADER_WIDTH}px"
 		style:--lanes-width="{scale.width}px"
@@ -129,28 +127,26 @@
 		style:--zoom-down={zoom.down}
 		style:--grid-offset="{scale.toX(0)}px"
 	>
-		{#if view === 'full'}
-			<div class="header cycle-header">
-				<button
-					type="button"
-					class="ui-button px-2 py-0.5 text-xs"
-					class:ui-button-on={transcription.cycle.on}
-					disabled={!transcription.cycle.region}
-					aria-pressed={transcription.cycle.on}
-					onclick={() => transcription.cycle.turn(!transcription.cycle.on)}
-					use:tooltip={TIPS.transcription.cycle}>Cycle</button
-				>
-				<span class="flex items-center gap-1 text-xs text-ink-soft">
-					<ToggleSwitch
-						bind:on={settings.transcribe.snapCycle}
-						labelledBy="snap-cycle"
-						tip={TIPS.transcription.snapCycle}
-					/>
-					<span id="snap-cycle">Snap</span>
-				</span>
-			</div>
-			<CycleStrip {transcription} {ruler} {scale} />
-		{/if}
+		<div class="header cycle-header">
+			<button
+				type="button"
+				class="ui-button px-2 py-0.5 text-xs"
+				class:ui-button-on={transcription.cycle.on}
+				disabled={!transcription.cycle.region}
+				aria-pressed={transcription.cycle.on}
+				onclick={() => transcription.cycle.turn(!transcription.cycle.on)}
+				use:tooltip={TIPS.transcription.cycle}>Cycle</button
+			>
+			<span class="flex items-center gap-1 text-xs text-ink-soft">
+				<ToggleSwitch
+					bind:on={settings.transcribe.snapCycle}
+					labelledBy="snap-cycle"
+					tip={TIPS.transcription.snapCycle}
+				/>
+				<span id="snap-cycle">Snap</span>
+			</span>
+		</div>
+		<CycleStrip {transcription} {ruler} {scale} />
 
 		<div class="corner"></div>
 		<!-- svelte-ignore a11y_click_events_have_key_events (← → pick beats on a computer) -->
@@ -176,74 +172,72 @@
 		</div>
 		<RecordingLane {transcription} {scale} />
 
-		{#if view === 'full'}
-			<div class="header"><span class="name">Chords</span></div>
-			<ChordLane {transcription} {scale} />
+		<div class="header"><span class="name">Chords</span></div>
+		<ChordLane {transcription} {scale} />
 
-			{#if transcription.band.performance}
-				<div class="header">
-					<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
-					<MuteSoloButtons settings={transcription.band.lane} name="Band" />
-					<LaneVolume level={transcription.band.lane} name="Band" />
-				</div>
-				<div class="part">
-					<BlockLane
-						lane={{ id: 'band', name: 'Band', kind: 'chords', blocks: transcription.band.blocks }}
-						{scale}
-					/>
-				</div>
-			{/if}
+		{#if transcription.band.performance}
+			<div class="header">
+				<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
+				<MuteSoloButtons settings={transcription.band.lane} name="Band" />
+				<LaneVolume level={transcription.band.lane} name="Band" />
+			</div>
+			<div class="part">
+				<BlockLane
+					lane={{ id: 'band', name: 'Band', kind: 'chords', blocks: transcription.band.blocks }}
+					{scale}
+				/>
+			</div>
+		{/if}
 
-			{#each parts as lane (lane.id)}
-				{@const channel = mixer.channels.find((each) => each.id === lane.id)}
-				<div class="header" class:picked-lane={transcription.lane === lane.id}>
-					<button
-						type="button"
-						class="name pick"
-						onclick={() => (transcription.lane = lane.id)}
-						aria-pressed={transcription.lane === lane.id}
-						use:tooltip={TIPS.transcription.partLane}>{lane.name}</button
-					>
-					{#if isLaneId(lane.id)}
-						<button
-							type="button"
-							class="ui-button px-2 py-0.5 text-xs"
-							onclick={() => transcription.useLaneAsBass(lane.id)}
-							use:tooltip={TIPS.transcription.laneBass}>Bass</button
-						>
-						<button
-							type="button"
-							class="ui-button px-2 py-0.5 text-xs"
-							aria-label="Remove {lane.name}"
-							onclick={() => transcription.removeLane(lane.id)}
-							use:tooltip={TIPS.transcription.laneRemove}>×</button
-						>
-					{:else if channel}
-						<MuteSoloButtons settings={channel} name={lane.name} />
-						<LaneVolume level={channel} name={lane.name} />
-					{/if}
-				</div>
-				<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
-				<div
-					class="part"
-					class:picked-lane={transcription.lane === lane.id}
+		{#each parts as lane (lane.id)}
+			{@const channel = mixer.channels.find((each) => each.id === lane.id)}
+			<div class="header" class:picked-lane={transcription.lane === lane.id}>
+				<button
+					type="button"
+					class="name pick"
 					onclick={() => (transcription.lane = lane.id)}
+					aria-pressed={transcription.lane === lane.id}
+					use:tooltip={TIPS.transcription.partLane}>{lane.name}</button
 				>
-					<BlockLane {lane} {scale} />
-				</div>
-			{/each}
-
-			{#if transcription.linked}
-				<div class="header add">
+				{#if isLaneId(lane.id)}
 					<button
 						type="button"
-						class="ui-button px-2 py-1 text-xs"
-						onclick={() => transcription.addLane()}
-						use:tooltip={TIPS.transcription.addLane}>+ Lane</button
+						class="ui-button px-2 py-0.5 text-xs"
+						onclick={() => transcription.useLaneAsBass(lane.id)}
+						use:tooltip={TIPS.transcription.laneBass}>Bass</button
 					>
-				</div>
-			{/if}
+					<button
+						type="button"
+						class="ui-button px-2 py-0.5 text-xs"
+						aria-label="Remove {lane.name}"
+						onclick={() => transcription.removeLane(lane.id)}
+						use:tooltip={TIPS.transcription.laneRemove}>×</button
+					>
+				{:else if channel}
+					<MuteSoloButtons settings={channel} name={lane.name} />
+					<LaneVolume level={channel} name={lane.name} />
+				{/if}
+			</div>
+			<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div
+				class="part"
+				class:picked-lane={transcription.lane === lane.id}
+				onclick={() => (transcription.lane = lane.id)}
+			>
+				<BlockLane {lane} {scale} />
+			</div>
+		{/each}
+
+		{#if transcription.linked}
+			<div class="header add">
+				<button
+					type="button"
+					class="ui-button px-2 py-1 text-xs"
+					onclick={() => transcription.addLane()}
+					use:tooltip={TIPS.transcription.addLane}>+ Lane</button
+				>
+			</div>
 		{/if}
 
 		{#if transcription.cycle.on && transcription.cycle.region}
@@ -255,7 +249,7 @@
 			></div>
 		{/if}
 		<div class="playhead" style:left="calc(var(--header-width) + {playheadX}px)"></div>
-		<GridMenu {transcription} {scale} {view} />
+		<GridMenu {transcription} {scale} />
 	</div>
 </div>
 
@@ -366,10 +360,5 @@
 		margin-left: -1px;
 		background: var(--color-danger);
 		pointer-events: none;
-	}
-
-	/* Room under the recording for a bar's menu (the lanes below are hidden) */
-	.tracks.setup-view {
-		padding-bottom: 4rem;
 	}
 </style>

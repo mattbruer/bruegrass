@@ -1,6 +1,6 @@
 <script>
 	/**
-	 * Setup's second step: the time signature and beat 1, both needed before
+	 * Before the workspace: the time signature and beat 1, both needed before
 	 * the bars can be found (the time is chosen here, with a ? that explains
 	 * the counts; a crooked bar is fixed later in its own menu). The recording on a lane with its
 	 * playhead: play it (slowed down if you like), click the lane to move the
@@ -55,8 +55,8 @@
 			</p>
 			<p class="text-ink-soft">
 				For a more exact beat 1: slow it down with Speed, so the beat is easier to catch, and zoom
-				in (Zoom +) as far as you like, so the hits spread out and you can put the playhead right on
-				one.
+				in (Zoom +) as far as you like, so the waveform spreads out and you can put the playhead
+				right on one.
 			</p>
 			<p class="text-ink-soft">
 				If a few notes come before the first full bar (a pickup), skip them and mark the “one” after
@@ -145,7 +145,7 @@
 				onclick={markBeat1}
 				use:tooltip={TIPS.transcription.markDownbeat}>Beat 1 is here</button
 			>
-			{#if transcription.grid && transcription.sections.length > 0}
+			{#if transcription.grid && transcription.movingDownbeat}
 				<button
 					type="button"
 					class="ui-button px-4 py-2"

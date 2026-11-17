@@ -183,12 +183,7 @@ export const TIPS = Object.freeze({
 	transcription: {
 		sectionPickup:
 			'Where this section’s tune starts: on the bar, or a beat or more before it, when the singer comes in early (“I was…”). Only the tune: the chords stay on the bar.',
-		doneListening: 'Done: on to the chords and notes.',
-		setupBack: 'Go back a step.',
 		changeRecording: 'Work out a different recording.',
-		oneIsHere:
-			'A bar starts on the beat at the playhead (or the one you tap while it plays). The bars after it line up again.',
-		listenThrough: 'Listen through again, to fix where “one” falls.',
 		markHere:
 			'Put a marker where the playhead is (on the nearest bar line), and type the part’s name.',
 		sectionEnd:
