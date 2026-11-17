@@ -31,12 +31,19 @@ export function followScroll(tick, notes, view, { tickWidth, rowHeight, highest 
 
 /**
  * The pitch to centre on when the roll opens: the middle of the tune, or
- * the home note near middle C when there are no notes yet.
+ * the home note near middle C when there are no notes yet, an octave lower
+ * at a time until it's near the middle of where the part usually plays (the bass).
  * @param {NotePlace[]} notes
  * @param {number} tonic pitch class of the key's home note
+ * @param {import('./pitchRows.js').RowRange} usualRange
  */
-export function middlePitch(notes, tonic) {
-	if (notes.length === 0) return 60 + ((tonic + 7) % 12);
+export function middlePitch(notes, tonic, usualRange) {
+	if (notes.length === 0) {
+		const usualMiddle = (usualRange.lowest + usualRange.highest) / 2;
+		let home = 60 + ((tonic + 7) % 12);
+		while (home > usualMiddle + 6) home -= 12;
+		return home;
+	}
 	const pitches = notes.map((note) => note.midi);
 	return (Math.min(...pitches) + Math.max(...pitches)) / 2;
 }

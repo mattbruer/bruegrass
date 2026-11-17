@@ -32,7 +32,7 @@
 		withinRange
 	} from '../../melody/roll/noteGestures.js';
 	import { followScroll, middlePitch } from '../../melody/roll/followView.js';
-	import { pitchRows } from '../../melody/roll/pitchRows.js';
+	import { PIANO_ROWS, pitchRows } from '../../melody/roll/pitchRows.js';
 	import { barLabel, isShortBar, tickWidthFor } from '../../melody/roll/rollLayout.js';
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 
@@ -55,7 +55,7 @@
 	 *   chordName: (name: string) => string,
 	 *   spelling: import('../../theory/musicInKey.js').Key,
 	 *   tonic: number,
-	 *   range: import('../../melody/roll/pitchRows.js').RowRange,
+	 *   usualRange: import('../../melody/roll/pitchRows.js').RowRange,
 	 *   end: number,
 	 *   gridStep: number,
 	 *   drawLength: number,
@@ -79,7 +79,7 @@
 		chordName,
 		spelling,
 		tonic,
-		range,
+		usualRange,
 		end,
 		gridStep,
 		drawLength,
@@ -125,6 +125,7 @@
 		const box = event.currentTarget.getBoundingClientRect();
 		onSeek?.((event.clientX - box.left) / tickWidth);
 	}
+	const range = PIANO_ROWS;
 	let rows = $derived(pitchRows(spelling, range));
 	let shown = $derived(preview ?? notes);
 	let width = $derived(end * tickWidth);
@@ -137,9 +138,9 @@
 		requestAnimationFrame(scrollToTune);
 	});
 
-	// Another voice's rows (the bass sits lower): show its notes
+	// Another voice (the bass sits lower): show its notes
 	$effect(() => {
-		void range;
+		void usualRange;
 		untrack(() => rendered().then(scrollToTune));
 	});
 
@@ -190,7 +191,7 @@
 	/** Show the tune's middle (or the home note near middle C) when the roll opens. */
 	function scrollToTune() {
 		if (!scroller) return;
-		const middle = middlePitch(notes, tonic);
+		const middle = middlePitch(notes, tonic, usualRange);
 		const y = (range.highest - middle) * rowHeight + RULER_HEIGHT - scroller.clientHeight / 2;
 		scroller.scrollTop = Math.max(0, y);
 	}

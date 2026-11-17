@@ -259,7 +259,7 @@
 				chordName={arrangement.chordName}
 				spelling={arranger.melodyKey.spelling}
 				tonic={arranger.melodyKey.tonic}
-				range={drawing.range}
+				usualRange={drawing.usualRange}
 				end={drawing.end}
 				gridStep={drawing.gridStep}
 				drawLength={drawing.drawLength}

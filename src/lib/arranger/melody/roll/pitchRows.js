@@ -11,7 +11,9 @@ import { isInKey } from './melodyKey.js';
  * @typedef {{ lowest: number, highest: number }} RowRange written pitches (concert, as ABC writes them)
  */
 
-/** The guitar's open low E up to the high e's 12th fret. */
+/** Every part's rows: a piano's 88 keys, A0 to C8, whatever the instrument can reach. */
+export const PIANO_ROWS = { lowest: 21, highest: 108 };
+/** Where each part usually plays, so an empty roll opens there. The guitar's open low E up to the high e's 12th fret. */
 export const MELODY_ROWS = { lowest: 52, highest: 88 };
 /** The bass's open E and a little below (bassline.js numbering, as its ABC writes it), up past its G string's fifth fret. */
 export const BASS_ROWS = { lowest: 36, highest: 62 };
@@ -28,7 +30,7 @@ const WHITE_KEY_BELOW = new Set([0, 5]);
  * @param {RowRange} [range]
  * @returns {{ midi: number, black: boolean, whiteKeyBelow: boolean, inKey: boolean, name: string }[]}
  */
-export function pitchRows(spelling, range = MELODY_ROWS) {
+export function pitchRows(spelling, range = PIANO_ROWS) {
 	const rows = [];
 	for (let midi = range.highest; midi >= range.lowest; midi--) {
 		const pitchClass = ((midi % 12) + 12) % 12;

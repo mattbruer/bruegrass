@@ -90,7 +90,8 @@ export class MelodyDrawing {
 	isHarmonyPart = $derived(
 		Boolean(this.current) && !this.ownBars && this.current?.id !== MELODY_CHANNEL
 	);
-	range = $derived(this.isBass ? BASS_ROWS : this.isLane ? LANE_ROWS : MELODY_ROWS);
+	/** Where this part usually plays (the rows are always the piano's). */
+	usualRange = $derived(this.isBass ? BASS_ROWS : this.isLane ? LANE_ROWS : MELODY_ROWS);
 	end = $derived(this.score ? totalTicks(this.score) : 0);
 	gridStep = $derived(gridTicks(this.grid));
 	/** Where the pickup shows again, in the last bar's closing beats (not on the bass or lanes: written as played). */
@@ -151,7 +152,7 @@ export class MelodyDrawing {
 			under && !isNoChord(under.name)
 				? concertChord(under.name, arrangement.key, arrangement.capoFret)
 				: null;
-		return chordToneOptions(chord, melodyKey.spelling, note.midi, this.range);
+		return chordToneOptions(chord, melodyKey.spelling, note.midi);
 	});
 
 	/** Show the tune and the bass line as they're read now (or the chart, when there's no melody). */
