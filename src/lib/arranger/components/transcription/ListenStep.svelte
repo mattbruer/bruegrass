@@ -4,8 +4,8 @@
 	 * ONE). Where "one" drifts (a crooked bar in a live solo, or a beat the
 	 * finder got wrong), put the playhead on the real "one", or tap it while
 	 * it plays, and press "One" is here: nothing to count. + New part marks
-	 * where each part starts (type its name), and Done waits for every part
-	 * to be named, start to end.
+	 * where each part starts (type its name). Done whenever it sounds right:
+	 * parts can be named later too.
 	 */
 	import { onMount } from 'svelte';
 	import TranscriptionGrid from './TranscriptionGrid.svelte';
@@ -16,20 +16,10 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/** Within this much of the end counts as having played to the end. */
-	const END_SECONDS = 3;
-
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
 	let { transcription } = $props();
 
 	const player = $derived(transcription.player);
-
-	// Named before (coming back to fix things): no need to play it all again
-	let furthest = $state(transcription.sections.length > 1 ? Infinity : 0);
-	$effect(() => {
-		if (player.time > furthest) furthest = player.time;
-	});
-	const heardToTheEnd = $derived(furthest >= player.duration - END_SECONDS);
 
 	onMount(() => {
 		if (!transcription.firstPartNamed) transcription.nameFirstPart();
@@ -119,18 +109,12 @@
 	{/if}
 
 	<div class="flex flex-wrap items-center justify-end gap-3 border-t border-line pt-4">
-		{#if transcription.firstPartNamed && heardToTheEnd}
-			<button
-				type="button"
-				class="big ui-button ui-button-primary"
-				onclick={() => transcription.doneListening()}
-				use:tooltip={TIPS.transcription.doneNaming}>Done</button
-			>
-		{:else if !transcription.firstPartNamed}
-			<span class="text-lg text-ink-soft">Name the part the song starts with.</span>
-		{:else}
-			<span class="text-lg text-ink-soft">Keep going to the end of the song.</span>
-		{/if}
+		<button
+			type="button"
+			class="big ui-button ui-button-primary"
+			onclick={() => transcription.doneListening()}
+			use:tooltip={TIPS.transcription.doneNaming}>Done</button
+		>
 	</div>
 </div>
 
