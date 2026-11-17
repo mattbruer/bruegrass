@@ -6,6 +6,10 @@
 	 */
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
 	import { MARKER_NAMES } from '../../transcription/markerNames.js';
+	import { SECTION_END } from '../../transcription/readChartOnBars.js';
+
+	/** How many beats before its bar a section's tune can start. */
+	const PICKUP_BEATS = [0, 1, 2, 3];
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -69,7 +73,10 @@
 					value={transcription.markers[bar.number] ?? ''}
 					onchange={(event) => transcription.setMarker(bar.number, event.currentTarget.value)}
 					onkeydown={(event) => {
-						if (event.key === 'Enter') event.currentTarget.blur();
+						if (event.key === 'Enter') {
+							event.currentTarget.blur();
+							transcription.finishMarker();
+						}
 						if (event.key === 'Escape') transcription.closeMenus();
 					}}
 					use:focusWhen={transcription.naming}
@@ -81,6 +88,33 @@
 					{/each}
 				</datalist>
 			</label>
+			{#if transcription.markers[bar.number] && transcription.markers[bar.number] !== SECTION_END}
+				<label class="flex items-center gap-2">
+					<span>Tune starts</span>
+					<select
+						class="min-w-0 flex-1 ui-field px-2 py-1"
+						value={transcription.sectionPickup(bar.number)}
+						onchange={(event) =>
+							transcription.setSectionPickup(bar.number, Number(event.currentTarget.value))}
+						use:tooltip={TIPS.transcription.sectionPickup}
+					>
+						{#each PICKUP_BEATS as beats (beats)}
+							<option value={beats}
+								>{beats === 0
+									? 'on the bar'
+									: `${beats} beat${beats === 1 ? '' : 's'} before (pickup)`}</option
+							>
+						{/each}
+					</select>
+				</label>
+			{/if}
+			<button
+				type="button"
+				class="ui-button px-3 py-1.5 text-sm"
+				class:ui-button-on={transcription.markers[bar.number] === SECTION_END}
+				onclick={() => transcription.setMarker(bar.number, SECTION_END)}
+				use:tooltip={TIPS.transcription.sectionEnd}>End of section</button
+			>
 			<div class="flex items-center gap-2">
 				<button
 					type="button"

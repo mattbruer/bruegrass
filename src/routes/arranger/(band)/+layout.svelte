@@ -27,6 +27,7 @@
 	import { keepWorkSaved } from '$lib/arranger/state/autosave.svelte.js';
 	import { rescueOldDrafts } from '$lib/arranger/state/rescueOldDrafts.js';
 	import { keepBassWithChart } from '$lib/arranger/state/bassFollowsChart.svelte.js';
+	import { keepTuneWithChart } from '$lib/arranger/state/tuneFollowsChart.svelte.js';
 	import { loadMyChords } from '$lib/arranger/voicings/myChords.svelte.js';
 	import { openDroppedSongFiles } from '$lib/arranger/share/dropSongFile.js';
 
@@ -43,6 +44,7 @@
 	});
 	keepWorkSaved(arranger);
 	keepBassWithChart(arranger);
+	keepTuneWithChart(arranger);
 	// The open song's recorded takes (from this device's storage)
 	$effect(() => {
 		arranger.recording.showSong(arranger.song.savedId);

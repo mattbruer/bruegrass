@@ -27,7 +27,7 @@ import { SongState } from './SongState.svelte.js';
 import { RecordingState } from './RecordingState.svelte.js';
 import { ReceiveState } from './ReceiveState.svelte.js';
 import { TranscriptionState } from '../transcription/TranscriptionState.svelte.js';
-import { abcjsReady } from './abcjsLoaded.svelte.js';
+import { abcjsIfLoaded, abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc } from '../melody/abcChords.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
 import { respellBass } from '../bass/respellBass.js';
@@ -45,13 +45,29 @@ import { respellDrawnMelody } from '../melody/roll/drawnMelody.js';
 import { melodyKey } from '../melody/roll/melodyKey.js';
 import { blankScoreForSong } from '../melody/roll/scoreFromChart.js';
 import { newAbc } from '../melody/roll/scoreToAbc.js';
+import { barsInPlayOrder } from '../chart/chartBars.js';
+import { sectionInstances } from '../melody/sections/tuneBySection.js';
+import { sectionRests } from '../melody/sections/sectionRests.js';
+import { hasRepeats, splitTune, unitOfHeader } from '../melody/sections/splitTune.js';
+import { splitPlayedOut } from '../melody/sections/playedOut.js';
+import { readTuneText, MELODY_VOICE } from '../melody/sections/tuneBySection.js';
+import { renamedParts } from '../melody/sections/renamedParts.js';
+import { partsFollowingBars, sectionBarKeys } from '../melody/sections/barsFollowChart.js';
+import { generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
+import { bassSongOf } from '../bass/songBassStyle.svelte.js';
+import { withWordsFromChart } from '../melody/sections/wordsFromChart.js';
+import { tuneReader } from '../melody/abcjs.js';
+import { writeBar } from '../melody/roll/writeBar.js';
+import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
 
 export class Arranger {
 	arrangement = new ArrangementState();
 	loop = new LoopState(this.arrangement);
-	melody = new MelodyState();
-	bass = new BassState();
+	melody = new MelodyState((tune) => this.#tuneLayout(unitOfHeader(tune.header)));
+	bass = new BassState(() => this.#bassLayout());
 	player = new PlayerState(this.arrangement, this.loop, this.melody, this.bass);
+	/** How many songs have been put on the page: a new one's chart isn't an edit of the last. */
+	songsLoaded = $state(0);
 	layout = new PageLayoutState();
 	/** Which song is open, and saving it (created last: it reads all of the above). */
 	song = new SongState(this);
@@ -110,6 +126,161 @@ export class Arranger {
 		};
 	}
 
+	/**
+	 * The chart's sections in play order, for a tune kept by section, and
+	 * the rests (with the chart's chords) a section with no tune yet plays.
+	 * @param {number} unit ticks in the tune's unit note length
+	 */
+	#tuneLayout(unit) {
+		const { arrangement } = this;
+		const bars = arrangement.readError ? [] : barsInPlayOrder(arrangement.sections);
+		const song = {
+			songKey: arrangement.key,
+			capo: arrangement.capoFret,
+			spelling: this.melodyKey.spelling,
+			unit
+		};
+		const abcjs = abcjsIfLoaded();
+		const instances = sectionInstances(arrangement.text);
+		const meter = bars[0]?.meter?.split('/').map(Number) ?? [4, 4];
+		return {
+			instances,
+			pickupRests: (/** @type {number} */ quarters) => {
+				const length = quarters * TICKS_PER_QUARTER;
+				const bar = {
+					start: 0,
+					length,
+					meter: { num: meter[0], den: meter[1] },
+					from: null,
+					to: null
+				};
+				const rest = [{ start: 0, length, midis: [], tie: false, chord: null }];
+				return `${writeBar(bar, rest, { key: song.spelling, unit, pickup: true })} |`;
+			},
+			reading: abcjs
+				? {
+						parse: tuneReader(abcjs),
+						barCounts: instances.map(
+							(_, index) => bars.filter((bar) => bar.section === index).length
+						)
+					}
+				: null,
+			restsFor: (/** @type {number} */ index) =>
+				sectionRests(
+					bars.filter((bar) => bar.section === index),
+					song
+				),
+			withWords: (/** @type {string} */ abc) =>
+				withWordsFromChart(
+					abc,
+					abcjsIfLoaded(),
+					arrangement.readError ? [] : arrangement.sections,
+					readLyrics(arrangement.text)
+				)
+		};
+	}
+
+	/**
+	 * The band's own bass line, read by section: what a section of a bass
+	 * line kept by section plays while nobody has edited it.
+	 */
+	#bassLayout() {
+		const { arrangement } = this;
+		const instances = sectionInstances(arrangement.text);
+		const own = this.#bandsOwnBass();
+		const bodies = (own?.sections ?? [])
+			.filter((section) => section.voice === MELODY_VOICE)
+			.map((section) => section.body);
+		return { instances, restsFor: (/** @type {number} */ index) => bodies[index] ?? '' };
+	}
+
+	/** The band's own bass line, read as voices and sections (null: the chart can't be played). */
+	#bandsOwnBass() {
+		if (!this.arrangement.isPlayable) return null;
+		return readTuneText(generatedBassAbc(bassSongOf(this)));
+	}
+
+	/**
+	 * Keep the tune by section: cut the whole tune at the chart's sections,
+	 * so each section owns its bars from now on.
+	 * @returns {Promise<string>} why it couldn't be ('' when it was)
+	 */
+	async splitTuneIntoSections() {
+		await abcjsReady();
+		const { melody, arrangement } = this;
+		// A transcription's tune follows the recording bar for bar: arranging it is a new song
+		if (melody.bySection || this.song.recording) return '';
+		if (!arrangement.isPlayable) return 'Fix the chart first.';
+		if (!melody.tune) return 'There is no tune to split yet.';
+		const instances = sectionInstances(arrangement.text);
+		const barCounts = arrangement.sections.map((section) => section.measures.length);
+		const { tune, problem } = hasRepeats(melody.notation)
+			? this.#splitPlayedOut(instances)
+			: splitTune(melody.notation, melody.tune, instances, barCounts);
+		if (!tune) return `The tune can't be split: ${problem}`;
+		melody.bySection = tune;
+		this.#splitBass();
+		return '';
+	}
+
+	/**
+	 * The tune's repeats and endings played out, then cut into sections.
+	 * @param {import('../melody/sections/tuneBySection.js').SectionInstance[]} instances
+	 */
+	#splitPlayedOut(instances) {
+		const { melody, arrangement } = this;
+		if (!melody.line) return { tune: null, problem: 'It has no notes to play.' };
+		return splitPlayedOut(
+			melody.notation,
+			melody.tune,
+			melody.line,
+			instances,
+			barsInPlayOrder(arrangement.sections),
+			{ songKey: arrangement.key, capo: arrangement.capoFret, spelling: this.melodyKey.spelling }
+		);
+	}
+
+	/** The bass line by section too, unless it was written by ear from nothing. */
+	#splitBass() {
+		const own = this.#bandsOwnBass();
+		if (!own || this.bass.bySection || isAsPlayed(this.bass.notation)) return;
+		this.bass.split(own.header);
+	}
+
+	/**
+	 * A section renamed in the chart keeps its tune and bass line.
+	 * @param {import('../melody/sections/tuneBySection.js').SectionInstance[]} before the chart's sections before the edit
+	 */
+	followRenames(before) {
+		const after = sectionInstances(this.arrangement.text);
+		for (const kept of [this.melody, this.bass]) {
+			const line = kept.bySection;
+			const parts = line && renamedParts(before, after, line.parts);
+			const pickups = line && renamedParts(before, after, line.pickups);
+			if (line && (parts || pickups))
+				kept.bySection = { ...line, parts: parts ?? line.parts, pickups: pickups ?? line.pickups };
+		}
+	}
+
+	/**
+	 * Bars added to or removed from a section in the chart: its tune and bass
+	 * line (kept by section) gain or lose the same bars.
+	 * @param {Record<string, string[]>} before each section's bars before the edit (sectionBarKeys)
+	 */
+	followBars(before) {
+		if (this.arrangement.readError) return;
+		const after = sectionBarKeys(
+			this.arrangement.sections,
+			sectionInstances(this.arrangement.text)
+		);
+		for (const kept of [this.melody, this.bass]) {
+			const line = kept.bySection;
+			const parts =
+				line && partsFollowingBars(line.parts, before, after, (name) => kept.emptyBars(name));
+			if (line && parts) kept.bySection = { ...line, parts };
+		}
+	}
+
 	/** What the melody's words and harmony parts are written from. */
 	songForMelody() {
 		return {
@@ -159,6 +330,7 @@ export class Arranger {
 			keyText: this.melodyKey.keyText,
 			lineStarts
 		});
+		this.splitTuneIntoSections();
 	}
 
 	/** Write the arrangement's chords (at concert pitch) into a melody that has none. */

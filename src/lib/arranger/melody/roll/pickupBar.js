@@ -6,7 +6,9 @@
  * that would cut off notes is refused, never made.
  */
 import { TICKS_PER_QUARTER } from './ticks.js';
-import { isPickup } from './scoreToAbc.js';
+import { isPickup, rewriteAbc } from './scoreToAbc.js';
+import { echoZone, withPickupEcho } from './pickupEcho.js';
+import { isShortBar } from './rollLayout.js';
 import { barEvents, lengthText, writeBar } from './writeBar.js';
 
 /** @typedef {import('./readScore.js').Score} Score */
@@ -100,24 +102,52 @@ function afterBarLine(abc, at) {
 }
 
 /**
- * The tune as sheet music shows it: the pickup ends with a double bar line
- * (`||`), so it stands apart from bar 1. Only a plain bar line is changed; a
- * repeat sign after the pickup stays.
+ * The tune as sheet music shows it (never saved): the pickup ends with a
+ * double bar line (`||`), so it stands apart from bar 1 (only a plain bar
+ * line is changed; a repeat sign after the pickup stays). And since the tune
+ * goes round, the pickup's notes are written again in the last bar's closing
+ * beats, leading back to the top, where that bar only has rests there.
  * @param {string} abc
  * @param {Score[]} scores each voice's score, read from abc
  */
-export function withPickupDoubleBar(abc, scores) {
-	let text = abc;
-	const ends = scores
-		.filter((score) => score.bars.length > 0 && isPickup(score, 0) && score.bars[0].to !== null)
-		.map((score) => /** @type {number} */ (score.bars[0].to))
-		.toSorted((a, b) => b - a);
-	for (const end of ends) {
-		const barLine = text.slice(end).match(/^\s*\|(?![:|\]])/);
-		if (barLine) {
-			const at = end + barLine[0].length;
-			text = `${text.slice(0, at)}|${text.slice(at)}`;
+export function pickupsOnPaper(abc, scores) {
+	/** @type {{ from: number, to: number, put: string }[]} */
+	const edits = [];
+	for (const score of scores) {
+		const first = score.bars[0];
+		if (!first || !isPickup(score, 0)) continue;
+		const barLine = first.to === null ? null : abc.slice(first.to).match(/^\s*\|(?![:|\]])/);
+		if (first.to !== null && barLine) {
+			const at = first.to + barLine[0].length;
+			edits.push({ from: at, to: at, put: '|' });
 		}
+		const end = pickupAtTheEnd(abc, score);
+		if (end) edits.push(end);
 	}
+	let text = abc;
+	for (const { from, to, put } of edits.toSorted((a, b) => b.from - a.from))
+		text = text.slice(0, from) + put + text.slice(to);
 	return text;
+}
+
+/**
+ * The last bar with the pickup's notes in its closing beats (null: it has
+ * notes of its own there, or no room).
+ * @param {string} abc
+ * @param {Score} score
+ */
+function pickupAtTheEnd(abc, score) {
+	const zone = echoZone(score.bars, isShortBar);
+	const last = score.bars.at(-1);
+	if (!zone || !last || last.from === null || last.to === null) return null;
+	const busy = score.notes.some(
+		(note) => note.start < zone.to && note.start + note.length > zone.from
+	);
+	if (busy) return null;
+	const echoes = withPickupEcho(score.notes, zone)
+		.filter((note) => note.echo)
+		.map(({ midi, start, length }) => ({ midi, start, length }));
+	const written = rewriteAbc(abc, score, [...score.notes, ...echoes]);
+	const grown = written.length - abc.length;
+	return { from: last.from, to: last.to, put: written.slice(last.from, last.to + grown) };
 }

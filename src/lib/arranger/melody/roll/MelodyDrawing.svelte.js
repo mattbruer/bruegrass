@@ -25,6 +25,8 @@ import { playedTime, playheadTicks } from './playheadTicks.js';
 import { rewriteAbc } from './scoreToAbc.js';
 import { BASS_ROWS, LANE_ROWS, MELODY_ROWS } from './pitchRows.js';
 import { isLaneId, laneNumber } from './extraLane.js';
+import { echoZone, withoutPickupEcho, withPickupEcho } from './pickupEcho.js';
+import { isShortBar } from './rollLayout.js';
 import { BASS_VOICE, bassVoice, readBassScore } from '../../bass/readBass.js';
 import { blankBassAbc, generatedBassAbc } from '../../bass/bassAbc.js';
 import { bassSongOf } from '../../bass/songBassStyle.svelte.js';
@@ -55,7 +57,7 @@ export class MelodyDrawing {
 	read = $state.raw(null);
 	/** The voice being edited (its channel id). */
 	voice = $state(MELODY_CHANNEL);
-	/** @type {DrawnNote[]} the edited voice's notes */
+	/** @type {import('./pickupEcho.js').RollNote[]} the edited voice's notes, with the pickup shown again at the end */
 	notes = $state.raw([]);
 	/** The note picked to delete or nudge (index into notes), or -1. */
 	selected = $state(-1);
@@ -91,6 +93,8 @@ export class MelodyDrawing {
 	range = $derived(this.isBass ? BASS_ROWS : this.isLane ? LANE_ROWS : MELODY_ROWS);
 	end = $derived(this.score ? totalTicks(this.score) : 0);
 	gridStep = $derived(gridTicks(this.grid));
+	/** Where the pickup shows again, in the last bar's closing beats (not on the bass or lanes: written as played). */
+	echo = $derived(this.score && !this.ownBars ? echoZone(this.score.bars, isShortBar) : null);
 	/**
 	 * The tune's other voices, drawn faintly behind the one being edited.
 	 * Not behind the bass: it's written as played, the tune as written.
@@ -174,7 +178,7 @@ export class MelodyDrawing {
 	editVoice(id) {
 		this.voice = id;
 		this.selected = -1;
-		this.notes = this.current?.score.notes ?? [];
+		this.notes = this.#shown();
 	}
 
 	/**
@@ -182,8 +186,14 @@ export class MelodyDrawing {
 	 * @param {DrawnNote[]} notes
 	 */
 	commit(notes) {
-		this.notes = notes;
-		this.#write(this.current?.id ?? MELODY_CHANNEL, notes);
+		const own = withoutPickupEcho(notes, this.current?.score.notes ?? [], this.echo);
+		this.notes = withPickupEcho(own, this.echo);
+		this.#write(this.current?.id ?? MELODY_CHANNEL, own);
+	}
+
+	/** The voice's notes as the roll shows them. */
+	#shown() {
+		return withPickupEcho(this.current?.score.notes ?? [], this.echo);
 	}
 
 	/** @param {import('./ticks.js').GridId} id */
@@ -221,6 +231,8 @@ export class MelodyDrawing {
 			newTune,
 			abcjs: abcjsIfLoaded()
 		});
+		// A tune drawn from the chart starts kept by section
+		if (newTune) this.arranger.splitTuneIntoSections();
 	}
 
 	/**
@@ -283,7 +295,7 @@ export class MelodyDrawing {
 	#show(read) {
 		this.read = read;
 		if (!this.voices.some((each) => each.id === this.voice)) this.voice = MELODY_CHANNEL;
-		this.notes = this.current?.score.notes ?? [];
+		this.notes = this.#shown();
 		if (this.selected >= this.notes.length) this.selected = -1;
 	}
 }

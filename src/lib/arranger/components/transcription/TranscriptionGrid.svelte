@@ -13,13 +13,19 @@
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { trackScale } from '../../tracks/trackScale.js';
-	import { rulerFromBars, rulerSpanWithRoom } from '../../transcription/rulerFromBars.js';
+	import {
+		markersShown,
+		rulerFromBars,
+		rulerSpanWithRoom
+	} from '../../transcription/rulerFromBars.js';
 	import { partLanes } from '../../transcription/partLanes.js';
 	import { isLaneId } from '../../melody/roll/extraLane.js';
 	import { timeSignature } from '../../transcription/timeSignatures.js';
 	import TrackRuler from '../tracks/TrackRuler.svelte';
 	import BlockLane from '../tracks/BlockLane.svelte';
 	import BeatDots from './BeatDots.svelte';
+	import TempoLane from './TempoLane.svelte';
+	import { tempoByBar, usualTempo } from '../../transcription/beats/tempoCurve.js';
 	import GridMenu from './GridMenu.svelte';
 	import CycleStrip from './CycleStrip.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
@@ -30,10 +36,13 @@
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
+	import HitsCheckbox from './HitsCheckbox.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
+	/**
+	 * @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }}
+	 */
 	let { transcription } = $props();
 
 	const { melody, bass } = useArranger();
@@ -54,8 +63,11 @@
 			transcription.bars,
 			beatsPerBar,
 			transcription.grid?.bars.firstBeat ?? 0,
-			transcription.markers
+			markersShown(transcription.markers, transcription.pickups)
 		)
+	);
+	const usualBpm = $derived(
+		usualTempo(tempoByBar(transcription.grid?.beats ?? [], transcription.bars))
 	);
 	const zoom = $derived(settings.transcribe.zoom);
 	const pixelsPerQuarter = $derived(PIXELS_PER_QUARTER * zoom.across);
@@ -146,10 +158,17 @@
 		<div class="header quiet"><span class="name">Beats</span></div>
 		<BeatDots {transcription} {scale} />
 
+		<div class="header quiet">
+			<span class="name">Tempo</span>
+			{#if usualBpm}<span class="text-xs text-ink-soft">≈ {Math.round(usualBpm)}</span>{/if}
+		</div>
+		<TempoLane {transcription} {scale} />
+
 		<div class="header recording">
 			<span class="name">Recording</span>
 			<MuteSoloButtons settings={transcription.recordingLane} name="Recording" />
 			<LaneVolume level={transcription.recordingLane} name="Recording" />
+			<HitsCheckbox />
 		</div>
 		<RecordingLane {transcription} {scale} />
 

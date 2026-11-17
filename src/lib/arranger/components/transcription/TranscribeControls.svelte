@@ -3,13 +3,12 @@
 	 * Transcribe's one row of controls: play, start over and a bar back or
 	 * forward (or click the ruler for any spot), + Marker (name the section
 	 * the playhead is in, at its bar), where you are, speed (the
-	 * pitch stays), fine tuning (TuningControl), Count along (a click on every beat, higher on ONE), Move beat 1, the
+	 * pitch stays), fine tuning (TuningControl), Count along (a click on every beat, higher on ONE), Move beat 1 (back to placing it), the
 	 * song's key and time signature (both can be set at any time), zoom for
 	 * the grid and the piano roll (across and down), and More:
 	 * the whole song's beats counted twice or half as fast, finding them
-	 * again, and how the slowed-down sound is made. While beat 1 is being
-	 * placed there are no bars yet, so only what works without them shows:
-	 * play, start over, speed, tuning, time, zoom and the sound.
+	 * again, and how the slowed-down sound is made. Only in the workspace:
+	 * the setup wizard's steps have their own few controls.
 	 */
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
@@ -18,7 +17,7 @@
 	import { songKeyChoices } from '../../chart/keyChoices.js';
 	import SongKeyOptions from '../chart/SongKeyOptions.svelte';
 	import { TIME_SIGNATURES } from '../../transcription/timeSignatures.js';
-	import { MIN_SPEED, MAX_SPEED, SPEED_STEP } from '$lib/slowDowner/speed.js';
+	import SpeedControl from './SpeedControl.svelte';
 	import { SOUNDS, soundById } from '$lib/slowDowner/sounds.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -30,7 +29,6 @@
 
 	const player = $derived(transcription.player);
 	const NOT_NAMED = '';
-	const beforeBeats = $derived(transcription.settingDownbeat);
 	const keyChoices = $derived(songKeyChoices(transcription.arranger.arrangement.capoFret));
 
 	$effect(() => {
@@ -90,85 +88,61 @@
 			aria-label="Start over"
 			use:tooltip={TIPS.transcription.startOver}>⏮︎</button
 		>
-		{#if !beforeBeats}
-			<button
-				type="button"
-				class="ui-button px-3 py-1.5 text-sm"
-				onclick={() => transcription.stepBar(-1)}
-				use:tooltip={TIPS.transcription.barBack}>‹ Bar</button
-			>
-			<button
-				type="button"
-				class="ui-button px-3 py-1.5 text-sm"
-				onclick={() => transcription.stepBar(1)}
-				use:tooltip={TIPS.transcription.barForward}>Bar ›</button
-			>
-			<button
-				type="button"
-				class="ml-1 ui-button px-3 py-1.5 text-sm"
-				onclick={() => transcription.markHere()}
-				use:tooltip={TIPS.transcription.addMarker}>+ Marker</button
-			>
-		{/if}
-	</div>
-	<span class="text-sm text-ink-soft tabular-nums">
-		{formatClock(player.time)} / {formatClock(player.duration)}
-	</span>
-
-	<label class="flex items-center gap-2">
-		<span class="text-sm text-ink-soft">Speed</span>
-		<input
-			type="range"
-			min={MIN_SPEED}
-			max={MAX_SPEED}
-			step={SPEED_STEP}
-			value={player.speed}
-			oninput={(event) => player.setSpeed(Number(event.currentTarget.value))}
-			class="w-28"
-			use:tooltip={TIPS.transcription.speed}
-		/>
-		<button
-			type="button"
-			class="w-14 ui-button px-2 py-1 text-sm tabular-nums"
-			onclick={() => player.setSpeed(1)}
-			use:tooltip={TIPS.transcription.resetSpeed}>{Math.round(player.speed * 100)}%</button
-		>
-	</label>
-
-	<TuningControl {transcription} />
-
-	{#if !beforeBeats}
-		<span class="flex items-center gap-2">
-			<ToggleSwitch
-				bind:on={transcription.clicksOn}
-				labelledBy="count-along"
-				tip={TIPS.transcription.countAlong}
-			/>
-			<span id="count-along" class="text-sm">Count along</span>
-		</span>
-
-		<label class="flex items-center gap-2">
-			<span class="text-sm text-ink-soft">Key</span>
-			<select
-				class="ui-field px-2 py-1.5"
-				value={transcription.key ?? NOT_NAMED}
-				onchange={(event) => transcription.setKey(event.currentTarget.value || null)}
-				use:tooltip={TIPS.transcription.key}
-			>
-				<option value={NOT_NAMED}>Not known yet</option>
-				<SongKeyOptions choices={keyChoices} />
-			</select>
-		</label>
-	{/if}
-
-	{#if !beforeBeats}
 		<button
 			type="button"
 			class="ui-button px-3 py-1.5 text-sm"
-			onclick={() => transcription.setDownbeatAgain()}
-			use:tooltip={TIPS.transcription.moveDownbeat}>Move beat 1…</button
+			onclick={() => transcription.stepBar(-1)}
+			use:tooltip={TIPS.transcription.barBack}>‹ Bar</button
 		>
-	{/if}
+		<button
+			type="button"
+			class="ui-button px-3 py-1.5 text-sm"
+			onclick={() => transcription.stepBar(1)}
+			use:tooltip={TIPS.transcription.barForward}>Bar ›</button
+		>
+		<button
+			type="button"
+			class="ml-1 ui-button px-3 py-1.5 text-sm"
+			onclick={() => transcription.markHere()}
+			use:tooltip={TIPS.transcription.addMarker}>+ Marker</button
+		>
+	</div>
+	<span class="text-sm text-ink-soft tabular-nums">
+		{formatClock(player.time, { tenths: true })} / {formatClock(player.duration)}
+	</span>
+
+	<SpeedControl {player} />
+
+	<TuningControl {transcription} />
+
+	<span class="flex items-center gap-2">
+		<ToggleSwitch
+			bind:on={transcription.clicksOn}
+			labelledBy="count-along"
+			tip={TIPS.transcription.countAlong}
+		/>
+		<span id="count-along" class="text-sm">Count along</span>
+	</span>
+
+	<label class="flex items-center gap-2">
+		<span class="text-sm text-ink-soft">Key</span>
+		<select
+			class="ui-field px-2 py-1.5"
+			value={transcription.key ?? NOT_NAMED}
+			onchange={(event) => transcription.setKey(event.currentTarget.value || null)}
+			use:tooltip={TIPS.transcription.key}
+		>
+			<option value={NOT_NAMED}>Not known yet</option>
+			<SongKeyOptions choices={keyChoices} />
+		</select>
+	</label>
+
+	<button
+		type="button"
+		class="ui-button px-3 py-1.5 text-sm"
+		onclick={() => transcription.setDownbeatAgain()}
+		use:tooltip={TIPS.transcription.moveDownbeat}>Move beat 1…</button
+	>
 
 	<div class="flex items-center gap-1" role="group" aria-label="Time signature">
 		<span class="mr-1 text-sm text-ink-soft">Time</span>
@@ -191,26 +165,24 @@
 			>More</summary
 		>
 		<div class="menu ui-card">
-			{#if !beforeBeats}
-				<button
-					type="button"
-					class="ui-button px-3 py-1.5 text-left text-sm"
-					onclick={() => transcription.doubleBeats()}
-					use:tooltip={TIPS.transcription.doubleBeats}>Count twice as fast</button
-				>
-				<button
-					type="button"
-					class="ui-button px-3 py-1.5 text-left text-sm"
-					onclick={() => transcription.halveBeats()}
-					use:tooltip={TIPS.transcription.halveBeats}>Count half as fast</button
-				>
-				<button
-					type="button"
-					class="ui-button px-3 py-1.5 text-left text-sm"
-					onclick={() => transcription.findBeatsAgain()}
-					use:tooltip={TIPS.transcription.findAgain}>Find the beats again</button
-				>
-			{/if}
+			<button
+				type="button"
+				class="ui-button px-3 py-1.5 text-left text-sm"
+				onclick={() => transcription.doubleBeats()}
+				use:tooltip={TIPS.transcription.doubleBeats}>Count twice as fast</button
+			>
+			<button
+				type="button"
+				class="ui-button px-3 py-1.5 text-left text-sm"
+				onclick={() => transcription.halveBeats()}
+				use:tooltip={TIPS.transcription.halveBeats}>Count half as fast</button
+			>
+			<button
+				type="button"
+				class="ui-button px-3 py-1.5 text-left text-sm"
+				onclick={() => transcription.findBeatsAgain()}
+				use:tooltip={TIPS.transcription.findAgain}>Find the beats again</button
+			>
 			<span class="mt-1 text-xs text-ink-soft">Slowed-down sound</span>
 			<TabSwitch
 				tabs={SOUNDS}

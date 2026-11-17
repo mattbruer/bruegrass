@@ -13,7 +13,9 @@ export const TIPS = Object.freeze({
 		home: 'Back to the song list.',
 		pages: {
 			'/': 'Your recorded songs: play one, or play them all.',
-			'/arranger': 'Write a chord chart and hear a bluegrass band play it.'
+			'/arranger': 'Write a chord chart and hear a bluegrass band play it.',
+			'/arranger/transcribe':
+				'Write a song down from a recording: its bars are found for you, then you write the chords and parts on them.'
 		},
 		settings: 'Settings: tips, the music keypad, the bass line, colours and shape.',
 		storage: 'What the app keeps on this device: see it, and delete what you don’t want.',
@@ -133,6 +135,7 @@ export const TIPS = Object.freeze({
 		export: 'Download the song: the full mix or stems as WAV files, or a MIDI file.',
 		musicView: {
 			chords: 'Show the chords scrolling past as the band plays.',
+			roll: 'Show the tune on a piano roll, to draw and change its notes.',
 			sheet: 'Show the tune as sheet music, with the chords over it.'
 		},
 		loopSection: 'Choose which part of the song repeats while it plays.',
@@ -179,10 +182,17 @@ export const TIPS = Object.freeze({
 	},
 
 	transcription: {
-		open: 'Write a song down from a recording: its bars are found for you, then you write the chords and tune on them.',
-		back: 'Back to the arranger. The song comes with you.',
+		sectionPickup:
+			'Where this section’s tune starts: on the bar, or a beat or more before it, when the singer comes in early (“I was…”). Only the tune: the chords stay on the bar.',
+		changeRecording: 'Work out a different recording.',
+		markHere:
+			'Put a marker where the playhead is (on the nearest bar line), and type the part’s name.',
+		sectionEnd:
+			'The section before ends at the start of this bar, and this bar starts no new one: put it after a part you want on its own, like a mando break.',
+		send: 'Take the sections you named to the arranger: one part to practise, or several to build an arrangement from.',
 		song: 'Pick a recording to transcribe. It becomes the open song’s recording.',
 		file: 'Open a recording from this device: an MP3, WAV or any song file.',
+		backToArranger: 'Go back to the song you came from, in the arranger.',
 		startSong:
 			'A new song on this recording’s bars, at its tempo, to write the chords and tune on.',
 		play: 'Play or pause the recording (Space).',
@@ -208,10 +218,14 @@ export const TIPS = Object.freeze({
 		more: 'Fixes for the whole song’s beats, and how the slowed-down sound is made.',
 		doubleBeats: 'For when the count is half the song’s speed: a beat between every two.',
 		halveBeats: 'For when the count is twice the song’s speed: every other beat.',
-		downbeatStrip: 'The whole recording. Click to move the playhead there.',
-		setDownbeat: 'Beat 1 of bar 1 is where the playhead is. It snaps to the nearest hit.',
-		findFromDownbeat:
-			'Find the beats and bars from the beat 1 you placed. A pickup before it stays as the lead-in.',
+		listenDownbeat: 'Play from just before beat 1 with a click on every beat, higher on “one”.',
+		fromTheStart: 'Back to the start of the recording.',
+		timeHelp: 'What the time signatures mean, and how each is counted.',
+		markDownbeat:
+			'Beat 1 is exactly where the playhead is. While it plays, press it on the beat like a tap.',
+		laneZoomIn: 'Zoom in on the recording, to put the playhead exactly on a beat.',
+		laneZoomOut: 'Zoom out, to see more of the recording.',
+		downbeatStrip: 'The whole recording. Click or drag to move the playhead.',
 		keepBeats: 'Go back to the beats and bars you have, without finding them again.',
 		moveDownbeat:
 			'Place beat 1 again, then find the beats again. Your fixes to the beats are forgotten.',
@@ -221,6 +235,8 @@ export const TIPS = Object.freeze({
 			'Click anywhere to play from there. Click a bar’s number for its menu: its beats, and Loop.',
 		beatDot:
 			'A beat. If its hit sits off the line below, drag the dot onto the hit; it snaps. Tap it for more.',
+		tempoLane:
+			'The tempo the beats found say the band plays at. Orange: each bar, its BPM above; red: a bar far from the usual tempo (dashed), worth a listen. The faint line is beat by beat.',
 		recordingLane:
 			'The recording, fitted to the bars. Its hits (orange) should sit on the beat lines. Tap to play from there.',
 		chordBar:
@@ -237,8 +253,11 @@ export const TIPS = Object.freeze({
 			'Notes before beat 1 (a pickup): how many beats of room to draw them in, before bar 1. Every voice gets the same.',
 		bottomViews: {
 			roll: 'Write and edit the picked part as notes on a grid.',
-			sheet: 'See what you’ve written as a score.'
+			sheet: 'See what you’ve written as a score.',
+			tab: 'The picked part as TAB, for guitar, mandolin or banjo: pick a number to change its fret or string.'
 		},
+		showHits:
+			'Show the hits: where each pick or strum starts, drawn over the waveform. Handy for putting beats right on them.',
 		laneVolume:
 			'How loud this lane plays. Turn the recording down or a part up to hear the part over it. Double-click to put it back.',
 		fewerBeats: 'This bar has a beat fewer. The bars after it move along.',
@@ -328,9 +347,13 @@ export const TIPS = Object.freeze({
 			'The fret this note is played at. Type another to change the note, on the same string.',
 		tabStringUp: 'Play this note on the string above, at the fret that gives the same note.',
 		tabStringDown: 'Play this note on the string below, at the fret that gives the same note.',
-		tabInstrument: 'Show this part as TAB, for guitar, mandolin or banjo, under the notes.',
+		tabInstrument: 'The instrument this part’s TAB is written for.',
+		tabTuning:
+			'How the instrument is tuned. The frets follow the tuning; the notes stay the same. Custom lets you pick each string’s note.',
+		tabStringTuning: 'The note this string is tuned to, top line of the TAB first.',
 		views: {
 			draw: 'Draw the tune and its harmony lines on a grid of notes.',
+			tab: 'The picked part as TAB, for guitar, mandolin or banjo: pick a number to change its fret or string.',
 			abc: 'The same tune as ABC notation, to read, paste or type.'
 		},
 		harmonyOptions: {

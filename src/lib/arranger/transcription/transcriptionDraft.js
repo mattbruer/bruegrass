@@ -2,7 +2,8 @@
  * A recording's transcription, kept on this device as you work, so leaving
  * the page (or an iPhone unloading it) never loses your fixes: what belongs
  * to the recording (where beat 1 is, the beats and bars, the time, lanes you
- * added, the fine tuning). The chords, sections and key are the song's own,
+ * added, the fine tuning, how early each section's tune starts, the part
+ * being worked on). The chords, sections and key are the song's own,
  * in its chart, which saves itself like any song.
  * One draft per recording, found again by the recording's key.
  */
@@ -17,10 +18,12 @@ const READABLE = [3, VERSION];
  * @typedef {{
  *   grid: import('./beatGrid.js').BeatGrid,
  *   time: string, lanes: import('./extraLanes.js').ExtraLane[],
- *   cents: number, downbeat: number | null
+ *   cents: number, downbeat: number | null,
+ *   pickups: Record<number, number>
  * }} Transcription
  *   downbeat: where you placed beat 1 of bar 1 (seconds; null in an older draft)
  *   cents: the recording's pitch moved by this much (fine tuning)
+ *   pickups: bar number → how many beats before it its section's tune starts (a marker's pickup)
  */
 
 /** @param {string} recordingKey */
@@ -44,6 +47,7 @@ export function readTranscriptionDraft(recordingKey) {
 		lanes: Array.isArray(value.lanes) ? value.lanes : [],
 		cents: typeof value.cents === 'number' ? value.cents : 0,
 		downbeat: typeof value.downbeat === 'number' ? value.downbeat : null,
+		pickups: value.pickups && typeof value.pickups === 'object' ? value.pickups : {},
 		written: typeof value.written === 'string' ? value.written : ''
 	};
 }

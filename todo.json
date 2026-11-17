@@ -27,6 +27,12 @@
 			"addedAt": "2026-11-12T00:00:00.000Z"
 		},
 		{
+			"id": "beat-pins",
+			"text": "Transcribe: fixes that stick (pins the beat finder must pass through), which also handle ritards",
+			"done": false,
+			"addedAt": "2026-11-17"
+		},
+		{
 			"id": "transcribe-loop",
 			"text": "Transcribe: the parts on their own instruments, key change; pinch to zoom",
 			"done": false,

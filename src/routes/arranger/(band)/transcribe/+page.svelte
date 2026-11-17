@@ -15,6 +15,7 @@
 	 * goes back to the start, comma and full stop a bar back or on (Logic's).
 	 */
 	import { onDestroy, untrack } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { useArranger } from '$lib/arranger/state/context.js';
 	import { soloSafeWhile } from '$lib/arranger/mixer/mixer.svelte.js';
@@ -22,11 +23,10 @@
 	import { gridClicks } from '$lib/arranger/transcription/gridClicks.js';
 	import { timeSignature } from '$lib/arranger/transcription/timeSignatures.js';
 	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
-	import RecordingChoice from '$lib/arranger/components/transcription/RecordingChoice.svelte';
-	import DownbeatPicker from '$lib/arranger/components/transcription/DownbeatPicker.svelte';
-	import AnalysingRecording from '$lib/arranger/components/transcription/AnalysingRecording.svelte';
 	import TranscribeControls from '$lib/arranger/components/transcription/TranscribeControls.svelte';
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
+	import SendToArranger from '$lib/arranger/components/transcription/SendToArranger.svelte';
+	import TranscribeSetup from '$lib/arranger/components/transcription/TranscribeSetup.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -42,15 +42,31 @@
 
 	// Arriving with a song written from one of the app's recordings opens it (only when the song
 	// changes: picking another recording here mustn't bring this one back)
+	// Arriving with a song sent from a transcription brings that transcription back (only on
+	// arriving: Send to the arranger opens the song it makes while still here)
+	let arrived = false;
 	$effect(() => {
-		if (song.ready && song.recording) untrack(() => transcription.reopenSongsRecording());
+		if (!song.ready) return;
+		if (song.recording) untrack(() => transcription.reopenSongsRecording());
+		else if (!arrived && song.madeFrom) untrack(() => transcription.openWhatItWasMadeFrom());
+		arrived = true;
 	});
 	/** A file from this device can't be reopened by the page: its name, to pick it again. */
-	const fileToOpenAgain = $derived(
-		song.recording?.key.startsWith('file:') && transcription.recording?.key !== song.recording.key
-			? song.recording.name
-			: null
-	);
+	const fileToOpenAgain = $derived.by(() => {
+		const wanted = song.recording ?? song.madeFrom;
+		return wanted?.key.startsWith('file:') && transcription.recording?.key !== wanted.key
+			? wanted.name
+			: null;
+	});
+
+	// Leave first: opening it here would bring its transcription straight back
+	async function backToArranger() {
+		const back = transcription.returnTo;
+		if (!back) return;
+		transcription.returnTo = null;
+		await goto(resolve('/arranger'));
+		await song.open(back.id);
+	}
 
 	$effect(() => {
 		const grid = transcription.grid;
@@ -118,54 +134,58 @@
 <svelte:window onkeydown={onKeydown} />
 
 <main class="ui-page-width flex flex-col gap-4 pt-6 pb-16">
-	<div class="flex flex-wrap items-center gap-3">
-		<a
-			href={resolve('/arranger')}
-			class="ui-button px-4 py-2 text-sm"
-			use:tooltip={TIPS.transcription.back}
-		>
-			‹ Arranger
-		</a>
+	<div class="flex flex-wrap items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold">Transcribe</h1>
+		<div class="flex flex-wrap items-center gap-2">
+			{#if transcription.returnTo}
+				<button
+					type="button"
+					class="ui-button px-4 py-2 text-sm"
+					onclick={backToArranger}
+					use:tooltip={TIPS.transcription.backToArranger}
+					>‹ Back to {transcription.returnTo.name}</button
+				>
+			{/if}
+			{#if !transcription.setupStep && transcription.linked}
+				<SendToArranger />
+			{/if}
+		</div>
 	</div>
 
-	<SongBar />
-
-	<RecordingChoice
-		current={transcription.recording}
-		onChoose={(recording) => transcription.open(recording)}
-	/>
-
-	{#if fileToOpenAgain}
+	{#if fileToOpenAgain && !transcription.recording}
 		<p class="text-sm text-ink-soft">
-			This song was written from <strong>{fileToOpenAgain}</strong>. Open it again (Open a
-			recording…) to carry on.
+			This song was written from <strong>{fileToOpenAgain}</strong>. Open it again to carry on.
 		</p>
 	{/if}
 
-	{#if transcription.recording}
-		{#if transcription.player.loading}
-			<p class="text-ink-soft">Loading…</p>
-		{:else if transcription.finding}
-			<AnalysingRecording />
-		{:else if transcription.settingDownbeat}
-			<TranscribeControls {transcription} />
-			<DownbeatPicker {transcription} />
-		{:else if transcription.grid}
-			<TranscribeControls {transcription} />
-			{#if !transcription.linked}
-				<p class="text-sm text-ink-soft">
-					The song open now isn’t this recording’s.
-					<button
-						type="button"
-						class="ml-2 ui-button px-3 py-1.5"
-						onclick={() => transcription.startSong()}
-						use:tooltip={TIPS.transcription.startSong}>Use it for a new song</button
-					>
-				</p>
-			{/if}
-			<TranscriptionGrid {transcription} />
-			<BottomPane {transcription} />
+	{#if transcription.setupStep}
+		<TranscribeSetup {transcription} />
+	{:else if transcription.recording && transcription.grid}
+		<div class="flex flex-wrap items-center gap-3">
+			<SongBar />
+			<span class="text-sm text-ink-soft"
+				>Recording: <strong>{transcription.recording.name}</strong></span
+			>
+			<button
+				type="button"
+				class="ui-button px-3 py-1.5 text-sm"
+				onclick={() => transcription.chooseRecordingAgain()}
+				use:tooltip={TIPS.transcription.changeRecording}>Change…</button
+			>
+		</div>
+		<TranscribeControls {transcription} />
+		{#if !transcription.linked}
+			<p class="text-sm text-ink-soft">
+				The song open now isn’t this recording’s.
+				<button
+					type="button"
+					class="ml-2 ui-button px-3 py-1.5"
+					onclick={() => transcription.startSong()}
+					use:tooltip={TIPS.transcription.startSong}>Use it for a new song</button
+				>
+			</p>
 		{/if}
+		<TranscriptionGrid {transcription} />
+		<BottomPane {transcription} />
 	{/if}
 </main>

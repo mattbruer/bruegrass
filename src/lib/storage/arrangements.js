@@ -22,7 +22,7 @@ import { newId } from './newId.js';
 import { DEFAULT_BASS_STYLE } from '$lib/arranger/instruments/bassStyles.js';
 
 /** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
-export const ARRANGEMENT_VERSION = 5;
+export const ARRANGEMENT_VERSION = 7;
 
 /** Where every saved song is kept, as { [id]: Arrangement }. */
 const SONGS_KEY = 'bruegrass.arrangements';
@@ -40,10 +40,13 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   title: string,
  *   arrangement: string,
  *   abc: string,
+ *   tune: import('$lib/arranger/melody/sections/tuneBySection.js').TuneBySection | null,
  *   bass: string,
+ *   bassTune: import('$lib/arranger/melody/sections/tuneBySection.js').TuneBySection | null,
  *   bassStyle: string,
  *   tab: Record<string, import('$lib/arranger/tab/songTab.svelte.js').PartTab>,
  *   recording: { key: string, name: string } | null,
+ *   madeFrom: { key: string, name: string } | null,
  *   tempo: number,
  *   capo: number,
  *   transpose: number,
@@ -52,11 +55,14 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   updatedAt: string
  * }} Arrangement
  *   title: the song's name; arrangement: the chord chart text; abc: the
- *   melody in ABC notation; bass: the bass line in ABC once it's been
- *   edited ('' while the band writes it from the chart); bassStyle: how the band
+ *   melody in ABC notation (as played); tune: the melody kept by section,
+ *   each section's bars (null: kept whole, in abc); bass: the bass line in ABC once it's been
+ *   edited ('' while the band writes it from the chart); bassTune: the bass line kept by
+ *   section (null: kept whole, in bass); bassStyle: how the band
  *   writes its own bass line, an id in BASS_STYLES; tab: each part's TAB instrument
- *   and the strings chosen for its notes (tab/songTab.svelte.js); recording: the
- *   recording it was transcribed from (its key and name), if any; transpose: semitones from the Key setting;
+ *   and the strings chosen for its notes, and its tuning if not standard (tab/songTab.svelte.js); recording: the
+ *   recording it was transcribed from (its key and name), if any (this song is that transcription);
+ *   madeFrom: the recording whose transcription it was sent from (Send to the arranger), if any; transpose: semitones from the Key setting;
  *   mix: the mixer's settings (see mixSnapshot in mixer.svelte.js);
  *   dates are ISO strings
  */
@@ -72,10 +78,13 @@ export function createArrangement(fields = {}) {
 		title: '',
 		arrangement: '',
 		abc: '',
+		tune: null,
 		bass: '',
+		bassTune: null,
 		bassStyle: DEFAULT_BASS_STYLE,
 		tab: {},
 		recording: null,
+		madeFrom: null,
 		tempo: 120,
 		capo: 0,
 		transpose: 0,
@@ -141,7 +150,9 @@ function allSongs() {
  * `bass` (the defaults fill it in: older songs play the generated bass);
  * version 3 `bassStyle` (it was a device setting before: older songs get the default);
  * version 4 `tab` (older songs have none); version 5 `recording` (none: a
- * song transcribed earlier gets it when its recording is opened again).
+ * song transcribed earlier gets it when its recording is opened again); version 6
+ * `tune` and `bassTune` (older songs keep their tune and bass line whole); version 7
+ * `madeFrom` (none: an arrangement sent earlier isn't linked back to its transcription).
  * @param {Arrangement} song
  * @returns {Arrangement}
  */

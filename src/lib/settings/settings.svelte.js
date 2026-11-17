@@ -50,22 +50,17 @@ export const settings = $state({
 		countInBars: 2
 	},
 
-	// The arranger page: set from its player card
-
-	/** Whether the page shows the chords scrolling past or the sheet music (see musicView.js). */
-	musicView: /** @type {import('$lib/arranger/components/page/musicView.js').MusicView} */ (
-		'sheet'
-	),
-
 	// The transcribe page: set from its player
 
 	transcribe: {
 		/** How the slowed-down song is stretched: an id in transcribe/sounds.js. */
 		sound: 'balanced',
-		/** The bottom pane shows the picked part as a piano roll or as sheet music: an id in transcription/bottomViews.js. */
+		/** The bottom pane shows the picked part as a piano roll, sheet music or TAB: an id in transcription/bottomViews.js. */
 		bottomView: 'roll',
 		/** Cycle ends snap to sixteenth notes (off: drag and tap to any spot). */
 		snapCycle: true,
+		/** The recording's hits (onset strength) drawn over its waveform. */
+		showHits: false,
 		/** Transcribe's track grid and piano roll: size multipliers (components/zoom/). */
 		zoom: { across: 1, down: 1 }
 	},

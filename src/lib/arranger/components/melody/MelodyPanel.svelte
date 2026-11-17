@@ -23,9 +23,10 @@
 		'GABc dedB|dedB dedB|'
 	].join('\n');
 
-	/** Two ways to write the same tune: draw it, or type it in ABC. */
+	/** Ways to write the same tune: draw it, fix its TAB, or type it in ABC. */
 	const VIEWS = [
 		{ id: 'draw', name: 'Draw' },
+		{ id: 'tab', name: 'TAB' },
 		{ id: 'abc', name: 'ABC' }
 	];
 
@@ -57,6 +58,8 @@
 		<HarmonyParts />
 		<MelodyDrawing />
 		<MelodyFitNote />
+	{:else if view === 'tab'}
+		<MelodyDrawing view="tab" />
 	{:else}
 		<p class="mb-2 text-sm text-ink-soft">
 			Paste or write a tune in
@@ -102,7 +105,7 @@
 
 		<textarea
 			id="abc-notation"
-			bind:value={melody.notation}
+			bind:value={melody.abcView}
 			aria-label="ABC notation"
 			placeholder={EXAMPLE_NOTATION}
 			class="h-56 w-full ui-field p-4 font-mono text-sm pointer-coarse:text-base"

@@ -17,7 +17,7 @@
 	import { drawSheetMusic } from '../../melody/drawSheetMusic.js';
 	import { playedQuarters, sheetEvents } from '../../melody/follow.js';
 	import { followSheetMusic } from '../../melody/followSheetMusic.js';
-	import { withPickupDoubleBar } from '../../melody/roll/pickupBar.js';
+	import { pickupsOnPaper } from '../../melody/roll/pickupBar.js';
 	import SheetViewToggle from './SheetViewToggle.svelte';
 
 	const { arrangement, melody, player } = useArranger();
@@ -29,7 +29,7 @@
 	const notation = $derived(
 		otherNotation ??
 			(melody.voices
-				? withPickupDoubleBar(
+				? pickupsOnPaper(
 						melody.notation,
 						melody.voices.map((voice) => voice.score)
 					)

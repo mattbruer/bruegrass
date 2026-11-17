@@ -4,8 +4,9 @@
  * saved and shared with it (state/songFields.js). A note you haven't
  * chosen a string for is placed by fingering.js.
  *
- * @typedef {{ instrument: string, strings: Record<string, number> }} PartTab
- *   strings: note key (fingering.js noteKey) → string index on the instrument
+ * @typedef {{ instrument: string, strings: Record<string, number>, tuning?: number[] }} PartTab
+ *   strings: note key (fingering.js noteKey) → string index on the instrument;
+ *   tuning: each string's steps from standard (tunings.js), none for standard
  */
 
 export const songTab = $state({ /** @type {Record<string, PartTab>} */ parts: {} });
@@ -26,6 +27,21 @@ export function setTabInstrument(voice, instrument) {
 	if (instrument === null) songTab.parts = others;
 	else if (old?.instrument !== instrument)
 		songTab.parts = { ...others, [voice]: { instrument, strings: {} } };
+}
+
+/**
+ * Tune a part's instrument (its strings keep their notes' choices: the
+ * frets follow the tuning).
+ * @param {string} voice
+ * @param {string} instrument
+ * @param {number[]} steps each string's steps from standard
+ */
+export function setTabTuning(voice, instrument, steps) {
+	setTabInstrument(voice, instrument);
+	const part = { ...songTab.parts[voice] };
+	if (steps.every((step) => step === 0)) delete part.tuning;
+	else part.tuning = [...steps];
+	songTab.parts = { ...songTab.parts, [voice]: part };
 }
 
 /**

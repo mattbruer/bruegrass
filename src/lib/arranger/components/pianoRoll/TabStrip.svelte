@@ -1,13 +1,13 @@
 <script>
 	/**
-	 * The part as TAB, under the piano roll and scrolling with it: a line
-	 * per string, top line first, and each note's fret number on its
-	 * string's line, where the note starts. Tap a number to pick its note
-	 * (the roll's own selection); then type a fret to change the note's
-	 * pitch on that string (two digits typed quickly make 10 and up), or ↑ ↓
-	 * to play it on the string above or below. Other keys go on to the roll.
+	 * The part as TAB: a line per string, top line first, bar lines, and
+	 * each note's fret number on its string's line, where the note starts.
+	 * Tap a number to pick its note (the roll's own selection); then type a
+	 * fret to change the note's pitch on that string (two digits typed
+	 * quickly make 10 and up), ↑ ↓ to play it on the string above or below,
+	 * or Delete to remove it.
 	 */
-	import { lineY } from '../../tab/tabLayout.js';
+	import { lineY, tabHeight } from '../../tab/tabLayout.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -15,17 +15,36 @@
 	 * @type {{
 	 *   tabNotes: import('../../tab/fingering.js').TabNote[],
 	 *   board: import('../../tab/fretboards.js').Fretboard,
+	 *   bars: import('../../melody/roll/readScore.js').ScoreBar[],
 	 *   tickWidth: number,
 	 *   width: number,
 	 *   labelWidth: number,
 	 *   selected: import('../../melody/roll/editNotes.js').DrawnNote | null,
 	 *   onSelect: (tabNote: import('../../tab/fingering.js').TabNote) => void,
 	 *   onFret: (tabNote: import('../../tab/fingering.js').TabNote, fret: number) => void,
-	 *   onString: (tabNote: import('../../tab/fingering.js').TabNote, direction: -1 | 1) => void
+	 *   onString: (tabNote: import('../../tab/fingering.js').TabNote, direction: -1 | 1) => void,
+	 *   onDelete: (tabNote: import('../../tab/fingering.js').TabNote) => void
 	 * }}
 	 */
-	let { tabNotes, board, tickWidth, width, labelWidth, selected, onSelect, onFret, onString } =
-		$props();
+	let {
+		tabNotes,
+		board,
+		bars,
+		tickWidth,
+		width,
+		labelWidth,
+		selected,
+		onSelect,
+		onFret,
+		onString,
+		onDelete
+	} = $props();
+
+	const lastLine = $derived(lineY(board.strings.length - 1));
+	/** Where each bar starts, and where the last one ends (ticks). */
+	const barLines = $derived(
+		bars.length ? [...bars.map((bar) => bar.start), bars.at(-1).start + bars.at(-1).length] : []
+	);
 
 	/** A second digit this soon after the first makes a two-digit fret. */
 	const TWO_DIGITS_MS = 800;
@@ -45,13 +64,18 @@
 			typed = twoDigits ? { digit: '', at: 0 } : { digit: event.key, at: now };
 		} else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
 			onString(tabNote, event.key === 'ArrowUp' ? -1 : 1);
+		} else if (event.key === 'Delete' || event.key === 'Backspace') {
+			onDelete(tabNote);
 		} else return;
 		event.preventDefault();
-		event.stopPropagation(); // the roll would move the note instead
 	}
 </script>
 
-<div class="names sticky left-0 z-10 shrink-0" style:width="{labelWidth}px">
+<div
+	class="names sticky left-0 z-10 shrink-0"
+	style:width="{labelWidth}px"
+	style:height="{tabHeight(board)}px"
+>
 	{#each board.strings as string, index (index)}
 		<span class="name" style:top="{lineY(index)}px">{string.name}</span>
 	{/each}
@@ -59,6 +83,14 @@
 <div class="lines relative" style:width="{width}px" aria-label="{board.name} TAB">
 	{#each board.strings, index (index)}
 		<span class="line" style:top="{lineY(index)}px"></span>
+	{/each}
+	{#each barLines as start, index (index)}
+		<span
+			class="barline"
+			style:left="{start * tickWidth}px"
+			style:top="{lineY(0)}px"
+			style:height="{lastLine - lineY(0)}px"
+		></span>
 	{/each}
 	{#each tabNotes as tabNote, index (index)}
 		{#if tabNote.place}
@@ -84,7 +116,6 @@
 	.lines {
 		position: relative;
 		background: var(--color-surface-deep);
-		border-top: 1px solid var(--color-line);
 	}
 	.names {
 		position: sticky;
@@ -102,6 +133,11 @@
 		right: 0;
 		height: 1px;
 		background: var(--color-ink-faint);
+	}
+	.barline {
+		position: absolute;
+		width: 1px;
+		background: var(--color-ink-soft);
 	}
 	/* The number sits on its string's line, hiding the line behind it */
 	.fret {

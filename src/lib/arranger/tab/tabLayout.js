@@ -1,6 +1,6 @@
-/** How the TAB strip under the piano roll is spaced (pixels). */
-export const STRING_SPACING = 18;
-const EDGE = 12;
+/** How the TAB is spaced (pixels). */
+const STRING_SPACING = 26;
+const EDGE = 16;
 
 /**
  * Where a string's line is, from the strip's top.

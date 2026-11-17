@@ -24,7 +24,7 @@
  */
 import { StretchPlayer } from '$lib/slowDowner/StretchPlayer.svelte.js';
 import { waveformPeaks } from '../takes/waveformPeaks.js';
-import { barAt, layOutBars, withBarLength, withBeatsPerBar } from './barPlan.js';
+import { layOutBars, withBarLength, withBeatsPerBar } from './barPlan.js';
 import {
 	newBeatGrid,
 	nearestBeat,
@@ -39,7 +39,7 @@ import {
 import { ANALYSIS_VERSION, analyseRecording } from './beats/analyseRecording.js';
 import { readRecordingAnalysis, writeRecordingAnalysis } from '$lib/storage/recordingAnalyses.js';
 import { detectBeats } from './beats/detectBeats.js';
-import { snapToHit } from './beats/snapToHit.js';
+import { snapToHit, tapToHit } from './beats/snapToHit.js';
 import {
 	clearTranscriptionDraft,
 	readTranscriptionDraft,
@@ -47,6 +47,7 @@ import {
 } from './transcriptionDraft.js';
 import { chartFromBars } from './chartFromBars.js';
 import { readChartOnBars } from './readChartOnBars.js';
+import { namedSections, withUniqueSectionNames } from './arrangementFromTranscription.js';
 import { chartCell, isEmptyBar, isHeld, slotsFromTyped, slotsOf } from './barChords.js';
 import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
 import { keyFieldName, withKeyField } from '../chart/keyField.js';
@@ -85,6 +86,8 @@ import { pickupLength, withPickupLength } from '../melody/roll/pickupBar.js';
 export const PEAKS_PER_SECOND = 200;
 /** Onset strength (in its own spread) drawn full height. */
 const HIT_SCALE = 6;
+/** Hearing beat 1 starts this long before it, so the count leads into it. */
+const LISTEN_BEFORE_SECONDS = 2.5;
 /** The recording's and the band's lane ids among the lanes that can be muted and soloed. */
 const RECORDING_LANE = 'recording';
 const BAND_LANE = 'band';
@@ -99,6 +102,13 @@ export class TranscriptionState {
 	time = $state(DEFAULT_TIME);
 	/** @type {import('./extraLanes.js').ExtraLane[]} the generic lanes (+ Lane), to write by ear */
 	extraLanes = $state.raw([]);
+	/**
+	 * How early each section's tune starts, in beats before its marker's bar (its
+	 * pickup: "I was…" sung before the verse's first bar). Only the tune: the
+	 * chords and the band keep to the bar lines. Bar number → beats.
+	 * @type {Record<number, number>}
+	 */
+	pickups = $state.raw({});
 	/** The generic lanes' notes, as the grid shows them. */
 	laneNotes = $derived(
 		this.extraLanes.map((lane) => ({
@@ -132,6 +142,28 @@ export class TranscriptionState {
 	downbeat = $state(/** @type {number | null} */ (null));
 	/** Placing beat 1 comes before finding the beats. */
 	settingDownbeat = $state(false);
+	/** Placing it again from the workspace (Move beat 1…), so the beats it had can be kept. */
+	movingDownbeat = $state(false);
+	/** Whether the time signature was chosen (a new recording's must be, with beat 1, before its bars are found). */
+	timeChosen = $state(false);
+	/** Beat 1 was just tapped: hearing it with the count, to say whether it's right. */
+	checkingDownbeat = $state(false);
+	/** The song you came from (sent from this transcription), to go back to in the arranger; null: none. */
+	returnTo = /** @type {{ id: string, name: string } | null} */ ($state.raw(null));
+	/** Choosing another recording, with one open. */
+	pickingRecording = $state(false);
+	/**
+	 * What has to happen before the workspace (null: nothing, it shows):
+	 * choosing a recording, then placing its beat 1.
+	 * @type {'recording' | 'downbeat' | null}
+	 */
+	setupStep = $derived(
+		!this.recording || this.pickingRecording
+			? 'recording'
+			: this.settingDownbeat || !this.grid
+				? 'downbeat'
+				: null
+	);
 	clicksOn = $state(true);
 	/** Logic's cycle: the region the player loops while it's on. */
 	cycle = new CycleState(this);
@@ -150,6 +182,16 @@ export class TranscriptionState {
 	chords = $derived(this.#chartOnBars.chords);
 	/** @type {Record<number, string>} bar number → the section (marker) starting there */
 	markers = $derived(this.#chartOnBars.markers);
+	/**
+	 * The sections you've named, which are the ones that can go to the
+	 * arranger: each with its bars, its first line of words and its pickup (beats).
+	 */
+	sections = $derived(
+		namedSections(
+			withUniqueSectionNames(this.arranger.arrangement.text),
+			this.arranger.arrangement.sections.map((section) => section.measures.length)
+		).map((section) => ({ ...section, pickup: this.sectionPickup(section.from) }))
+	);
 	/** The key the chart names ("G", "Em"; null: none, guessed from the first chord). */
 	key = $derived(this.linked ? keyFieldName(this.arranger.arrangement.text) : null);
 	/** Where the recording is now, in the song's quarters from bar 1. */
@@ -210,7 +252,12 @@ export class TranscriptionState {
 	});
 
 	/** @type {AudioBuffer | null} */
-	#audio = null;
+	#audio = $state.raw(null);
+
+	/** The recording's audio, decoded (null until it's loaded): for drawing it in detail. */
+	get audio() {
+		return this.#audio;
+	}
 	/** @type {import('./beats/analyseRecording.js').Analysis | null} */
 	#analysis = null;
 
@@ -242,10 +289,16 @@ export class TranscriptionState {
 		this.grid = null;
 		this.time = DEFAULT_TIME;
 		this.extraLanes = [];
+		this.pickups = {};
 		this.peaks = null;
 		this.hits = null;
 		this.downbeat = null;
 		this.settingDownbeat = false;
+		this.movingDownbeat = false;
+		this.checkingDownbeat = false;
+		const placed = (readTranscriptionDraft(recording.key)?.downbeat ?? null) !== null;
+		this.timeChosen = placed;
+		this.pickingRecording = false;
 		this.cycle.clear();
 		this.player.setCents(0);
 		this.closeMenus();
@@ -274,6 +327,7 @@ export class TranscriptionState {
 			this.grid = draft.downbeat === null ? null : draft.grid;
 			this.time = draft.time;
 			this.extraLanes = draft.lanes;
+			this.pickups = draft.pickups;
 			this.player.setCents(draft.cents);
 			this.downbeat = draft.downbeat;
 			// A song written from it before songs named their recording
@@ -321,6 +375,21 @@ export class TranscriptionState {
 		return analysis;
 	}
 
+	/**
+	 * Arriving with a song sent from a transcription (Send to the arranger):
+	 * open that recording and its own song, and remember the way back.
+	 */
+	async openWhatItWasMadeFrom() {
+		const { song } = this.arranger;
+		const from = song.madeFrom;
+		if (!from) return;
+		this.returnTo = song.savedId ? { id: song.savedId, name: song.name } : null;
+		if (this.recording?.key !== from.key) {
+			const recording = bundledRecording(from.key);
+			if (recording) await this.open(recording);
+		} else if (this.grid && !this.linked) await this.#openSongOrStart();
+	}
+
 	/** Open the recording the open song was written from, if it's one of the app's own and isn't open. */
 	reopenSongsRecording() {
 		const wanted = this.arranger.song.recording;
@@ -334,22 +403,93 @@ export class TranscriptionState {
 		return this.recording ? { key: this.recording.key, name: this.recording.name } : null;
 	}
 
-	/** Beat 1 of bar 1 is where the playhead is (snapped to the hit nearest). */
-	setDownbeatHere() {
-		if (!this.#analysis) return;
-		this.downbeat = snapToHit(this.player.time, this.#analysis);
+	/**
+	 * Beat 1 is here: exactly at the playhead (paused: you put it there, often
+	 * zoomed in, so it isn't moved), or on the hit just before it (tapped
+	 * while it plays: a tap comes a little late). The beats and bars are
+	 * found through it at once, to check by ear (listenToDownbeat).
+	 */
+	markDownbeatHere() {
+		if (!this.#analysis || !this.timeChosen) return;
+		const tapped = this.player.playing;
+		this.player.pause();
+		const at = this.player.time;
+		this.downbeat = tapped ? tapToHit(at, this.#analysis) : Math.round(at * 1000) / 1000;
+		this.#findBeatsFromDownbeat();
+		this.checkingDownbeat = true;
 	}
 
-	/** Find the beats and bars through the placed beat 1, and start the song on them. */
-	findBeatsFromDownbeat() {
+	/** Hear beat 1 with the count: from a little before it, a click on every beat, higher on ONE. */
+	listenToDownbeat() {
 		if (this.downbeat === null) return;
-		this.settingDownbeat = false;
+		this.clicksOn = true;
+		this.player.seek(Math.max(0, this.downbeat - LISTEN_BEFORE_SECONDS));
+		this.player.play();
+	}
+
+	/** Not right: back to marking it, the playhead on the one marked. */
+	tryDownbeatAgain() {
 		this.player.pause();
+		this.checkingDownbeat = false;
+		if (this.downbeat !== null) this.player.seek(this.downbeat);
+	}
+
+	/** Beat 1 sounds right: on to the workspace. */
+	downbeatSoundsRight() {
+		this.player.pause();
+		this.player.seek(0);
+		this.closeMenus();
+		this.checkingDownbeat = false;
+		this.settingDownbeat = false;
+		this.movingDownbeat = false;
+		if (!this.linked) this.#openSongOrStart();
+	}
+
+	/** The beats and bars found through the placed beat 1, and the chart written on them. */
+	#findBeatsFromDownbeat() {
+		if (this.downbeat === null) return;
 		this.#findBeats();
 		if (this.recording) clearTranscriptionDraft(this.recording.key);
 		this.#writeChart();
 		this.#keepDraft();
-		if (!this.linked) this.#openSongOrStart();
+	}
+
+	/** Back to choosing the recording (the open one stays until another is chosen). */
+	chooseRecordingAgain() {
+		this.player.pause();
+		this.closeMenus();
+		this.pickingRecording = true;
+	}
+
+	/**
+	 * The time signature, chosen on the beat 1 step: beats in a usual bar,
+	 * the same all through (a bar with more or fewer is fixed later, in its
+	 * own menu). With beat 1 marked, the bars are found again in it.
+	 * @param {string} id
+	 */
+	chooseTime(id) {
+		this.time = id;
+		this.timeChosen = true;
+		if (this.checkingDownbeat) this.#findBeatsFromDownbeat();
+	}
+
+	/** Keep the open recording: back from choosing another. */
+	keepRecording() {
+		this.pickingRecording = false;
+	}
+
+	/** The bar whose start is nearest the playhead (a tap is often a little early or late). */
+	#barLineNearPlayhead() {
+		const grid = this.grid;
+		if (!grid) return null;
+		const beat = this.quartersNow + grid.bars.firstBeat;
+		return this.bars.reduce(
+			(nearest, bar) =>
+				!nearest || Math.abs(bar.firstBeat - beat) < Math.abs(nearest.firstBeat - beat)
+					? bar
+					: nearest,
+			/** @type {import('./barPlan.js').Bar | null} */ (null)
+		);
 	}
 
 	/** Go back to placing beat 1 (the beats stay until they're found again). */
@@ -357,11 +497,15 @@ export class TranscriptionState {
 		this.player.pause();
 		this.closeMenus();
 		this.settingDownbeat = true;
+		this.movingDownbeat = true;
 	}
 
 	/** Leave placing beat 1 without finding the beats again. */
 	cancelSettingDownbeat() {
+		this.player.pause();
+		this.checkingDownbeat = false;
 		this.settingDownbeat = false;
+		this.movingDownbeat = false;
 	}
 
 	/**
@@ -370,7 +514,7 @@ export class TranscriptionState {
 	 */
 	startSong() {
 		if (!this.grid) return;
-		const chart = chartFromBars(this.bars, timeSignature(this.time), {});
+		const chart = chartFromBars(this.bars, timeSignature(this.time), {}, {});
 		const { song } = this.arranger;
 		song.startNew(
 			{
@@ -544,6 +688,11 @@ export class TranscriptionState {
 		this.#keepDraft();
 	}
 
+	/** @param {import('./barPlan.js').Bar} bar the playhead to its first beat */
+	#seekToBar(bar) {
+		if (this.grid) this.seekToQuarters(bar.firstBeat - this.grid.bars.firstBeat);
+	}
+
 	/** @param {number} quarters play from here in the song (quarters from bar 1) */
 	seekToQuarters(quarters) {
 		if (this.grid) this.player.seek(secondsAt(this.grid, quarters));
@@ -562,15 +711,49 @@ export class TranscriptionState {
 		this.#writeChart({ markers });
 	}
 
-	/** A marker on the bar the playhead is in: its menu opens to name it. */
+	/**
+	 * How many beats before a marker's bar its section's tune starts (0: on
+	 * the bar). On the first bar that's the tune's own pickup, before bar 1.
+	 * @param {number} number the marker's bar
+	 * @param {number} beats
+	 */
+	setSectionPickup(number, beats) {
+		if (number === this.bars[0]?.number) return this.setPickup(beats);
+		const pickups = { ...this.pickups };
+		if (beats > 0) pickups[number] = beats;
+		else delete pickups[number];
+		this.pickups = pickups;
+		this.#keepDraft();
+	}
+
+	/**
+	 * How many beats before a marker's bar its section's tune starts.
+	 * @param {number} number
+	 */
+	sectionPickup(number) {
+		return number === this.bars[0]?.number ? this.pickup : (this.pickups[number] ?? 0);
+	}
+
+	#playAfterNaming = false;
+
+	/** The marker's name is typed: close its menu, and play on if it was playing. */
+	finishMarker() {
+		this.closeMenus();
+		if (this.#playAfterNaming) this.player.play();
+		this.#playAfterNaming = false;
+	}
+
+	/** A marker at the bar line nearest the playhead (pressed a moment late or early), the playhead moved onto it: its menu opens to name it. */
 	markHere() {
-		const grid = this.grid;
-		if (!grid) return;
-		const beat = Math.max(grid.bars.firstBeat, Math.floor(this.quartersNow + grid.bars.firstBeat));
-		const bar = barAt(this.bars, beat) ?? this.bars.at(-1);
+		const bar = this.#barLineNearPlayhead();
 		if (!bar) return;
+		// Pause to type the name, the playhead on the marker's bar line (named, it plays on from there: finishMarker)
+		this.#playAfterNaming = this.player.playing;
+		this.player.pause();
 		this.openBarMenu(bar.number);
 		this.naming = true;
+		// After the menu, which would set the playhead a couple of beats before the bar
+		this.#seekToBar(bar);
 	}
 
 	/**
@@ -777,7 +960,8 @@ export class TranscriptionState {
 			time: this.time,
 			lanes: this.extraLanes,
 			cents: this.player.cents,
-			downbeat: this.downbeat
+			downbeat: this.downbeat,
+			pickups: this.pickups
 		});
 	}
 }

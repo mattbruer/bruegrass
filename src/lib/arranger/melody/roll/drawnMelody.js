@@ -108,7 +108,7 @@ function hasWords(/** @type {string} */ abc) {
 }
 
 /** @param {import('../../chart/sectionLyrics.js').SectionLyrics[]} lyrics */
-function hasLyrics(lyrics) {
+export function hasLyrics(lyrics) {
 	return lyrics.some((section) => section.pickup.trim() || section.bars.some((bar) => bar.trim()));
 }
 

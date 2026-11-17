@@ -1,66 +1,76 @@
 /**
  * Where every beat falls: the run of beats that lands on the strongest
- * onsets while keeping each gap close to the usual one (dynamic
+ * onsets while keeping each gap close to the gap expected there (dynamic
  * programming, after Ellis, "Beat tracking by dynamic programming", 2007).
- * Each gap is only compared with the usual gap, so the beats can drift
- * with a song that speeds up or drags.
+ * The expected gap is given frame by frame, so it can be one tempo for the
+ * whole song or the tempo of the bars around each moment (localTempo.js).
  */
 
-/** How strictly each gap keeps to the usual one. Lower follows tempo changes more freely. */
-const TIGHTNESS = 100;
-
-/**
- * @param {Float32Array} strength from analyseRecording
- * @param {number} beatFrames the usual gap, from estimateBeatFrames
- * @returns {number[]} beat positions, in frames, in order
- */
-export function trackBeats(strength, beatFrames) {
-	return track(strength, beatFrames, false);
-}
+/** How strictly each gap keeps to the expected one, when nothing else is said. */
+export const LOOSE = 100;
 
 /**
  * Beats that run through a beat you've placed by hand: tracked forward
  * from it and backward from it, so it is one of them exactly.
  * @param {Float32Array} strength
- * @param {number} beatFrames
+ * @param {Float32Array} expectedGaps the gap expected at each frame, in frames
  * @param {number} anchor the frame of the beat that must be there
+ * @param {number} tightness how strictly each gap keeps to the expected one
  * @returns {{ frames: number[], anchorIndex: number }} the beats (frames) and which one is the anchor
  */
-export function trackBeatsThrough(strength, beatFrames, anchor) {
-	const forward = track(strength.subarray(anchor), beatFrames, true).map((frame) => anchor + frame);
-	const backward = track(strength.slice(0, anchor + 1).reverse(), beatFrames, true)
+export function trackBeatsThrough(strength, expectedGaps, anchor, tightness = LOOSE) {
+	const forward = track(strength.subarray(anchor), expectedGaps.subarray(anchor), tightness).map(
+		(frame) => anchor + frame
+	);
+	const backward = track(
+		strength.slice(0, anchor + 1).reverse(),
+		expectedGaps.slice(0, anchor + 1).reverse(),
+		tightness
+	)
 		.map((frame) => anchor - frame)
 		.reverse();
 	return { frames: [...backward.slice(0, -1), ...forward], anchorIndex: backward.length - 1 };
 }
 
 /**
- * @param {Float32Array} strength
+ * The same gap expected everywhere.
+ * @param {number} length frames
  * @param {number} beatFrames
- * @param {boolean} startsAtFirstFrame the first beat is the first frame
  */
-function track(strength, beatFrames, startsAtFirstFrame) {
+export function evenGaps(length, beatFrames) {
+	return new Float32Array(length).fill(beatFrames);
+}
+
+/**
+ * Beats from the first frame on.
+ * @param {Float32Array} strength
+ * @param {Float32Array} expectedGaps
+ * @param {number} tightness
+ */
+function track(strength, expectedGaps, tightness) {
 	const length = strength.length;
 	if (length === 0) return [];
 	const score = new Float64Array(length);
 	const previous = new Int32Array(length).fill(-1);
-	const nearest = Math.max(1, Math.round(beatFrames / 2));
-	const farthest = Math.round(beatFrames * 2);
 
-	for (let t = 0; t < length; t++) {
-		let best = startsAtFirstFrame ? -Infinity : 0;
+	score[0] = strength[0];
+	for (let t = 1; t < length; t++) {
+		const expected = expectedGaps[t];
+		const nearest = Math.max(1, Math.round(expected / 2));
+		const farthest = Math.round(expected * 2);
+		let best = -Infinity;
 		for (let back = nearest; back <= farthest && back <= t; back++) {
-			const gap = Math.log(back / beatFrames);
-			const candidate = score[t - back] - TIGHTNESS * gap * gap;
+			const gap = Math.log(back / expected);
+			const candidate = score[t - back] - tightness * gap * gap;
 			if (candidate > best) {
 				best = candidate;
 				previous[t] = t - back;
 			}
 		}
-		score[t] = t === 0 || best > -Infinity ? strength[t] + (t === 0 ? 0 : best) : -Infinity;
+		score[t] = best > -Infinity ? strength[t] + best : -Infinity;
 	}
 
-	const last = lastBeat(score, beatFrames);
+	const last = lastBeat(score, expectedGaps[length - 1]);
 	return score[last] === -Infinity ? [0] : backtrack(previous, last);
 }
 

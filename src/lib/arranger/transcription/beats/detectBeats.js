@@ -8,19 +8,25 @@
  * (a pickup, or an intro): up to a bar of them are kept.
  *
  * The usual gap comes from how the hits repeat (estimateTempo.js), then the
- * beats are tracked (trackBeats.js). A song repeats at twice and half its
+ * beats are tracked (trackBeats.js). Then tracked again, held to the tempo
+ * of the bars around each moment (localTempo.js): a band drifts slowly but
+ * doesn't jump, so a beat finder that loses its place in a busy passage is
+ * carried through it by the steady beat either side. A song repeats at twice and half its
  * beat too, and fast bluegrass is easily counted on every other strum; so
  * when there's still a strong hit halfway between most of the beats found,
  * they're tracked again at half the gap.
  */
 import { estimateBeatFrames } from './estimateTempo.js';
-import { trackBeatsThrough } from './trackBeats.js';
+import { evenGaps, trackBeatsThrough } from './trackBeats.js';
+import { localGaps } from './localTempo.js';
 import { frameAt, secondsAt } from './analyseRecording.js';
 
 /** Hits halfway between beats this strong (against the hits on them) mean a beat was missed in between. */
 const HALFWAY_HITS_MEAN_DOUBLE = 0.4;
 /** Never count faster than this. */
 const FASTEST_BPM = 360;
+/** How strictly the second run keeps to the local tempo (the first run's is trackBeats.js LOOSE). */
+const STEADY = 400;
 
 /**
  * @param {import('./analyseRecording.js').Analysis} analysis
@@ -33,11 +39,14 @@ export function detectBeats(analysis, downbeat, leadInBeats) {
 	const anchor = Math.max(0, Math.min(strength.length - 1, frameAt(analysis, downbeat)));
 	if (strength.length === 0) return { beats: [downbeat], firstBeat: 0 };
 	const beatFrames = estimateBeatFrames(strength, framesPerSecond);
-	let found = trackBeatsThrough(strength, beatFrames, anchor);
+	const length = strength.length;
+	let found = trackBeatsThrough(strength, evenGaps(length, beatFrames), anchor);
 
 	const shortest = (60 / FASTEST_BPM) * framesPerSecond;
 	if (halfwayHits(strength, found.frames) > HALFWAY_HITS_MEAN_DOUBLE && beatFrames / 2 >= shortest)
-		found = trackBeatsThrough(strength, beatFrames / 2, anchor);
+		found = trackBeatsThrough(strength, evenGaps(length, beatFrames / 2), anchor);
+
+	found = trackBeatsThrough(strength, localGaps(found.frames, length), anchor, STEADY);
 
 	const dropped = Math.max(0, found.anchorIndex - leadInBeats);
 	const beats = found.frames

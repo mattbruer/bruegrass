@@ -2,6 +2,9 @@
  * The optional melody: ABC notation, and everything read from it. The
  * notation is parsed once per change, here (`#read`); the band, the piano
  * roll, harmony and the chord conversions all take what they need from it.
+ *
+ * The tune is kept whole or by section (SectionedText.svelte.js);
+ * `notation` is always the tune as played.
  */
 import { readTune } from '../melody/readTune.js';
 import { readMelody } from '../melody/readMelody.js';
@@ -9,10 +12,59 @@ import { readVoices } from '../melody/roll/drawnMelody.js';
 import { hasChords } from '../melody/abcChords.js';
 import { STARTER_SONG } from '../starterSong.js';
 import { abcjsIfLoaded } from './abcjsLoaded.svelte.js';
+import { SectionedText } from './SectionedText.svelte.js';
 
 export class MelodyState {
-	/** The tune in ABC notation, as typed. */
-	notation = $state(STARTER_SONG.abc);
+	#tune;
+
+	/** @param {import('./SectionedText.svelte.js').LayoutOf} [layoutOf] */
+	constructor(layoutOf = () => ({ instances: [], restsFor: () => '' })) {
+		this.#tune = new SectionedText(STARTER_SONG.abc, layoutOf);
+	}
+
+	/** The tune in ABC notation, as played. */
+	get notation() {
+		return this.#tune.text;
+	}
+
+	set notation(abc) {
+		this.#tune.text = abc;
+	}
+
+	/** The tune as the ABC view shows it: whole, or each section's tune once. */
+	get abcView() {
+		return this.#tune.view;
+	}
+
+	set abcView(text) {
+		this.#tune.view = text;
+	}
+
+	/** @type {import('../melody/sections/tuneBySection.js').TuneBySection | null} the tune kept by section (null: kept whole) */
+	/**
+	 * What a section plays with nothing written for it (SectionedText).
+	 * @param {string} section
+	 */
+	emptyBars(section) {
+		return this.#tune.emptyBars(section);
+	}
+
+	get bySection() {
+		return this.#tune.bySection;
+	}
+
+	set bySection(tune) {
+		this.#tune.bySection = tune;
+	}
+
+	/**
+	 * A song's tune onto the page.
+	 * @param {string} abc as played (or whole)
+	 * @param {import('../melody/sections/tuneBySection.js').TuneBySection | null} bySection
+	 */
+	load(abc, bySection) {
+		this.#tune.load(abc, bySection);
+	}
 
 	/** How the sheet music is drawn: as it sounds, or in the key of the guitar's shapes (for reading with a capo). */
 	sheetView = $state(/** @type {'concert' | 'shapes'} */ ('concert'));

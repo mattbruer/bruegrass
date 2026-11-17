@@ -50,3 +50,17 @@ export function rulerSpanWithRoom(ruler, beatsPerBar) {
 		end: last ? last.start + last.beats + beatsPerBar : beatsPerBar
 	};
 }
+
+/**
+ * Markers as the ruler names them: a section whose tune starts early says so.
+ * @param {Record<number, string>} markers bar number → name
+ * @param {Record<number, number>} pickups bar number → beats its tune starts before the bar
+ */
+export function markersShown(markers, pickups) {
+	return Object.fromEntries(
+		Object.entries(markers).map(([bar, name]) => {
+			const beats = pickups[Number(bar)];
+			return [bar, beats ? `${name} (pickup ${beats})` : name];
+		})
+	);
+}
