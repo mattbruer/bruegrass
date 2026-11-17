@@ -30,10 +30,12 @@
 	import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
 	import TabView from './TabView.svelte';
 	import TabChoice from './TabChoice.svelte';
+	import TuningChoice from './TuningChoice.svelte';
 	import TabFretBar from './TabFretBar.svelte';
 	import { changeNote } from '../../melody/roll/editNotes.js';
 	import { chooseString, setTabInstrument, songTab } from '../../tab/songTab.svelte.js';
 	import { fretboard } from '../../tab/fretboards.js';
+	import { tunedBoard } from '../../tab/tunings.js';
 	import { noteKey, pitchAt, stringToward, tabNotes } from '../../tab/fingering.js';
 
 	/**
@@ -113,7 +115,8 @@
 	);
 	const partTab = $derived(tabVoice ? (songTab.parts[tabVoice] ?? null) : null);
 	const tabInstrument = $derived(partTab?.instrument ?? DEFAULT_TAB_INSTRUMENT);
-	const board = $derived(tabVoice ? fretboard(tabInstrument) : null);
+	const standardBoard = $derived(tabVoice ? fretboard(tabInstrument) : null);
+	const board = $derived(standardBoard ? tunedBoard(standardBoard, partTab?.tuning) : null);
 	const tab = $derived(board ? tabNotes(drawing.notes, board, partTab?.strings ?? {}) : []);
 	const unplayable = $derived(tab.filter((tabNote) => !tabNote.place).length);
 
@@ -184,8 +187,9 @@
 			{#if drawing.isBass}
 				<p class="text-sm text-ink-soft">There's no TAB for the bass yet.</p>
 			{:else if tabVoice && board}
-				<div class="mb-2">
+				<div class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2">
 					<TabChoice voice={tabVoice} instrument={tabInstrument} />
+					<TuningChoice voice={tabVoice} instrument={tabInstrument} steps={partTab?.tuning} />
 				</div>
 				<TabView
 					tabNotes={tab}

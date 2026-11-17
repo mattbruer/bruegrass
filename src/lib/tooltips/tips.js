@@ -351,6 +351,9 @@ export const TIPS = Object.freeze({
 		tabStringUp: 'Play this note on the string above, at the fret that gives the same note.',
 		tabStringDown: 'Play this note on the string below, at the fret that gives the same note.',
 		tabInstrument: 'The instrument this part’s TAB is written for.',
+		tabTuning:
+			'How the instrument is tuned. The frets follow the tuning; the notes stay the same. Custom lets you pick each string’s note.',
+		tabStringTuning: 'The note this string is tuned to, top line of the TAB first.',
 		views: {
 			draw: 'Draw the tune and its harmony lines on a grid of notes.',
 			tab: 'The picked part as TAB, for guitar, mandolin or banjo: pick a number to change its fret or string.',

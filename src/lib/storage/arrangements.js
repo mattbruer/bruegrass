@@ -59,7 +59,7 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   edited ('' while the band writes it from the chart); bassTune: the bass line kept by
  *   section (null: kept whole, in bass); bassStyle: how the band
  *   writes its own bass line, an id in BASS_STYLES; tab: each part's TAB instrument
- *   and the strings chosen for its notes (tab/songTab.svelte.js); recording: the
+ *   and the strings chosen for its notes, and its tuning if not standard (tab/songTab.svelte.js); recording: the
  *   recording it was transcribed from (its key and name), if any; transpose: semitones from the Key setting;
  *   mix: the mixer's settings (see mixSnapshot in mixer.svelte.js);
  *   dates are ISO strings
