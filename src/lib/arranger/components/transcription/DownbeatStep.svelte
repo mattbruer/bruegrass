@@ -47,7 +47,12 @@
 				here: with the playhead on it, or as a tap while it plays.
 			</p>
 			<p class="text-ink-soft">
-				From that one beat, the bars and beats of the whole song are found for you.
+				From that one beat, the bars and beats of the whole song are found for you, so the closer it
+				is, the better everything lines up.
+			</p>
+			<p class="text-ink-soft">
+				For a more exact beat 1: slow it down with Speed, so the beat is easier to catch, and zoom
+				in (Zoom +), so the hits spread out and you can put the playhead right on one.
 			</p>
 			<p class="text-ink-soft">
 				If a few notes come before the first full bar (a pickup), skip them and mark the “one” after
