@@ -12,6 +12,3 @@ export const SETUP_STEPS = /** @type {const} */ ([
 	{ id: 'downbeat', name: 'Beat 1 and time' },
 	{ id: 'parts', name: 'Name the parts' }
 ]);
-
-/** The names offered for a part, biggest first; anything else can be typed. */
-export const PART_NAMES = Object.freeze(['Intro', 'Verse', 'Chorus', 'Break', 'Ending']);

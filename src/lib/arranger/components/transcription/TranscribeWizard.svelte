@@ -9,7 +9,6 @@
 	import RecordingChoice from './RecordingChoice.svelte';
 	import AnalysingRecording from './AnalysingRecording.svelte';
 	import DownbeatStep from './DownbeatStep.svelte';
-	import TranscriptionGrid from './TranscriptionGrid.svelte';
 	import PartsStep from './PartsStep.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -68,9 +67,6 @@
 		{/if}
 	{:else if step === 'parts'}
 		<PartsStep {transcription} />
-		{#if transcription.firstPartNamed && transcription.askingPartAt === null}
-			<TranscriptionGrid {transcription} />
-		{/if}
 	{/if}
 
 	<div class="flex flex-wrap items-center gap-3 border-t border-line pt-4">

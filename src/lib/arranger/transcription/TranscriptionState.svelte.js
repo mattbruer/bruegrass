@@ -24,7 +24,7 @@
  */
 import { StretchPlayer } from '$lib/slowDowner/StretchPlayer.svelte.js';
 import { waveformPeaks } from '../takes/waveformPeaks.js';
-import { barAt, layOutBars, withBarLength, withBeatsPerBar } from './barPlan.js';
+import { layOutBars, withBarLength, withBeatsPerBar } from './barPlan.js';
 import {
 	newBeatGrid,
 	nearestBeat,
@@ -150,8 +150,6 @@ export class TranscriptionState {
 	namingSections = $state(false);
 	/** Choosing another recording, with one open (the setup's first step again). */
 	pickingRecording = $state(false);
-	/** The bar a part was just marked at, while its name is asked (null: not asking). */
-	askingPartAt = $state(/** @type {number | null} */ (null));
 	/**
 	 * Which step of setting up a transcription is showing (null: set up, the
 	 * workspace shows). The steps are SETUP_STEPS, in order.
@@ -300,7 +298,6 @@ export class TranscriptionState {
 		this.timeChosen = (readTranscriptionDraft(recording.key)?.downbeat ?? null) !== null;
 		this.namingSections = false;
 		this.pickingRecording = false;
-		this.askingPartAt = null;
 		this.cycle.clear();
 		this.player.setCents(0);
 		this.closeMenus();
@@ -450,7 +447,6 @@ export class TranscriptionState {
 	doneNamingSections() {
 		this.player.pause();
 		this.closeMenus();
-		this.askingPartAt = null;
 		this.namingSections = false;
 	}
 
@@ -478,25 +474,6 @@ export class TranscriptionState {
 		this.pickingRecording = false;
 	}
 
-	/** A new part starts at the bar line nearest the playhead: it pauses to ask which part. */
-	startPartHere() {
-		const bar = this.#barLineNearPlayhead();
-		if (!bar) return;
-		this.player.pause();
-		this.askingPartAt = bar.number;
-	}
-
-	/**
-	 * Name the part just marked, and play on.
-	 * @param {string} name
-	 */
-	namePart(name) {
-		if (this.askingPartAt === null || !name.trim()) return;
-		this.setMarker(this.askingPartAt, name);
-		this.askingPartAt = null;
-		this.player.play();
-	}
-
 	/** Whether the song's first bar has a part named (every bar is in a part after it). */
 	get firstPartNamed() {
 		const first = this.bars[0]?.number;
@@ -504,19 +481,12 @@ export class TranscriptionState {
 		return !!name && name !== SECTION_END;
 	}
 
-	/**
-	 * Name the part the song starts with (it starts at bar 1).
-	 * @param {string} name
-	 */
-	nameFirstPart(name) {
+	/** Open bar 1's menu to name the part the song starts with. */
+	nameFirstPart() {
 		const first = this.bars[0]?.number;
-		if (first !== undefined && name.trim()) this.setMarker(first, name);
-	}
-
-	/** Not a part after all: forget the mark, and play on. */
-	cancelPart() {
-		this.askingPartAt = null;
-		this.player.play();
+		if (first === undefined) return;
+		this.openBarMenu(first);
+		this.naming = true;
 	}
 
 	/** The bar whose start is nearest the playhead (a tap is often a little early or late). */
@@ -779,13 +749,22 @@ export class TranscriptionState {
 		return number === this.bars[0]?.number ? this.pickup : (this.pickups[number] ?? 0);
 	}
 
-	/** A marker on the bar the playhead is in: its menu opens to name it. */
+	#playAfterNaming = false;
+
+	/** The marker's name is typed: close its menu, and play on if it was playing. */
+	finishMarker() {
+		this.closeMenus();
+		if (this.#playAfterNaming) this.player.play();
+		this.#playAfterNaming = false;
+	}
+
+	/** A marker at the bar line nearest the playhead (pressed a moment late or early): its menu opens to name it. */
 	markHere() {
-		const grid = this.grid;
-		if (!grid) return;
-		const beat = Math.max(grid.bars.firstBeat, Math.floor(this.quartersNow + grid.bars.firstBeat));
-		const bar = barAt(this.bars, beat) ?? this.bars.at(-1);
+		const bar = this.#barLineNearPlayhead();
 		if (!bar) return;
+		// Pause to type the name (named, it plays on: finishMarker)
+		this.#playAfterNaming = this.player.playing;
+		this.player.pause();
 		this.openBarMenu(bar.number);
 		this.naming = true;
 	}

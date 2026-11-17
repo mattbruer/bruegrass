@@ -16,10 +16,11 @@
 	/**
 	 * @type {{
 	 *   transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState,
-	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>
-	 * }}
+	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>,
+	 *   markersOnly?: boolean
+	 * }} markersOnly: a bar's menu is only its marker (the setup's naming step)
 	 */
-	let { transcription, scale } = $props();
+	let { transcription, scale, markersOnly = false } = $props();
 
 	const firstBeat = $derived(transcription.grid?.bars.firstBeat ?? 0);
 	const beat = $derived(transcription.selectedBeat);
@@ -49,6 +50,7 @@
 {#if anchor !== null}
 	<div
 		class="menu ui-card"
+		class:markers-only={markersOnly}
 		style:left="calc(var(--header-width) + {scale.toX(anchor - firstBeat)}px)"
 	>
 		{#if transcription.bar}
@@ -73,7 +75,10 @@
 					value={transcription.markers[bar.number] ?? ''}
 					onchange={(event) => transcription.setMarker(bar.number, event.currentTarget.value)}
 					onkeydown={(event) => {
-						if (event.key === 'Enter') event.currentTarget.blur();
+						if (event.key === 'Enter') {
+							event.currentTarget.blur();
+							transcription.finishMarker();
+						}
 						if (event.key === 'Escape') transcription.closeMenus();
 					}}
 					use:focusWhen={transcription.naming}
@@ -85,62 +90,64 @@
 					{/each}
 				</datalist>
 			</label>
-			{#if transcription.markers[bar.number] && transcription.markers[bar.number] !== SECTION_END}
-				<label class="flex items-center gap-2">
-					<span>Tune starts</span>
-					<select
-						class="min-w-0 flex-1 ui-field px-2 py-1"
-						value={transcription.sectionPickup(bar.number)}
-						onchange={(event) =>
-							transcription.setSectionPickup(bar.number, Number(event.currentTarget.value))}
-						use:tooltip={TIPS.transcription.sectionPickup}
+			{#if !markersOnly}
+				{#if transcription.markers[bar.number] && transcription.markers[bar.number] !== SECTION_END}
+					<label class="flex items-center gap-2">
+						<span>Tune starts</span>
+						<select
+							class="min-w-0 flex-1 ui-field px-2 py-1"
+							value={transcription.sectionPickup(bar.number)}
+							onchange={(event) =>
+								transcription.setSectionPickup(bar.number, Number(event.currentTarget.value))}
+							use:tooltip={TIPS.transcription.sectionPickup}
+						>
+							{#each PICKUP_BEATS as beats (beats)}
+								<option value={beats}
+									>{beats === 0
+										? 'on the bar'
+										: `${beats} beat${beats === 1 ? '' : 's'} before (pickup)`}</option
+								>
+							{/each}
+						</select>
+					</label>
+				{/if}
+				<button
+					type="button"
+					class="ui-button px-3 py-1.5 text-sm"
+					class:ui-button-on={transcription.markers[bar.number] === SECTION_END}
+					onclick={() => transcription.setMarker(bar.number, SECTION_END)}
+					use:tooltip={TIPS.transcription.sectionEnd}>End of section</button
+				>
+				<div class="flex items-center gap-2">
+					<button
+						type="button"
+						class="size-8 ui-button"
+						disabled={bar.beats <= 1}
+						onclick={() => transcription.changeBarLength(-1)}
+						aria-label="One beat fewer"
+						use:tooltip={TIPS.transcription.fewerBeats}>−</button
 					>
-						{#each PICKUP_BEATS as beats (beats)}
-							<option value={beats}
-								>{beats === 0
-									? 'on the bar'
-									: `${beats} beat${beats === 1 ? '' : 's'} before (pickup)`}</option
-							>
-						{/each}
-					</select>
-				</label>
+					<span class="tabular-nums">{bar.beats} beats</span>
+					<button
+						type="button"
+						class="size-8 ui-button"
+						onclick={() => transcription.changeBarLength(1)}
+						aria-label="One beat more"
+						use:tooltip={TIPS.transcription.moreBeats}>+</button
+					>
+				</div>
+				<div class="flex items-center gap-2">
+					<ToggleSwitch
+						bind:on={
+							() => transcription.cycle.isJustBar(bar.number),
+							() => transcription.cycle.toggleBar(bar.number)
+						}
+						labelledBy="bar-loop"
+						tip={TIPS.transcription.loop}
+					/>
+					<span id="bar-loop">Cycle this bar</span>
+				</div>
 			{/if}
-			<button
-				type="button"
-				class="ui-button px-3 py-1.5 text-sm"
-				class:ui-button-on={transcription.markers[bar.number] === SECTION_END}
-				onclick={() => transcription.setMarker(bar.number, SECTION_END)}
-				use:tooltip={TIPS.transcription.sectionEnd}>End of section</button
-			>
-			<div class="flex items-center gap-2">
-				<button
-					type="button"
-					class="size-8 ui-button"
-					disabled={bar.beats <= 1}
-					onclick={() => transcription.changeBarLength(-1)}
-					aria-label="One beat fewer"
-					use:tooltip={TIPS.transcription.fewerBeats}>−</button
-				>
-				<span class="tabular-nums">{bar.beats} beats</span>
-				<button
-					type="button"
-					class="size-8 ui-button"
-					onclick={() => transcription.changeBarLength(1)}
-					aria-label="One beat more"
-					use:tooltip={TIPS.transcription.moreBeats}>+</button
-				>
-			</div>
-			<div class="flex items-center gap-2">
-				<ToggleSwitch
-					bind:on={
-						() => transcription.cycle.isJustBar(bar.number),
-						() => transcription.cycle.toggleBar(bar.number)
-					}
-					labelledBy="bar-loop"
-					tip={TIPS.transcription.loop}
-				/>
-				<span id="bar-loop">Cycle this bar</span>
-			</div>
 		{:else if beat !== null && beatBar}
 			<div class="flex items-center gap-2">
 				<strong>Bar {beatBar.number}, beat {beat - beatBar.firstBeat + 1}</strong>
@@ -186,5 +193,10 @@
 		width: 13rem;
 		padding: 0.6rem 0.75rem;
 		font-size: 0.85rem;
+	}
+
+	/* No cycle strip or beats row above it in the naming step */
+	.menu.markers-only {
+		top: calc(var(--ruler-height) + 0.25rem);
 	}
 </style>

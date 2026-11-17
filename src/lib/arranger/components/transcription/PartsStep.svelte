@@ -1,14 +1,18 @@
 <script>
 	/**
-	 * Setup's last step: name every part of the song, start to end. First it
-	 * asks what the song starts with; then, while it plays, one big button
-	 * says a new part starts here (at the nearest bar line): it pauses, asks
-	 * which part, and plays on. Each part lasts until the next one. Done
-	 * shows once the song has been played to the end (or every part was
-	 * named before), so no part is left without a name.
+	 * Setup's last step: name every part of the song, start to end, on the
+	 * track lane. Play and listen; + Marker puts a marker on the bar line
+	 * nearest the playhead and opens its box to type the part's name (the
+	 * same markers as the workspace, here with only the name in the bar's
+	 * menu). Bar 1's box opens first, for what the song starts with. Each
+	 * part lasts until the next. Done shows once the song has been played to
+	 * the end (or its parts were named before), so none is left unnamed.
 	 */
-	import { PART_NAMES } from '../../transcription/setupSteps.js';
-	import { MARKER_NAMES } from '../../transcription/markerNames.js';
+	import { onMount } from 'svelte';
+	import TranscriptionGrid from './TranscriptionGrid.svelte';
+	import SpeedControl from './SpeedControl.svelte';
+	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
+	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -19,8 +23,6 @@
 	let { transcription } = $props();
 
 	const player = $derived(transcription.player);
-	let typing = $state(false);
-	let typed = $state('');
 
 	// Named before (coming back to fix them): no need to play it all again
 	let furthest = $state(transcription.sections.length > 1 ? Infinity : 0);
@@ -29,15 +31,9 @@
 	});
 	const heardToTheEnd = $derived(furthest >= player.duration - END_SECONDS);
 
-	const asking = $derived(!transcription.firstPartNamed || transcription.askingPartAt !== null);
-
-	/** @param {string} name */
-	function choose(name) {
-		typing = false;
-		typed = '';
-		if (!transcription.firstPartNamed) transcription.nameFirstPart(name);
-		else transcription.namePart(name);
-	}
+	onMount(() => {
+		if (!transcription.firstPartNamed) transcription.nameFirstPart();
+	});
 
 	/** @param {number} seconds */
 	function clock(seconds) {
@@ -46,86 +42,46 @@
 	}
 </script>
 
-{#if asking}
-	<div class="flex flex-col gap-4" role="group" aria-labelledby="part-question">
-		<h3 id="part-question" class="text-2xl font-bold">
-			{transcription.firstPartNamed ? 'What part just started?' : 'What does the song start with?'}
-		</h3>
-		<div class="flex flex-wrap gap-3">
-			{#each PART_NAMES as name (name)}
-				<button type="button" class="big ui-button" onclick={() => choose(name)}>{name}</button>
-			{/each}
-			<button
-				type="button"
-				class="big ui-button"
-				class:ui-button-on={typing}
-				onclick={() => (typing = true)}>Other…</button
-			>
-		</div>
-		{#if typing}
-			<form
-				class="flex flex-wrap gap-2"
-				onsubmit={(event) => {
-					event.preventDefault();
-					choose(typed);
-				}}
-			>
-				<!-- svelte-ignore a11y_autofocus (the field was just asked for) -->
-				<input
-					class="min-w-0 flex-1 ui-field px-3 py-2 text-lg"
-					list="part-names"
-					placeholder="Fiddle solo"
-					aria-label="The part's name"
-					bind:value={typed}
-					autofocus
-				/>
-				<datalist id="part-names">
-					{#each MARKER_NAMES as name (name)}
-						<option value={name}></option>
-					{/each}
-				</datalist>
-				<button type="submit" class="ui-button px-5 py-2 ui-button-primary" disabled={!typed.trim()}
-					>OK</button
-				>
-			</form>
-		{/if}
-		{#if transcription.askingPartAt !== null}
-			<div>
-				<button
-					type="button"
-					class="ui-button px-4 py-2"
-					onclick={() => transcription.cancelPart()}
-					use:tooltip={TIPS.transcription.notAPart}>Oops, no new part</button
-				>
-			</div>
-		{/if}
+<div class="flex flex-col gap-4">
+	<p class="text-lg">
+		Play the song. Where each part starts, press + Marker and type its name: Intro, Verse, Chorus,
+		Fiddle solo…
+	</p>
+
+	<div class="flex flex-wrap items-center gap-3">
+		<button
+			type="button"
+			class="big ui-button"
+			onclick={() => (player.playing ? player.pause() : player.play())}
+			use:tooltip={TIPS.transcription.play}
+		>
+			{player.playing ? '❚❚ Pause' : '▶ Play'}
+		</button>
+		<button
+			type="button"
+			class="ui-button px-4 py-2"
+			onclick={() => player.seek(0)}
+			use:tooltip={TIPS.transcription.fromTheStart}>⏮ From the start</button
+		>
+		<span class="text-lg text-ink-soft tabular-nums"
+			>{clock(player.time)} / {clock(player.duration)}</span
+		>
+		<SpeedControl {player} />
+		<ZoomControl zoom={settings.transcribe.zoom} />
 	</div>
-{:else}
-	<div class="flex flex-col gap-5">
-		<p class="text-xl">Play the song. When a new part starts, press the big button.</p>
 
-		<div class="flex flex-wrap items-center gap-3">
-			<button
-				type="button"
-				class="big ui-button"
-				onclick={() => (player.playing ? player.pause() : player.play())}
-			>
-				{player.playing ? '❚❚ Pause' : '▶ Play'}
-			</button>
-			<span class="text-lg text-ink-soft tabular-nums"
-				>{clock(player.time)} / {clock(player.duration)}</span
-			>
-		</div>
+	<div>
+		<button
+			type="button"
+			class="big ui-button ui-button-primary"
+			onclick={() => transcription.markHere()}
+			use:tooltip={TIPS.transcription.markHere}>+ Marker</button
+		>
+	</div>
 
-		<div>
-			<button
-				type="button"
-				class="huge ui-button ui-button-primary"
-				onclick={() => transcription.startPartHere()}
-				use:tooltip={TIPS.transcription.partStarts}>A new part starts</button
-			>
-		</div>
+	<TranscriptionGrid {transcription} markersOnly />
 
+	{#if transcription.sections.length > 0}
 		<ol class="flex flex-col divide-y divide-line ui-well">
 			{#each transcription.sections as section (section.index)}
 				<li class="flex flex-wrap items-center gap-3 px-4 py-2">
@@ -140,6 +96,7 @@
 							type="button"
 							class="ui-button px-3 py-1.5"
 							onclick={() => transcription.playFromBar(section.from)}
+							aria-label="Play {section.name}"
 							use:tooltip={TIPS.transcription.hearPart}>▶</button
 						>
 						{#if section.from !== transcription.bars[0]?.number}
@@ -155,22 +112,24 @@
 				</li>
 			{/each}
 		</ol>
+	{/if}
 
-		<div class="flex flex-wrap items-center justify-end gap-3 border-t border-line pt-4">
-			{#if heardToTheEnd}
-				<span class="text-lg">Every part named?</span>
-				<button
-					type="button"
-					class="big ui-button ui-button-primary"
-					onclick={() => transcription.doneNamingSections()}
-					use:tooltip={TIPS.transcription.doneNaming}>Done</button
-				>
-			{:else}
-				<span class="text-lg text-ink-soft">Keep going to the end of the song.</span>
-			{/if}
-		</div>
+	<div class="flex flex-wrap items-center justify-end gap-3 border-t border-line pt-4">
+		{#if transcription.firstPartNamed && heardToTheEnd}
+			<span class="text-lg">Every part named?</span>
+			<button
+				type="button"
+				class="big ui-button ui-button-primary"
+				onclick={() => transcription.doneNamingSections()}
+				use:tooltip={TIPS.transcription.doneNaming}>Done</button
+			>
+		{:else if !transcription.firstPartNamed}
+			<span class="text-lg text-ink-soft">Name the part the song starts with.</span>
+		{:else}
+			<span class="text-lg text-ink-soft">Keep going to the end of the song.</span>
+		{/if}
 	</div>
-{/if}
+</div>
 
 <style>
 	.big {
@@ -178,12 +137,5 @@
 		padding: 0.75rem 1.5rem;
 		font-size: 1.15rem;
 		font-weight: 600;
-	}
-
-	.huge {
-		min-height: 5rem;
-		padding: 1rem 2.5rem;
-		font-size: 1.5rem;
-		font-weight: 700;
 	}
 </style>

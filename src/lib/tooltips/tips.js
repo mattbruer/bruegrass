@@ -187,8 +187,8 @@ export const TIPS = Object.freeze({
 		nameSections: 'Name the song’s parts again.',
 		setupBack: 'Go back a step.',
 		changeRecording: 'Work out a different recording.',
-		partStarts: 'Press when a new part of the song starts. It stops and asks which part.',
-		notAPart: 'Pressed by mistake: no new part here. It plays on.',
+		markHere:
+			'Put a marker where the playhead is (on the nearest bar line), and type the part’s name.',
 		hearPart: 'Play from the start of this part.',
 		removePart: 'Take this part away. Its bars join the part before.',
 		sectionEnd:
