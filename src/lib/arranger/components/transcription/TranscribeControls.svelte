@@ -17,7 +17,7 @@
 	import { songKeyChoices } from '../../chart/keyChoices.js';
 	import SongKeyOptions from '../chart/SongKeyOptions.svelte';
 	import { TIME_SIGNATURES } from '../../transcription/timeSignatures.js';
-	import { MIN_SPEED, MAX_SPEED, SPEED_STEP } from '$lib/slowDowner/speed.js';
+	import SpeedControl from './SpeedControl.svelte';
 	import { SOUNDS, soundById } from '$lib/slowDowner/sounds.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -111,25 +111,7 @@
 		{formatClock(player.time)} / {formatClock(player.duration)}
 	</span>
 
-	<label class="flex items-center gap-2">
-		<span class="text-sm text-ink-soft">Speed</span>
-		<input
-			type="range"
-			min={MIN_SPEED}
-			max={MAX_SPEED}
-			step={SPEED_STEP}
-			value={player.speed}
-			oninput={(event) => player.setSpeed(Number(event.currentTarget.value))}
-			class="w-28"
-			use:tooltip={TIPS.transcription.speed}
-		/>
-		<button
-			type="button"
-			class="w-14 ui-button px-2 py-1 text-sm tabular-nums"
-			onclick={() => player.setSpeed(1)}
-			use:tooltip={TIPS.transcription.resetSpeed}>{Math.round(player.speed * 100)}%</button
-		>
-	</label>
+	<SpeedControl {player} />
 
 	<TuningControl {transcription} />
 

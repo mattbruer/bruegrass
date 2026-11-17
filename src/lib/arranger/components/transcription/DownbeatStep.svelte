@@ -7,15 +7,9 @@
 	 * taps again. Slowing it down helps catch it (and the listening plays at
 	 * the same speed).
 	 */
+	import SpeedControl from './SpeedControl.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
-
-	/** Speeds to catch beat 1 at: slower is more accurate. */
-	const SPEEDS = [
-		{ speed: 1, name: 'Full speed' },
-		{ speed: 0.75, name: '75%' },
-		{ speed: 0.5, name: '50%' }
-	];
 
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
 	let { transcription } = $props();
@@ -84,19 +78,7 @@
 				use:tooltip={TIPS.transcription.fromTheStart}>⏮ From the start</button
 			>
 			<span class="text-lg text-ink-soft tabular-nums">{clock(player.time)}</span>
-		</div>
-		<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Speed">
-			<span class="text-ink-soft">Speed</span>
-			{#each SPEEDS as choice (choice.speed)}
-				<button
-					type="button"
-					class="ui-button px-4 py-2"
-					class:ui-button-on={player.speed === choice.speed}
-					aria-pressed={player.speed === choice.speed}
-					onclick={() => player.setSpeed(choice.speed)}
-					use:tooltip={TIPS.transcription.slower}>{choice.name}</button
-				>
-			{/each}
+			<SpeedControl {player} />
 		</div>
 		<div>
 			<button

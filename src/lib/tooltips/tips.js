@@ -224,8 +224,6 @@ export const TIPS = Object.freeze({
 		halveBeats: 'For when the count is twice the song’s speed: every other beat.',
 		listenDownbeat: 'Play from just before beat 1 with a click on every beat, higher on “one”.',
 		fromTheStart: 'Back to the start of the recording.',
-		slower:
-			'How fast it plays. Slower makes beat 1 easier to catch exactly; the pitch stays the same.',
 		keepBeats: 'Go back to the beats and bars you have, without finding them again.',
 		moveDownbeat:
 			'Place beat 1 again, then find the beats again. Your fixes to the beats are forgotten.',
