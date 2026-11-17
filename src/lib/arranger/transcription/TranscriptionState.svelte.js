@@ -24,7 +24,7 @@
  */
 import { StretchPlayer } from '$lib/slowDowner/StretchPlayer.svelte.js';
 import { waveformPeaks } from '../takes/waveformPeaks.js';
-import { layOutBars, withBarLength, withBeatsPerBar } from './barPlan.js';
+import { layOutBars, withBarLength } from './barPlan.js';
 import {
 	newBeatGrid,
 	nearestBeat,
@@ -569,17 +569,6 @@ export class TranscriptionState {
 	 */
 	async setKey(name) {
 		if (this.linked) await this.arranger.nameSongKey(name);
-	}
-
-	/**
-	 * The song's time signature: the bars are laid out again in it, and ONE found again.
-	 * @param {string} id
-	 */
-	setTime(id) {
-		this.time = id;
-		const beatsPerBar = timeSignature(id).beatsPerBar;
-		this.#edit((grid) => ({ ...grid, bars: withBeatsPerBar(grid.bars, beatsPerBar) }));
-		this.closeMenus();
 	}
 
 	/**

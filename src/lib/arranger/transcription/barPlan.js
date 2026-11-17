@@ -84,17 +84,6 @@ export function withBarLength(plan, number, beats) {
 }
 
 /**
- * A new usual bar length. The odd bars are forgotten: they were counted
- * in the old one.
- * @param {BarPlan} plan
- * @param {number} beatsPerBar
- * @returns {BarPlan}
- */
-export function withBeatsPerBar(plan, beatsPerBar) {
-	return evenBarPlan(beatsPerBar, plan.firstBeat);
-}
-
-/**
  * "ONE is here": move the bar line nearest this beat onto it, by
  * lengthening or shortening the bar before that line. Every later bar
  * moves with it. A beat nearer bar 1's line moves bar 1 (the pickup

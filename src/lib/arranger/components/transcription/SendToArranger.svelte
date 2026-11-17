@@ -4,13 +4,15 @@
 	 * new song in the arranger, one of two ways. Practise a part: one section
 	 * on its own, looping, with the notes showing. Build an arrangement: the
 	 * sections you tick, in the recording's order, to rearrange there. Bars
-	 * you didn't name never go. The transcription stays as it is.
+	 * you didn't name never go. The song's key must be named first (the band
+	 * needs it, and the tune is spelled in it). The transcription stays as it is.
 	 */
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import Dialog from '$lib/components/Dialog.svelte';
 	import { useArranger } from '../../state/context.js';
 	import { arrangeFromTranscription } from '../../state/arrangeFromTranscription.js';
+	import TranscriptionKeySelect from './TranscriptionKeySelect.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -73,6 +75,12 @@
 				<button type="button" class="ui-button px-4 py-2" onclick={() => (open = false)}>OK</button>
 			</div>
 		{:else}
+			{#if !arranger.transcription.key}
+				<div class="mb-4 flex flex-col gap-2 ui-well p-3">
+					<p class="text-sm font-semibold">What key is the song in?</p>
+					<TranscriptionKeySelect transcription={arranger.transcription} />
+				</div>
+			{/if}
 			<p class="mb-2 text-sm font-semibold">What do you want to do?</p>
 			<div class="mb-3 grid grid-cols-2 gap-2">
 				<button
@@ -130,7 +138,7 @@
 				<button
 					type="button"
 					class="ui-button px-4 py-2 ui-button-primary"
-					disabled={chosen.length === 0}
+					disabled={chosen.length === 0 || !arranger.transcription.key}
 					onclick={send}>Send</button
 				>
 			</div>

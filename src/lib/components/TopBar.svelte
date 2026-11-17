@@ -21,6 +21,13 @@
 	/** @type {{ onOpenSettings: () => void, settingsOpen: boolean }} */
 	let { onOpenSettings, settingsOpen } = $props();
 
+	// Its height, for things that stick just under it (--top-bar-height)
+	let height = $state(0);
+	$effect(() => {
+		document.documentElement.style.setProperty('--top-bar-height', `${height}px`);
+		return () => document.documentElement.style.removeProperty('--top-bar-height');
+	});
+
 	const PAGES = /** @type {const} */ ([
 		{ path: '/', name: 'Songs' },
 		{ path: '/arranger', name: 'Arranger' },
@@ -54,7 +61,7 @@
 	}
 </script>
 
-<header class="topbar print:hidden">
+<header class="topbar print:hidden" bind:clientHeight={height}>
 	<!-- On a phone the wordmark makes way so the buttons fit: the lit button says where you are -->
 	<nav
 		class="ui-page-width flex items-center gap-1.5 max-sm:justify-between sm:gap-3"

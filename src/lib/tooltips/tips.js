@@ -214,7 +214,6 @@ export const TIPS = Object.freeze({
 		countAlong:
 			'Click on every beat as the recording plays, higher on each ONE, so you can hear if the bars fit.',
 		key: 'The song’s key, if you know it: the tune’s notes are spelled in it. Not known, it’s guessed from the first chord.',
-		time: 'The bars are laid out again in it, and ONE is found again.',
 		more: 'Fixes for the whole song’s beats, and how the slowed-down sound is made.',
 		doubleBeats: 'For when the count is half the song’s speed: a beat between every two.',
 		halveBeats: 'For when the count is twice the song’s speed: every other beat.',

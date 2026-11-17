@@ -4,19 +4,19 @@
 	 * forward (or click the ruler for any spot), + Marker (name the section
 	 * the playhead is in, at its bar), where you are, speed (the
 	 * pitch stays), fine tuning (TuningControl), Count along (a click on every beat, higher on ONE), Move beat 1 (back to placing it), the
-	 * song's key and time signature (both can be set at any time), zoom for
+	 * song's key (the time signature is chosen with beat 1), zoom for
 	 * the grid and the piano roll (across and down), and More:
 	 * the whole song's beats counted twice or half as fast, finding them
-	 * again, and how the slowed-down sound is made. Only in the workspace:
-	 * the setup wizard's steps have their own few controls.
+	 * again, and how the slowed-down sound is made. It stays in view under the
+	 * top bar, so Play is at hand while you write in the piano roll below.
+	 * Only in the workspace: placing beat 1 has its own few controls.
 	 */
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
 	import TuningControl from './TuningControl.svelte';
-	import { songKeyChoices } from '../../chart/keyChoices.js';
-	import SongKeyOptions from '../chart/SongKeyOptions.svelte';
-	import { TIME_SIGNATURES } from '../../transcription/timeSignatures.js';
+	import TranscriptionKeySelect from './TranscriptionKeySelect.svelte';
+	import PlayPauseGlyph from '../icons/PlayPauseGlyph.svelte';
 	import SpeedControl from './SpeedControl.svelte';
 	import { SOUNDS, soundById } from '$lib/slowDowner/sounds.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
@@ -28,8 +28,6 @@
 	let { transcription } = $props();
 
 	const player = $derived(transcription.player);
-	const NOT_NAMED = '';
-	const keyChoices = $derived(songKeyChoices(transcription.arranger.arrangement.capoFret));
 
 	$effect(() => {
 		transcription.player.setFrameSeconds(soundById(settings.transcribe.sound).frameSeconds);
@@ -70,15 +68,16 @@
 
 <svelte:window onkeydown={onKeydown} onkeyup={onKeyup} />
 
-<div class="flex flex-wrap items-center gap-x-5 gap-y-3 ui-card px-4 py-3">
+<div class="controls flex flex-wrap items-center gap-x-5 gap-y-3 ui-card px-4 py-3">
 	<button
 		type="button"
-		class="ui-button px-5 py-2 ui-button-primary"
+		class="play ui-button px-5 py-2 ui-button-primary"
 		disabled={player.loading}
 		onclick={togglePlay}
+		aria-label={player.playing ? 'Pause' : 'Play'}
 		use:tooltip={TIPS.transcription.play}
 	>
-		{player.playing ? 'Pause' : 'Play'}
+		<PlayPauseGlyph playing={player.playing} />
 	</button>
 	<div class="flex items-center gap-1" role="group" aria-label="Where in the song">
 		<button
@@ -124,18 +123,7 @@
 		<span id="count-along" class="text-sm">Count along</span>
 	</span>
 
-	<label class="flex items-center gap-2">
-		<span class="text-sm text-ink-soft">Key</span>
-		<select
-			class="ui-field px-2 py-1.5"
-			value={transcription.key ?? NOT_NAMED}
-			onchange={(event) => transcription.setKey(event.currentTarget.value || null)}
-			use:tooltip={TIPS.transcription.key}
-		>
-			<option value={NOT_NAMED}>Not known yet</option>
-			<SongKeyOptions choices={keyChoices} />
-		</select>
-	</label>
+	<TranscriptionKeySelect {transcription} />
 
 	<button
 		type="button"
@@ -143,20 +131,6 @@
 		onclick={() => transcription.setDownbeatAgain()}
 		use:tooltip={TIPS.transcription.moveDownbeat}>Move beat 1…</button
 	>
-
-	<div class="flex items-center gap-1" role="group" aria-label="Time signature">
-		<span class="mr-1 text-sm text-ink-soft">Time</span>
-		{#each TIME_SIGNATURES as time (time.id)}
-			<button
-				type="button"
-				class="ui-button px-2.5 py-1.5 text-sm tabular-nums"
-				class:ui-button-on={time.id === transcription.time}
-				aria-pressed={time.id === transcription.time}
-				onclick={() => transcription.setTime(time.id)}
-				use:tooltip={`${time.count}: ${time.about}. ${TIPS.transcription.time}`}>{time.id}</button
-			>
-		{/each}
-	</div>
 
 	<ZoomControl zoom={settings.transcribe.zoom} />
 
@@ -195,6 +169,18 @@
 </div>
 
 <style>
+	/* Stays in view while you scroll down to the piano roll */
+	.controls {
+		position: sticky;
+		top: calc(var(--top-bar-height, 3.5rem) + 0.5rem);
+		z-index: 20;
+	}
+
+	.play {
+		font-size: 1.25rem;
+		line-height: 1;
+	}
+
 	.more summary {
 		list-style: none;
 		cursor: pointer;

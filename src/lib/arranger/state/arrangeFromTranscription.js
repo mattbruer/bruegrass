@@ -11,6 +11,7 @@
  * it. Only the tune: the bass and chords keep to the bar lines.
  */
 import { abcjsReady } from './abcjsLoaded.svelte.js';
+import { keyFieldName } from '../chart/keyField.js';
 import { readSongFields } from './songFields.js';
 import { tuneReader } from '../melody/abcjs.js';
 import { readTuneText, sectionInstances } from '../melody/sections/tuneBySection.js';
@@ -34,6 +35,7 @@ export async function arrangeFromTranscription(arranger, chosen, name, pickups) 
 	const { arrangement, melody, bass, song } = arranger;
 	if (!arrangement.isPlayable) return 'Fix the chords first: the chart can’t be played.';
 	if (chosen.length === 0) return 'Choose a section or more.';
+	if (!keyFieldName(arrangement.text)) return 'Choose the song’s key first.';
 
 	const named = withUniqueSectionNames(arrangement.text);
 	const instances = sectionInstances(named);
