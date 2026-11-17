@@ -22,7 +22,7 @@
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
-	import { formatClock } from '$lib/utils/formatClock.js';
+	import PlayClock from './PlayClock.svelte';
 
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
 	let { transcription } = $props();
@@ -106,9 +106,12 @@
 			use:tooltip={TIPS.transcription.addMarker}>+ Marker</button
 		>
 	</div>
-	<span class="text-sm text-ink-soft tabular-nums">
-		{formatClock(player.time, { tenths: true })} / {formatClock(player.duration)}
-	</span>
+	<PlayClock
+		time={player.time}
+		duration={player.duration}
+		withLength
+		class="text-sm text-ink-soft"
+	/>
 
 	<SpeedControl {player} />
 

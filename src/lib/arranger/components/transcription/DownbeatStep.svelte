@@ -11,9 +11,9 @@
 	 * goes back to marking it.
 	 */
 	import RecordingStrip from './RecordingStrip.svelte';
+	import PlayClock from './PlayClock.svelte';
 	import SpeedControl from './SpeedControl.svelte';
 	import { TIME_SIGNATURES } from '../../transcription/timeSignatures.js';
-	import { formatClock } from '$lib/utils/formatClock.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -80,9 +80,7 @@
 			onclick={() => player.seek(0)}
 			use:tooltip={TIPS.transcription.fromTheStart}>⏮ From the start</button
 		>
-		<span class="text-lg text-ink-soft tabular-nums"
-			>{formatClock(player.time, { tenths: true })}</span
-		>
+		<PlayClock time={player.time} duration={player.duration} class="text-lg text-ink-soft" />
 		<SpeedControl {player} />
 	</div>
 
