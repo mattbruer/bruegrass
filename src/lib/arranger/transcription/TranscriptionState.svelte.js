@@ -703,9 +703,14 @@ export class TranscriptionState {
 	 */
 	playFromBar(number) {
 		const bar = this.bars.find((each) => each.number === number);
-		if (!bar || !this.grid) return;
-		this.seekToQuarters(bar.firstBeat - this.grid.bars.firstBeat);
+		if (!bar) return;
+		this.#seekToBar(bar);
 		this.player.play();
+	}
+
+	/** @param {import('./barPlan.js').Bar} bar the playhead to its first beat */
+	#seekToBar(bar) {
+		if (this.grid) this.seekToQuarters(bar.firstBeat - this.grid.bars.firstBeat);
 	}
 
 	/** @param {number} quarters play from here in the song (quarters from bar 1) */
@@ -758,15 +763,17 @@ export class TranscriptionState {
 		this.#playAfterNaming = false;
 	}
 
-	/** A marker at the bar line nearest the playhead (pressed a moment late or early): its menu opens to name it. */
+	/** A marker at the bar line nearest the playhead (pressed a moment late or early), the playhead moved onto it: its menu opens to name it. */
 	markHere() {
 		const bar = this.#barLineNearPlayhead();
 		if (!bar) return;
-		// Pause to type the name (named, it plays on: finishMarker)
+		// Pause to type the name, the playhead on the marker's bar line (named, it plays on from there: finishMarker)
 		this.#playAfterNaming = this.player.playing;
 		this.player.pause();
 		this.openBarMenu(bar.number);
 		this.naming = true;
+		// After the menu, which would set the playhead a couple of beats before the bar
+		this.#seekToBar(bar);
 	}
 
 	/**

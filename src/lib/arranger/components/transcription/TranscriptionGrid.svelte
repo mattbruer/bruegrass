@@ -115,6 +115,7 @@
 <div class="scroller" bind:this={scroller}>
 	<div
 		class="tracks"
+		class:markers-only={markersOnly}
 		bind:clientHeight={lanesHeight}
 		style:--header-width="{HEADER_WIDTH}px"
 		style:--lanes-width="{scale.width}px"
@@ -355,5 +356,10 @@
 		margin-left: -1px;
 		background: var(--color-danger);
 		pointer-events: none;
+	}
+
+	/* Room under the recording for a bar's marker box (the lanes below are hidden) */
+	.tracks.markers-only {
+		padding-bottom: 4rem;
 	}
 </style>
