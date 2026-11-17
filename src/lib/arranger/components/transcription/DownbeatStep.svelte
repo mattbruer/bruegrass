@@ -13,6 +13,7 @@
 	import RecordingStrip from './RecordingStrip.svelte';
 	import SpeedControl from './SpeedControl.svelte';
 	import { TIME_SIGNATURES } from '../../transcription/timeSignatures.js';
+	import { formatClock } from '$lib/utils/formatClock.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -33,12 +34,6 @@
 		if (player.playing) player.pause();
 		else if (checking) transcription.listenToDownbeat();
 		else player.play();
-	}
-
-	/** @param {number} seconds */
-	function clock(seconds) {
-		const whole = Math.max(0, Math.floor(seconds));
-		return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
 	}
 </script>
 
@@ -85,7 +80,9 @@
 			onclick={() => player.seek(0)}
 			use:tooltip={TIPS.transcription.fromTheStart}>⏮ From the start</button
 		>
-		<span class="text-lg text-ink-soft tabular-nums">{clock(player.time)}</span>
+		<span class="text-lg text-ink-soft tabular-nums"
+			>{formatClock(player.time, { tenths: true })}</span
+		>
 		<SpeedControl {player} />
 	</div>
 

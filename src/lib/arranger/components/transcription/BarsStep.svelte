@@ -11,6 +11,7 @@
 	import SpeedControl from './SpeedControl.svelte';
 	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
 	import { settings } from '$lib/settings/settings.svelte.js';
+	import { formatClock } from '$lib/utils/formatClock.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -18,12 +19,6 @@
 	let { transcription } = $props();
 
 	const player = $derived(transcription.player);
-
-	/** @param {number} seconds */
-	function clock(seconds) {
-		const whole = Math.max(0, Math.floor(seconds));
-		return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
-	}
 </script>
 
 <div class="flex flex-col gap-4">
@@ -48,7 +43,7 @@
 			use:tooltip={TIPS.transcription.fromTheStart}>⏮ From the start</button
 		>
 		<span class="text-lg text-ink-soft tabular-nums"
-			>{clock(player.time)} / {clock(player.duration)}</span
+			>{formatClock(player.time, { tenths: true })} / {formatClock(player.duration)}</span
 		>
 		<SpeedControl {player} />
 		<ZoomControl zoom={settings.transcribe.zoom} />

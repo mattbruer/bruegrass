@@ -108,7 +108,7 @@
 		>
 	</div>
 	<span class="text-sm text-ink-soft tabular-nums">
-		{formatClock(player.time)} / {formatClock(player.duration)}
+		{formatClock(player.time, { tenths: true })} / {formatClock(player.duration)}
 	</span>
 
 	<SpeedControl {player} />
