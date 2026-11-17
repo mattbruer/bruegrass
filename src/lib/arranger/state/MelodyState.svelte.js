@@ -41,6 +41,14 @@ export class MelodyState {
 	}
 
 	/** @type {import('../melody/sections/tuneBySection.js').TuneBySection | null} the tune kept by section (null: kept whole) */
+	/**
+	 * What a section plays with nothing written for it (SectionedText).
+	 * @param {string} section
+	 */
+	emptyBars(section) {
+		return this.#tune.emptyBars(section);
+	}
+
 	get bySection() {
 		return this.#tune.bySection;
 	}

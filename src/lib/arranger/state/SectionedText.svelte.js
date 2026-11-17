@@ -36,6 +36,16 @@ import {
  */
 
 export class SectionedText {
+	/**
+	 * What a section plays with nothing written for it, as the chart is now.
+	 * @param {string} section its name
+	 */
+	emptyBars(section) {
+		const layout = this.#layout;
+		const index = layout?.instances.findIndex((instance) => instance.source === section) ?? -1;
+		return layout && index >= 0 ? layout.restsFor(index) : '';
+	}
+
 	/** Kept whole: ABC as typed. */
 	#whole = $state('');
 	/** @type {TuneBySection | null} kept by section (null: kept whole) */

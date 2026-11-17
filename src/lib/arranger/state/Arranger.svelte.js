@@ -52,6 +52,7 @@ import { hasRepeats, splitTune, unitOfHeader } from '../melody/sections/splitTun
 import { splitPlayedOut } from '../melody/sections/playedOut.js';
 import { readTuneText, MELODY_VOICE } from '../melody/sections/tuneBySection.js';
 import { renamedParts } from '../melody/sections/renamedParts.js';
+import { partsFollowingBars, sectionBarKeys } from '../melody/sections/barsFollowChart.js';
 import { generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
 import { bassSongOf } from '../bass/songBassStyle.svelte.js';
 import { withWordsFromChart } from '../melody/sections/wordsFromChart.js';
@@ -65,6 +66,8 @@ export class Arranger {
 	melody = new MelodyState((tune) => this.#tuneLayout(unitOfHeader(tune.header)));
 	bass = new BassState(() => this.#bassLayout());
 	player = new PlayerState(this.arrangement, this.loop, this.melody, this.bass);
+	/** How many songs have been put on the page: a new one's chart isn't an edit of the last. */
+	songsLoaded = $state(0);
 	layout = new PageLayoutState();
 	/** Which song is open, and saving it (created last: it reads all of the above). */
 	song = new SongState(this);
@@ -256,6 +259,25 @@ export class Arranger {
 			const pickups = line && renamedParts(before, after, line.pickups);
 			if (line && (parts || pickups))
 				kept.bySection = { ...line, parts: parts ?? line.parts, pickups: pickups ?? line.pickups };
+		}
+	}
+
+	/**
+	 * Bars added to or removed from a section in the chart: its tune and bass
+	 * line (kept by section) gain or lose the same bars.
+	 * @param {Record<string, string[]>} before each section's bars before the edit (sectionBarKeys)
+	 */
+	followBars(before) {
+		if (this.arrangement.readError) return;
+		const after = sectionBarKeys(
+			this.arrangement.sections,
+			sectionInstances(this.arrangement.text)
+		);
+		for (const kept of [this.melody, this.bass]) {
+			const line = kept.bySection;
+			const parts =
+				line && partsFollowingBars(line.parts, before, after, (name) => kept.emptyBars(name));
+			if (line && parts) kept.bySection = { ...line, parts };
 		}
 	}
 
