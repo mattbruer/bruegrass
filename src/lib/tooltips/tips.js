@@ -224,7 +224,7 @@ export const TIPS = Object.freeze({
 		listenDownbeat: 'Play from just before beat 1 with a click on every beat, higher on “one”.',
 		fromTheStart: 'Back to the start of the recording.',
 		markDownbeat:
-			'Beat 1 is where the playhead is (it snaps to the nearest hit). While it plays, press it on the beat like a tap.',
+			'Beat 1 is exactly where the playhead is. While it plays, press it on the beat like a tap.',
 		downbeatStrip: 'The whole recording. Click or drag to move the playhead.',
 		keepBeats: 'Go back to the beats and bars you have, without finding them again.',
 		moveDownbeat:

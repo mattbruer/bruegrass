@@ -2,8 +2,8 @@
 	/**
 	 * Setup's second step: find beat 1. The recording on a lane with its
 	 * playhead: play it (slowed down if you like), click the lane to move the
-	 * playhead, and press Beat 1 is here: paused, on the playhead (snapped to
-	 * the hit nearest); playing, as a tap (moved back onto the hit just
+	 * playhead, and press Beat 1 is here: paused, exactly on the playhead;
+	 * playing, as a tap (moved back onto the hit just
 	 * before it). The beats are found through it at once. Then listen: a
 	 * click on every beat, higher on ONE. Sounds right goes on; Try again
 	 * goes back to marking it.

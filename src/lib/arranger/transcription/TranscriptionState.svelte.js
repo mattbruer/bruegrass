@@ -384,17 +384,17 @@ export class TranscriptionState {
 	}
 
 	/**
-	 * Beat 1 is here: at the playhead, on the hit nearest it (paused), or on
-	 * the hit just before it (tapped while it plays: a tap comes a little
-	 * late). The beats and bars are found through it at once, to check by
-	 * ear (listenToDownbeat).
+	 * Beat 1 is here: exactly at the playhead (paused: you put it there, often
+	 * zoomed in, so it isn't moved), or on the hit just before it (tapped
+	 * while it plays: a tap comes a little late). The beats and bars are
+	 * found through it at once, to check by ear (listenToDownbeat).
 	 */
 	markDownbeatHere() {
 		if (!this.#analysis) return;
 		const tapped = this.player.playing;
 		this.player.pause();
 		const at = this.player.time;
-		this.downbeat = tapped ? tapToHit(at, this.#analysis) : snapToHit(at, this.#analysis);
+		this.downbeat = tapped ? tapToHit(at, this.#analysis) : Math.round(at * 1000) / 1000;
 		this.#findBeatsFromDownbeat();
 		this.checkingDownbeat = true;
 	}
