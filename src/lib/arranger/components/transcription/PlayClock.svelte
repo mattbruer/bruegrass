@@ -7,7 +7,7 @@
 	 */
 	import SteadyText from './SteadyText.svelte';
 	import { formatClock } from '$lib/utils/formatClock.js';
-	import { barsAndBeats, barsAndBeatsText } from '../../transcription/barsAndBeats.js';
+	import { barsAndBeats } from '../../transcription/barsAndBeats.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -22,16 +22,16 @@
 	let { time, duration, beat = 0, bars = [], class: className = '' } = $props();
 
 	const DECIMALS = 2;
+	/** Bars and beats, each with its label under it, as Logic's transport shows them. */
+	const fields = $derived([
+		{ label: 'Bar', value: place.bar, widest: bars.at(-1)?.number ?? 0 },
+		{ label: 'Beat', value: place.beat, widest: Math.max(...bars.map((bar) => bar.beats)) },
+		{ label: '16th', value: place.division, widest: 4 }
+	]);
 	const showBars = $derived(bars.length > 0 && settings.transcribe.clock === 'bars');
 	const place = $derived(barsAndBeats(beat, bars));
-	const text = $derived(
-		showBars ? barsAndBeatsText(place) : formatClock(time, { decimals: DECIMALS })
-	);
-	const widest = $derived(
-		showBars
-			? barsAndBeatsText({ bar: bars.at(-1)?.number ?? 0, beat: 0, division: 0 })
-			: formatClock(duration, { decimals: DECIMALS })
-	);
+	const text = $derived(formatClock(time, { decimals: DECIMALS }));
+	const widest = $derived(formatClock(duration, { decimals: DECIMALS }));
 	const spoken = $derived(
 		showBars ? `Bar ${place.bar}, beat ${place.beat}` : `${text} of ${formatClock(duration)}`
 	);
@@ -49,9 +49,18 @@
 		aria-label="{spoken}. Show {showBars ? 'the time' : 'bars and beats'}"
 		use:tooltip={TIPS.transcription.clock}
 	>
-		<SteadyText {text} {widest} />{#if !showBars}<span aria-hidden="true"
-				>&nbsp;/ {formatClock(duration)}</span
-			>{/if}
+		{#if showBars}
+			<span class="fields">
+				{#each fields as field (field.label)}
+					<span class="field">
+						<SteadyText text={String(field.value)} widest={String(field.widest)} />
+						<span class="label" aria-hidden="true">{field.label}</span>
+					</span>
+				{/each}
+			</span>
+		{:else}
+			<SteadyText {text} {widest} /><span aria-hidden="true">&nbsp;/ {formatClock(duration)}</span>
+		{/if}
 	</button>
 {:else}
 	<span class="clock {className}" aria-label={spoken}><SteadyText {text} {widest} /></span>
@@ -60,6 +69,22 @@
 <style>
 	.clock {
 		white-space: nowrap;
+	}
+	.fields {
+		display: inline-flex;
+		gap: 0.6rem;
+	}
+	.field {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: flex-end;
+		line-height: 1.1;
+	}
+	.label {
+		font-size: 0.6rem;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--color-ink-soft);
 	}
 	button.clock {
 		cursor: pointer;
