@@ -230,3 +230,9 @@
 		padding-inline: calc(var(--spacing) * 3 + var(--corner-room));
 	}
 }
+
+/* A menu's arrow (the browser's own) sits inside its right padding: the same
+   room on every menu, more as the corners round */
+select.ui-field {
+	padding-right: calc(0.75rem + var(--corner-control) * 0.25);
+}
