@@ -119,7 +119,7 @@ export const TIPS = Object.freeze({
 		stop: 'Stop playing. With Loop off, Play carries on from here.',
 		toStart: 'Back to the start: the next Play begins at the top (or the first bar you chose).',
 		countIn:
-			'Count-in: when lit, Play clicks before the band comes in, so you know when to start. Recording always counts in; the record panel sets how many bars.',
+			'Count-in: tap for off, one bar or two bars of clicks before the band comes in (a row of 1234 for each bar). Recording always counts in, the same number of bars.',
 		metronome:
 			'Start or stop a steady click to play along with, with or without the music. While the song plays, it follows the song’s bars.',
 		metronomeSound: 'The sound of the click: woodblock, cowbell, beep or tick.',
