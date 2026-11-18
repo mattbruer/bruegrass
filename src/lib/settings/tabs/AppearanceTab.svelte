@@ -136,6 +136,26 @@
 					class="range"
 				/>
 			</label>
+			<label class="block pb-2">
+				<span class="flex justify-between font-semibold">
+					Sink depth
+					<span class="font-mono text-sm text-ink-soft"
+						>{settings.appearance.sinkDepth.toFixed(1)}</span
+					>
+				</span>
+				<span class="block text-sm text-ink-soft"
+					>How deep the chord strip, piano roll, lanes, fields and meters sit in the page, from a
+					dent (0) to a deep slot (2).</span
+				>
+				<input
+					type="range"
+					min="0"
+					max="2"
+					step="0.1"
+					bind:value={settings.appearance.sinkDepth}
+					class="range"
+				/>
+			</label>
 		{/if}
 
 		<label class="block py-2">

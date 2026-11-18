@@ -115,153 +115,155 @@
 	}
 </script>
 
-<div class="scroller" bind:this={scroller}>
-	<div
-		class="tracks"
-		bind:clientHeight={lanesHeight}
-		style:--header-width="{HEADER_WIDTH}px"
-		style:--lanes-width="{scale.width}px"
-		style:--lanes-height="{lanesHeight}px"
-		style:--quarter="{pixelsPerQuarter}px"
-		style:--zoom-down={zoom.down}
-		style:--grid-offset="{scale.toX(0)}px"
-	>
-		<div class="header cycle-header">
-			<button
-				type="button"
-				class="ui-button px-2 py-0.5 text-xs"
-				class:ui-button-on={transcription.cycle.on}
-				disabled={!transcription.cycle.region}
-				aria-pressed={transcription.cycle.on}
-				onclick={() => transcription.cycle.turn(!transcription.cycle.on)}
-				use:tooltip={TIPS.transcription.cycle}>Cycle</button
-			>
-			<span class="flex items-center gap-1 text-xs text-ink-soft">
-				<ToggleSwitch
-					bind:on={settings.transcribe.snapCycle}
-					labelledBy="snap-cycle"
-					tip={TIPS.transcription.snapCycle}
-				/>
-				<span id="snap-cycle">Snap</span>
-			</span>
-		</div>
-		<CycleStrip {transcription} {ruler} {scale} />
-
-		<div class="corner ruler-corner">
-			<button
-				type="button"
-				class="ui-button px-1.5 py-0.5 text-xs"
-				onclick={() => transcription.markHere()}
-				use:tooltip={TIPS.transcription.addMarker}>+ Marker</button
-			>
-			<Popover class="px-1.5 py-0.5 text-xs" tip={TIPS.zoom.folded}>
-				{#snippet button()}Zoom <span aria-hidden="true">▾</span>{/snippet}
-				<ZoomControl zoom={settings.transcribe.zoom} />
-			</Popover>
-		</div>
-		<!-- svelte-ignore a11y_click_events_have_key_events (← → pick beats on a computer) -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="ruler" onclick={clickRuler} use:tooltip={TIPS.transcription.ruler}>
-			<TrackRuler bars={ruler} {scale} />
-		</div>
-
-		<div class="header beats-header" class:quiet={!transcription.fixingBeats}>
-			<span class="name">Beats</span>
-			{#if transcription.fixingBeats}
+<div class="ui-sunk-frame rounded-[var(--corner-card)]">
+	<div class="scroller" bind:this={scroller}>
+		<div
+			class="tracks"
+			bind:clientHeight={lanesHeight}
+			style:--header-width="{HEADER_WIDTH}px"
+			style:--lanes-width="{scale.width}px"
+			style:--lanes-height="{lanesHeight}px"
+			style:--quarter="{pixelsPerQuarter}px"
+			style:--zoom-down={zoom.down}
+			style:--grid-offset="{scale.toX(0)}px"
+		>
+			<div class="header cycle-header">
 				<button
 					type="button"
-					class="ui-button px-1.5 text-xs"
-					disabled={!transcription.canUndoBeats}
-					onclick={() => transcription.undoBeats()}
-					use:tooltip={TIPS.transcription.undoBeats}>Undo</button
+					class="ui-button px-2 py-0.5 text-xs"
+					class:ui-button-on={transcription.cycle.on}
+					disabled={!transcription.cycle.region}
+					aria-pressed={transcription.cycle.on}
+					onclick={() => transcription.cycle.turn(!transcription.cycle.on)}
+					use:tooltip={TIPS.transcription.cycle}>Cycle</button
 				>
+				<span class="flex items-center gap-1 text-xs text-ink-soft">
+					<ToggleSwitch
+						bind:on={settings.transcribe.snapCycle}
+						labelledBy="snap-cycle"
+						tip={TIPS.transcription.snapCycle}
+					/>
+					<span id="snap-cycle">Snap</span>
+				</span>
+			</div>
+			<CycleStrip {transcription} {ruler} {scale} />
+
+			<div class="corner ruler-corner">
 				<button
 					type="button"
-					class="ui-button px-1.5 text-xs"
-					onclick={() => transcription.fixBeats(false)}
-					use:tooltip={TIPS.transcription.doneFixingBeats}>Done</button
+					class="ui-button px-1.5 py-0.5 text-xs"
+					onclick={() => transcription.markHere()}
+					use:tooltip={TIPS.transcription.addMarker}>+ Marker</button
 				>
-			{/if}
-		</div>
-		<BeatDots {transcription} {scale} />
+				<Popover class="px-1.5 py-0.5 text-xs" tip={TIPS.zoom.folded}>
+					{#snippet button()}Zoom <span aria-hidden="true">▾</span>{/snippet}
+					<ZoomControl zoom={settings.transcribe.zoom} />
+				</Popover>
+			</div>
+			<!-- svelte-ignore a11y_click_events_have_key_events (← → pick beats on a computer) -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div class="ruler" onclick={clickRuler} use:tooltip={TIPS.transcription.ruler}>
+				<TrackRuler bars={ruler} {scale} />
+			</div>
 
-		<div class="header recording">
-			<span class="name">Recording</span>
-			<RecordingMenu {transcription} />
-			<MuteSoloButtons settings={transcription.recordingLane} name="Recording" />
-			<LaneVolume level={transcription.recordingLane} name="Recording" />
-			<HitsCheckbox />
-		</div>
-		<RecordingLane {transcription} {scale} />
-
-		<div class="header">
-			<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
-			<MuteSoloButtons settings={transcription.band.lane} name="Band" />
-			<LaneVolume level={transcription.band.lane} name="Band" />
-		</div>
-		<ChordLane {transcription} {scale} />
-
-		{#each parts as lane (lane.id)}
-			{@const channel = mixer.channels.find((each) => each.id === lane.id)}
-			<div class="header" class:picked-lane={transcription.lane === lane.id}>
-				<button
-					type="button"
-					class="name pick"
-					onclick={() => (transcription.lane = lane.id)}
-					aria-pressed={transcription.lane === lane.id}
-					use:tooltip={TIPS.transcription.partLane}>{lane.name}</button
-				>
-				{#if isLaneId(lane.id)}
+			<div class="header beats-header" class:quiet={!transcription.fixingBeats}>
+				<span class="name">Beats</span>
+				{#if transcription.fixingBeats}
 					<button
 						type="button"
-						class="ui-button px-2 py-0.5 text-xs"
-						onclick={() => transcription.useLaneAsBass(lane.id)}
-						use:tooltip={TIPS.transcription.laneBass}>Bass</button
+						class="ui-button px-1.5 text-xs"
+						disabled={!transcription.canUndoBeats}
+						onclick={() => transcription.undoBeats()}
+						use:tooltip={TIPS.transcription.undoBeats}>Undo</button
 					>
 					<button
 						type="button"
-						class="ui-button px-2 py-0.5 text-xs"
-						aria-label="Remove {lane.name}"
-						onclick={() => transcription.removeLane(lane.id)}
-						use:tooltip={TIPS.transcription.laneRemove}>×</button
+						class="ui-button px-1.5 text-xs"
+						onclick={() => transcription.fixBeats(false)}
+						use:tooltip={TIPS.transcription.doneFixingBeats}>Done</button
 					>
-				{:else if channel}
-					<MuteSoloButtons settings={channel} name={lane.name} />
-					<LaneVolume level={channel} name={lane.name} />
 				{/if}
 			</div>
-			<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<div
-				class="part"
-				class:picked-lane={transcription.lane === lane.id}
-				onclick={() => (transcription.lane = lane.id)}
-			>
-				<BlockLane {lane} {scale} />
-			</div>
-		{/each}
+			<BeatDots {transcription} {scale} />
 
-		{#if transcription.linked}
-			<div class="header add">
-				<button
-					type="button"
-					class="ui-button px-2 py-1 text-xs"
-					onclick={() => transcription.addLane()}
-					use:tooltip={TIPS.transcription.addLane}>+ Lane</button
+			<div class="header recording">
+				<span class="name">Recording</span>
+				<RecordingMenu {transcription} />
+				<MuteSoloButtons settings={transcription.recordingLane} name="Recording" />
+				<LaneVolume level={transcription.recordingLane} name="Recording" />
+				<HitsCheckbox />
+			</div>
+			<RecordingLane {transcription} {scale} />
+
+			<div class="header">
+				<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
+				<MuteSoloButtons settings={transcription.band.lane} name="Band" />
+				<LaneVolume level={transcription.band.lane} name="Band" />
+			</div>
+			<ChordLane {transcription} {scale} />
+
+			{#each parts as lane (lane.id)}
+				{@const channel = mixer.channels.find((each) => each.id === lane.id)}
+				<div class="header" class:picked-lane={transcription.lane === lane.id}>
+					<button
+						type="button"
+						class="name pick"
+						onclick={() => (transcription.lane = lane.id)}
+						aria-pressed={transcription.lane === lane.id}
+						use:tooltip={TIPS.transcription.partLane}>{lane.name}</button
+					>
+					{#if isLaneId(lane.id)}
+						<button
+							type="button"
+							class="ui-button px-2 py-0.5 text-xs"
+							onclick={() => transcription.useLaneAsBass(lane.id)}
+							use:tooltip={TIPS.transcription.laneBass}>Bass</button
+						>
+						<button
+							type="button"
+							class="ui-button px-2 py-0.5 text-xs"
+							aria-label="Remove {lane.name}"
+							onclick={() => transcription.removeLane(lane.id)}
+							use:tooltip={TIPS.transcription.laneRemove}>×</button
+						>
+					{:else if channel}
+						<MuteSoloButtons settings={channel} name={lane.name} />
+						<LaneVolume level={channel} name={lane.name} />
+					{/if}
+				</div>
+				<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div
+					class="part"
+					class:picked-lane={transcription.lane === lane.id}
+					onclick={() => (transcription.lane = lane.id)}
 				>
-			</div>
-		{/if}
+					<BlockLane {lane} {scale} />
+				</div>
+			{/each}
 
-		{#if transcription.cycle.on && transcription.cycle.region}
-			<div
-				class="cycle-shade"
-				style:left="calc(var(--header-width) + {scale.toX(transcription.cycle.region.from)}px)"
-				style:width="{scale.toX(transcription.cycle.region.to) -
-					scale.toX(transcription.cycle.region.from)}px"
-			></div>
-		{/if}
-		<div class="playhead" style:left="calc(var(--header-width) + {playheadX}px)"></div>
-		<GridMenu {transcription} {scale} />
+			{#if transcription.linked}
+				<div class="header add">
+					<button
+						type="button"
+						class="ui-button px-2 py-1 text-xs"
+						onclick={() => transcription.addLane()}
+						use:tooltip={TIPS.transcription.addLane}>+ Lane</button
+					>
+				</div>
+			{/if}
+
+			{#if transcription.cycle.on && transcription.cycle.region}
+				<div
+					class="cycle-shade"
+					style:left="calc(var(--header-width) + {scale.toX(transcription.cycle.region.from)}px)"
+					style:width="{scale.toX(transcription.cycle.region.to) -
+						scale.toX(transcription.cycle.region.from)}px"
+				></div>
+			{/if}
+			<div class="playhead" style:left="calc(var(--header-width) + {playheadX}px)"></div>
+			<GridMenu {transcription} {scale} />
+		</div>
 	</div>
 </div>
 

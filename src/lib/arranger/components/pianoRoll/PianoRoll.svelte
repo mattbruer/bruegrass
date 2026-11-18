@@ -369,139 +369,141 @@
 	}
 </script>
 
-<div
-	bind:this={scroller}
-	class="roll relative h-72 overflow-auto ui-well outline-offset-2 pointer-coarse:h-80"
-	role="application"
-	aria-label="Piano roll: draw the melody"
-	tabindex="0"
-	onkeydown={keys}
-	onwheel={pauseFollowing}
-	ontouchstart={pauseFollowing}
->
-	<div class="relative" style:width="{LABEL_WIDTH + width}px">
-		<div class="sticky top-0 z-20 flex" style:height="{RULER_HEIGHT}px">
-			<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
-			<!-- svelte-ignore a11y_click_events_have_key_events (the page's own keys move around) -->
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<div
-				class="ruler relative"
-				class:seeks={onSeek}
-				style:width="{width}px"
-				onclick={onSeek ? seekFromRuler : undefined}
-			>
-				{#each score.bars as bar, index (index)}
-					<span class="bar-number" style:left="{bar.start * tickWidth}px"
-						>{barLabel(score.bars, index)}</span
-					>
-				{/each}
-			</div>
-		</div>
-
-		<div class="flex">
-			<div class="labels sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px">
-				{#each rows as row (row.midi)}
-					<div
-						class="label"
-						class:in-key={row.inKey}
-						class:white-key-below={row.whiteKeyBelow}
-						style:height="{rowHeight}px"
-					>
-						{row.name}
-					</div>
-				{/each}
+<div class="ui-sunk-frame rounded-[var(--corner-card)]">
+	<div
+		bind:this={scroller}
+		class="roll relative h-72 overflow-auto ui-well outline-offset-2 pointer-coarse:h-80"
+		role="application"
+		aria-label="Piano roll: draw the melody"
+		tabindex="0"
+		onkeydown={keys}
+		onwheel={pauseFollowing}
+		ontouchstart={pauseFollowing}
+	>
+		<div class="relative" style:width="{LABEL_WIDTH + width}px">
+			<div class="sticky top-0 z-20 flex" style:height="{RULER_HEIGHT}px">
+				<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
+				<!-- svelte-ignore a11y_click_events_have_key_events (the page's own keys move around) -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div
+					class="ruler relative"
+					class:seeks={onSeek}
+					style:width="{width}px"
+					onclick={onSeek ? seekFromRuler : undefined}
+				>
+					{#each score.bars as bar, index (index)}
+						<span class="bar-number" style:left="{bar.start * tickWidth}px"
+							>{barLabel(score.bars, index)}</span
+						>
+					{/each}
+				</div>
 			</div>
 
-			<div
-				bind:this={surface}
-				class="surface relative"
-				class:editable={!readOnly}
-				class:resizing
-				style:width="{width}px"
-				style:height="{height}px"
-				onpointerdown={press}
-				onpointermove={drag}
-				onpointerup={release}
-				onpointercancel={cancel}
-				role="presentation"
-			>
-				{#each rows as row, i (row.midi)}
-					<div
-						class="row"
-						class:black={row.black}
-						class:white-key-below={row.whiteKeyBelow}
-						style:top="{i * rowHeight}px"
-						style:height="{rowHeight}px"
-					></div>
-				{/each}
-				{#each score.bars as bar, index (index)}
-					<div
-						class="bar"
-						class:pickup={index === 0 && firstIsPickup}
-						style:left="{bar.start * tickWidth}px"
-						style:width="{bar.length * tickWidth}px"
-						style:--beat="{TICKS_PER_QUARTER * tickWidth}px"
-						style:--step="{gridStep * tickWidth}px"
-					></div>
-				{/each}
-				{#each others as voice, v (v)}
-					{#each voice.notes as note (`${note.start}-${note.midi}`)}
+			<div class="flex">
+				<div class="labels sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px">
+					{#each rows as row (row.midi)}
 						<div
-							class="note other voice-colour"
-							style:--voice={voice.colour}
+							class="label"
+							class:in-key={row.inKey}
+							class:white-key-below={row.whiteKeyBelow}
+							style:height="{rowHeight}px"
+						>
+							{row.name}
+						</div>
+					{/each}
+				</div>
+
+				<div
+					bind:this={surface}
+					class="surface relative"
+					class:editable={!readOnly}
+					class:resizing
+					style:width="{width}px"
+					style:height="{height}px"
+					onpointerdown={press}
+					onpointermove={drag}
+					onpointerup={release}
+					onpointercancel={cancel}
+					role="presentation"
+				>
+					{#each rows as row, i (row.midi)}
+						<div
+							class="row"
+							class:black={row.black}
+							class:white-key-below={row.whiteKeyBelow}
+							style:top="{i * rowHeight}px"
+							style:height="{rowHeight}px"
+						></div>
+					{/each}
+					{#each score.bars as bar, index (index)}
+						<div
+							class="bar"
+							class:pickup={index === 0 && firstIsPickup}
+							style:left="{bar.start * tickWidth}px"
+							style:width="{bar.length * tickWidth}px"
+							style:--beat="{TICKS_PER_QUARTER * tickWidth}px"
+							style:--step="{gridStep * tickWidth}px"
+						></div>
+					{/each}
+					{#each others as voice, v (v)}
+						{#each voice.notes as note (`${note.start}-${note.midi}`)}
+							<div
+								class="note other voice-colour"
+								style:--voice={voice.colour}
+								style:left="{note.start * tickWidth}px"
+								style:top="{(range.highest - note.midi) * rowHeight}px"
+								style:width="{note.length * tickWidth}px"
+								style:height="{rowHeight}px"
+							></div>
+						{/each}
+					{/each}
+					{#each shown as note, index (`${note.start}-${note.midi}`)}
+						<div
+							class="note voice-colour"
+							style:--voice={colour}
+							class:selected={!preview && index === selected}
+							class:echo={'echo' in note && note.echo}
 							style:left="{note.start * tickWidth}px"
 							style:top="{(range.highest - note.midi) * rowHeight}px"
 							style:width="{note.length * tickWidth}px"
 							style:height="{rowHeight}px"
-						></div>
+						>
+							{#if !readOnly}
+								<span class="grip" style:width="{resizeEdge(note, tickWidth)}px"></span>
+							{/if}
+						</div>
 					{/each}
-				{/each}
-				{#each shown as note, index (`${note.start}-${note.midi}`)}
-					<div
-						class="note voice-colour"
-						style:--voice={colour}
-						class:selected={!preview && index === selected}
-						class:echo={'echo' in note && note.echo}
-						style:left="{note.start * tickWidth}px"
-						style:top="{(range.highest - note.midi) * rowHeight}px"
-						style:width="{note.length * tickWidth}px"
-						style:height="{rowHeight}px"
-					>
-						{#if !readOnly}
-							<span class="grip" style:width="{resizeEdge(note, tickWidth)}px"></span>
-						{/if}
-					</div>
-				{/each}
-				<div bind:this={playheadLine} class="playhead"></div>
-				{#if !preview && notes[selected]}
-					{@const picked = notes[selected]}
-					{#each options as midi (midi)}
-						<button
-							type="button"
-							class="option voice-colour"
-							style:--voice={colour}
-							data-option={midi}
-							style:left="{picked.start * tickWidth}px"
-							style:top="{(range.highest - midi) * rowHeight}px"
-							style:width="{Math.max(picked.length * tickWidth, rowHeight)}px"
-							style:height="{rowHeight}px"
-							aria-label="Move the note here"
-						></button>
-					{/each}
-				{/if}
+					<div bind:this={playheadLine} class="playhead"></div>
+					{#if !preview && notes[selected]}
+						{@const picked = notes[selected]}
+						{#each options as midi (midi)}
+							<button
+								type="button"
+								class="option voice-colour"
+								style:--voice={colour}
+								data-option={midi}
+								style:left="{picked.start * tickWidth}px"
+								style:top="{(range.highest - midi) * rowHeight}px"
+								style:width="{Math.max(picked.length * tickWidth, rowHeight)}px"
+								style:height="{rowHeight}px"
+								aria-label="Move the note here"
+							></button>
+						{/each}
+					{/if}
+				</div>
 			</div>
-		</div>
 
-		<div class="sticky bottom-0 z-20 flex" style:height="{CHORD_HEIGHT}px">
-			<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
-			<div class="chords relative" style:width="{width}px">
-				{#each chordsUnder as chord, index (index)}
-					<span
-						class="chord"
-						style:left="{chord.at * tickWidth}px"
-						style:width="{chord.length * tickWidth}px">{chordName(chord.name, chord.place)}</span
-					>
-				{/each}
+			<div class="sticky bottom-0 z-20 flex" style:height="{CHORD_HEIGHT}px">
+				<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
+				<div class="chords relative" style:width="{width}px">
+					{#each chordsUnder as chord, index (index)}
+						<span
+							class="chord"
+							style:left="{chord.at * tickWidth}px"
+							style:width="{chord.length * tickWidth}px">{chordName(chord.name, chord.place)}</span
+						>
+					{/each}
+				</div>
 			</div>
 		</div>
 	</div>

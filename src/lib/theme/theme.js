@@ -19,8 +19,9 @@
  *   depth: number,
  *   roundness: number,
  *   dropShadows?: boolean,
- *   dropStrength?: number
- * }} Appearance colours are #rrggbb; depth, roundness and dropStrength are 0–2 (1 = normal);
+ *   dropStrength?: number,
+ *   sinkDepth?: number
+ * }} Appearance colours are #rrggbb; depth, roundness, dropStrength and sinkDepth are 0–2 (1 = normal);
  *   dropShadows: 3D depth, things lifted off the page on big drop shadows (on unless false)
  */
 
@@ -33,7 +34,8 @@ export const DEFAULT_APPEARANCE = Object.freeze({
 	depth: 1,
 	roundness: 1,
 	dropShadows: true,
-	dropStrength: 2
+	dropStrength: 2,
+	sinkDepth: 2
 });
 
 /** Ready-made looks, offered in Settings → Appearance. */
@@ -94,7 +96,8 @@ const CSS_VARIABLE_FOR = {
 	depth: '--theme-depth',
 	roundness: '--theme-roundness',
 	dropShadows: '--theme-drop-shadows',
-	dropStrength: '--theme-drop-strength'
+	dropStrength: '--theme-drop-strength',
+	sinkDepth: '--theme-sink-depth'
 };
 
 /**
