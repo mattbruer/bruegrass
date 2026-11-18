@@ -49,29 +49,16 @@
 	color: var(--color-ink);
 	transition:
 		box-shadow 0.15s ease,
-		translate 0.15s ease,
 		color 0.15s ease;
 
 	&:hover:not(:disabled) {
 		color: var(--color-accent);
 	}
 
-	/* With drop shadows on, a button rises toward the mouse */
-	@media (hover: hover) {
-		&:hover:not(:disabled):not(:active) {
-			translate: 0 calc(-1px * var(--drop));
-			box-shadow:
-				var(--shadow-bevel),
-				0 1px 3px var(--shadow-dark-edge),
-				var(--shadow-drop);
-		}
-	}
-
 	&:active:not(:disabled) {
 		background: var(--color-surface-deep);
 		background-image: none;
 		box-shadow: var(--shadow-inset-small);
-		translate: none;
 	}
 
 	&:disabled {
