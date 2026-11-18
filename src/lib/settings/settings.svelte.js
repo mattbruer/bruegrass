@@ -67,6 +67,13 @@ export const settings = $state({
 		zoom: { across: 1, down: 1 }
 	},
 
+	// The tuner: set from its dialog
+
+	tuner: {
+		/** How the tuner shows the pitch: an id in tuner/tunerLooks.js. */
+		look: 'trace'
+	},
+
 	// The lyric chart: set from its page
 
 	chart: {

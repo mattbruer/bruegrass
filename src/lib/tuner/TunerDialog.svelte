@@ -2,13 +2,19 @@
 	/**
 	 * The tuner in a dialog: it listens while it's open, and lets go of the
 	 * microphone when it closes. Open it with `tuner.open()` from the click
-	 * that shows it (browsers only start audio from a click).
+	 * that shows it (browsers only start audio from a click). Its look
+	 * (tunerLooks.js) is chosen at the top and remembered.
 	 */
 	import Dialog from '$lib/components/Dialog.svelte';
-	import TunerDisplay from './TunerDisplay.svelte';
+	import TabSwitch from '$lib/components/TabSwitch.svelte';
+	import { TUNER_LOOKS, tunerLook } from './tunerLooks.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** @type {{ open: boolean, tuner: import('./TunerState.svelte.js').TunerState }} */
 	let { open = $bindable(false), tuner } = $props();
+
+	const Look = $derived(tunerLook(settings.tuner.look).component);
 
 	$effect(() => {
 		if (!open) tuner.close();
@@ -25,7 +31,15 @@
 				>
 			</div>
 		{:else}
-			<TunerDisplay {tuner} />
+			<div class="flex justify-center">
+				<TabSwitch
+					tabs={TUNER_LOOKS}
+					bind:value={settings.tuner.look}
+					tips={TIPS.tuner.looks}
+					label="How the tuner looks"
+				/>
+			</div>
+			<Look {tuner} />
 			<p class="truncate text-center text-xs text-ink-soft">
 				{#if tuner.status === 'opening'}
 					Opening the microphone…

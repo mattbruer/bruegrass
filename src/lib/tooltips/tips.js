@@ -182,7 +182,12 @@ export const TIPS = Object.freeze({
 	},
 
 	tuner: {
-		open: 'A tuner: play a string and tune it until the needle sits in the middle and the stripes stand still.'
+		open: 'A tuner: play a string and tune it until the line runs down the green middle.',
+		looks: {
+			trace:
+				'The last few seconds of pitch as a glowing line: green in tune, amber close, red far.',
+			meter: 'A needle over ±50 cents, with a strobe band that stands still when you’re in tune.'
+		}
 	},
 	transcription: {
 		sectionPickup:

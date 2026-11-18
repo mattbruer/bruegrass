@@ -153,7 +153,7 @@
 <style>
 	/* An instrument's screen: a deeper tone of the page, its own lamps */
 	.screen {
-		--screen: oklch(from var(--theme-background) calc(l - 0.09) calc(c + 0.015) h);
+		--screen: var(--tuner-screen);
 		--lit: color-mix(in oklab, var(--meter-safe), var(--color-ink) 18%);
 		--off: var(--color-accent);
 		display: grid;
