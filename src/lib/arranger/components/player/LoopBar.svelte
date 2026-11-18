@@ -37,7 +37,7 @@
 		disabled={arrangement.sections.length === 0}
 		aria-label="Loop which part"
 		use:tooltip={TIPS.player.loopSection}
-		class="w-44 ui-field px-2 py-1"
+		class="ui-field px-2 py-1"
 	>
 		<option value={WHOLE_ARRANGEMENT}>Whole arrangement</option>
 		{#each arrangement.sections as section, index (index)}

@@ -22,7 +22,7 @@
 	use:tooltip={TIPS.player.capo}
 >
 	Capo
-	<select value={arrangement.capoFret} onchange={choose} class="w-20 ui-field px-2 py-1">
+	<select value={arrangement.capoFret} onchange={choose} class="ui-field px-2 py-1">
 		{#each CAPO_CHOICES as fret (fret)}
 			<option value={fret}>{fret === 0 ? 'None' : fret}</option>
 		{/each}

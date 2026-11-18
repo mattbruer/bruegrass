@@ -231,8 +231,32 @@
 	}
 }
 
-/* A menu's arrow (the browser's own) sits inside its right padding: the same
+/* A menu's arrow, drawn here rather than by the browser (Safari keeps its own
+   against the edge whatever the padding): a chevron in two halves, the same
    room on every menu, more as the corners round */
 select.ui-field {
-	padding-right: calc(0.75rem + var(--corner-control) * 0.25);
+	--arrow-half: 5px;
+	--arrow-line: var(--color-ink-soft);
+	--arrow-right: calc(0.7rem + var(--corner-control) * 0.25);
+	appearance: none;
+	-webkit-appearance: none;
+	padding-right: calc(var(--arrow-right) + 2 * var(--arrow-half) + 0.5rem);
+	background-image:
+		linear-gradient(
+			45deg,
+			transparent calc(50% - 0.8px),
+			var(--arrow-line) calc(50% - 0.8px) calc(50% + 0.8px),
+			transparent calc(50% + 0.8px)
+		),
+		linear-gradient(
+			-45deg,
+			transparent calc(50% - 0.8px),
+			var(--arrow-line) calc(50% - 0.8px) calc(50% + 0.8px),
+			transparent calc(50% + 0.8px)
+		);
+	background-size: var(--arrow-half) var(--arrow-half);
+	background-position:
+		right calc(var(--arrow-right) + var(--arrow-half)) center,
+		right var(--arrow-right) center;
+	background-repeat: no-repeat;
 }
