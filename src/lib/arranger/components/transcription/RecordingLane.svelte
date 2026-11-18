@@ -18,13 +18,18 @@
 	 */
 	let { transcription, scale } = $props();
 
-	/** The recording a bar at a time (the lead-in as one stretch), each drawn in its own place. */
+	/**
+	 * The recording a bar at a time (the lead-in as one stretch, and whatever
+	 * sounds in the room before the first beat), each drawn in its own place.
+	 */
 	const pieces = $derived.by(() => {
 		const { peaks, grid } = transcription;
 		if (!peaks || !grid) return [];
 		const waveScale = WAVE_FILL / peaks.reduce((loudest, peak) => Math.max(loudest, peak), 1e-6);
 		const first = grid.bars.firstBeat;
+		const roomStart = scale.start + first;
 		const stretches = [
+			...(roomStart < 0 ? [{ from: roomStart, to: 0 }] : []),
 			...(first > 0 ? [{ from: 0, to: first }] : []),
 			...transcription.bars.map((bar) => ({ from: bar.firstBeat, to: bar.firstBeat + bar.beats }))
 		];
