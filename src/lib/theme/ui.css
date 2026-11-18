@@ -71,6 +71,32 @@
 	}
 }
 
+/* Buttons joined into one raised strip (start over, bar back, bar forward):
+   the strip casts one shadow, so no key shades its neighbour */
+@utility ui-key-strip {
+	display: flex;
+	overflow: hidden;
+	border-radius: var(--corner-control);
+	border: 1px solid var(--color-line);
+	box-shadow:
+		0 1px 3px var(--shadow-dark-edge),
+		var(--shadow-drop-small);
+
+	& > .ui-button {
+		border: none;
+		border-radius: 0;
+		box-shadow: var(--shadow-bevel);
+	}
+
+	& > .ui-button + .ui-button {
+		border-left: 1px solid var(--color-line);
+	}
+
+	& > .ui-button:active:not(:disabled) {
+		box-shadow: var(--shadow-inset-small);
+	}
+}
+
 /* The main action on a screen (Play): a button in the accent colour */
 @utility ui-button-primary {
 	color: var(--color-accent);

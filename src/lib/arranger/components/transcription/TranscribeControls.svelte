@@ -77,7 +77,7 @@
 			>
 				<PlayPauseGlyph playing={player.playing} />
 			</button>
-			<div class="keys">
+			<div class="keys ui-key-strip">
 				<button
 					type="button"
 					class="ui-button"
@@ -159,27 +159,15 @@
 		line-height: 1;
 	}
 
-	/* Start over and the bar steps as one strip of keys */
 	.keys {
-		display: flex;
+		height: 2.5rem;
 	}
 	.keys .ui-button {
 		width: 2.75rem;
-		height: 2.5rem;
 		display: grid;
 		place-items: center;
 		font-size: 1.25rem;
 		line-height: 1;
-		border-radius: 0;
-	}
-	.keys .ui-button + .ui-button {
-		margin-left: -1px;
-	}
-	.keys .ui-button:first-child {
-		border-radius: var(--corner-control) 0 0 var(--corner-control);
-	}
-	.keys .ui-button:last-child {
-		border-radius: 0 var(--corner-control) var(--corner-control) 0;
 	}
 
 	.readout {
