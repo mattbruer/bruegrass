@@ -24,6 +24,18 @@ export function unknownChordMessage(name, where) {
 }
 
 /**
+ * What's wrong with one chord box ('' when nothing is): it holds one chord
+ * the band can play, or nothing.
+ * @param {string} text
+ */
+export function chordBoxProblem(text) {
+	const name = text.trim();
+	if (!name) return '';
+	if (/[\s,|]/.test(name)) return 'One chord per box.';
+	return isKnownChord(name) ? '' : unknownChordMessage(name);
+}
+
+/**
  * The first chord in the chart the band can't play, worded ('' when there's none).
  * @param {import('./timeline.js').Section[]} sections
  */

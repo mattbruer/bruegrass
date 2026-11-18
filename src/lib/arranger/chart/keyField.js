@@ -1,12 +1,14 @@
 /**
- * The song's key written into the chart as an abc-style field, `[K:G]`,
- * for when the first chord doesn't give it (a song that starts on the V).
- * It names the key of the guitar's shapes, before any capo, and holds for
- * the whole song. Written once, on the first section's line.
+ * Keys written into the chart as abc-style fields, `[K:G]`. Anywhere in
+ * the chart one names the key from that bar on (a B part in minor, a
+ * modulation). The one before the first bar, on the first section's line,
+ * names the song's key, for when the first chord doesn't give it (a song
+ * that starts on the V). Keys name the guitar's shapes, before any capo.
  */
 import { parseKeyName } from './key.js';
 
-const KEY_FIELD = /\[K:([^\]]*)\]/;
+/** A section line's leading fields, up to its first `[K:]` (the song's key, on the first section line). */
+const LEADING_KEY = /^(\s*"[^"]+"[ \t]*(?:\[(?!K:)[^\]]*\][ \t]*)*)\[K:([^\]]*)\][ \t]?/;
 
 /** @param {string} token */
 export function isKeyField(token) {
@@ -25,21 +27,34 @@ export function parseKeyField(token, section) {
 }
 
 /**
- * The arrangement text naming this key (or none, to go back to the guess).
+ * The arrangement text naming this song key (or none, to go back to the
+ * guess). Only the song's key changes; keys named later in the song stay.
  * @param {string} text
  * @param {string | null} name e.g. "G", "Em"
  */
 export function withKeyField(text, name) {
+	const line = firstSectionLine(text);
+	if (!line) return text;
 	const field = name ? `[K:${name}]` : '';
-	if (KEY_FIELD.test(text)) return text.replace(/\s?\[K:[^\]]*\]/, field && ` ${field}`);
-	if (!field) return text;
-	return text.replace(/^(\s*"[^"]+")/m, `$1 ${field}`);
+	const named = LEADING_KEY.test(line.text)
+		? line.text.replace(LEADING_KEY, (_, lead) => (field ? `${lead}${field} ` : lead))
+		: field
+			? line.text.replace(/^(\s*"[^"]+")/, `$1 ${field}`)
+			: line.text;
+	return text.slice(0, line.at) + named + text.slice(line.at + line.text.length);
 }
 
 /**
- * The key the chart names ("G", "Em"), or null when it names none.
+ * The song's key as the chart names it ("G", "Em"), or null when it names none.
  * @param {string} text
  */
 export function keyFieldName(text) {
-	return text.match(KEY_FIELD)?.[1].trim() || null;
+	const line = firstSectionLine(text);
+	return (line && LEADING_KEY.exec(line.text)?.[2].trim()) || null;
+}
+
+/** @param {string} text */
+function firstSectionLine(text) {
+	const match = /^\s*"[^"]+".*$/m.exec(text);
+	return match ? { at: match.index, text: match[0] } : null;
 }

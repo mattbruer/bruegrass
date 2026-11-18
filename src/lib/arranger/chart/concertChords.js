@@ -12,7 +12,7 @@ const EPSILON = 1e-6;
 /**
  * A chord as written on the chart (a guitar shape), at concert pitch.
  * @param {string} name e.g. "G", "G:high"
- * @param {import('./key.js').Key | null} key the song's key
+ * @param {import('./key.js').Key | null} key the key it's in (the song's, or one a [K:] named)
  * @param {number} capo
  */
 export function concertChord(name, key, capo) {
@@ -32,6 +32,6 @@ export function concertChordAt(sections, capo) {
 	return (time) => {
 		const slot =
 			time < 0 ? slots.at(-1) : (slots.findLast((s) => s.start <= time + EPSILON) ?? slots[0]);
-		return slot && !isNoChord(slot.name) ? concertChord(slot.name, key, capo) : null;
+		return slot && !isNoChord(slot.name) ? concertChord(slot.name, slot.key ?? key, capo) : null;
 	};
 }

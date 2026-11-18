@@ -46,6 +46,7 @@
  * @typedef {Record<string, Record<string, string>>} PickupBars section → voice → its pickup bar
  */
 import { sectionBlocks } from '../../chart/sectionBlocks.js';
+import { tuneKeyText, withKeyResets, withoutReset } from './sectionKeys.js';
 
 /** The melody's voice id, as the harmony writer marks it (V:1). */
 export const MELODY_VOICE = '1';
@@ -105,14 +106,18 @@ export function upgradedTune(saved) {
 export function playedTune(tune, instances, fill) {
 	const voiced = tune.voices.length > 0;
 	const first = instances[0]?.source;
-	const voice = (/** @type {string} */ id, /** @type {string} */ line) => [
-		...(voiced ? [line] : []),
-		...nonEmpty(pickupBar(tune, id, first, fill) ?? tune.leads[id]),
-		...instances.flatMap((instance, index) => [
-			`P:${instance.name}`,
-			partOf(tune, id, instance.source, index, fill)
-		])
-	];
+	const tuneKey = tuneKeyText(tune.header);
+	const voice = (/** @type {string} */ id, /** @type {string} */ line) => {
+		const bodies = withKeyResets(
+			instances.map((instance, index) => partOf(tune, id, instance.source, index, fill)),
+			tuneKey
+		);
+		return [
+			...(voiced ? [line] : []),
+			...nonEmpty(pickupBar(tune, id, first, fill) ?? tune.leads[id]),
+			...instances.flatMap((instance, index) => [`P:${instance.name}`, bodies[index]])
+		];
+	};
 	return lines([
 		tune.header.trimEnd(),
 		...voice(MELODY_VOICE, `V:${MELODY_VOICE}`),
@@ -154,12 +159,23 @@ export function tuneBySectionText(tune, instances, fill) {
 				...tune.voices.flatMap(({ id, line }) => [line, ...leadOf(id)])
 			]
 		: leadOf(MELODY_VOICE);
-	const sections = firstOfEach(instances).flatMap(({ source, index }) => [
+	const shown = firstOfEach(instances);
+	const tuneKey = tuneKeyText(tune.header);
+	const bodiesOf = Object.fromEntries(
+		ids.map((id) => [
+			id,
+			withKeyResets(
+				shown.map(({ source, index }) => partOf(tune, id, source, index, fill)),
+				tuneKey
+			)
+		])
+	);
+	const sections = shown.flatMap(({ source }, i) => [
 		`P:${source}`,
 		...ids.flatMap((id) => [
 			...(voiced ? [`V:${id}`] : []),
 			...nonEmpty(pickupBar(tune, id, source, fill) ?? ''),
-			partOf(tune, id, source, index, fill)
+			bodiesOf[id][i]
 		])
 	]);
 	return lines([tune.header.trimEnd(), ...leads, ...sections]);
@@ -183,10 +199,12 @@ export function fromPlayedTune(text, tune, instances, fill, lifted = {}) {
 	if (!read) return null;
 	const parts = copyParts(tune.parts);
 	const pickups = copyPickups(tune.pickups);
+	const tuneKey = tuneKeyText(read.header);
 	for (const id of read.ids) {
 		const sections = read.sections.filter((section) => section.voice === id);
 		if (sections.length !== instances.length) return null;
-		sections.forEach(({ body }, index) => {
+		sections.forEach(({ body: written }, index) => {
+			const body = withoutReset(written, tuneKey);
 			const { source } = instances[index];
 			if (body !== partOf(tune, id, source, index, fill)) setPart(parts, source, id, body);
 		});
@@ -221,7 +239,9 @@ export function fromTuneBySectionText(text, tune, instances, fill) {
 	if (!read || read.sections.length === 0) return null;
 	const parts = copyParts(tune.parts);
 	const pickups = copyPickups(tune.pickups);
-	for (const { name, voice, body } of read.sections) {
+	const tuneKey = tuneKeyText(read.header);
+	for (const { name, voice, body: written } of read.sections) {
+		const body = withoutReset(written, tuneKey);
 		const index = instances.findIndex((instance) => instance.source === name);
 		const { pickup, rest } = tune.pickups[name]?.quarters
 			? splitFirstBar(body)

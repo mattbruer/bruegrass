@@ -10,8 +10,8 @@ import { withoutVariant } from '../instruments/chordBook.js';
 /**
  * @typedef {{ section: number, measure: number, chord: number }} ChordPlace
  *   where a chord is written: section index, bar in it, chord in the bar
- * @typedef {import('../theory/analyzeProgression.js').Reading & { mark: string | null, name: string }} ChordAnalysis
- *   mark: your own reading, shown instead of label when there is one
+ * @typedef {import('../theory/analyzeProgression.js').Reading & { mark: string | null, name: string, key: import('./key.js').Key }} ChordAnalysis
+ *   mark: your own reading, shown instead of label when there is one; key: the key it's read in
  */
 
 /** @param {ChordPlace} place */
@@ -21,7 +21,7 @@ export function placeId({ section, measure, chord }) {
 
 /**
  * @param {(import('./timeline.js').Section & { marks?: (string | null)[][] })[]} sections
- * @param {import('./key.js').Key | null} key
+ * @param {import('./key.js').Key | null} key the song's (each chord is read in its own, `keyOfChord`)
  * @returns {Map<string, ChordAnalysis>} by placeId
  */
 export function chartAnalysis(sections, key) {
@@ -29,15 +29,16 @@ export function chartAnalysis(sections, key) {
 	const byPlace = new Map();
 	if (!key) return byPlace;
 	const slots = slotPositions(sections);
+	const keys = slots.map((slot) => slot.key ?? key);
 	const readings = analyzeProgression(
 		slots.map((slot) => withoutVariant(slot.name)),
-		key
+		keys
 	);
 	slots.forEach((slot, i) => {
 		const reading = readings[i];
 		if (!reading) return;
 		const mark = sections[slot.section].marks?.[slot.measure]?.[slot.chord] ?? null;
-		byPlace.set(placeId(slot), { ...reading, mark, name: slot.name });
+		byPlace.set(placeId(slot), { ...reading, mark, name: slot.name, key: keys[i] });
 	});
 	return byPlace;
 }

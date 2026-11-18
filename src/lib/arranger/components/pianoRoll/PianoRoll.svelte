@@ -52,7 +52,7 @@
 	 *   score: import('../../melody/roll/readScore.js').Score,
 	 *   notes: import('../../melody/roll/editNotes.js').DrawnNote[],
 	 *   chordsUnder: import('../../melody/roll/chordsUnderBars.js').ChordUnder[],
-	 *   chordName: (name: string) => string,
+	 *   chordName: (name: string, place?: import('../../chart/chartAnalysis.js').ChordPlace) => string,
 	 *   spelling: import('../../theory/musicInKey.js').Key,
 	 *   tonic: number,
 	 *   usualRange: import('../../melody/roll/pitchRows.js').RowRange,
@@ -499,7 +499,7 @@
 					<span
 						class="chord"
 						style:left="{chord.at * tickWidth}px"
-						style:width="{chord.length * tickWidth}px">{chordName(chord.name)}</span
+						style:width="{chord.length * tickWidth}px">{chordName(chord.name, chord.place)}</span
 					>
 				{/each}
 			</div>

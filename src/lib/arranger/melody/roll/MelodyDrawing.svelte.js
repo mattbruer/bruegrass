@@ -150,7 +150,7 @@ export class MelodyDrawing {
 		);
 		const chord =
 			under && !isNoChord(under.name)
-				? concertChord(under.name, arrangement.key, arrangement.capoFret)
+				? concertChord(under.name, under.key ?? arrangement.key, arrangement.capoFret)
 				: null;
 		return chordToneOptions(chord, melodyKey.spelling, note.midi);
 	});

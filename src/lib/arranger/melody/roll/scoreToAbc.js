@@ -33,7 +33,7 @@ export function rewriteAbc(abc, score, notes, { every = false } = {}) {
 		const lead = old.match(/^\s*/)?.[0] ?? '';
 		const trail = old.match(/\s*$/)?.[0] ?? '';
 		const music = writeBar(bar, after, {
-			key: score.key,
+			key: bar.key ?? score.key,
 			unit: score.unit,
 			pickup: isPickup(score, index)
 		});
@@ -59,7 +59,7 @@ export function changedBars(score, notes) {
 }
 
 /**
- * A whole tune: header, then every bar.
+ * A whole tune: header, then every bar, with a `[K:]` wherever a bar's key changes.
  * @param {Score} score bars not yet written (from scoreFromChart)
  * @param {DrawnNote[]} notes
  * @param {{ title: string, keyText: string, lineStarts: Map<number, string> }} header
@@ -70,6 +70,8 @@ export function newAbc(score, notes, { title, keyText, lineStarts }) {
 	const lines = [];
 	let line = '';
 	let meter = `${first.num}/${first.den}`;
+	const tuneKey = keyText.split(' ')[0]; // "Em", without a clef
+	let key = tuneKey;
 	let barsOnLine = 0;
 
 	score.bars.forEach((bar, index) => {
@@ -83,10 +85,13 @@ export function newAbc(score, notes, { title, keyText, lineStarts }) {
 		}
 		if (sectionName) lines.push(`P:${sectionName}`);
 		const barMeter = `${bar.meter.num}/${bar.meter.den}`;
-		const change = barMeter !== meter ? `[M:${barMeter}] ` : '';
+		const barKey = bar.keyText ?? tuneKey;
+		const change =
+			(barMeter !== meter ? `[M:${barMeter}] ` : '') + (barKey !== key ? `[K:${barKey}] ` : '');
 		meter = barMeter;
+		key = barKey;
 		const music = writeBar(bar, barEvents(bar, notes, score.chords), {
-			key: score.key,
+			key: bar.key ?? score.key,
 			unit: score.unit
 		});
 		line += `${line ? '| ' : ''}${change}${music} `;

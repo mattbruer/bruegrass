@@ -21,8 +21,13 @@ import { chartTokens, isBar } from './chartTokens.js';
  * - `[2/4]` (no `M:`) sets the time signature for that one bar only, for
  *   the extra or missing beats of a crooked tune.
  * - Default is 4/4.
- * - `[K:G]` names the song's key (keyField.js), when the first chord
- *   doesn't give it. Every section carries it as `key` (null if not named).
+ * - `[K:G]` names the key from there on (keyField.js), carrying into
+ *   later sections until changed, like `[M:]`: a B part in minor, a
+ *   modulation. Inside a bar it changes the key from the next chord, for a
+ *   pivot chord (`|G,[K:Em]Am|`). `keys`, parallel to `measures`, is each
+ *   chord's key (null before any is named). A `[K:]` before the first bar names the song's
+ *   key, which every section carries as `key` (null if not named: the
+ *   first chord says it).
  * - Lines under a section line are its lyrics (see sectionLyrics.js);
  *   the chord chart ignores them.
  * - `A7{V7/V}`: your own analysis of a chord (analysisMarks.js), kept in
@@ -30,14 +35,17 @@ import { chartTokens, isBar } from './chartTokens.js';
  * - `held`, parallel to `measures`: true for a bar left empty, which holds
  *   the chord before it (drawn without a chord name).
  *
- * @returns {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], marks: (string | null)[][], held: boolean[], key: import('./key.js').Key | null }[]}
+ * @returns {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], marks: (string | null)[][], held: boolean[], keys: (import('./key.js').Key | null)[][], key: import('./key.js').Key | null }[]}
  */
 export function parseArrangement(source) {
-	/** @type {{ name: string, measures?: string[][], meters?: import('./timeline.js').Meter[], marks?: (string | null)[][], held?: boolean[], reference?: string, key?: import('./key.js').Key | null }[]} */
+	/** @type {{ name: string, measures?: string[][], meters?: import('./timeline.js').Meter[], marks?: (string | null)[][], held?: boolean[], keys?: (import('./key.js').Key | null)[][], reference?: string, key?: import('./key.js').Key | null }[]} */
 	const sections = [];
 	let meter = DEFAULT_METER;
-	/** @type {import('./key.js').Key | null} */
+	/** @type {import('./key.js').Key | null} the key in force */
 	let key = null;
+	/** @type {import('./key.js').Key | null} named before the first bar */
+	let songKey = null;
+	let barsSoFar = 0;
 	/** @type {string | null} */
 	let chordBefore = null;
 
@@ -54,10 +62,13 @@ export function parseArrangement(source) {
 		const meters = [];
 		const marks = [];
 		const held = [];
+		const keys = [];
 		/** @type {import('./timeline.js').Meter | null} */
 		let barOnly = null;
 		let text = '';
 		let afterBarline = false;
+		/** @type {{ from: number, key: import('./key.js').Key }[]} keys named inside this bar, from which chord */
+		let keyChanges = [];
 
 		const endBar = () => {
 			let chords = text
@@ -73,6 +84,12 @@ export function parseArrangement(source) {
 			measures.push(chords.map(({ chord }) => chord));
 			marks.push(chords.map(({ mark }) => mark));
 			meters.push(barOnly ?? meter);
+			keys.push(
+				chords.map((_, c) => keyChanges.findLast((change) => change.from <= c)?.key ?? key)
+			);
+			key = keyChanges.at(-1)?.key ?? key;
+			keyChanges = [];
+			barsSoFar += 1;
 			barOnly = null;
 		};
 
@@ -80,16 +97,21 @@ export function parseArrangement(source) {
 			if (token === '|') {
 				endBar();
 				afterBarline = true;
-			} else if (isKeyField(token)) key ??= parseKeyField(token, name);
-			else if (token.startsWith('[')) {
+			} else if (isKeyField(token)) {
+				const from = text.split(',').filter((chord) => chord.trim()).length;
+				const named = parseKeyField(token, name);
+				if (barsSoFar === 0 && from === 0) songKey = named;
+				keyChanges.push({ from, key: named });
+			} else if (token.startsWith('[')) {
 				const field = parseMeterField(token, name);
 				if (field.persistent) meter = field.meter;
 				else barOnly = field.meter;
 			} else text += token;
 		}
 		if (text.trim()) endBar(); // chords after the last barline
+		key = keyChanges.at(-1)?.key ?? key; // named after the section's last bar: from the next one on
 
-		sections.push({ name, measures, meters, marks, held });
+		sections.push({ name, measures, meters, marks, held, keys });
 	}
 
 	// Resolve repeated sections
@@ -106,12 +128,13 @@ export function parseArrangement(source) {
 		section.meters = structuredClone(original.meters);
 		section.marks = structuredClone(original.marks);
 		section.held = structuredClone(original.held);
+		section.keys = structuredClone(original.keys);
 		delete section.reference;
 	}
 
-	for (const section of sections) section.key = key;
+	for (const section of sections) section.key = songKey;
 
-	return /** @type {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], marks: (string | null)[][], held: boolean[], key: import('./key.js').Key | null }[]} */ (
+	return /** @type {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], marks: (string | null)[][], held: boolean[], keys: (import('./key.js').Key | null)[][], key: import('./key.js').Key | null }[]} */ (
 		sections
 	);
 }

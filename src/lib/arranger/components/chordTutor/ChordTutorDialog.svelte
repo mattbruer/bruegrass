@@ -22,13 +22,11 @@
 
 	let found = $derived(place ? arrangement.analysis.get(placeId(place)) : undefined);
 	let name = $derived(found ? withoutVariant(found.name) : '');
-	let lesson = $derived(
-		found && arrangement.key ? chordLesson(name, found, arrangement.key) : null
-	);
+	let lesson = $derived(found ? chordLesson(name, found, found.key) : null);
 
 	function hearScale() {
 		if (!lesson) return;
-		// The lesson is in the chart's key (the shapes); the capo raises what the band sounds
+		// The lesson is in the chord's key on the chart (the shapes); the capo raises what the band sounds
 		const pitches = lesson.pitches.map((pitch) => pitch + arrangement.capoFret);
 		auditionScale(pitches, arrangement.transpose).catch(console.error);
 	}

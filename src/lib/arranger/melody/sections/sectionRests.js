@@ -1,10 +1,13 @@
 /**
  * What a section with no tune yet plays: a rest in every bar, with the
  * chart's chords on them (at concert pitch), so the sheet music and the
- * piano roll show the section's bars and chords, ready to draw on.
+ * piano roll show the section's bars and chords, ready to draw on, and
+ * the chart's key where it isn't the tune's (`[K:]`).
  */
 import { scoreFromChart } from '../roll/scoreFromChart.js';
 import { barEvents, writeBar } from '../roll/writeBar.js';
+import { melodyKey } from '../roll/melodyKey.js';
+import { withKeyFields } from './sectionKeys.js';
 
 /** Bars on a line of a section's tune. */
 const BARS_PER_LINE = 4;
@@ -19,9 +22,9 @@ const BARS_PER_LINE = 4;
 export function sectionRests(bars, { songKey, capo, spelling, unit }) {
 	const { score } = scoreFromChart(bars, songKey, capo, spelling);
 	const written = score.bars.map((bar) =>
-		writeBar(bar, barEvents(bar, [], score.chords), { key: spelling, unit })
+		writeBar(bar, barEvents(bar, [], score.chords), { key: bar.key ?? spelling, unit })
 	);
-	return barLines(written);
+	return barLines(withKeyFields(score.bars, written, melodyKey(songKey, capo).keyText));
 }
 
 /**

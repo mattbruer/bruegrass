@@ -1,10 +1,11 @@
 /**
  * Rewrite a chord chart's chords in another key, leaving everything else
- * (section names, bar lines, time signatures, spacing) as typed. A `[K:]`
- * field moves with the chords.
+ * (section names, bar lines, time signatures, spacing) as typed. Every
+ * `[K:]` field moves with the chords, and each chord is spelled in the key
+ * it's written in.
  */
 import { chordLabel, keyName, songKey } from './key.js';
-import { isKeyField } from './keyField.js';
+import { isKeyField, parseKeyField } from './keyField.js';
 import { chartTokens } from './chartTokens.js';
 import { parseArrangement } from './parseArrangement.js';
 import { splitMark, withMark } from './analysisMarks.js';
@@ -14,7 +15,7 @@ import { splitMark, withMark } from './analysisMarks.js';
  * @param {number} semitones how far to move every chord
  */
 export function transposeChart(text, semitones) {
-	const key = songKey(parseArrangement(text));
+	let key = songKey(parseArrangement(text));
 	if (!key) return text;
 
 	/** @param {string} text a chord, maybe with your analysis after it (which doesn't change with the key) */
@@ -30,7 +31,10 @@ export function transposeChart(text, semitones) {
 			if (!match || match[2].startsWith('as ')) return line;
 			const [, name, content] = match;
 			const rewritten = chartTokens(content).map((token) => {
-				if (isKeyField(token)) return `[K:${keyName(key, semitones)}]`;
+				if (isKeyField(token)) {
+					key = parseKeyField(token, name);
+					return `[K:${keyName(key, semitones)}]`;
+				}
 				if (token === '|' || token.startsWith('[')) return token;
 				return token.replace(/[^,\s]+/g, moved);
 			});

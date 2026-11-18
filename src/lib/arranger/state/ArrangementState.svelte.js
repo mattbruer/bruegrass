@@ -4,7 +4,7 @@
  * from them.
  */
 import { readArrangement } from '../chart/readArrangement.js';
-import { chordLabel, songKey, validChordDisplay } from '../chart/key.js';
+import { chordLabel, keyOfChord, songKey, validChordDisplay } from '../chart/key.js';
 import { keyChoicesFor } from '../chart/keyChoices.js';
 import { TEMPO_DEFAULT, validTempo } from '../chart/tempo.js';
 import { validCapo } from '../chart/capo.js';
@@ -69,7 +69,10 @@ export class ArrangementState {
 	chordName = (chord, place) => {
 		if (this.chordDisplay !== 'roman') {
 			const shift = this.chordDisplay === 'shapes' ? this.shapesShift : this.pitchShift;
-			return chordLabel(chord, { key: this.key, shift, mode: this.chordDisplay });
+			const key = place
+				? keyOfChord(this.sections[place.section] ?? {}, place.measure, place.chord, this.key)
+				: this.key;
+			return chordLabel(chord, { key, shift, mode: this.chordDisplay });
 		}
 		const found = place && this.analysis.get(placeId(place));
 		return found ? (found.mark ?? found.label) : functionOnItsOwn(chord, this.key);

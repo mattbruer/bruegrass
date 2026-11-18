@@ -17,6 +17,7 @@ import { barEvents, writeBar } from '../roll/writeBar.js';
 import { TICKS_PER_QUARTER } from '../roll/ticks.js';
 import { barLines } from './sectionRests.js';
 import { readTuneText } from './tuneBySection.js';
+import { tuneKeyText, withKeyFields } from './sectionKeys.js';
 
 /** Repeats or endings in the music (`|:`, `:|`, `::`, `[1`, `|2`). */
 const REPEATS = /\|:|:\||::|\[\d|\|\d/;
@@ -75,10 +76,11 @@ export function hasRepeats(abc) {
 export function splitScore(score, pickup, id, instances, barCounts, split) {
 	const write = (/** @type {import('../roll/readScore.js').ScoreBar} */ bar, isPickup = false) =>
 		writeBar(bar, barEvents(bar, score.notes, score.chords), {
-			key: score.key,
+			key: bar.key ?? score.key,
 			unit: score.unit,
 			pickup: isPickup
 		});
+	const tuneKey = tuneKeyText(split.header);
 	const first = instances[0]?.source;
 	if (pickup && first !== undefined) {
 		// A pickup at the start belongs to the first section: it's sung before it wherever it plays
@@ -91,7 +93,13 @@ export function splitScore(score, pickup, id, instances, barCounts, split) {
 		const bars = score.bars.slice(at, at + barCounts[index]);
 		at += barCounts[index];
 		if (split.parts[source]?.[id] !== undefined || !hasNotes(score, bars)) return;
-		const music = barLines(bars.map((bar) => write(bar)));
+		const music = barLines(
+			withKeyFields(
+				bars,
+				bars.map((bar) => write(bar)),
+				tuneKey
+			)
+		);
 		split.parts[source] = { ...split.parts[source], [id]: music };
 	});
 }

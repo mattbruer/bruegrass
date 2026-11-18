@@ -11,8 +11,12 @@ import { isPickup } from './scoreToAbc.js';
 const EPSILON = 1e-6;
 
 /**
- * @typedef {{ at: number, length: number, name: string }} ChordUnder
- *   at/length in ticks of the score; name as the chart writes it
+ * @typedef {{
+ *   at: number, length: number, name: string,
+ *   place: import('../../chart/chartAnalysis.js').ChordPlace, key: import('../../chart/key.js').Key | null
+ * }} ChordUnder
+ *   at/length in ticks of the score; name as the chart writes it; place: where on the chart;
+ *   key: the key a [K:] named for it (null: the song's)
  */
 
 /**
@@ -31,7 +35,9 @@ export function chordsUnderBars(score, sequence, chartBars) {
 		return chordsBetween(chartBars, time, time + bar.length / TICKS_PER_QUARTER).map((chord) => ({
 			at: bar.start + Math.round((chord.start - time) * TICKS_PER_QUARTER),
 			length: Math.round(chord.length * TICKS_PER_QUARTER),
-			name: chord.name
+			name: chord.name,
+			place: chord.place,
+			key: chord.key
 		}));
 	});
 }
@@ -63,7 +69,13 @@ function chordsBetween(chartBars, from, to) {
 			const end = start + chord.length;
 			if (end > from + EPSILON && start < to - EPSILON) {
 				const clipped = Math.max(start, from);
-				chords.push({ name: chord.name, start: clipped, length: Math.min(end, to) - clipped });
+				chords.push({
+					name: chord.name,
+					start: clipped,
+					length: Math.min(end, to) - clipped,
+					place: { section: bar.section, measure: bar.measure, chord: chord.chord },
+					key: chord.key
+				});
 			}
 			start = end;
 		}

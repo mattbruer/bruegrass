@@ -226,9 +226,14 @@ function within(notes, region) {
  * @param {Score} score the voice they're from (its key, unit and time)
  */
 function barOf(notes, region, score) {
-	const meter = score.bars.find((bar) => bar.start <= region.from)?.meter ?? { num: 4, den: 4 };
+	const source = score.bars.find((bar) => bar.start <= region.from);
+	const meter = source?.meter ?? { num: 4, den: 4 };
 	const bar = { start: region.from, length: region.to - region.from, meter, from: null, to: null };
-	return `${writeBar(bar, barEvents(bar, notes, []), { key: score.key, unit: score.unit, pickup: true })} |`;
+	return `${writeBar(bar, barEvents(bar, notes, []), {
+		key: source?.key ?? score.key,
+		unit: score.unit,
+		pickup: true
+	})} |`;
 }
 
 /**

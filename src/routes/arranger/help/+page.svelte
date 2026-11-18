@@ -238,6 +238,22 @@
 			Name the key of the chord shapes you play, before any capo: with G shapes and the capo on 2,
 			write <code>[K:G]</code>. A minor key has an <b>m</b>: <code>[K:Em]</code>.
 		</p>
+		<p>
+			When the song <b>changes key</b>, say the new key where it changes, and it holds from there
+			on, into the next parts too, until you change it again. A part in a minor key:
+		</p>
+		{@render example(`"A" [K:G] |G|C|D|G|
+"B" [K:Em] |Em|Am|B7|Em|`)}
+		<p>
+			It can change halfway through a bar too, from the next chord on, for a chord that leads into
+			the new key:
+		</p>
+		{@render example(`"B" [K:Em] |Em|Am|B7|Em,[K:G] D7|`)}
+		<p class="tip">
+			The key doesn't change what the band plays. It changes how the chords are named in Roman and
+			Nashville numbers, what the chord lessons say, and how notes are spelled. In the melody, write
+			<code>[K:Em]</code> in the ABC the same way.
+		</p>
 	</section>
 
 	<section id="words">

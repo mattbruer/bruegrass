@@ -51,24 +51,35 @@ import {
 
 /**
  * @param {string[]} names chord names in play order (anything that isn't a chord, like N.C., is skipped)
- * @param {Key} key
+ * @param {Key | Key[]} keys the key, or each chord's own (a song that changes key): every
+ *   chord is read in its own key, and so are the chords it leads to
  * @returns {(Reading | null)[]} one per name; null where there's no chord
  */
-export function analyzeProgression(names, key) {
-	const chords = names.map((name) => readChord(name, key));
-	const nexts = chords.map((_, i) => nextChange(chords, i));
-	const dominants = chords.map((chord, i) =>
-		chord ? dominantReading(chord, nexts[i]?.chord ?? null, key) : null
-	);
+export function analyzeProgression(names, keys) {
+	return names.map((_, i) => readingAt(names, i, Array.isArray(keys) ? keys[i] : keys));
+}
 
-	return chords.map((chord, i) => {
-		if (!chord) return null;
-		const asDominant = dominants[i];
-		if (asDominant) return withoutDetails(asDominant);
-		const next = nexts[i]?.chord ?? null;
-		const nextAsDominant = nexts[i] ? dominants[nexts[i].index] : null;
-		return relatedTwoReading(chord, next, nextAsDominant, key) ?? plainReading(chord, next, key);
-	});
+/**
+ * One chord's reading, from where it goes, all in its key.
+ * @param {string[]} names
+ * @param {number} i
+ * @param {Key} key
+ * @returns {Reading | null}
+ */
+function readingAt(names, i, key) {
+	const chord = readChord(names[i], key);
+	if (!chord) return null;
+	const next = nextChange(names, i);
+	const nextChord = next === null ? null : readChord(names[next], key);
+	const asDominant = dominantReading(chord, nextChord, key);
+	if (asDominant) return withoutDetails(asDominant);
+	const afterNext = next === null ? null : nextChange(names, next);
+	const nextAsDominant =
+		nextChord &&
+		dominantReading(nextChord, afterNext === null ? null : readChord(names[afterNext], key), key);
+	return (
+		relatedTwoReading(chord, nextChord, nextAsDominant, key) ?? plainReading(chord, nextChord, key)
+	);
 }
 
 /**
@@ -95,18 +106,16 @@ export function readChord(name, key) {
 }
 
 /**
- * The next different chord after this one, going round to the top at the
- * end (a song repeats, so its last chord leads back to its first).
- * @param {(Chord | null)[]} chords
+ * Where the next different chord after this one is, going round to the
+ * top at the end (a song repeats, so its last chord leads back to its first).
+ * @param {string[]} names
  * @param {number} i
+ * @returns {number | null}
  */
-function nextChange(chords, i) {
-	const chord = chords[i];
-	if (!chord) return null;
-	for (let step = 1; step < chords.length; step++) {
-		const index = (i + step) % chords.length;
-		const next = chords[index];
-		if (next && next.name !== chord.name) return { index, chord: next };
+function nextChange(names, i) {
+	for (let step = 1; step < names.length; step++) {
+		const index = (i + step) % names.length;
+		if (parseChord(names[index]) && names[index] !== names[i]) return index;
 	}
 	return null;
 }

@@ -5,9 +5,11 @@
  * each chord on the same letter step from the tonic, so G–C–D in G becomes
  * Bb–Eb–F in Bb (never A#–D#–F), and an F (bVII) in G becomes G in A.
  *
- * The song's key is the chart's `[K:G]` field when it has one (see
- * keyField.js). Otherwise it's taken from the first chord (bluegrass songs
- * almost always start on the I chord); a minor first chord makes it minor.
+ * The song's key is the chart's `[K:G]` field before the first bar when it
+ * has one (see keyField.js). Otherwise it's taken from the first chord
+ * (bluegrass songs almost always start on the I chord); a minor first chord
+ * makes it minor. A `[K:]` later in the chart changes the key from that bar
+ * on (`keyOfChord`).
  */
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -89,6 +91,18 @@ function isMinor(rest) {
  */
 export function songKey(sections) {
 	return sections[0]?.key ?? guessedKey(sections);
+}
+
+/**
+ * The key a chord is in: the one a `[K:]` named for it, else the song's.
+ * @param {{ keys?: (Key | null)[][] }} section
+ * @param {number} measure
+ * @param {number} chord
+ * @param {Key | null} songsKey
+ * @returns {Key | null}
+ */
+export function keyOfChord(section, measure, chord, songsKey) {
+	return section.keys?.[measure]?.[chord] ?? songsKey;
 }
 
 /**

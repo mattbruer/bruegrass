@@ -17,8 +17,13 @@ import { TICKS_PER_QUARTER, ticksOfWhole } from './ticks.js';
 /**
  * @typedef {import('./editNotes.js').DrawnNote} DrawnNote
  * @typedef {{ num: number, den: number }} AbcMeter
- * @typedef {{ start: number, length: number, meter: AbcMeter, from: number | null, to: number | null }} ScoreBar
- *   start/length in ticks; from/to: where its notes are in the ABC (null: not written yet)
+ * @typedef {{
+ *   start: number, length: number, meter: AbcMeter, from: number | null, to: number | null,
+ *   key?: import('../../theory/musicInKey.js').Key | null, keyText?: string
+ * }} ScoreBar
+ *   start/length in ticks; from/to: where its notes are in the ABC (null: not written yet);
+ *   key: the key signature a `[K:]` in the tune put it in (none: the tune's own K:);
+ *   keyText: the `[K:]` it's under ("Em"; none: the tune's own), to write before it
  * @typedef {{ at: number, name: string }} ScoreChord a chord symbol, at a tick
  * @typedef {{
  *   bars: ScoreBar[], notes: DrawnNote[], chords: ScoreChord[], unit: number,
@@ -47,6 +52,10 @@ export function readScore(abc, tune, voice = 0) {
 	/** @type {ScoreChord[]} */
 	const chords = [];
 	let meter = meterOf(tune.getMeterFraction());
+	/** @type {import('../../theory/musicInKey.js').Key | null} */
+	let keyChange = null;
+	/** @type {string | undefined} */
+	let keyChangeText;
 	let tick = 0;
 	let triplet = 1;
 	/** @type {ScoreBar | null} */
@@ -65,6 +74,10 @@ export function readScore(abc, tune, voice = 0) {
 			else if (element.el_type === 'meter') {
 				if (bar) problems.add('a change inside a bar');
 				meter = meterOf(element.value?.[0]);
+			} else if (element.el_type === 'key') {
+				if (bar) problems.add('a key change inside a bar');
+				keyChange = tuneKey(element);
+				keyChangeText = `${element.root}${element.acc ?? ''}${element.mode ?? ''}`;
 			} else if (element.el_type === 'note') {
 				for (const problem of unsupported(element)) problems.add(problem);
 				if (element.startTriplet) triplet = element.tripletMultiplier ?? 1;
@@ -72,7 +85,15 @@ export function readScore(abc, tune, voice = 0) {
 				if (element.endTriplet) triplet = 1;
 				if (length === 0) continue;
 
-				bar ??= { start: tick, length: 0, meter, from: element.startChar, to: element.endChar };
+				bar ??= {
+					start: tick,
+					length: 0,
+					meter,
+					from: element.startChar,
+					to: element.endChar,
+					key: keyChange,
+					keyText: keyChangeText
+				};
 				bar.length += length;
 				bar.to = element.endChar;
 

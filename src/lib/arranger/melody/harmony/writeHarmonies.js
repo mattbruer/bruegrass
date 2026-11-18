@@ -81,8 +81,8 @@ function findBody(abc) {
 }
 
 /**
- * The melody's notes, rests and bar lines in written order, each note with
- * when it first plays and what it sounds.
+ * The melody's notes, rests, bar lines and key changes in written order,
+ * each note with when it first plays and what it sounds.
  * @param {import('abcjs').TuneObject} tune
  * @param {number} melodyEnd
  */
@@ -101,7 +101,7 @@ function leadNotes(tune, melodyEnd) {
 	return tune.lines
 		.flatMap((line) => line.staff?.[0]?.voices?.[0] ?? [])
 		.filter((element) => element.startChar < melodyEnd)
-		.filter((element) => element.el_type === 'note' || element.el_type === 'bar')
+		.filter((element) => ['note', 'bar', 'key'].includes(element.el_type))
 		.map((element) => ({
 			element,
 			sounding: sounding.get(element.startChar) ?? ownPitch(element, pickup)
@@ -124,7 +124,8 @@ function ownPitch(element, pickup) {
 }
 
 /**
- * One part's music: the melody's text with every note's pitch swapped.
+ * One part's music: the melody's text with every note's pitch swapped,
+ * spelled in the key in force (the melody's `[K:]` changes are copied with it).
  * @param {string} abc
  * @param {number} from
  * @param {number} to
@@ -144,6 +145,10 @@ function partText(abc, from, to, notes, key, { chordAt, count, style }) {
 	const swaps = [];
 
 	for (const { element, sounding } of notes) {
+		if (element.el_type === 'key') {
+			key = tuneKey(element);
+			continue;
+		}
 		if (element.el_type === 'bar') {
 			bar = new Map();
 			continue;

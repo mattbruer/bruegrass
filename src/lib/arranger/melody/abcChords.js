@@ -439,9 +439,10 @@ export function abcWithChords(abc, voices, sections, { capo = 0 } = {}) {
 	const played = items
 		.map((item) => ({ ...item, t: item.t - pickup }))
 		.filter((item) => item.t >= -EPSILON && item.t < end - EPSILON && item.startChar !== undefined);
-	const concert = (/** @type {string} */ name) => concertChord(name, key, capo);
-	const chordAt = (/** @type {number} */ time) =>
-		slots.filter((slot) => slot.start <= time + EPSILON).at(-1)?.name ?? slots[0].name;
+	/** @param {import('../chart/timeline.js').SlotPosition} slot */
+	const concert = (slot) => concertChord(slot.name, slot.key ?? key, capo);
+	const slotAt = (/** @type {number} */ time) =>
+		slots.filter((slot) => slot.start <= time + EPSILON).at(-1) ?? slots[0];
 	/** @param {number} time */
 	const where = (time) => {
 		const slot = slots.filter((s) => s.barStart <= time + EPSILON).at(-1) ?? slots[0];
@@ -449,31 +450,31 @@ export function abcWithChords(abc, voices, sections, { capo = 0 } = {}) {
 	};
 
 	// Each chord change goes on the note (or rest) that starts with it
-	/** @type {Map<number, string>} */
+	/** @type {Map<number, import('../chart/timeline.js').SlotPosition>} */
 	const symbols = new Map();
 	slots.forEach((slot, k) => {
 		if (k > 0 && slots[k - 1].name === slot.name) return;
 		const item = played.find((i) => i.t >= slot.start - EPSILON);
 		if (!item || item.t >= slot.start + slot.length - EPSILON) {
 			notes.push(
-				`The ${concert(slot.name)} at ${where(slot.start)} can't be shown: the melody holds a note through it.`
+				`The ${concert(slot)} at ${where(slot.start)} can't be shown: the melody holds a note through it.`
 			);
 			return;
 		}
 		if (item.t > slot.start + EPSILON) {
 			notes.push(
-				`The ${concert(slot.name)} at ${where(slot.start)} is shown on the next note, as the melody holds a note through the change.`
+				`The ${concert(slot)} at ${where(slot.start)} is shown on the next note, as the melody holds a note through the change.`
 			);
 		}
 		const startChar = /** @type {number} */ (item.startChar);
-		if (!symbols.has(startChar)) symbols.set(startChar, slot.name);
+		if (!symbols.has(startChar)) symbols.set(startChar, slot);
 	});
 
 	// Repeated bars are written once, so they must have the same chords each time
 	for (const item of played) {
 		const symbol = symbols.get(/** @type {number} */ (item.startChar));
-		const wanted = chordAt(item.t);
-		if (symbol && symbol !== wanted) {
+		const wanted = slotAt(item.t);
+		if (symbol && symbol.name !== wanted.name) {
 			notes.push(
 				`At ${where(item.t)} the arrangement plays ${concert(wanted)}, but that bar repeats one where it plays ${concert(symbol)}; the music shows ${concert(symbol)}.`
 			);
@@ -481,8 +482,8 @@ export function abcWithChords(abc, voices, sections, { capo = 0 } = {}) {
 	}
 
 	let result = abc;
-	for (const [startChar, name] of [...symbols].sort((a, b) => b[0] - a[0])) {
-		result = `${result.slice(0, startChar)}"${concert(name)}"${result.slice(startChar)}`;
+	for (const [startChar, slot] of [...symbols].sort((a, b) => b[0] - a[0])) {
+		result = `${result.slice(0, startChar)}"${concert(slot)}"${result.slice(startChar)}`;
 	}
 	return { abc: result, notes: [...new Set(notes)] };
 }

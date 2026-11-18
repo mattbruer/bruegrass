@@ -4,7 +4,8 @@ import { barQuarters, meterText, slotPositions } from './timeline.js';
  * The arrangement as bars in play order, each with its chords and their
  * lengths in beats: what a chart draws (the scrolling strip, the lyric chart).
  *
- * @typedef {{ name: string, chord: number, length: number }} BarChord
+ * @typedef {{ name: string, chord: number, length: number, key: import('./key.js').Key | null }} BarChord
+ *   key: the key a [K:] named for it (null: the song's)
  * @typedef {{
  *   index: number, section: number, measure: number, sectionName: string, sectionStart: boolean,
  *   meter: string | null, beats: number, start: number, chords: BarChord[], held: boolean
@@ -42,7 +43,7 @@ export function barsInPlayOrder(sections) {
 			previousMeter = meter;
 			previousSection = slot.section;
 		}
-		bar.chords.push({ name: slot.name, chord: slot.chord, length: slot.length });
+		bar.chords.push({ name: slot.name, chord: slot.chord, length: slot.length, key: slot.key });
 	}
 	return bars;
 }

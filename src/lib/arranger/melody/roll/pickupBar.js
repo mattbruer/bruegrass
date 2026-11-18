@@ -83,7 +83,11 @@ function resizedPickup(abc, score, pickup, ticks) {
 	const to = /** @type {number} */ (pickup.to);
 	const bar = { ...pickup, start: pickup.length - ticks, length: ticks };
 	const events = barEvents(bar, score.notes, score.chords);
-	const music = writeBar(bar, events, { key: score.key, unit: score.unit, pickup: true });
+	const music = writeBar(bar, events, {
+		key: bar.key ?? score.key,
+		unit: score.unit,
+		pickup: true
+	});
 	const old = abc.slice(from, to);
 	const lead = old.match(/^\s*/)?.[0] ?? '';
 	const trail = old.match(/\s*$/)?.[0] || ' ';
