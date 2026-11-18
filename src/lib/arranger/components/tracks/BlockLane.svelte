@@ -78,8 +78,16 @@
 		min-height: 3px;
 		border-radius: 1px;
 		background: var(--color-accent);
+		background-image: linear-gradient(
+			to bottom,
+			rgb(255 255 255 / calc(0.5 * var(--gloss))) 0 35%,
+			transparent 60%,
+			rgb(0 0 0 / calc(0.15 * var(--gloss)))
+		);
 		box-shadow:
 			inset 0 1px 0 rgb(255 255 255 / calc(0.35 * var(--drop))),
-			0 3px 6px rgb(0 0 0 / calc(0.6 * var(--drop)));
+			0 3px 6px rgb(0 0 0 / calc(0.6 * var(--drop))),
+			0 3px calc(8px * var(--gloss))
+				color-mix(in oklab, var(--color-accent) calc(70% * var(--gloss)), transparent);
 	}
 </style>

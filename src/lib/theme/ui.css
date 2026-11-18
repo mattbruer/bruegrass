@@ -20,7 +20,13 @@
 	border-radius: var(--corner-card);
 	background: var(--color-raised);
 	border: 1px solid var(--color-line);
-	background-image: var(--face-3d);
+	/* the light catching the card where the mouse is (theme/followPointer.js) */
+	--sheen: radial-gradient(
+		circle 14rem at calc(var(--pointer-x, 0.5) * 100%) calc(var(--pointer-y, 0.5) * 100%),
+		rgb(255 255 255 / calc(0.1 * var(--tilt) * var(--hovering, 0))),
+		transparent
+	);
+	background-image: var(--sheen), var(--face-3d);
 	box-shadow:
 		var(--shadow-bevel),
 		0 2px 8px var(--shadow-dark-edge),
@@ -40,7 +46,12 @@
 	border-radius: var(--corner-control);
 	background: var(--color-raised);
 	border: 1px solid var(--color-line);
-	background-image: var(--face-3d);
+	--sheen: radial-gradient(
+		circle 5rem at calc(var(--pointer-x, 0.5) * 100%) calc(var(--pointer-y, 0.5) * 100%),
+		rgb(255 255 255 / calc(0.3 * var(--tilt) * var(--hovering, 0))),
+		transparent
+	);
+	background-image: var(--sheen), var(--face-3d);
 	box-shadow:
 		var(--shadow-bevel),
 		0 1px 3px var(--shadow-dark-edge),
@@ -50,6 +61,8 @@
 	transition:
 		box-shadow 0.15s ease,
 		translate 0.15s ease,
+		transform 0.15s ease,
+		scale 0.45s var(--ease-spring),
 		color 0.15s ease;
 
 	&:hover:not(:disabled) {
@@ -58,20 +71,27 @@
 
 	/* With drop shadows on, a button rises toward the mouse */
 	@media (hover: hover) {
-		&:hover:not(:disabled):not(:active) {
+		&:hover:not(:disabled):not(:active):not(.ui-button-on) {
 			translate: 0 calc(-1px * var(--drop));
 			box-shadow:
 				var(--shadow-bevel),
 				0 1px 3px var(--shadow-dark-edge),
 				var(--shadow-drop);
+			/* tipped toward the mouse (theme/followPointer.js) */
+			transform: perspective(20rem)
+				rotateX(calc((var(--pointer-y, 0.5) - 0.5) * -18deg * var(--tilt)))
+				rotateY(calc((0.5 - var(--pointer-x, 0.5)) * 18deg * var(--tilt)));
 		}
 	}
 
+	/* pressed: squashed a little; let go, it springs back past where it was */
 	&:active:not(:disabled) {
 		background: var(--color-surface-deep);
 		background-image: none;
 		box-shadow: var(--shadow-inset-small), var(--shadow-sunk);
 		translate: none;
+		scale: calc(1 - 0.07 * var(--springs));
+		transition-duration: 0.15s, 0.15s, 0.15s, 0.06s, 0.15s;
 	}
 
 	&:disabled {
@@ -94,7 +114,11 @@
 	background: color-mix(in oklab, var(--color-accent) 16%, var(--color-raised));
 	border-color: var(--color-accent);
 	background-image: none;
-	box-shadow: var(--shadow-sunk);
+	/* lit from inside: the accent glows out onto what's around it */
+	box-shadow:
+		var(--shadow-sunk),
+		0 0 calc(14px * var(--glow))
+			color-mix(in oklab, var(--color-accent) calc(45% * var(--glow)), transparent);
 	color: var(--color-accent);
 }
 
@@ -138,11 +162,4 @@
 /* A voice of the tune (melody, harmony parts): a turn round the colour wheel from the accent. Set --voice to its place (0 = melody). */
 @utility voice-colour {
 	--voice-colour: oklch(from var(--color-accent) l c calc(h + var(--voice, 0) * 75));
-}
-
-/* Cards that float over the page (menus and panels in the top layer) cast the biggest shadow */
-.ui-card:popover-open,
-:popover-open > .ui-card,
-.ui-floating {
-	box-shadow: var(--shadow-bevel), var(--shadow-drop-floating);
 }

@@ -11,12 +11,14 @@
 	import SettingsPanel from '$lib/settings/SettingsPanel.svelte';
 	import { settings, loadSettings } from '$lib/settings/settings.svelte.js';
 	import { applyTheme } from '$lib/theme/theme.js';
+	import { followPointer } from '$lib/theme/followPointer.js';
 
 	let { children } = $props();
 
 	let settingsOpen = $state(false);
 
 	onMount(loadSettings);
+	onMount(followPointer);
 
 	// Whenever an appearance setting changes, restyle the page
 	$effect(() => {

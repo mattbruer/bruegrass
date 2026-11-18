@@ -37,11 +37,15 @@
 		background:
 			linear-gradient(
 				to bottom,
-				oklch(from var(--player-bar) calc(l + 0.06) c h),
-				var(--player-bar) 35%,
-				oklch(from var(--player-bar) calc(l - 0.07) c h)
+				oklch(from var(--player-bar) calc(l + 0.06) c h / calc(1 - 0.3 * var(--glass))),
+				color-mix(in oklab, var(--player-bar) calc(100% - 30% * var(--glass)), transparent) 35%,
+				oklch(from var(--player-bar) calc(l - 0.07) c h / calc(1 - 0.3 * var(--glass)))
 			),
-			var(--player-bar); /* solid underneath: the theme's shadow colours are partly see-through */
+			/* solid underneath unless it's glass: the theme's shadow colours are partly see-through */
+			color-mix(in oklab, var(--player-bar) calc(100% - 100% * var(--glass)), transparent);
+		backdrop-filter: blur(calc(16px * var(--glass))) saturate(calc(100% + 60% * var(--glass)));
+		-webkit-backdrop-filter: blur(calc(16px * var(--glass)))
+			saturate(calc(100% + 60% * var(--glass)));
 		border-top: 1px solid var(--shadow-light-edge);
 		padding-bottom: env(safe-area-inset-bottom, 0px);
 		box-shadow:
@@ -122,9 +126,13 @@
 			0 calc(var(--key-depth) + 12px) 22px
 				color-mix(in oklab, var(--shadow-dark-edge), transparent 35%);
 		transform: translateY(0);
+		/* let go, the key springs back up */
 		transition:
-			transform 0.07s ease,
+			transform 0.45s var(--ease-spring),
 			box-shadow 0.07s ease;
+	}
+	.bar-content :global(.bar-tile:active) {
+		transition-duration: 0.07s;
 	}
 
 	/* Pressed, or on (playing, clicking, its drawer open): the key sinks almost flush with the bar */
@@ -136,6 +144,15 @@
 			inset 0 -1px 0 var(--shadow-light-edge),
 			0 2px 0 var(--key-side-4),
 			0 3px 4px var(--shadow-dark-edge);
+	}
+	.bar-content :global(.bar-tile.ui-button-on) {
+		box-shadow:
+			inset 0 3px 8px var(--shadow-dark-edge),
+			inset 0 -1px 0 var(--shadow-light-edge),
+			0 2px 0 var(--key-side-4),
+			0 3px 4px var(--shadow-dark-edge),
+			0 0 calc(24px * var(--glow))
+				color-mix(in oklab, var(--color-accent) calc(60% * var(--glow)), transparent);
 	}
 
 	/* On: the face glows with the accent */

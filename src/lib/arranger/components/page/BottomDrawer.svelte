@@ -83,7 +83,7 @@
 		transform: translateY(100%);
 		visibility: hidden;
 		transition:
-			transform 0.25s ease,
+			transform 0.5s var(--ease-spring),
 			visibility 0s linear 0.25s;
 	}
 
@@ -93,7 +93,7 @@
 	.drawer.open {
 		transform: none;
 		visibility: visible;
-		transition: transform 0.25s ease;
+		transition: transform 0.5s var(--ease-spring);
 	}
 
 	/* A phone on its side: a drawer may use all the height between the top bar and the player bar */
