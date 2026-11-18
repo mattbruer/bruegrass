@@ -49,7 +49,7 @@
 	const { melody, bass } = useArranger();
 
 	/** The names column (px); the lanes scroll under it. */
-	const HEADER_WIDTH = 150;
+	const HEADER_WIDTH = 170;
 	/** Room for a chord on every beat. */
 	const PIXELS_PER_QUARTER = 44;
 	/** The playhead sits this far across the lanes while following. */
@@ -367,7 +367,7 @@
 	.cycle-header {
 		height: var(--cycle-row-height);
 		flex-wrap: nowrap;
-		padding: 0 0.25rem;
+		padding: 0 0.5rem;
 	}
 
 	.cycle-shade {

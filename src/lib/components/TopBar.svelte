@@ -78,7 +78,7 @@
 		{#each PAGES as section (section.path)}
 			<a
 				href={resolve(section.path)}
-				class="ui-button px-2 py-1.5 text-sm sm:px-3"
+				class="ui-button px-1.5 py-1.5 text-sm sm:px-3"
 				class:ui-button-on={isCurrentSection(section.path)}
 				aria-current={isCurrentSection(section.path) ? 'page' : undefined}
 				use:tooltip={TIPS.app.pages[/** @type {keyof typeof TIPS.app.pages} */ (section.path)]}
@@ -92,7 +92,7 @@
 				<a
 					href={resolve(tool.path)}
 					class={[
-						'dev-link ui-button px-2 py-1.5 text-sm sm:px-3',
+						'dev-link ui-button px-1.5 py-1.5 text-sm sm:px-3',
 						isCurrentSection(tool.path) && 'ui-button-on',
 						'computerOnly' in tool && 'pointer-coarse:hidden'
 					]}
@@ -111,7 +111,7 @@
 
 		<a
 			href={resolve('/storage')}
-			class="flex h-9 w-9 shrink-0 ui-button items-center justify-center rounded-full"
+			class="flex h-9 w-9 shrink-0 items-center justify-center ui-button rounded-full"
 			class:ui-button-on={isCurrentSection('/storage')}
 			aria-label="Stored on this device"
 			aria-current={isCurrentSection('/storage') ? 'page' : undefined}
@@ -122,7 +122,7 @@
 
 		<button
 			type="button"
-			class="flex h-9 w-9 shrink-0 ui-button items-center justify-center rounded-full"
+			class="flex h-9 w-9 shrink-0 items-center justify-center ui-button rounded-full"
 			class:ui-button-on={settingsOpen}
 			aria-label="Settings"
 			use:tooltip={TIPS.app.settings}

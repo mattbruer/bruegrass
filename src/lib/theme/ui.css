@@ -197,3 +197,36 @@
 		pointer-events: none;
 	}
 }
+
+/*
+ * Room for the corners: rounder corners eat into a button's sides, so its
+ * side padding grows with them (none when square). It adds to the px-* the
+ * button was given, so small and big ones keep their sizes. Not fields: many
+ * have a fixed width, and the room would cut off what's in them.
+ */
+:where(.ui-button) {
+	--corner-room: calc(var(--corner-control) * 0.25);
+}
+.ui-button.px-1\.5 {
+	padding-inline: calc(var(--spacing) * 1.5 + var(--corner-room));
+}
+.ui-button.px-2 {
+	padding-inline: calc(var(--spacing) * 2 + var(--corner-room));
+}
+.ui-button.px-3 {
+	padding-inline: calc(var(--spacing) * 3 + var(--corner-room));
+}
+.ui-button.px-4 {
+	padding-inline: calc(var(--spacing) * 4 + var(--corner-room));
+}
+.ui-button.px-5 {
+	padding-inline: calc(var(--spacing) * 5 + var(--corner-room));
+}
+.ui-button.px-6 {
+	padding-inline: calc(var(--spacing) * 6 + var(--corner-room));
+}
+@media (width >= 40rem) {
+	.ui-button.sm\:px-3 {
+		padding-inline: calc(var(--spacing) * 3 + var(--corner-room));
+	}
+}
