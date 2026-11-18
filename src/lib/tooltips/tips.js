@@ -116,7 +116,8 @@ export const TIPS = Object.freeze({
 	},
 	player: {
 		play: 'Play the arrangement from the start (round and round while Loop is on). Changes you make while it plays are picked up.',
-		stop: 'Stop playing.',
+		stop: 'Stop playing. With Loop off, Play carries on from here.',
+		toStart: 'Back to the start: the next Play begins at the top (or the first bar you chose).',
 		metronome:
 			'Start or stop a steady click to play along with, with or without the music. While the song plays, it follows the song’s bars.',
 		metronomeSound: 'The sound of the click: woodblock, cowbell, beep or tick.',

@@ -13,12 +13,14 @@
 	 * @type {{
 	 *   sections: import('../../chart/loop.js').LoopSection[],
 	 *   playback: Playback | null,
+	 *   restAt?: number,
 	 *   label?: (chord: string, place: ChordPlace) => string,
 	 *   onChordTap?: (place: ChordPlace) => void
 	 * }}
-	 *   onChordTap: given, chords are buttons (the chord tutor)
+	 *   restAt: while stopped, rest here (quarters in) rather than on the last
+	 *   edit: where Play carries on; onChordTap: given, chords are buttons (the chord tutor)
 	 */
-	let { sections, playback, label = (chord) => chord, onChordTap } = $props();
+	let { sections, playback, restAt = 0, label = (chord) => chord, onChordTap } = $props();
 
 	import { namesChord } from '../../chart/chordChanges.js';
 	import { barsInPlayOrder } from '../../chart/chartBars.js';
@@ -73,7 +75,7 @@
 	// The playhead marks where you are; the chart just slides under it
 	$effect(() => {
 		if (!playback) {
-			scrollTo(progressAtBar(restingBar));
+			scrollTo(restAt > 0 ? (restAt * BEAT_PX) / passWidth : progressAtBar(restingBar));
 			return;
 		}
 		const active = playback;

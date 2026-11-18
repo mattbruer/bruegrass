@@ -9,6 +9,7 @@ import { melodyTime } from '../melody/follow.js';
 import { MetronomeState } from './MetronomeState.svelte.js';
 import { abcjsReady } from './abcjsLoaded.svelte.js';
 import { chosenBassStyle } from '../bass/songBassStyle.svelte.js';
+import { rhythm } from '../chart/timeline.js';
 
 /** @typedef {Awaited<ReturnType<typeof playArrangement>>} Playback */
 
@@ -46,6 +47,13 @@ export class PlayerState {
 
 	/** Called once when this playback stops (recording saves its take then). */
 	#onStop = /** @type {(() => void) | null} */ (null);
+	/**
+	 * With the loop off, where Stop left off (quarters from bar 1 of the
+	 * song), so Play carries on from there; 0 is the start.
+	 */
+	resumeAt = $state(0);
+	/** This playback carries on from where it's stopped (the loop is off, and it isn't a recording). */
+	#resumable = false;
 	/** Stops a playback that doesn't loop once it has rung out. */
 	#endTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
 
@@ -64,13 +72,15 @@ export class PlayerState {
 	}
 
 	/**
-	 * Loops until stopped, or with the loop switched off plays once and stops.
+	 * Loops until stopped, or with the loop switched off plays once and stops,
+	 * and carries on from where Stop left it next time.
 	 * @param {{ countIn?: number, passes?: number, leaveOutTrack?: string, onStop?: () => void }} [options]
 	 *   for recording: countIn (seconds before bar 1), passes (stop after this many),
 	 *   leaveOutTrack (don't play the track being recorded on), onStop
 	 */
-	async play({ countIn, passes = this.#loop.repeats ? undefined : 1, leaveOutTrack, onStop } = {}) {
+	async play({ countIn, passes, leaveOutTrack, onStop } = {}) {
 		this.stop();
+		const once = passes === undefined && !this.#loop.repeats;
 		this.problem = '';
 		if (this.#arrangement.error) {
 			this.problem = this.#arrangement.error;
@@ -94,8 +104,10 @@ export class PlayerState {
 				takes: await this.takesToPlay(leaveOutTrack ?? null),
 				regionStart: this.#arrangement.clock.secondsAt(this.#loop.startInSong),
 				countIn,
-				passes
+				passes: once ? 1 : passes,
+				from: once ? this.resumeInPass() : 0
 			});
+			this.#resumable = once;
 			this.#onStop = onStop ?? null;
 			const playback = this.playback;
 			const endsIn = playback.secondsLeft() + RING_OUT;
@@ -114,12 +126,40 @@ export class PlayerState {
 
 	stop() {
 		clearTimeout(this.#endTimer);
+		if (this.playback && this.#resumable) this.resumeAt = this.#stoppedAt(this.playback);
 		this.playback?.stop();
 		this.playback = null;
 		this.metronome.sync();
 		const onStop = this.#onStop;
 		this.#onStop = null;
 		onStop?.();
+	}
+
+	/** Back to the start: the next Play begins there (and a playing band starts over). */
+	toStart() {
+		this.resumeAt = 0;
+		if (this.isPlaying) {
+			this.#resumable = false; // so stopping to start over doesn't remember where it was
+			this.play();
+		}
+	}
+
+	/**
+	 * Where in the song this playback is (quarters from bar 1), or 0 once
+	 * it has played through.
+	 * @param {Playback} playback
+	 */
+	#stoppedAt(playback) {
+		const clock = playback.beats();
+		return clock ? this.#loop.startInSong + Math.max(0, clock.elapsed) : 0;
+	}
+
+	/** Where the next Play carries on in what's about to play (quarters into it): 0 for the top. */
+	resumeInPass() {
+		if (this.#loop.repeats) return 0;
+		const into = this.resumeAt - this.#loop.startInSong;
+		const length = rhythm(this.#loop.sectionsToPlay).quarters;
+		return into > 0 && into < length ? into : 0;
 	}
 
 	/** After a change that affects what's playing (like the loop): start again with it. */

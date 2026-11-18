@@ -32,7 +32,7 @@ const TICK = 0.1;
  *   bassStyle?: import('../instruments/bassStyles.js').BassStyle, swing?: number,
  *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[],
  *   takes?: import('../takes/playTakes.js').PlayableTake[],
- *   regionStart?: number, countIn?: number, passes?: number
+ *   regionStart?: number, countIn?: number, passes?: number, from?: number
  * }} options
  *   transpose: semitones on top of the capo, for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo, played on
@@ -42,7 +42,8 @@ const TICK = 0.1;
  *   takes: recorded takes to play with it; regionStart: where these sections
  *   start in the song (seconds), for the takes;
  *   countIn: at least this long before bar 1 (seconds), e.g. a bar of clicks to record after;
- *   passes: play only this many passes (default: loop until stopped)
+ *   passes: play only this many passes (default: loop until stopped);
+ *   from: start this far into the pass (quarters), to carry on where it stopped
  * @returns {Promise<{
  *   stop: () => void,
  *   barOne: number,
@@ -87,18 +88,25 @@ export async function playArrangement(sections, options = {}) {
 	const context = Tone.getContext();
 	// The band waits for a pickup (the melody's, or one sung on a take) or a count-in, so bar 1 lands together
 	const fromTheTop = (options.regionStart ?? 0) === 0;
-	const lead = Math.max(
-		performance.melody?.leadIn ?? 0,
-		fromTheTop ? sungPickup(options.takes ?? [], firstBar(sections, 60 / quarter).seconds) : 0,
-		options.countIn ?? 0
-	);
+	const from = options.from ?? 0;
+	const lead =
+		from > 0
+			? (options.countIn ?? 0)
+			: Math.max(
+					performance.melody?.leadIn ?? 0,
+					fromTheTop
+						? sungPickup(options.takes ?? [], firstBar(sections, 60 / quarter).seconds)
+						: 0,
+					options.countIn ?? 0
+				);
 	const takes = await createTakePlayback(
 		Tone,
 		options.takes ?? [],
 		{ regionStart: options.regionStart ?? 0, passLength: duration, lead },
 		getChannel
 	);
-	const start = Tone.now() + START_DELAY + lead;
+	// Carrying on part way through: bar 1 was in the past, and the notes before now are skipped
+	const start = Tone.now() + START_DELAY + lead - clock.secondsAt(from);
 	const end = options.passes ? options.passes * duration : Infinity;
 	/** @type {number | undefined} */
 	let timer;
@@ -108,7 +116,7 @@ export async function playArrangement(sections, options = {}) {
 		stream: createStream(notes, period),
 		play
 	}));
-	band.playIntro(start);
+	if (from === 0) band.playIntro(start);
 
 	/*
 	 * Lookahead scheduler: every TICK, queue just the notes due within the

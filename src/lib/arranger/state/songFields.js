@@ -50,6 +50,7 @@ export function readSongFields(arranger) {
  */
 export function loadSongIntoPage(arranger, song) {
 	arranger.player.stop();
+	arranger.player.toStart();
 
 	arranger.songsLoaded += 1; // another song's chart: nothing to follow from the last one's
 	arranger.arrangement.text = song.arrangement;

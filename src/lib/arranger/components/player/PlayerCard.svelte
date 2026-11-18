@@ -52,6 +52,7 @@
 		<ArrangementStrip
 			sections={loop.sectionsToPlay}
 			playback={player.playback}
+			restAt={player.resumeInPass()}
 			label={arrangement.chordName}
 			onChordTap={(place) => (tutorOn = place)}
 		/>
