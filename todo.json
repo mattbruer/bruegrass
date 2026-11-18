@@ -9,20 +9,26 @@
 	],
 	"suggestions": [
 		{
+			"id": "limits-take-storage",
+			"text": "Takes: ask the browser to protect them (persist), keep the take in use + last few, offer to clear the rest",
+			"done": false,
+			"addedAt": "2026-11-18"
+		},
+		{
+			"id": "takes-as-flac",
+			"text": "Takes saved as 24-bit FLAC (hand-written encoder, browsers already play it): about half the size, lossless",
+			"done": false,
+			"addedAt": "2026-11-18"
+		},
+		{
 			"id": "limits-stems-memory",
-			"text": "Limits: stems of a long song may crash an iPhone (~700 MB at once); render or write them in pieces",
+			"text": "Stems: render each stem in its own pass, WAV it and let go before the next, so a long song fits an iPhone",
 			"done": false,
 			"addedAt": "2026-11-18"
 		},
 		{
 			"id": "limits-song-storage",
 			"text": "Limits: songs live in localStorage (5 MB cap); move them to IndexedDB behind storage/",
-			"done": false,
-			"addedAt": "2026-11-18"
-		},
-		{
-			"id": "limits-take-storage",
-			"text": "Limits: takes are uncompressed (~35 MB each, all kept) and iPhone may clear them; ask the browser to protect them, tidy old takes",
 			"done": false,
 			"addedAt": "2026-11-18"
 		},
