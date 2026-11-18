@@ -9,6 +9,36 @@
 	],
 	"suggestions": [
 		{
+			"id": "limits-stems-memory",
+			"text": "Limits: stems of a long song may crash an iPhone (~700 MB at once); render or write them in pieces",
+			"done": false,
+			"addedAt": "2026-11-18"
+		},
+		{
+			"id": "limits-song-storage",
+			"text": "Limits: songs live in localStorage (5 MB cap); move them to IndexedDB behind storage/",
+			"done": false,
+			"addedAt": "2026-11-18"
+		},
+		{
+			"id": "limits-take-storage",
+			"text": "Limits: takes are uncompressed (~35 MB each, all kept) and iPhone may clear them; ask the browser to protect them, tidy old takes",
+			"done": false,
+			"addedAt": "2026-11-18"
+		},
+		{
+			"id": "limits-beats-worker",
+			"text": "Limits: beat finding freezes the page 1–2 s; move it to a Web Worker",
+			"done": false,
+			"addedAt": "2026-11-18"
+		},
+		{
+			"id": "limits-iphone-load",
+			"text": "Limits: measure on an iPhone: the slow-downer's CPU, and a new player per note during playback",
+			"done": false,
+			"addedAt": "2026-11-18"
+		},
+		{
 			"id": "vitest",
 			"text": "Tests with Vitest for the song logic (chart, bass, MIDI, theory)",
 			"done": false,
