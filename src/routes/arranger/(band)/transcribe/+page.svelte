@@ -8,9 +8,10 @@
 	 * No band plays here: this page is for writing the song down; the band
 	 * is for practising. Desktop first; the phone gets its own layout later.
 	 *
-	 * Keys on a computer: Space plays and pauses, ← → pick the beat before or
-	 * after (its menu opens), Alt+← → move the picked beat a little, Enter
-	 * says a bar starts on it, L cycles the open bar, C turns the cycle on
+	 * Keys on a computer: Space plays and pauses; while fixing the beats,
+	 * ← → pick the beat before or after (its menu opens), Alt+← → move the
+	 * picked beat a little, Enter says a bar starts on it; ⌘Z undoes the
+	 * last change to the beats; L cycles the open bar, C turns the cycle on
 	 * and off (Logic's), Escape closes the menu, Home
 	 * goes back to the start, comma and full stop a bar back or on (Logic's).
 	 */
@@ -92,6 +93,17 @@
 	/** @param {KeyboardEvent} event @returns {(() => void) | undefined} */
 	function keyAction(event) {
 		const beat = transcription.selectedBeat;
+		if ((event.metaKey || event.ctrlKey) && event.key === 'z' && !event.shiftKey)
+			return () => transcription.undoBeats();
+		return (transcription.fixingBeats && beatKeyAction(event, beat)) || otherKeyAction(event);
+	}
+
+	/**
+	 * Keys that pick and move beats: only while fixing them.
+	 * @param {KeyboardEvent} event
+	 * @param {number | null} beat the picked beat
+	 */
+	function beatKeyAction(event, beat) {
 		if (event.key === 'ArrowLeft')
 			return event.altKey
 				? () => transcription.nudgeBeat(-NUDGE_SECONDS)
@@ -100,6 +112,11 @@
 			return event.altKey
 				? () => transcription.nudgeBeat(NUDGE_SECONDS)
 				: () => transcription.openBeatMenu((beat ?? -1) + 1);
+		if (event.key === 'Enter' && beat !== null) return () => transcription.barStartsHere();
+	}
+
+	/** @param {KeyboardEvent} event */
+	function otherKeyAction(event) {
 		if (event.key === 'Escape') return () => transcription.closeMenus();
 		if (event.key === 'Home') return () => transcription.startOver();
 		if (event.key === ',') return () => transcription.stepBar(-1);
@@ -109,7 +126,6 @@
 			return () => transcription.cycle.toggleBar(bar.number);
 		if (event.key === 'c' || event.key === 'C')
 			return () => transcription.cycle.turn(!transcription.cycle.on);
-		if (event.key === 'Enter' && beat !== null) return () => transcription.barStartsHere();
 	}
 
 	/** @param {KeyboardEvent} event */

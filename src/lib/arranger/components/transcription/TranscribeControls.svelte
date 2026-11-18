@@ -1,24 +1,18 @@
 <script>
 	/**
-	 * Transcribe's one row of controls: play, start over and a bar back or
-	 * forward (or click the ruler for any spot), + Marker (name the section
-	 * the playhead is in, at its bar), where you are, speed (the
-	 * pitch stays), fine tuning (TuningControl), Count along (a click on every beat, higher on ONE), Move beat 1 (back to placing it), the
-	 * song's key (the time signature is chosen with beat 1), zoom for
-	 * the grid and the piano roll (across and down), and More:
-	 * the whole song's beats counted twice or half as fast, finding them
-	 * again, and how the slowed-down sound is made. It stays in view under the
-	 * top bar, so Play is at hand while you write in the piano roll below.
-	 * Only in the workspace: placing beat 1 has its own few controls.
+	 * Transcribe's control bar, centred: where you are (play, start over, a
+	 * bar back or forward, the clock) and how it sounds (speed with the pitch
+	 * kept, and Count along as the metronome: a click on every beat, higher
+	 * on ONE). + Marker and Zoom are beside the grid's ruler, and the
+	 * recording's own settings in its lane's menu (RecordingMenu). It stays
+	 * in view under the top bar, so Play is at hand while you write in the
+	 * piano roll below. Only in the workspace: placing beat 1 has its own few
+	 * controls.
 	 */
-	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
-	import TabSwitch from '$lib/components/TabSwitch.svelte';
-	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
-	import TuningControl from './TuningControl.svelte';
-	import TranscriptionKeySelect from './TranscriptionKeySelect.svelte';
 	import PlayPauseGlyph from '../icons/PlayPauseGlyph.svelte';
 	import SpeedControl from './SpeedControl.svelte';
-	import { SOUNDS, soundById } from '$lib/slowDowner/sounds.js';
+	import CountAlongButton from './CountAlongButton.svelte';
+	import { soundById } from '$lib/slowDowner/sounds.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -68,141 +62,133 @@
 
 <svelte:window onkeydown={onKeydown} onkeyup={onKeyup} />
 
-<div class="controls flex flex-wrap items-center gap-x-5 gap-y-3 ui-card px-4 py-3">
-	<button
-		type="button"
-		class="play ui-button px-5 py-2 ui-button-primary"
-		disabled={player.loading}
-		onclick={togglePlay}
-		aria-label={player.playing ? 'Pause' : 'Play'}
-		use:tooltip={TIPS.transcription.play}
-	>
-		<PlayPauseGlyph playing={player.playing} />
-	</button>
-	<div class="flex items-center gap-1" role="group" aria-label="Where in the song">
-		<button
-			type="button"
-			class="ui-button px-3 py-1.5 text-sm"
-			onclick={() => transcription.startOver()}
-			aria-label="Start over"
-			use:tooltip={TIPS.transcription.startOver}>⏮︎</button
-		>
-		<button
-			type="button"
-			class="ui-button px-3 py-1.5 text-sm"
-			onclick={() => transcription.stepBar(-1)}
-			use:tooltip={TIPS.transcription.barBack}>‹ Bar</button
-		>
-		<button
-			type="button"
-			class="ui-button px-3 py-1.5 text-sm"
-			onclick={() => transcription.stepBar(1)}
-			use:tooltip={TIPS.transcription.barForward}>Bar ›</button
-		>
-		<button
-			type="button"
-			class="ml-1 ui-button px-3 py-1.5 text-sm"
-			onclick={() => transcription.markHere()}
-			use:tooltip={TIPS.transcription.addMarker}>+ Marker</button
-		>
-	</div>
-	<PlayClock
-		time={player.time}
-		duration={player.duration}
-		beat={transcription.quartersNow + (transcription.grid?.bars.firstBeat ?? 0)}
-		bars={transcription.bars}
-		class="text-sm text-ink-soft"
-	/>
-
-	<SpeedControl {player} />
-
-	<TuningControl {transcription} />
-
-	<span class="flex items-center gap-2">
-		<ToggleSwitch
-			bind:on={transcription.clicksOn}
-			labelledBy="count-along"
-			tip={TIPS.transcription.countAlong}
-		/>
-		<span id="count-along" class="text-sm">Count along</span>
-	</span>
-
-	<TranscriptionKeySelect {transcription} />
-
-	<button
-		type="button"
-		class="ui-button px-3 py-1.5 text-sm"
-		onclick={() => transcription.setDownbeatAgain()}
-		use:tooltip={TIPS.transcription.moveDownbeat}>Move beat 1…</button
-	>
-
-	<ZoomControl zoom={settings.transcribe.zoom} />
-
-	<details class="more relative ml-auto">
-		<summary class="ui-button px-3 py-1.5 text-sm" use:tooltip={TIPS.transcription.more}
-			>More</summary
-		>
-		<div class="menu ui-card">
+<div class="controls ui-card">
+	<div class="row">
+		<div class="cluster" role="group" aria-label="Where in the song">
 			<button
 				type="button"
-				class="ui-button px-3 py-1.5 text-left text-sm"
-				onclick={() => transcription.doubleBeats()}
-				use:tooltip={TIPS.transcription.doubleBeats}>Count twice as fast</button
+				class="play ui-button ui-button-primary"
+				disabled={player.loading}
+				onclick={togglePlay}
+				aria-label={player.playing ? 'Pause' : 'Play'}
+				use:tooltip={TIPS.transcription.play}
 			>
-			<button
-				type="button"
-				class="ui-button px-3 py-1.5 text-left text-sm"
-				onclick={() => transcription.halveBeats()}
-				use:tooltip={TIPS.transcription.halveBeats}>Count half as fast</button
-			>
-			<button
-				type="button"
-				class="ui-button px-3 py-1.5 text-left text-sm"
-				onclick={() => transcription.findBeatsAgain()}
-				use:tooltip={TIPS.transcription.findAgain}>Find the beats again</button
-			>
-			<span class="mt-1 text-xs text-ink-soft">Slowed-down sound</span>
-			<TabSwitch
-				tabs={SOUNDS}
-				bind:value={settings.transcribe.sound}
-				tips={TIPS.transcribe.sounds}
-				label="Sound"
-			/>
+				<PlayPauseGlyph playing={player.playing} />
+			</button>
+			<div class="keys">
+				<button
+					type="button"
+					class="ui-button"
+					onclick={() => transcription.startOver()}
+					aria-label="Start over"
+					use:tooltip={TIPS.transcription.startOver}>⏮︎</button
+				>
+				<button
+					type="button"
+					class="ui-button"
+					onclick={() => transcription.stepBar(-1)}
+					aria-label="A bar back"
+					use:tooltip={TIPS.transcription.barBack}>‹</button
+				>
+				<button
+					type="button"
+					class="ui-button"
+					onclick={() => transcription.stepBar(1)}
+					aria-label="A bar forward"
+					use:tooltip={TIPS.transcription.barForward}>›</button
+				>
+			</div>
+			<div class="readout ui-well">
+				<PlayClock
+					time={player.time}
+					duration={player.duration}
+					beat={transcription.quartersNow + (transcription.grid?.bars.firstBeat ?? 0)}
+					bars={transcription.bars}
+					class="text-xl"
+				/>
+			</div>
 		</div>
-	</details>
+
+		<div class="cluster listening">
+			<SpeedControl {player} />
+			<CountAlongButton {transcription} class="h-10 w-12" />
+		</div>
+	</div>
 </div>
 
 <style>
-	/* Stays in view while you scroll down to the piano roll */
+	/* Two clusters, centred: where you are, and how it sounds. Every control is one
+	   height and sits on one centre line. The card is a container, so the
+	   layout follows the bar's own width. */
 	.controls {
-		position: sticky;
+		position: sticky; /* stays in view while you scroll down to the piano roll */
 		top: calc(var(--top-bar-height, 3.5rem) + 0.5rem);
 		z-index: 20;
+		container-type: inline-size;
+		padding: 0.75rem 1rem;
+	}
+
+	.row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem 2rem;
+	}
+
+	.cluster {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		white-space: nowrap;
+	}
+
+	.listening {
+		gap: 1rem;
 	}
 
 	.play {
-		font-size: 1.25rem;
+		width: 3.75rem;
+		height: 2.5rem;
+		display: grid;
+		place-items: center;
+		font-size: 1.4rem;
 		line-height: 1;
 	}
 
-	.more summary {
-		list-style: none;
-		cursor: pointer;
-	}
-
-	.more summary::-webkit-details-marker {
-		display: none;
-	}
-
-	.menu {
-		position: absolute;
-		right: 0;
-		top: calc(100% + 0.4rem);
-		z-index: 10;
+	/* Start over and the bar steps as one strip of keys */
+	.keys {
 		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
-		width: max-content;
-		padding: 0.6rem;
+	}
+	.keys .ui-button {
+		width: 2.75rem;
+		height: 2.5rem;
+		font-size: 1.1rem;
+		border-radius: 0;
+	}
+	.keys .ui-button + .ui-button {
+		margin-left: -1px;
+	}
+	.keys .ui-button:first-child {
+		border-radius: var(--corner-control) 0 0 var(--corner-control);
+	}
+	.keys .ui-button:last-child {
+		border-radius: 0 var(--corner-control) var(--corner-control) 0;
+	}
+
+	.readout {
+		height: 2.5rem;
+		display: grid;
+		place-items: center;
+		padding: 0 0.4rem;
+		border-radius: var(--corner-control);
+	}
+
+	/* Phones: each zone may wrap, its lines centred too */
+	@container (max-width: 520px) {
+		.cluster {
+			flex-wrap: wrap;
+			justify-content: center;
+		}
 	}
 </style>

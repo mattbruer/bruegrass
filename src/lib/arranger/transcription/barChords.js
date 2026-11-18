@@ -6,8 +6,51 @@
  * so a bar's slots are written in the fewest chords that say the same
  * thing (`chartCell`).
  */
+import { beatGroups } from '../chart/timeline.js';
 
 /** @typedef {(string | null)[]} Slots */
+
+/**
+ * The beats a chord may change on: where the band's boom falls (beats 1
+ * and 3 in 4/4; bluegrass doesn't change chords faster), except in 3/4,
+ * where any beat can.
+ * @param {number} beats
+ * @returns {number[]}
+ */
+export function chordPlaces(beats) {
+	if (beats === 3) return [0, 1, 2];
+	let at = 0;
+	return beatGroups(beats).map((group) => {
+		const place = at;
+		at += group;
+		return place;
+	});
+}
+
+/**
+ * The places a bar's boxes go: its chord places, or every beat when the
+ * bar already has a chord off them (so opening it loses nothing).
+ * @param {Slots} slots
+ */
+export function placesFor(slots) {
+	const places = chordPlaces(slots.length);
+	const offPlace = slots.some((slot, beat) => slot && !places.includes(beat));
+	return offPlace ? slots.map((_, beat) => beat) : places;
+}
+
+/**
+ * What's typed in each place's box, back as one slot per beat.
+ * @param {(string | null)[]} typed one per place
+ * @param {number[]} places
+ * @param {number} beats
+ * @returns {Slots}
+ */
+export function slotsFromPlaces(typed, places, beats) {
+	/** @type {Slots} */
+	const slots = Array(beats).fill(null);
+	places.forEach((beat, i) => (slots[beat] = typed[i] ?? null));
+	return slots;
+}
 
 /**
  * How the chart shares a bar's beats among n chords.
@@ -20,21 +63,23 @@ export function shares(beats, n) {
 }
 
 /**
- * Chords typed into a bar at once ("G C" or "G,C"), spread over its beats as the chart would.
+ * Chords typed into a bar at once ("G C" or "G,C"), spread evenly over its
+ * chord places. Only for drafts from when a bar's chords were kept as typed.
  * @param {string} typed
  * @param {number} beats
  * @returns {Slots}
  */
 export function slotsFromTyped(typed, beats) {
+	const places = chordPlaces(beats);
 	const names = typed
 		.split(/[\s,|]+/)
 		.filter(Boolean)
-		.slice(0, beats);
+		.slice(0, places.length);
 	/** @type {Slots} */
 	const slots = Array(beats).fill(null);
 	let at = 0;
-	shares(beats, names.length).forEach((length, i) => {
-		slots[at] = names[i];
+	shares(places.length, names.length).forEach((length, i) => {
+		slots[places[at]] = names[i];
 		at += length;
 	});
 	return slots;

@@ -2,14 +2,15 @@
 	/**
 	 * The track grid, Logic's way: the cycle strip (drag across it to play a
 	 * stretch over and over), a bar ruler that follows the recording,
-	 * the Beats row under it (drag a dot onto its hit; tap one for its menu),
-	 * the recording bent onto the bars, the chords by beat, and a lane for
+	 * the Beats row under it (a dot per beat), the recording bent onto the
+	 * bars (its menu: beats, tuning, the slowed-down sound), the chords by beat, and a lane for
 	 * each part being written (+ Lane adds the bass). Lane names stay put
 	 * while the lanes scroll sideways together; tap a part to edit it in the
 	 * piano roll below. Click the ruler to play from that spot; click a bar's
 	 * number for its menu (its beats, Loop). The playhead follows the
-	 * recording and the lanes scroll with it. Zoom (settings.transcribe.zoom)
-	 * widens the quarters and heightens the lanes.
+	 * recording and the lanes scroll with it. Beside the ruler: + Marker
+	 * (at the playhead's bar) and Zoom (settings.transcribe.zoom, which widens
+	 * the quarters and heightens the lanes here and in the piano roll).
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { trackScale } from '../../tracks/trackScale.js';
@@ -24,8 +25,6 @@
 	import TrackRuler from '../tracks/TrackRuler.svelte';
 	import BlockLane from '../tracks/BlockLane.svelte';
 	import BeatDots from './BeatDots.svelte';
-	import TempoLane from './TempoLane.svelte';
-	import { tempoByBar, usualTempo } from '../../transcription/beats/tempoCurve.js';
 	import GridMenu from './GridMenu.svelte';
 	import CycleStrip from './CycleStrip.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
@@ -37,6 +36,9 @@
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
 	import HitsCheckbox from './HitsCheckbox.svelte';
+	import RecordingMenu from './RecordingMenu.svelte';
+	import Popover from '$lib/components/Popover.svelte';
+	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -65,9 +67,6 @@
 			transcription.grid?.bars.firstBeat ?? 0,
 			markersShown(transcription.markers, transcription.pickups)
 		)
-	);
-	const usualBpm = $derived(
-		usualTempo(tempoByBar(transcription.grid?.beats ?? [], transcription.bars))
 	);
 	const zoom = $derived(settings.transcribe.zoom);
 	const pixelsPerQuarter = $derived(PIXELS_PER_QUARTER * zoom.across);
@@ -148,46 +147,59 @@
 		</div>
 		<CycleStrip {transcription} {ruler} {scale} />
 
-		<div class="corner"></div>
+		<div class="corner ruler-corner">
+			<button
+				type="button"
+				class="ui-button px-1.5 py-0.5 text-xs"
+				onclick={() => transcription.markHere()}
+				use:tooltip={TIPS.transcription.addMarker}>+ Marker</button
+			>
+			<Popover class="px-1.5 py-0.5 text-xs" tip={TIPS.zoom.folded}>
+				{#snippet button()}Zoom <span aria-hidden="true">▾</span>{/snippet}
+				<ZoomControl zoom={settings.transcribe.zoom} />
+			</Popover>
+		</div>
 		<!-- svelte-ignore a11y_click_events_have_key_events (← → pick beats on a computer) -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div class="ruler" onclick={clickRuler} use:tooltip={TIPS.transcription.ruler}>
 			<TrackRuler bars={ruler} {scale} />
 		</div>
 
-		<div class="header quiet"><span class="name">Beats</span></div>
-		<BeatDots {transcription} {scale} />
-
-		<div class="header quiet">
-			<span class="name">Tempo</span>
-			{#if usualBpm}<span class="text-xs text-ink-soft">≈ {Math.round(usualBpm)}</span>{/if}
+		<div class="header beats-header" class:quiet={!transcription.fixingBeats}>
+			<span class="name">Beats</span>
+			{#if transcription.fixingBeats}
+				<button
+					type="button"
+					class="ui-button px-1.5 text-xs"
+					disabled={!transcription.canUndoBeats}
+					onclick={() => transcription.undoBeats()}
+					use:tooltip={TIPS.transcription.undoBeats}>Undo</button
+				>
+				<button
+					type="button"
+					class="ui-button px-1.5 text-xs"
+					onclick={() => transcription.fixBeats(false)}
+					use:tooltip={TIPS.transcription.doneFixingBeats}>Done</button
+				>
+			{/if}
 		</div>
-		<TempoLane {transcription} {scale} />
+		<BeatDots {transcription} {scale} />
 
 		<div class="header recording">
 			<span class="name">Recording</span>
+			<RecordingMenu {transcription} />
 			<MuteSoloButtons settings={transcription.recordingLane} name="Recording" />
 			<LaneVolume level={transcription.recordingLane} name="Recording" />
 			<HitsCheckbox />
 		</div>
 		<RecordingLane {transcription} {scale} />
 
-		<div class="header"><span class="name">Chords</span></div>
+		<div class="header">
+			<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
+			<MuteSoloButtons settings={transcription.band.lane} name="Band" />
+			<LaneVolume level={transcription.band.lane} name="Band" />
+		</div>
 		<ChordLane {transcription} {scale} />
-
-		{#if transcription.band.performance}
-			<div class="header">
-				<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
-				<MuteSoloButtons settings={transcription.band.lane} name="Band" />
-				<LaneVolume level={transcription.band.lane} name="Band" />
-			</div>
-			<div class="part">
-				<BlockLane
-					lane={{ id: 'band', name: 'Band', kind: 'chords', blocks: transcription.band.blocks }}
-					{scale}
-				/>
-			</div>
-		{/if}
 
 		{#each parts as lane (lane.id)}
 			{@const channel = mixer.channels.find((each) => each.id === lane.id)}
@@ -274,6 +286,14 @@
 		width: max-content;
 	}
 
+	.ruler-corner {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0 0.4rem;
+		z-index: 3;
+	}
+
 	.corner,
 	.header {
 		position: sticky;
@@ -298,6 +318,14 @@
 		flex: 1;
 		min-width: 0;
 		text-align: left;
+	}
+
+	.beats-header {
+		flex-wrap: nowrap;
+		justify-content: flex-start;
+	}
+	.beats-header .name {
+		flex: 1;
 	}
 
 	.header.quiet .name {

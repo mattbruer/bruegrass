@@ -48,12 +48,12 @@ import {
 import { chartFromBars } from './chartFromBars.js';
 import { readChartOnBars } from './readChartOnBars.js';
 import { namedSections, withUniqueSectionNames } from './arrangementFromTranscription.js';
-import { chartCell, isEmptyBar, isHeld, slotsFromTyped, slotsOf } from './barChords.js';
+import { chartCell, isEmptyBar, isHeld, slotsOf } from './barChords.js';
 import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
 import { keyFieldName, withKeyField } from '../chart/keyField.js';
 import { withBarChords } from '../chart/withBarChords.js';
 import { NO_CHORD } from '../chart/noChord.js';
-import { isKnownChord, unknownChordMessage } from '../chart/knownChords.js';
+import { chordBoxProblem } from '../chart/knownChords.js';
 import { listArrangements } from '$lib/storage/arrangements.js';
 import { quartersAt, secondsAt } from './tempoMap.js';
 import { barStepTarget } from './barStep.js';
@@ -91,6 +91,9 @@ const LISTEN_BEFORE_SECONDS = 2.5;
 /** The recording's and the band's lane ids among the lanes that can be muted and soloed. */
 const RECORDING_LANE = 'recording';
 const BAND_LANE = 'band';
+
+/** How many changes to the beats Undo remembers. */
+const UNDO_STEPS = 50;
 
 export class TranscriptionState {
 	player = new StretchPlayer();
@@ -137,6 +140,13 @@ export class TranscriptionState {
 	openBar = $state(null);
 	/** @type {number | null} the beat whose menu is open (index into the grid's beats) */
 	selectedBeat = $state(null);
+	/**
+	 * The Beats row (drag, add, remove beats, Undo) shows only while fixing them. Nothing turns
+	 * it on for now (the user's call: a stray drag moved a beat); a button calling fixBeats(true) brings it back.
+	 */
+	fixingBeats = $state(false);
+	/** The grid before each change to the beats, newest last, for Undo. */
+	#beatHistory = /** @type {BeatGrid[]} */ ($state.raw([]));
 	finding = $state(false);
 	/** Beat 1 of bar 1, in seconds into the recording, as you placed it (null: not yet). */
 	downbeat = $state(/** @type {number | null} */ (null));
@@ -193,7 +203,9 @@ export class TranscriptionState {
 		).map((section) => ({ ...section, pickup: this.sectionPickup(section.from) }))
 	);
 	/** The key the chart names ("G", "Em"; null: none, guessed from the first chord). */
-	key = $derived(this.linked ? keyFieldName(this.arranger.arrangement.text) : null);
+	/** @type {string | null} the key chosen while placing beat 1, before the song is made */
+	#keyBeforeSong = $state(null);
+	key = $derived(this.linked ? keyFieldName(this.arranger.arrangement.text) : this.#keyBeforeSong);
 	/** Where the recording is now, in the song's quarters from bar 1. */
 	quartersNow = $derived(this.grid ? quartersAt(this.grid, this.player.time) : 0);
 	/**
@@ -287,6 +299,7 @@ export class TranscriptionState {
 	async open(recording) {
 		this.recording = recording;
 		this.grid = null;
+		this.#beatHistory = [];
 		this.time = DEFAULT_TIME;
 		this.extraLanes = [];
 		this.pickups = {};
@@ -528,6 +541,8 @@ export class TranscriptionState {
 			this.recording?.name ?? ''
 		);
 		song.keepAsYourOwn().catch(console.error);
+		if (this.#keyBeforeSong) this.arranger.nameSongKey(this.#keyBeforeSong).catch(console.error);
+		this.#keyBeforeSong = null;
 		this.#keepDraft();
 	}
 
@@ -564,18 +579,19 @@ export class TranscriptionState {
 
 	/**
 	 * Name the song's key (null: none, guess it from the first chord). The
-	 * song's chart says it, and its tune and bass are spelled in it.
+	 * song's chart says it, and its tune and bass are spelled in it. Chosen
+	 * before the song is made (with beat 1), it's written when the song starts.
 	 * @param {string | null} name
 	 */
 	async setKey(name) {
 		if (this.linked) await this.arranger.nameSongKey(name);
+		else this.#keyBeforeSong = name;
 	}
 
 	/**
 	 * All of a bar's chords at once, a slot per beat (empty slots: the chord
-	 * before carries on). One name typed on the first beat and nothing else,
-	 * or several there ("G C"), are spread over the bar as the chart would.
-	 * Nothing is written if a chord isn't one the band can play.
+	 * before carries on), one chord in each. Nothing is written if a slot
+	 * holds more than one, or a chord the band can't play.
 	 * @param {number} number
 	 * @param {(string | null)[]} typed what's in each beat's box
 	 * @returns {string} why it wasn't written ('' when it was)
@@ -583,15 +599,12 @@ export class TranscriptionState {
 	setBarChords(number, typed) {
 		const bar = this.bars.find((each) => each.number === number);
 		if (!bar) return '';
-		const cleaned = typed.map((text) => (text ?? '').trim() || null);
-		const first = (cleaned[0] ?? '').split(/[\s,|]+/).filter(Boolean);
-		const onlyFirst = cleaned.slice(1).every((slot) => !slot);
-		const slots =
-			onlyFirst && first.length > 1
-				? slotsFromTyped(first.join(' '), bar.beats)
-				: slotsOf(cleaned, bar.beats).map((slot) => slot?.split(/[\s,|]+/)[0] ?? null);
-		const unknown = slots.find((slot) => slot && !isKnownChord(slot));
-		if (unknown) return unknownChordMessage(unknown);
+		const problem = typed.map((text) => chordBoxProblem(text ?? '')).find(Boolean);
+		if (problem) return problem;
+		const slots = slotsOf(
+			typed.map((text) => (text ?? '').trim() || null),
+			bar.beats
+		);
 		if (isEmptyBar(slots) && this.isHeld(bar)) return ''; // still holding the chord before
 		const place = this.#chartOnBars.places[number];
 		if (!place) {
@@ -854,6 +867,27 @@ export class TranscriptionState {
 		}));
 	}
 
+	/** @param {boolean} on show the Beats row, to move, add and remove beats */
+	fixBeats(on) {
+		this.fixingBeats = on;
+		if (!on) this.closeMenus();
+	}
+
+	get canUndoBeats() {
+		return this.#beatHistory.length > 0;
+	}
+
+	/** Put the beats back as they were before the last change to them. */
+	undoBeats() {
+		const before = this.#beatHistory.at(-1);
+		if (!before || !this.recording) return;
+		this.#beatHistory = this.#beatHistory.slice(0, -1);
+		this.grid = before;
+		this.selectedBeat = null;
+		this.#keepDraft();
+		this.#writeChart();
+	}
+
 	/** A beat the finder missed: halfway after the picked one. */
 	addBeat() {
 		const grid = this.grid;
@@ -902,12 +936,14 @@ export class TranscriptionState {
 		const beatsPerBar = timeSignature(this.time).beatsPerBar;
 		const { beats, firstBeat } = detectBeats(this.#analysis, this.downbeat, beatsPerBar);
 		this.grid = newBeatGrid(beats, beatsPerBar, firstBeat);
+		this.#beatHistory = [];
 		this.closeMenus();
 	}
 
 	/** @param {(grid: BeatGrid) => BeatGrid} change */
 	#edit(change) {
 		if (!this.grid || !this.recording) return;
+		this.#beatHistory = [...this.#beatHistory.slice(1 - UNDO_STEPS), this.grid];
 		this.grid = change(this.grid);
 		this.#keepDraft();
 		this.#writeChart();

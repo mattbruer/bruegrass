@@ -2,7 +2,8 @@
 	/**
 	 * Before the workspace: the time signature and beat 1, both needed before
 	 * the bars can be found (the time is chosen here, with a ? that explains
-	 * the counts; a crooked bar is fixed later in its own menu). The recording on a lane with its
+	 * the counts; a crooked bar is fixed later in its own menu), and the
+	 * recording's key, which is chosen only here (Move beat 1… comes back). The recording on a lane with its
 	 * playhead: play it (slowed down if you like), click the lane to move the
 	 * playhead, and press Beat 1 is here: paused, exactly on the playhead;
 	 * playing, as a tap (moved back onto the hit just
@@ -13,6 +14,7 @@
 	import RecordingStrip from './RecordingStrip.svelte';
 	import PlayClock from './PlayClock.svelte';
 	import SpeedControl from './SpeedControl.svelte';
+	import TranscriptionKeySelect from './TranscriptionKeySelect.svelte';
 	import { TIME_SIGNATURES } from '../../transcription/timeSignatures.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -125,6 +127,8 @@
 	{#if askedForTime && !transcription.timeChosen}
 		<p class="text-danger" role="alert">Choose the time signature first.</p>
 	{/if}
+
+	<TranscriptionKeySelect {transcription} large />
 
 	<div class="flex flex-wrap gap-3">
 		{#if checking}

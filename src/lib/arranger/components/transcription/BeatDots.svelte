@@ -1,7 +1,8 @@
 <script>
 	/**
 	 * The Beats row under the ruler, like Logic's beat mapping: a dot on
-	 * every beat the recording has (darker on each ONE). When a beat's hit
+	 * every beat the recording has (darker on each ONE). Only while fixing
+	 * the beats (TranscriptionState.fixingBeats) can they be moved: when a beat's hit
 	 * sits off its line in the recording lane, drag the dot onto the hit:
 	 * letting go snaps it onto the strongest hit near there, and the
 	 * recording is bent again so the hit sits on the line. Tap a dot for its
@@ -66,26 +67,32 @@
 </script>
 
 <div class="row">
-	{#each beats, index (index)}
-		{@const dragging = drag?.index === index && drag.moved}
-		<button
-			type="button"
-			class="dot"
-			class:one={ones.has(index)}
-			class:picked={transcription.selectedBeat === index}
-			class:dragging
-			style:left="{xOf(index) + (dragging && drag ? drag.offset : 0)}px"
-			onpointerdown={(event) => press(event, index)}
-			onpointermove={move}
-			onpointerup={release}
-			onpointercancel={() => (drag = null)}
-			aria-label="Beat {index - firstBeat + 1}"
-			use:tooltip={TIPS.transcription.beatDot}
-		></button>
-		{#if dragging && drag}
-			<div class="guide" style:left="{xOf(index) + drag.offset}px"></div>
-		{/if}
-	{/each}
+	{#if !transcription.fixingBeats}
+		{#each beats, index (index)}
+			<span class="dot still" class:one={ones.has(index)} style:left="{xOf(index)}px"></span>
+		{/each}
+	{:else}
+		{#each beats, index (index)}
+			{@const dragging = drag?.index === index && drag.moved}
+			<button
+				type="button"
+				class="dot"
+				class:one={ones.has(index)}
+				class:picked={transcription.selectedBeat === index}
+				class:dragging
+				style:left="{xOf(index) + (dragging && drag ? drag.offset : 0)}px"
+				onpointerdown={(event) => press(event, index)}
+				onpointermove={move}
+				onpointerup={release}
+				onpointercancel={() => (drag = null)}
+				aria-label="Beat {index - firstBeat + 1}"
+				use:tooltip={TIPS.transcription.beatDot}
+			></button>
+			{#if dragging && drag}
+				<div class="guide" style:left="{xOf(index) + drag.offset}px"></div>
+			{/if}
+		{/each}
+	{/if}
 </div>
 
 <style>
@@ -108,6 +115,11 @@
 		background: var(--color-raised);
 		cursor: ew-resize;
 		touch-action: none;
+	}
+
+	.dot.still {
+		cursor: default;
+		pointer-events: none;
 	}
 
 	.dot.one {

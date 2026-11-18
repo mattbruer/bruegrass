@@ -10,7 +10,6 @@ import { createBand } from '../instruments/band.js';
 import { getChannel } from '../mixer/mixerGraph.svelte.js';
 import { chosenBassStyle } from '../bass/songBassStyle.svelte.js';
 import { BASS_VOICE } from '../bass/readBass.js';
-import { chordBlocks } from '../tracks/lanes.js';
 import { createBandAlong, streamsOnRecording } from './bandAlong.js';
 
 /** The mixer channels the band plays into. */
@@ -37,11 +36,6 @@ export class TranscribeBand {
 			bassStyle: chosenBassStyle()
 		});
 	});
-
-	/** The chords the band plays, for its lane (quarters from bar 1). */
-	blocks = $derived(
-		this.performance ? chordBlocks(this.transcription.arranger.arrangement.sections) : []
-	);
 
 	/** @type {Map<string, import('tone').Gain>} the band level, one per channel the band plays into */
 	// Audio nodes, not UI state

@@ -2,15 +2,16 @@
 	/**
 	 * The chords, by beat. Each bar shows its chords as chips, each as wide
 	 * as it lasts (G for two beats, then C). Tap a bar and it opens into a
-	 * box on each beat: type the chord on the beat where it changes and leave
-	 * the rest empty (the chord before carries on). Tab moves along the
-	 * beats, Enter keeps them, Escape leaves the bar as it was. Typing "G C"
-	 * in the first box alone splits the bar evenly, as a chart does. A chord
-	 * the band can't play isn't kept: the bar stays open and says why.
+	 * box on each beat a chord may change on (`chordPlaces`: beats 1 and 3
+	 * in 4/4): type the chord where it changes and leave the rest empty (the
+	 * chord before carries on). One chord to a box: a space or comma is
+	 * taken out as it's typed. Tab moves along the boxes, Enter keeps them, Escape leaves
+	 * the bar as it was. A box is checked as you leave it, and a chord the
+	 * band can't play isn't kept: the bar stays open and says why.
 	 */
 	import { tick } from 'svelte';
-	import { changesIn } from '../../transcription/barChords.js';
-	import { isKnownChord } from '../../chart/knownChords.js';
+	import { changesIn, placesFor, slotsFromPlaces } from '../../transcription/barChords.js';
+	import { chordBoxProblem, isKnownChord } from '../../chart/knownChords.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -24,8 +25,11 @@
 
 	/** @type {number | null} the bar open for typing */
 	let editing = $state(null);
-	/** @type {string[]} what's in each beat's box */
+	/** @type {string[]} what's in each box */
 	let boxes = $state([]);
+	/** @type {number[]} the beat each box starts on */
+	let places = $state([]);
+	let beatsInBar = $state(0);
 	/** @type {HTMLElement | undefined} */
 	let openBar = $state();
 	/** Why the open bar's chords weren't kept ('' : nothing wrong). */
@@ -40,21 +44,39 @@
 	async function open(bar) {
 		editing = bar.number;
 		problem = '';
-		boxes = transcription.slotsOf(bar).map((slot) => slot ?? '');
+		const slots = transcription.slotsOf(bar);
+		places = placesFor(slots);
+		beatsInBar = bar.beats;
+		boxes = places.map((beat) => slots[beat] ?? '');
 		await tick();
 		openBar?.querySelector('input')?.focus();
 	}
 
 	function keep() {
 		if (editing === null) return;
-		problem = transcription.setBarChords(editing, boxes);
+		say(transcription.setBarChords(editing, slotsFromPlaces(boxes, places, beatsInBar)));
 		if (!problem) editing = null;
-		else if (openBar) onTheRight = openBar.getBoundingClientRect().left > window.innerWidth / 2;
 	}
 
-	/** @param {string} box what's typed in one beat's box */
-	function boxIsKnown(box) {
-		return box.split(/[\s,|]+/).every((name) => !name || isKnownChord(name));
+	/** Check the boxes as one is left, so a wrong chord shows at once. */
+	function check() {
+		say(boxes.map(chordBoxProblem).find(Boolean) ?? '');
+	}
+
+	/** @param {string} message */
+	function say(message) {
+		problem = message;
+		if (problem && openBar)
+			onTheRight = openBar.getBoundingClientRect().left > window.innerWidth / 2;
+	}
+
+	/**
+	 * Keep a box to one chord: whatever would start a second (a space,
+	 * comma or bar) is taken out as it's typed or pasted.
+	 * @param {number} i
+	 */
+	function oneChord(i) {
+		boxes[i] = boxes[i].replace(/[\s,|]/g, '');
 	}
 
 	/** @param {KeyboardEvent} event */
@@ -82,18 +104,20 @@
 				class="open"
 				style:left="{left}px"
 				role="group"
-				aria-label="Chords in bar {bar.number}, a box for each beat"
+				aria-label="Chords in bar {bar.number}, a box for each beat a chord can change on"
 				onfocusout={onFocusOut}
 			>
-				{#each boxes, beat (beat)}
+				{#each places as beat, i (beat)}
 					<input
-						bind:value={boxes[beat]}
+						bind:value={boxes[i]}
 						class="box ui-field"
-						style:width="{quarter - 2}px"
+						style:width="{((places[i + 1] ?? bar.beats) - beat) * quarter - 2}px"
 						placeholder={String(beat + 1)}
 						onkeydown={onKey}
+						oninput={() => oneChord(i)}
+						onchange={check}
 						aria-label="Beat {beat + 1}"
-						aria-invalid={problem !== '' && !boxIsKnown(boxes[beat])}
+						aria-invalid={problem !== '' && chordBoxProblem(boxes[i]) !== ''}
 						autocapitalize="characters"
 						autocomplete="off"
 						spellcheck="false"

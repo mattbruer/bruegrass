@@ -53,7 +53,7 @@
 			<span class="fields">
 				{#each fields as field (field.label)}
 					<span class="field">
-						<SteadyText text={String(field.value)} widest={String(field.widest)} />
+						<SteadyText text={String(field.value)} widest={String(field.widest)} align="center" />
 						<span class="label" aria-hidden="true">{field.label}</span>
 					</span>
 				{/each}
@@ -77,7 +77,7 @@
 	.field {
 		display: inline-flex;
 		flex-direction: column;
-		align-items: flex-end;
+		align-items: center;
 		line-height: 1.1;
 	}
 	.label {

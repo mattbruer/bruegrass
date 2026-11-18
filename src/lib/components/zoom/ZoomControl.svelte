@@ -16,27 +16,26 @@
 	]);
 </script>
 
-<div class="flex items-center gap-3" role="group" aria-label="Zoom">
-	<span class="text-sm text-ink-soft">Zoom</span>
+<div class="flex items-center gap-2" role="group" aria-label="Zoom">
 	{#each AXES as axis (axis.id)}
 		<span class="flex items-center">
 			<button
 				type="button"
-				class="h-8 w-8 ui-button text-base"
+				class="size-10 ui-button text-lg"
 				disabled={!canZoomOut(zoom[axis.id])}
 				onclick={() => (zoom[axis.id] = zoomStep(zoom[axis.id], -1))}
 				use:tooltip={axis.tips.out}>−</button
 			>
 			<button
 				type="button"
-				class="w-7 text-center text-base text-ink-soft"
+				class="w-7 text-center text-lg text-ink-soft"
 				class:text-ink={zoom[axis.id] !== 1}
 				onclick={() => (zoom[axis.id] = 1)}
 				use:tooltip={axis.tips.reset}>{axis.sign}</button
 			>
 			<button
 				type="button"
-				class="h-8 w-8 ui-button text-base"
+				class="size-10 ui-button text-lg"
 				disabled={!canZoomIn(zoom[axis.id])}
 				onclick={() => (zoom[axis.id] = zoomStep(zoom[axis.id], 1))}
 				use:tooltip={axis.tips.in}>+</button

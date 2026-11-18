@@ -213,8 +213,8 @@ export const TIPS = Object.freeze({
 			'Measure how far the band is from A = 440 and tune the recording back by that much. Then nudge by ear if it needs it.',
 		countAlong:
 			'Click on every beat as the recording plays, higher on each ONE, so you can hear if the bars fit.',
-		key: 'The song’s key, if you know it: the tune’s notes are spelled in it. Not known, it’s guessed from the first chord.',
-		more: 'Fixes for the whole song’s beats, and how the slowed-down sound is made.',
+		key: 'The recording’s key, if you know it: the tune’s notes are spelled in it, and Send to the arranger needs it. Not known yet: choose it later from Move beat 1….',
+		more: 'The recording’s menu: fixes for the whole song’s beats (beat 1, counting faster or slower), tuning the recording, and how the slowed-down sound is made.',
 		doubleBeats: 'For when the count is half the song’s speed: a beat between every two.',
 		halveBeats: 'For when the count is twice the song’s speed: every other beat.',
 		listenDownbeat: 'Play from just before beat 1 with a click on every beat, higher on “one”.',
@@ -234,15 +234,15 @@ export const TIPS = Object.freeze({
 			'Click anywhere to play from there. Click a bar’s number for its menu: its beats, and Loop.',
 		beatDot:
 			'A beat. If its hit sits off the line below, drag the dot onto the hit; it snaps. Tap it for more.',
-		tempoLane:
-			'The tempo the beats found say the band plays at. Orange: each bar, its BPM above; red: a bar far from the usual tempo (dashed), worth a listen. The faint line is beat by beat.',
+		undoBeats: 'Put the beats back as they were before your last change to them (⌘Z).',
+		doneFixingBeats: 'Hide the beats again, so they can’t move by accident.',
 		recordingLane:
-			'The recording, fitted to the bars. Its hits (orange) should sit on the beat lines. Tap to play from there.',
+			'The recording, fitted to the bars. Its hits (orange) should sit under the beat dots. Tap to play from there.',
 		chordBar:
-			'Tap to type this bar’s chords: one box per beat, the chord on the beat where it changes.',
+			'Tap to type this bar’s chords: a box on each beat a chord can change on (1 and 3 in 4/4), the chord where it changes.',
 		partLane: 'Edit this part in the piano roll below.',
 		bandLane:
-			'The band (guitar, mandolin, bass) playing your chords along with the recording. Each instrument’s own level is in the mixer.',
+			'The band (guitar, mandolin, bass) plays these chords along with the recording. Tap a bar to type its chords. Each instrument’s own level is in the mixer.',
 		addLane:
 			'Add an empty lane to write by ear, for any instrument. Its Bass button makes it the song’s bass line.',
 		laneBass:
@@ -275,6 +275,7 @@ export const TIPS = Object.freeze({
 	},
 
 	zoom: {
+		folded: 'Zoom the grid and the piano roll, across and down.',
 		across: {
 			out: 'Zoom out across: more of the song fits.',
 			in: 'Zoom in across: more room for each beat.',
