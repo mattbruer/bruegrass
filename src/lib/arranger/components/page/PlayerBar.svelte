@@ -171,7 +171,7 @@
 		white-space: nowrap;
 	}
 
-	/* Phones upright: narrower keys, still big to tap (five fit across a 375px phone) */
+	/* Phones upright: narrower keys that share the width, never smaller than a finger (seven fit across a 375px phone) */
 	@media (max-width: 639px) {
 		.bar-content {
 			--tile-height: 4.25rem;
@@ -180,7 +180,18 @@
 			gap: 0.4rem;
 		}
 
+		.bar-content :global(.bar-tile) {
+			flex: 0 1 var(--tile-width);
+			min-width: 2.75rem;
+		}
+
+		.bar-content :global(.bar-tile svg) {
+			max-width: 100%;
+		}
+
 		.end {
+			flex: 0 1 auto;
+			min-width: 0;
 			gap: 0.4rem;
 		}
 	}

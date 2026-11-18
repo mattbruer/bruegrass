@@ -7,7 +7,7 @@
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { RECORD_TRACKS } from '../../takes/recordTracks.js';
-	import { COUNT_IN_BARS } from '../../takes/countIn.js';
+	import { COUNT_IN_BARS } from '../../playback/metronome/countIn.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -71,10 +71,10 @@
 					type="button"
 					role="radio"
 					class="ui-button py-2"
-					class:ui-button-on={settings.recording.countInBars === bars}
-					aria-checked={settings.recording.countInBars === bars}
+					class:ui-button-on={settings.metronome.countInBars === bars}
+					aria-checked={settings.metronome.countInBars === bars}
 					disabled={recording.isRecording}
-					onclick={() => (settings.recording.countInBars = bars)}
+					onclick={() => (settings.metronome.countInBars = bars)}
 					use:tooltip={TIPS.recording.countIn}
 				>
 					{bars === 1 ? '1 bar' : `${bars} bars`}

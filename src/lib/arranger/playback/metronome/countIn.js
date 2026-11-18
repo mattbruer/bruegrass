@@ -1,5 +1,6 @@
 /**
- * The count-in before a recorded take: plain maths, no audio.
+ * The count-in before the band (Play with Count-in on, and every recorded
+ * take): plain maths, no audio.
  *
  * A few bars of clicks before bar 1, like a bandleader's "one, two, three,
  * four". When the melody has a pickup, the clicks stop where it starts, so
@@ -8,7 +9,7 @@
  * metronome takes over.
  */
 
-/** The count-in lengths offered in the record panel (bars). */
+/** The count-in lengths offered (bars). */
 export const COUNT_IN_BARS = [1, 2];
 
 /**
@@ -18,7 +19,7 @@ export const COUNT_IN_BARS = [1, 2];
  *   metronome is on, so click every beat
  * @returns {{ seconds: number, beats: number }} how long before bar 1 it starts, and how many clicks
  */
-export function countIn({ bars, bar, pickup, clickThrough }) {
+export function countInClicks({ bars, bar, pickup, clickThrough }) {
 	const seconds = bars * bar.seconds;
 	const allBeats = bars * bar.quarters;
 	if (clickThrough || pickup <= 0) return { seconds, beats: allBeats };

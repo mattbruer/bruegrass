@@ -141,6 +141,8 @@ export async function playArrangement(sections, options = {}) {
 	return {
 		/** The audio-clock time of bar 1 of the first pass (seconds). */
 		barOne: start,
+		/** When the band comes in: bar 1, or where it carries on from (audio-clock seconds). */
+		startsAt: start + clock.secondsAt(from),
 		/** How long the melody's pickup is before bar 1 (seconds; 0 without one). */
 		pickup: performance.melody?.leadIn ?? 0,
 		/** One pass, in seconds. */

@@ -43,13 +43,10 @@ export const settings = $state({
 		sound: 'woodblock',
 		level: -14,
 		beats: 4,
-		unit: 4
-	},
-
-	// Recording along: set from the record panel
-
-	recording: {
-		/** Bars of clicks before bar 1 (the melody's pickup is sung in the last of them). */
+		unit: 4,
+		/** Play counts in first (recording always does). */
+		countIn: false,
+		/** Bars of clicks before the band, for Play and recording (a pickup is sung in the last of them). */
 		countInBars: 2
 	},
 

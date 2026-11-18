@@ -12,9 +12,7 @@
  */
 import { openMicInput } from '$lib/audio/recording/micInput.js';
 import { createTakeRecorder } from '$lib/audio/recording/takeRecorder.js';
-import { playClicks } from '$lib/audio/recording/clickTrack.js';
 import { createWorkletNode } from '../../audio/worklets/worklets.js';
-import { getMetronomeInput } from '../mixer/mixerGraph.svelte.js';
 
 /** Input names that mean Bluetooth: a long delay, and call-quality sound. */
 const BLUETOOTH_NAMES = /airpods|bluetooth|hands-?free|beats|buds/i;
@@ -32,8 +30,6 @@ export async function openRecordAlong(Tone, deviceId) {
 		const recorder = await createTakeRecorder(audio, mic.source, 1, (options) =>
 			createWorkletNode(Tone, 'take-recorder', options)
 		);
-		const clickOut = audio.createGain();
-		Tone.connect(clickOut, await getMetronomeInput());
 
 		return {
 			audio,
@@ -44,24 +40,9 @@ export async function openRecordAlong(Tone, deviceId) {
 			/** How late the take is, from what the browser reports (seconds). */
 			roundTrip: outputLatency(audio) + mic.latency,
 
-			/**
-			 * The count-in clicks before the band (takes/countIn.js says how many).
-			 * @param {{ tempo: number, beatsPerBar: number, beats: number }} run
-			 * @param {number} at the audio-clock time of its first click
-			 */
-			countIn(run, at) {
-				return playClicks(
-					audio,
-					{ ...run, bars: Math.ceil(run.beats / run.beatsPerBar) },
-					clickOut,
-					at
-				);
-			},
-
 			close() {
 				recorder.dispose();
 				mic.close();
-				clickOut.disconnect();
 				setAudioSession('playback');
 			}
 		};

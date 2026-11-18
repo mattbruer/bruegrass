@@ -1,7 +1,7 @@
 /**
  * Recording along with the band, and the open song's takes.
  *
- * Record: a count-in (takes/countIn.js), then the band plays the song (or the loop region)
+ * Record: a count-in (the player's, playback/metronome/countIn.js), then the band plays the song (or the loop region)
  * once while the mic records onto the chosen track; it stops by itself at
  * the end, or when you press Stop. The take is saved on this device at once
  * (storage/songTakes.js), and from then on plays on its track's mixer channel
@@ -23,8 +23,6 @@ import { slugify } from '$lib/utils/slugify.js';
 import { RECORD_TRACKS, trackName } from '../takes/recordTracks.js';
 import { firstBar } from '../takes/takeTiming.js';
 import { openRecordAlong } from '../takes/recordAlong.js';
-import { countIn } from '../takes/countIn.js';
-import { settings } from '$lib/settings/settings.svelte.js';
 import { readAudioFile, takeAsWav } from '../takes/takeFiles.js';
 import { firstSound } from '../takes/takePickup.js';
 
@@ -36,7 +34,7 @@ const SHORTEST_TAKE = 1;
  * @typedef {{
  *   rig: import('../takes/recordAlong.js').RecordAlong,
  *   songId: string, trackId: string, bpm: number,
- *   regionStart: number, barOne: number, started: boolean, stopClicks: () => void
+ *   regionStart: number, barOne: number, started: boolean
  * }} Recording
  *   regionStart: where the recorded pass starts in the song (seconds);
  *   barOne: the audio-clock time of its bar 1; started: the recorder is running
@@ -109,9 +107,7 @@ export class RecordingState {
 		try {
 			const Tone = await import('tone');
 			rig = await openRecordAlong(Tone, null);
-			const bar = firstBar(loop.sectionsToPlay, arrangement.bpm);
 			const regionStart = arrangement.clock.secondsAt(loop.startInSong);
-			const countInSeconds = settings.recording.countInBars * bar.seconds;
 			/** @type {Recording} */
 			const recording = {
 				rig,
@@ -120,12 +116,11 @@ export class RecordingState {
 				regionStart,
 				bpm: arrangement.bpm,
 				barOne: 0,
-				started: false,
-				stopClicks: () => {}
+				started: false
 			};
 
 			await player.play({
-				countIn: countInSeconds,
+				countIn: true,
 				passes: 1,
 				leaveOutTrack: trackId,
 				onStop: () => this.#finish(recording)
@@ -133,18 +128,7 @@ export class RecordingState {
 			const playback = player.playback;
 			if (!playback) throw new Error(player.problem || 'The band couldn’t start.');
 			recording.barOne = playback.barOne;
-			const clicks = countIn({
-				bars: settings.recording.countInBars,
-				bar,
-				pickup: playback.pickup,
-				clickThrough: player.metronome.on
-			});
-			const countInAt = playback.barOne - countInSeconds;
-			recording.stopClicks = rig.countIn(
-				{ tempo: arrangement.bpm, beatsPerBar: bar.quarters, beats: clicks.beats },
-				countInAt
-			);
-			rig.recorder.start(countInAt);
+			rig.recorder.start(player.countInAt);
 			recording.started = true;
 
 			addEventListener('visibilitychange', this.#stopWhenHidden);
@@ -169,9 +153,8 @@ export class RecordingState {
 	 * The band has stopped: save the take.
 	 * @param {Recording} recording
 	 */
-	async #finish({ rig, songId, trackId, regionStart, bpm, barOne, started, stopClicks }) {
+	async #finish({ rig, songId, trackId, regionStart, bpm, barOne, started }) {
 		removeEventListener('visibilitychange', this.#stopWhenHidden);
-		stopClicks();
 		if (!started) return; // stopped before it began: record() lets go of the mic
 		this.status = 'saving';
 		try {
