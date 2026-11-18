@@ -9,9 +9,8 @@ import { STRINGS } from './guitar.js';
 /**
  * @param {number} string index into STRINGS
  * @param {number} fret
- * @param {boolean} inTune false plays the sample as recorded (for comparing by ear)
  */
-export function tuningFix(string, fret, inTune) {
-	const cents = inTune ? (GUITAR_SAMPLE_FIXES[`${STRINGS[string]}${fret}`] ?? 0) : 0;
+export function tuningFix(string, fret) {
+	const cents = GUITAR_SAMPLE_FIXES[`${STRINGS[string]}${fret}`] ?? 0;
 	return 2 ** (cents / 1200);
 }

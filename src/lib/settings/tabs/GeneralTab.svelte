@@ -28,12 +28,4 @@
 	>
 		<ToggleSwitch bind:on={settings.musicKeypad} labelledBy="setting-music-keypad" />
 	</SettingRow>
-
-	<SettingRow
-		id="setting-samples-in-tune"
-		label="Guitar in tune"
-		description="Each guitar note is nudged to perfect pitch. Turn it off while the band plays to hear the notes as recorded."
-	>
-		<ToggleSwitch bind:on={settings.samplesInTune} labelledBy="setting-samples-in-tune" />
-	</SettingRow>
 </section>

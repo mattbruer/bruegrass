@@ -53,23 +53,20 @@ export function loadBuffer(Tone, url) {
  *   where each instrument plays into the mixer
  * @param {{
  *   live?: boolean,
- *   instrumentOf?: (channelId: string) => import('./tuneInstruments.js').TuneInstrument,
- *   samplesInTune?: () => boolean
+ *   instrumentOf?: (channelId: string) => import('./tuneInstruments.js').TuneInstrument
  * }} [options]
  *   live: playing for as long as you listen, so each finished note's player
  *   is let go (an offline render is thrown away whole once it's done; and
  *   there, Tone reports a player stopped before it has even played, so
  *   letting it go then would silence it); instrumentOf: what each tune
  *   channel plays on, asked at each note, so a change is heard while playing
- *   (the guitar samples when not given); samplesInTune: whether each
- *   guitar sample is put in tune (sampleTuning.js), asked at each note so
- *   it can be switched while playing
+ *   (the guitar samples when not given)
  */
 export async function createBand(
 	Tone,
 	performance,
 	channelInput,
-	{ live = true, instrumentOf, samplesInTune = () => false } = {}
+	{ live = true, instrumentOf } = {}
 ) {
 	const { guitar, mandolin, bass, melody } = performance;
 
@@ -170,7 +167,7 @@ export async function createBand(
 	 * @param {number} at
 	 */
 	const playMelody = (note, buffer, at) => {
-		const rate = note.rate * tuningFix(note.string, note.fret, samplesInTune());
+		const rate = note.rate * tuningFix(note.string, note.fret);
 		const synth = instrumentOf && tuneSynth(note.channel, instrumentOf(note.channel));
 		if (synth) {
 			synth.play(melodyPitch(note), note.stop - note.time, at, note.levelDb);
@@ -201,7 +198,7 @@ export async function createBand(
 			period: guitar.period,
 			/** @param {import('./guitar.js').NoteEvent} event @param {number} i @param {number} at */
 			play: (event, i, at) => {
-				const rate = guitar.rate * tuningFix(event.string, event.fret, samplesInTune());
+				const rate = guitar.rate * tuningFix(event.string, event.fret);
 				const player = track(
 					new Tone.Player({
 						url: guitarSounds[i],

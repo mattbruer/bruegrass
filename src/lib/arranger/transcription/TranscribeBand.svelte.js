@@ -7,7 +7,6 @@
  */
 import { preparePerformance } from '../instruments/performance.js';
 import { createBand } from '../instruments/band.js';
-import { settings } from '$lib/settings/settings.svelte.js';
 import { getChannel } from '../mixer/mixerGraph.svelte.js';
 import { chosenBassStyle } from '../bass/songBassStyle.svelte.js';
 import { BASS_VOICE } from '../bass/readBass.js';
@@ -107,9 +106,7 @@ export class TranscribeBand {
 		const { grid } = this.transcription;
 		if (!performance || !grid) return null;
 		const Tone = (this.#tone ??= await import('tone'));
-		const band = await createBand(Tone, performance, (id) => this.#levelFor(Tone, id), {
-			samplesInTune: () => settings.samplesInTune
-		});
+		const band = await createBand(Tone, performance, (id) => this.#levelFor(Tone, id));
 		this.#madeFrom = { performance, grid };
 		return { band, streams: streamsOnRecording(band.streams, performance.quarter, grid) };
 	}

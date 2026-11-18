@@ -33,9 +33,6 @@ export const settings = $state({
 	/** Which view the mixer's master visualiser shows. */
 	scopeView: /** @type {'waveform' | 'spectrum' | 'stereo'} */ ('spectrum'),
 
-	/** Play each guitar sample in tune (its measured fix, instruments/sampleTuning.js); off: as recorded. */
-	samplesInTune: true,
-
 	// Metronome: set from the menu beside its button on the arranger's bar
 
 	/** The metronome: its sound, level (dB, before the output) and meter when playing alone. */
