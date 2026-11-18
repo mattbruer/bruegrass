@@ -1,13 +1,14 @@
 <script>
 	/**
 	 * The part as TAB: a line per string, top line first, bar lines, and
-	 * each note's fret number on its string's line, where the note starts.
+	 * each note's fret number on its string's line, where the note starts
+	 * (a little in from the barline, as TAB is written: tabLayout.js).
 	 * Tap a number to pick its note (the roll's own selection); then type a
 	 * fret to change the note's pitch on that string (two digits typed
 	 * quickly make 10 and up), ↑ ↓ to play it on the string above or below,
 	 * or Delete to remove it.
 	 */
-	import { lineY, tabHeight } from '../../tab/tabLayout.js';
+	import { lineY, tabHeight, tabX } from '../../tab/tabLayout.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -76,7 +77,7 @@
 	style:width="{labelWidth}px"
 	style:height="{tabHeight(board)}px"
 >
-	{#each board.strings as string, index (index)}
+	{#each board.strings as string, index (`${index}:${string.name}`)}
 		<span class="name" style:top="{lineY(index)}px">{string.name}</span>
 	{/each}
 </div>
@@ -84,7 +85,7 @@
 	{#each board.strings, index (index)}
 		<span class="line" style:top="{lineY(index)}px"></span>
 	{/each}
-	{#each barLines as start, index (index)}
+	{#each barLines as start (start)}
 		<span
 			class="barline"
 			style:left="{start * tickWidth}px"
@@ -92,14 +93,14 @@
 			style:height="{lastLine - lineY(0)}px"
 		></span>
 	{/each}
-	{#each tabNotes as tabNote, index (index)}
+	{#each tabNotes as tabNote, index (`${index}:${tabNote.place?.string}:${tabNote.place?.fret}`)}
 		{#if tabNote.place}
 			<button
 				type="button"
 				class="fret"
 				class:picked={tabNote.note === selected}
 				aria-pressed={tabNote.note === selected}
-				style:left="{tabNote.note.start * tickWidth}px"
+				style:left="{tabX(tabNote.note.start, bars, tickWidth)}px"
 				style:top="{lineY(tabNote.place.string)}px"
 				aria-label="Fret {tabNote.place.fret} on the {board.strings[tabNote.place.string]
 					.name} string"
@@ -139,10 +140,10 @@
 		width: 1px;
 		background: var(--color-ink-soft);
 	}
-	/* The number sits on its string's line, hiding the line behind it */
+	/* The number sits centred on its moment and on its string's line, hiding the line behind it */
 	.fret {
 		position: absolute;
-		transform: translateY(-50%);
+		transform: translate(-50%, -50%);
 		min-width: 1rem;
 		padding: 0 0.2rem;
 		border-radius: var(--corner-small);

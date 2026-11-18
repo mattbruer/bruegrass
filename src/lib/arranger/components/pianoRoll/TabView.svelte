@@ -1,14 +1,15 @@
 <script>
 	/**
-	 * The part as TAB, on its own: the bars numbered along the top (click to
-	 * play from there, where the page can), the TAB, and the chart's chords
-	 * under it, all scrolling sideways together at the piano roll's scale.
+	 * The part as TAB, on its own: the chart's chords over the notes they
+	 * go with, the TAB, and the bars numbered under it (click to play from
+	 * there, where the page can), all scrolling sideways together at the piano roll's scale.
 	 * While playing, a line shows where the band is and the view follows it
 	 * (it lets go for a moment when you scroll it yourself).
 	 */
 	import { onEveryFrame } from '../../../audio/analysis/frameLoop.js';
 	import { followScroll } from '../../melody/roll/followView.js';
 	import { barLabel, tickWidthFor } from '../../melody/roll/rollLayout.js';
+	import { tabX, tickAtTabX } from '../../tab/tabLayout.js';
 	import TabStrip from './TabStrip.svelte';
 
 	const LABEL_WIDTH = 44;
@@ -20,7 +21,7 @@
 	 *   board: import('../../tab/fretboards.js').Fretboard,
 	 *   score: import('../../melody/roll/readScore.js').Score,
 	 *   chordsUnder: import('../../melody/roll/chordsUnderBars.js').ChordUnder[],
-	 *   chordName: (name: string) => string,
+	 *   chordName: (name: string, place?: import('../../chart/chartAnalysis.js').ChordPlace) => string,
 	 *   end: number,
 	 *   gridStep: number,
 	 *   zoom?: { across: number, down: number },
@@ -79,7 +80,7 @@
 			return;
 		}
 		playheadLine.style.display = 'block';
-		playheadLine.style.transform = `translateX(${LABEL_WIDTH + tick * tickWidth}px)`;
+		playheadLine.style.transform = `translateX(${LABEL_WIDTH + tabX(tick, score.bars, tickWidth)}px)`;
 		if (performance.now() < followPausedUntil) return;
 		const view = { width: scroller.clientWidth - LABEL_WIDTH, height: 0, top: 0 };
 		scroller.scrollLeft = followScroll(tick, [], view, {
@@ -96,7 +97,7 @@
 	/** @param {MouseEvent & { currentTarget: HTMLElement }} event */
 	function seekFromRuler(event) {
 		const box = event.currentTarget.getBoundingClientRect();
-		onSeek?.((event.clientX - box.left) / tickWidth);
+		onSeek?.(tickAtTabX(event.clientX - box.left, score.bars, tickWidth));
 	}
 </script>
 
@@ -111,17 +112,10 @@
 	<div class="relative" style:width="{LABEL_WIDTH + width}px">
 		<div class="flex">
 			<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
-			<!-- svelte-ignore a11y_click_events_have_key_events (the page's own keys move around) -->
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<div
-				class="ruler relative"
-				class:seeks={onSeek}
-				style:width="{width}px"
-				onclick={onSeek ? seekFromRuler : undefined}
-			>
-				{#each score.bars as bar, index (index)}
-					<span class="bar-number" style:left="{bar.start * tickWidth}px"
-						>{barLabel(score.bars, index)}</span
+			<div class="chords relative" style:width="{width}px">
+				{#each chordsUnder as chord (`${chord.at}:${chord.name}`)}
+					<span class="chord" style:left="{tabX(chord.at, score.bars, tickWidth)}px"
+						>{chordName(chord.name, chord.place)}</span
 					>
 				{/each}
 			</div>
@@ -145,12 +139,17 @@
 
 		<div class="flex">
 			<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
-			<div class="chords relative" style:width="{width}px">
-				{#each chordsUnder as chord, index (index)}
-					<span
-						class="chord"
-						style:left="{chord.at * tickWidth}px"
-						style:width="{chord.length * tickWidth}px">{chordName(chord.name)}</span
+			<!-- svelte-ignore a11y_click_events_have_key_events (the page's own keys move around) -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div
+				class="ruler relative"
+				class:seeks={onSeek}
+				style:width="{width}px"
+				onclick={onSeek ? seekFromRuler : undefined}
+			>
+				{#each score.bars as bar, index (bar.start)}
+					<span class="bar-number" style:left="{bar.start * tickWidth}px"
+						>{barLabel(score.bars, index)}</span
 					>
 				{/each}
 			</div>
@@ -186,21 +185,17 @@
 		padding-left: 0.25rem;
 	}
 	.chords {
-		height: 28px;
-		border-top: 1px solid var(--color-line);
+		height: 26px;
 	}
+	/* Over its first note: the name starts a little left of the fret number's middle */
 	.chord {
 		position: absolute;
-		top: 0;
 		bottom: 0;
-		display: flex;
-		align-items: center;
-		padding-left: 0.3rem;
-		overflow: hidden;
+		transform: translateX(-0.4rem);
 		white-space: nowrap;
-		border-left: 1px solid var(--color-line);
 		color: var(--color-ink);
-		font-weight: 600;
+		font-size: 0.85rem;
+		font-weight: 700;
 	}
 	.playhead {
 		display: none;
