@@ -602,19 +602,12 @@
 		background: var(--voice-colour);
 		border: 1px solid color-mix(in oklab, var(--voice-colour) 60%, var(--color-ink));
 		border-radius: var(--corner-small);
-		/* gloss on top; the right end resizes */
-		background-image:
-			linear-gradient(
-				to bottom,
-				rgb(255 255 255 / calc(0.45 * var(--gloss))) 0 30%,
-				transparent 55%,
-				rgb(0 0 0 / calc(0.15 * var(--gloss)))
-			),
-			linear-gradient(
-				to left,
-				color-mix(in oklab, var(--voice-colour) 70%, var(--color-ink)) 0 4px,
-				transparent 4px
-			);
+		/* the right end resizes */
+		background-image: linear-gradient(
+			to left,
+			color-mix(in oklab, var(--voice-colour) 70%, var(--color-ink)) 0 4px,
+			transparent 4px
+		);
 		box-shadow: var(--shadow-bevel), var(--shadow-drop-small);
 	}
 	.playhead {
@@ -627,8 +620,6 @@
 		z-index: 3;
 		pointer-events: none;
 		background: var(--color-ink);
-		box-shadow: 0 0 calc(12px * var(--glow)) calc(1px * var(--glow))
-			color-mix(in oklab, var(--color-accent) calc(80% * var(--glow)), transparent);
 	}
 	/* The pickup again, leading back to bar 1: the same notes, edited either place */
 	.note.echo {

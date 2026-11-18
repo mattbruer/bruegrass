@@ -8,7 +8,6 @@
 	import SettingRow from '../controls/SettingRow.svelte';
 	import ColorSwatch from '../controls/ColorSwatch.svelte';
 	import ToggleSwitch from '../controls/ToggleSwitch.svelte';
-	import { DEPTH_EFFECTS } from '$lib/theme/depthEffects.js';
 	import {
 		APPEARANCE_PRESETS,
 		DEFAULT_APPEARANCE,
@@ -105,36 +104,39 @@
 		</SettingRow>
 	</section>
 
-	<section class="ui-well px-4 py-2">
-		<h3 class="mt-2 text-xs font-bold tracking-wider text-ink-faint uppercase">Depth</h3>
-		{#each DEPTH_EFFECTS as effect (effect.id)}
-			<SettingRow id="setting-{effect.id}" label={effect.label} description={effect.description}>
-				<ToggleSwitch bind:on={settings.appearance[effect.id]} labelledBy="setting-{effect.id}" />
-			</SettingRow>
-			{#if effect.id === 'dropShadows' && settings.appearance.dropShadows}
-				<label class="block pb-2">
-					<span class="flex justify-between font-semibold">
-						Drop shadow strength
-						<span class="font-mono text-sm text-ink-soft"
-							>{settings.appearance.dropStrength.toFixed(1)}</span
-						>
-					</span>
-					<span class="block text-sm text-ink-soft">From a hint (0) to towering (2).</span>
-					<input
-						type="range"
-						min="0"
-						max="2"
-						step="0.1"
-						bind:value={settings.appearance.dropStrength}
-						class="range"
-					/>
-				</label>
-			{/if}
-		{/each}
-	</section>
-
 	<section class="ui-well px-4 py-3">
 		<h3 class="mb-1 text-xs font-bold tracking-wider text-ink-faint uppercase">Shape</h3>
+
+		<SettingRow
+			id="setting-drop-shadows"
+			label="3D depth"
+			description="Things float above the page on deep drop shadows. Off: flat."
+		>
+			<ToggleSwitch
+				bind:on={settings.appearance.dropShadows}
+				labelledBy="setting-drop-shadows"
+				tip={TIPS.settings.dropShadows}
+			/>
+		</SettingRow>
+		{#if settings.appearance.dropShadows}
+			<label class="block pb-2">
+				<span class="flex justify-between font-semibold">
+					Drop shadow strength
+					<span class="font-mono text-sm text-ink-soft"
+						>{settings.appearance.dropStrength.toFixed(1)}</span
+					>
+				</span>
+				<span class="block text-sm text-ink-soft">From a hint (0) to towering (2).</span>
+				<input
+					type="range"
+					min="0"
+					max="2"
+					step="0.1"
+					bind:value={settings.appearance.dropStrength}
+					class="range"
+				/>
+			</label>
+		{/if}
 
 		<label class="block py-2">
 			<span class="flex justify-between font-semibold">

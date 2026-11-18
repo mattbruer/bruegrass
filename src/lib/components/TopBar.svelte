@@ -147,10 +147,7 @@
 		z-index: 25;
 		padding-block: 0.6rem;
 		padding-top: max(0.6rem, env(safe-area-inset-top)); /* clear the iPhone notch */
-		background: color-mix(in oklab, var(--player-bar) calc(100% - 30% * var(--glass)), transparent);
-		backdrop-filter: blur(calc(16px * var(--glass))) saturate(calc(100% + 60% * var(--glass)));
-		-webkit-backdrop-filter: blur(calc(16px * var(--glass)))
-			saturate(calc(100% + 60% * var(--glass)));
+		background: var(--player-bar);
 		box-shadow:
 			inset 0 -1px 0 rgb(0 0 0 / calc(0.3 * var(--drop))),
 			0 6px 14px var(--shadow-dark-edge),

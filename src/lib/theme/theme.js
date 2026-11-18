@@ -10,8 +10,6 @@
  * (and the colours worked out from it) never flash wrong on load.
  */
 
-import { DEPTH_EFFECTS, ALL_EFFECTS_ON } from './depthEffects.js';
-
 /**
  * @typedef {{
  *   background: string,
@@ -20,9 +18,10 @@ import { DEPTH_EFFECTS, ALL_EFFECTS_ON } from './depthEffects.js';
  *   waveform: string,
  *   depth: number,
  *   roundness: number,
- *   [effect: string]: string | number | boolean
+ *   dropShadows?: boolean,
+ *   dropStrength?: number
  * }} Appearance colours are #rrggbb; depth, roundness and dropStrength are 0–2 (1 = normal);
- *   plus a switch per effect in depthEffects.js (on unless false)
+ *   dropShadows: 3D depth, things lifted off the page on big drop shadows (on unless false)
  */
 
 /** The look the app ships with, Night (the same values as tokens.css). */
@@ -33,8 +32,8 @@ export const DEFAULT_APPEARANCE = Object.freeze({
 	waveform: '#7ee08a',
 	depth: 1,
 	roundness: 1,
-	dropStrength: 1,
-	...ALL_EFFECTS_ON
+	dropShadows: true,
+	dropStrength: 1
 });
 
 /** Ready-made looks, offered in Settings → Appearance. */
@@ -94,8 +93,8 @@ const CSS_VARIABLE_FOR = {
 	waveform: '--theme-waveform',
 	depth: '--theme-depth',
 	roundness: '--theme-roundness',
-	dropStrength: '--theme-drop-strength',
-	...Object.fromEntries(DEPTH_EFFECTS.map((effect) => [effect.id, effect.variable]))
+	dropShadows: '--theme-drop-shadows',
+	dropStrength: '--theme-drop-strength'
 };
 
 /**
@@ -106,7 +105,7 @@ export function applyTheme(appearance) {
 	/** @type {Record<string, string>} */
 	const variables = {};
 	for (const [choice, variable] of Object.entries(CSS_VARIABLE_FOR)) {
-		variables[variable] = cssValue(appearance[choice]);
+		variables[variable] = cssValue(appearance[/** @type {keyof Appearance} */ (choice)]);
 	}
 	// Tell the browser whether the page is light or dark, so its own controls
 	// (the audio player, dropdown menus, scroll bars) match

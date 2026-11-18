@@ -12,7 +12,6 @@
 	import SettingsPanel from '$lib/settings/SettingsPanel.svelte';
 	import { settings, loadSettings } from '$lib/settings/settings.svelte.js';
 	import { applyTheme } from '$lib/theme/theme.js';
-	import { followPointer } from '$lib/theme/followPointer.js';
 
 	let { children } = $props();
 
@@ -22,7 +21,6 @@
 	let isSettingsWindow = $derived(page.route.id === '/settings');
 
 	onMount(loadSettings);
-	onMount(followPointer);
 
 	// Whenever an appearance setting changes, restyle the page
 	$effect(() => {

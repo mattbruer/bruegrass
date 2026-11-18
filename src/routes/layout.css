@@ -6,7 +6,6 @@
 @import 'tailwindcss';
 @import '../lib/theme/tokens.css';
 @import '../lib/theme/ui.css';
-@import '../lib/theme/depth.css';
 
 body {
 	background: var(--color-surface);

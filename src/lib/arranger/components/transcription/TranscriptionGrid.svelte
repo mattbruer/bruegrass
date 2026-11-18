@@ -387,8 +387,6 @@
 		width: 2px;
 		margin-left: -1px;
 		background: var(--color-danger);
-		box-shadow: 0 0 calc(12px * var(--glow)) calc(1px * var(--glow))
-			color-mix(in oklab, var(--color-danger) calc(80% * var(--glow)), transparent);
 		pointer-events: none;
 	}
 </style>

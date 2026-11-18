@@ -89,9 +89,6 @@
 		box-shadow: var(--shadow-raised), var(--shadow-bevel), var(--shadow-drop-floating);
 		padding: 0;
 	}
-	.panel[open] {
-		animation: pop-in 0.4s var(--ease-spring);
-	}
 
 	/* A floating window sits near the top, over the page, which stays usable */
 	.panel.floating {
@@ -113,7 +110,6 @@
 	/* The page behind is dimmed (in the text colour, so it suits any theme) and blurred */
 	.panel::backdrop {
 		background: color-mix(in oklab, var(--color-ink) 35%, transparent);
-		backdrop-filter: blur(calc(3px + 6px * var(--fx-blur-behind)));
-		-webkit-backdrop-filter: blur(calc(3px + 6px * var(--fx-blur-behind)));
+		backdrop-filter: blur(3px);
 	}
 </style>

@@ -129,14 +129,6 @@
 		z-index: 20;
 		container-type: inline-size;
 		padding: 0.75rem 1rem;
-		background-color: color-mix(
-			in oklab,
-			var(--color-raised) calc(100% - 30% * var(--glass)),
-			transparent
-		);
-		backdrop-filter: blur(calc(14px * var(--glass))) saturate(calc(100% + 50% * var(--glass)));
-		-webkit-backdrop-filter: blur(calc(14px * var(--glass)))
-			saturate(calc(100% + 50% * var(--glass)));
 	}
 
 	.row {

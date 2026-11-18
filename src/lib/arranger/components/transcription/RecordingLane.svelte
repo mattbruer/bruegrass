@@ -49,22 +49,11 @@
 		const box = event.currentTarget.getBoundingClientRect();
 		transcription.seekToQuarters(scale.toQuarters(event.clientX - box.left) + scale.start);
 	}
-
-	const uid = $props.id();
-	const glossId = `${uid}-gloss`;
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events (Space plays; the ruler and keys move around) -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="lane" onclick={playFrom} use:tooltip={TIPS.transcription.recordingLane}>
-	<!-- Gloss: lighter along the top, darker underneath, so the wave looks rounded -->
-	<svg class="defs" aria-hidden="true">
-		<linearGradient id={glossId} x1="0" y1="0" x2="0" y2="1">
-			<stop offset="0" class="gloss-top" />
-			<stop offset="0.5" class="gloss-middle" />
-			<stop offset="1" class="gloss-bottom" />
-		</linearGradient>
-	</svg>
 	{#each pieces as piece, index (index)}
 		<svg
 			class="wave"
@@ -75,7 +64,7 @@
 			preserveAspectRatio="none"
 			aria-hidden="true"
 		>
-			<path d={piece.wave} fill="url(#{glossId})" />
+			<path d={piece.wave} />
 		</svg>
 		{#if settings.transcribe.showHits}
 			<svg
@@ -106,21 +95,6 @@
 		top: 0;
 		height: 100%;
 		pointer-events: none;
-	}
-
-	.defs {
-		position: absolute;
-		width: 0;
-		height: 0;
-	}
-	.gloss-top {
-		stop-color: color-mix(in oklab, var(--color-waveform), white calc(45% * var(--gloss)));
-	}
-	.gloss-middle {
-		stop-color: var(--color-waveform);
-	}
-	.gloss-bottom {
-		stop-color: color-mix(in oklab, var(--color-waveform), black calc(30% * var(--gloss)));
 	}
 
 	.wave {
