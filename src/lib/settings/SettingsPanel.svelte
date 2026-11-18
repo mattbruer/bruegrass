@@ -1,77 +1,34 @@
 <script>
 	/**
 	 * The Settings panel: a dialog over whatever page you're on (so opening it
-	 * never interrupts your work), with a tab for each group of settings.
-	 *
-	 * To add a tab: write a component in ./tabs/ and add it to TABS below.
+	 * never interrupts your work). On a computer it can open in a window of its
+	 * own instead, beside the page, so a change shows without closing it.
 	 */
 	import Dialog from '$lib/components/Dialog.svelte';
-	import GeneralTab from './tabs/GeneralTab.svelte';
-	import AppearanceTab from './tabs/AppearanceTab.svelte';
-
-	const TABS = [
-		{ id: 'general', name: 'General', component: GeneralTab },
-		{ id: 'appearance', name: 'Appearance', component: AppearanceTab }
-	];
+	import SettingsTabs from './SettingsTabs.svelte';
+	import { openSettingsWindow } from './settingsWindow.js';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** @type {{ open: boolean }} */
 	let { open = $bindable(false) } = $props();
 
-	let currentTabId = $state(TABS[0].id);
-	let currentTab = $derived(TABS.find((tab) => tab.id === currentTabId) ?? TABS[0]);
-
-	/**
-	 * Left/right arrows move between tabs, as screen readers and keyboard
-	 * users expect from a tab bar.
-	 * @param {KeyboardEvent} event
-	 */
-	function moveBetweenTabs(event) {
-		const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
-		if (step === 0) return;
-		event.preventDefault();
-
-		const currentIndex = TABS.findIndex((tab) => tab.id === currentTabId);
-		const nextIndex = (currentIndex + step + TABS.length) % TABS.length;
-		currentTabId = TABS[nextIndex].id;
-		document.getElementById(`settings-tab-${currentTabId}`)?.focus();
+	function popOut() {
+		openSettingsWindow();
+		open = false;
 	}
 </script>
 
 <Dialog bind:open title="Settings">
-	<!-- Tab bar: a sunk well with the chosen tab raised -->
-	<div
-		class="mx-6 mt-5 flex ui-well rounded-[var(--corner-control)] p-1"
-		role="tablist"
-		aria-label="Settings sections"
-		tabindex="-1"
-		onkeydown={moveBetweenTabs}
-	>
-		{#each TABS as tab (tab.id)}
-			{@const selected = tab.id === currentTabId}
-			<button
-				type="button"
-				role="tab"
-				id="settings-tab-{tab.id}"
-				aria-selected={selected}
-				aria-controls="settings-tab-panel"
-				tabindex={selected ? 0 : -1}
-				class="flex-1 rounded-[var(--corner-control)] px-3 py-1.5 text-sm font-semibold"
-				class:ui-button={selected}
-				class:text-accent={selected}
-				class:text-ink-soft={!selected}
-				onclick={() => (currentTabId = tab.id)}
-			>
-				{tab.name}
-			</button>
-		{/each}
+	<div class="mx-6 mt-4 flex ui-hover-only justify-end">
+		<button
+			type="button"
+			class="ui-button px-3 py-1.5 text-sm"
+			onclick={popOut}
+			use:tooltip={TIPS.settings.popOut}
+		>
+			Open in its own window ↗
+		</button>
 	</div>
-
-	<div
-		id="settings-tab-panel"
-		class="px-6 pt-5 pb-6"
-		role="tabpanel"
-		aria-labelledby="settings-tab-{currentTabId}"
-	>
-		<currentTab.component />
-	</div>
+	<SettingsTabs />
 </Dialog>

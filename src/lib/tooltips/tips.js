@@ -520,6 +520,7 @@ export const TIPS = Object.freeze({
 
 	settings: {
 		preset: 'Use this colour scheme.',
-		resetAppearance: 'Go back to the original colours and shape.'
+		resetAppearance: 'Go back to the original colours and shape.',
+		popOut: 'Settings in a window of its own, beside the app: every change shows straight away.'
 	}
 });

@@ -96,6 +96,22 @@ export function loadSettings() {
 
 	restoreSavedSettings();
 	saveSettingsWheneverTheyChange();
+	followOtherWindows();
+}
+
+/**
+ * Settings changed in another window of the app (Settings in its own window)
+ * show here at once. Kept for the life of the page, on purpose (set up once).
+ */
+function followOtherWindows() {
+	window.addEventListener('storage', (event) => {
+		if (event.key !== SETTINGS_STORAGE_KEY || !event.newValue) return;
+		try {
+			copyMatchingValues(JSON.parse(event.newValue), settings);
+		} catch {
+			// Unreadable: keep what this window has
+		}
+	});
 }
 
 function restoreSavedSettings() {

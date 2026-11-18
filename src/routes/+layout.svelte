@@ -7,6 +7,7 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
 	import TopBar from '$lib/components/TopBar.svelte';
 	import SettingsPanel from '$lib/settings/SettingsPanel.svelte';
 	import { settings, loadSettings } from '$lib/settings/settings.svelte.js';
@@ -16,6 +17,9 @@
 	let { children } = $props();
 
 	let settingsOpen = $state(false);
+
+	/** Settings in its own window is only the settings, with no top bar */
+	let isSettingsWindow = $derived(page.route.id === '/settings');
 
 	onMount(loadSettings);
 	onMount(followPointer);
@@ -28,8 +32,12 @@
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-<TopBar {settingsOpen} onOpenSettings={() => (settingsOpen = true)} />
+{#if !isSettingsWindow}
+	<TopBar {settingsOpen} onOpenSettings={() => (settingsOpen = true)} />
+{/if}
 
 {@render children()}
 
-<SettingsPanel bind:open={settingsOpen} />
+{#if !isSettingsWindow}
+	<SettingsPanel bind:open={settingsOpen} />
+{/if}
