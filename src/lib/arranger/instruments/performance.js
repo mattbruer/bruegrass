@@ -19,6 +19,7 @@ import { mod12 } from '../chart/key.js';
 import { rhythm } from '../chart/timeline.js';
 import { endBeforeStops, sectionsToPlay, stops, withoutStops } from '../chart/noChord.js';
 import { secondsPerQuarter } from '../chart/tempo.js';
+import { SWING_STRAIGHT, swungTime } from '../chart/swing.js';
 
 /**
  * @typedef {ReturnType<typeof preparePerformance>} Performance
@@ -31,7 +32,7 @@ import { secondsPerQuarter } from '../chart/tempo.js';
  *   bpm?: number, capo?: number, transpose?: number, loop?: boolean,
  *   melody?: import('../melody/melody.js').MelodyPart | null,
  *   bass?: import('./bassline.js').BassNote[] | null, offset?: number,
- *   bassStyle?: import('./bassStyles.js').BassStyle
+ *   bassStyle?: import('./bassStyles.js').BassStyle, swing?: number
  * }} options
  *   transpose: semitones on top of the capo, for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo (looping
@@ -39,7 +40,8 @@ import { secondsPerQuarter } from '../chart/tempo.js';
  *   channel (Melody, or a harmony part's);
  *   bass: the song's edited bass line (BassState.written), or null for the
  *   band's own; offset: where these sections start in the song (quarters),
- *   for the edited bass; bassStyle: how busy the band's own bass is
+ *   for the edited bass; bassStyle: how busy the band's own bass is;
+ *   swing: how long-short the eighths are (chart/swing.js), for every instrument
  */
 export function preparePerformance(
 	written,
@@ -51,10 +53,16 @@ export function preparePerformance(
 		melody = null,
 		bass = null,
 		offset = 0,
-		bassStyle = undefined
+		bassStyle = undefined,
+		swing = SWING_STRAIGHT
 	} = {}
 ) {
 	const quarter = secondsPerQuarter(bpm);
+	/** @param {number} seconds */
+	const swung = (seconds) => swungTime(seconds, quarter, swing);
+	/** @template {{ time: number, stop: number }} T @param {T[]} notes */
+	const swingNotes = (notes) =>
+		notes.map((note) => ({ ...note, time: swung(note.time), stop: swung(note.stop) }));
 	const passQuarters = rhythm(written).quarters;
 	const passLength = passQuarters * quarter;
 	const shift = capo + transpose;
@@ -69,10 +77,13 @@ export function preparePerformance(
 	const tuning = guitarTuning(sections, shift);
 	const built = buildEvents(sections, { bpm, capo: tuning.capo, loop });
 	const duration = built.duration;
-	const events = quiet(built.events).map((event) => ({
-		...event,
-		stop: endBeforeStops(event.time / quarter, event.stop / quarter, silent, passQuarters) * quarter
-	}));
+	const events = swingNotes(
+		quiet(built.events).map((event) => ({
+			...event,
+			stop:
+				endBeforeStops(event.time / quarter, event.stop / quarter, silent, passQuarters) * quarter
+		}))
+	);
 
 	// Bass and mandolin work in concert pitch and pick their own register
 	const concert = { bpm, capo: mod12(shift) };
@@ -88,7 +99,14 @@ export function preparePerformance(
 		}),
 		{ bpm }
 	);
-	const chops = quiet(chopNotes(sections, concert));
+	const chops = quiet(chopNotes(sections, concert)).map((note) => ({
+		...note,
+		time: swung(note.time)
+	}));
+	const bassNotes = bassLine.notes.map((note) => {
+		const time = swung(note.time);
+		return { ...note, time, duration: swung(note.time + note.duration) - time };
+	});
 
 	if (melody && loop && Math.abs(melody.period - passLength) > 1e-6) {
 		throw new Error('The melody was prepared for a different arrangement or tempo');
@@ -116,15 +134,15 @@ export function preparePerformance(
 			urls: chops.map((note) => mandoSampleUrl(note.course, note.fret))
 		},
 		bass: {
-			notes: loop ? bassLine.notes : bassLine.notes.filter((note) => note.time < passLength),
+			notes: loop ? bassNotes : bassNotes.filter((note) => note.time < passLength),
 			/** The bass line repeats every this many seconds (the band's own spans several passes). */
 			period: bassLine.passes * passLength
 		},
 		melody: melody
 			? {
-					events: melody.events,
+					events: swingNotes(melody.events),
 					/** The pickup before bar 1 (negative times). */
-					intro: melody.intro,
+					intro: swingNotes(melody.intro),
 					/** How long the band waits for the pickup, in seconds. */
 					leadIn: melody.leadIn,
 					urls: melody.events.map(melodyUrl),

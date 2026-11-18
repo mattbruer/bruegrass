@@ -15,6 +15,8 @@ import { tuningFix } from './sampleTuning.js';
 
 /** Seconds; avoids clicks when a note is cut off. */
 const FADE_OUT = 0.03;
+/** Seconds of a plucked sample kept before its strike: the pick catching the string. */
+const PICK_BEFORE_STRIKE = 0.005;
 
 /** Decoded samples, shared by every performance (and by live and offline audio). */
 /** @type {Map<string, Promise<import('tone').ToneAudioBuffer>>} */
@@ -117,16 +119,20 @@ export async function createBand(
 	};
 
 	/**
-	 * Start a sample this far past where its sound begins, at the moment it
-	 * would have got there anyway: a graze skips the pick's click, in time.
+	 * Start a sample so its note is struck exactly at `at`, whatever silence
+	 * or scrape the recording has before it (soundStart.js). A pluck keeps
+	 * the pick's last moment before the strike; a graze starts `skip` past it,
+	 * leaving the pick's click out.
 	 * @param {import('tone').Player} player
 	 * @param {import('tone').ToneAudioBuffer} buffer
 	 * @param {number} at
-	 * @param {number} skip seconds
+	 * @param {number} skip seconds of the sample after the strike left out (0: a pluck)
+	 * @param {number} [rate] the player's playback rate
 	 */
-	const startSkipping = (player, buffer, at, skip) => {
-		const offset = skip > 0 ? soundStart(buffer) + skip : 0;
-		return player.start(at + offset, offset);
+	const startOnTheBeat = (player, buffer, at, skip, rate = 1) => {
+		const strike = soundStart(buffer);
+		const from = skip > 0 ? strike + skip : Math.max(0, strike - PICK_BEFORE_STRIKE);
+		return player.start(Math.max(0, at + (from - strike) / rate), from);
 	};
 
 	/** @type {Set<import('tone').Player>} */
@@ -187,8 +193,8 @@ export async function createBand(
 					: /** @type {import('tone').ToneAudioNode} */ (melodyOuts.get(note.channel))
 			)
 		);
-		const skip = grazed ? ARTICULATIONS.graze.skip / rate : 0;
-		startSkipping(player, buffer, at, skip).stop(at + note.stop - note.time);
+		const skip = grazed ? ARTICULATIONS.graze.skip : 0;
+		startOnTheBeat(player, buffer, at, skip, rate).stop(at + note.stop - note.time);
 	};
 
 	/** @type {Stream[]} */
@@ -208,8 +214,8 @@ export async function createBand(
 						playbackRate: rate
 					}).connect(guitarOut[event.part])
 				);
-				const skip = guitar.feel.skip[event.part] / rate;
-				startSkipping(player, guitarSounds[i], at, skip).stop(at + event.stop - event.time);
+				const skip = guitar.feel.skip[event.part];
+				startOnTheBeat(player, guitarSounds[i], at, skip, rate).stop(at + event.stop - event.time);
 			}
 		},
 		{
@@ -225,7 +231,7 @@ export async function createBand(
 						fadeIn: CHOP_ARTICULATION.attack
 					}).connect(mandolinOut)
 				);
-				startSkipping(player, chopSounds[i], at, CHOP_ARTICULATION.skip);
+				startOnTheBeat(player, chopSounds[i], at, CHOP_ARTICULATION.skip);
 			}
 		},
 		{

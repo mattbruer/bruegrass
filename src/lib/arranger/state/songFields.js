@@ -4,13 +4,14 @@
  */
 import { applySongMix, songMixSnapshot } from '../mixer/listeningSetup.svelte.js';
 import { validCapo } from '../chart/capo.js';
+import { validSwing } from '../chart/swing.js';
 import { songBassStyle } from '../bass/songBassStyle.svelte.js';
 import { DEFAULT_BASS_STYLE } from '../instruments/bassStyles.js';
 import { songTab, tabSnapshot } from '../tab/songTab.svelte.js';
 
 /**
  * @typedef {Pick<import('$lib/storage/arrangements.js').Arrangement,
- *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'bassStyle' | 'tab' | 'recording' | 'madeFrom' | 'tempo' | 'capo' | 'transpose' | 'mix'>} SongFields
+ *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'bassStyle' | 'tab' | 'recording' | 'madeFrom' | 'tempo' | 'swing' | 'capo' | 'transpose' | 'mix'>} SongFields
  *   what a song is made of (its name is kept separately)
  */
 
@@ -31,6 +32,7 @@ export function readSongFields(arranger) {
 		recording: arranger.song.recording,
 		madeFrom: arranger.song.madeFrom,
 		tempo: arranger.arrangement.bpm,
+		swing: arranger.arrangement.swing,
 		capo: arranger.arrangement.capoFret,
 		transpose: arranger.arrangement.transpose,
 		mix: songMixSnapshot() // the song's own EQs, even while a listening setup is in use
@@ -50,6 +52,7 @@ export function loadSongIntoPage(arranger, song) {
 	arranger.songsLoaded += 1; // another song's chart: nothing to follow from the last one's
 	arranger.arrangement.text = song.arrangement;
 	arranger.arrangement.tempo = song.tempo;
+	arranger.arrangement.swing = validSwing(song.swing); // examples, and drafts from before
 	arranger.arrangement.capo = validCapo(song.capo);
 	arranger.arrangement.transpose = song.transpose;
 	arranger.melody.load(song.abc, song.tune ?? null); // songs from before the tune could be kept by section

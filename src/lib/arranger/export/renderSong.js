@@ -43,7 +43,8 @@ const TAIL_MAX = 8;
  *   bpm: number, capo: number, transpose: number,
  *   melody: import('../melody/melody.js').Melody | null,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null,
- *   bassStyle?: import('../instruments/bassStyles.js').BassStyle
+ *   bassStyle?: import('../instruments/bassStyles.js').BassStyle,
+ *   swing?: number
  * }} Song
  *   bass: the edited bass line (BassState.written), or null for the band's own
  * @typedef {ReturnType<typeof import('../mixer/mixer.svelte.js').mixSnapshot>} Mix
@@ -183,7 +184,8 @@ function planRender(song, mix) {
 		loop: false,
 		melody,
 		bass: song.bass ?? null,
-		bassStyle: song.bassStyle
+		bassStyle: song.bassStyle,
+		swing: song.swing
 	});
 
 	// The .mid file's lead-in: a bar for the pickup, so bar 1 is on a bar line

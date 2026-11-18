@@ -1,12 +1,13 @@
 <script>
 	/**
 	 * The tempo panel, opened from the tempo tile on the bar: big − and + for
-	 * the tempo (hold to keep going), the metronome's on/off, and, while it
-	 * clicks, its sound, beats and level. A native popover: a tap outside or
+	 * the tempo (hold to keep going), the swing, the metronome's on/off, and,
+	 * while it clicks, its sound, beats and level. A native popover: a tap outside or
 	 * Escape closes it, and it sits just above the bar.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { TEMPO_MAX, TEMPO_MIN } from '../../chart/tempo.js';
+	import { SWING_MAX, SWING_STRAIGHT, validSwing } from '../../chart/swing.js';
 	import { CLICK_SOUNDS } from '../../playback/metronome/sounds.js';
 	import { LEVEL_MAX_DB, LEVEL_MIN_DB } from '../../state/MetronomeState.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -38,6 +39,27 @@
 		void prefs.level;
 		metronome.applyLevel();
 	});
+
+	/** Let a playing band pick up the swing once the fader has rested a moment. */
+	const SWING_SETTLE_MS = 400;
+	let swingPlayed = arrangement.swing;
+	$effect(() => {
+		const swing = arrangement.swing;
+		if (swing === swingPlayed) return;
+		const timer = setTimeout(() => {
+			swingPlayed = swing;
+			player.restartIfPlaying();
+		}, SWING_SETTLE_MS);
+		return () => clearTimeout(timer);
+	});
+
+	/** @param {number} swing */
+	const swingPosition = (swing) => (swing - SWING_STRAIGHT) / (SWING_MAX - SWING_STRAIGHT);
+	/** @param {number} position */
+	const swingFromPosition = (position) =>
+		validSwing(SWING_STRAIGHT + position * (SWING_MAX - SWING_STRAIGHT));
+	/** @param {number} swing */
+	const formatSwing = (swing) => (swing === SWING_STRAIGHT ? 'Straight' : `${swing}%`);
 
 	/** @param {number} db */
 	const levelPosition = (db) => (db - LEVEL_MIN_DB) / (LEVEL_MAX_DB - LEVEL_MIN_DB);
@@ -79,6 +101,17 @@
 				<span aria-hidden="true">+</span><span class="sr-only">Faster</span>
 			</button>
 		</div>
+
+		<Slider
+			label="Swing"
+			name="Swing"
+			bind:value={arrangement.swing}
+			toPosition={swingPosition}
+			fromPosition={swingFromPosition}
+			format={formatSwing}
+			reset={SWING_STRAIGHT}
+			tip={TIPS.player.swing}
+		/>
 
 		<button
 			type="button"

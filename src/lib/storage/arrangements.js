@@ -18,11 +18,12 @@
  * routes or an API) only the bodies here change, not the pages.
  */
 import { readStored, removeStored, writeStored } from './localStore.js';
+import { SWING_STRAIGHT } from '$lib/arranger/chart/swing.js';
 import { newId } from './newId.js';
 import { DEFAULT_BASS_STYLE } from '$lib/arranger/instruments/bassStyles.js';
 
 /** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
-export const ARRANGEMENT_VERSION = 7;
+export const ARRANGEMENT_VERSION = 8;
 
 /** Where every saved song is kept, as { [id]: Arrangement }. */
 const SONGS_KEY = 'bruegrass.arrangements';
@@ -48,6 +49,7 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   recording: { key: string, name: string } | null,
  *   madeFrom: { key: string, name: string } | null,
  *   tempo: number,
+ *   swing: number,
  *   capo: number,
  *   transpose: number,
  *   mix: object | null,
@@ -62,7 +64,7 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   writes its own bass line, an id in BASS_STYLES; tab: each part's TAB instrument
  *   and the strings chosen for its notes, and its tuning if not standard (tab/songTab.svelte.js); recording: the
  *   recording it was transcribed from (its key and name), if any (this song is that transcription);
- *   madeFrom: the recording whose transcription it was sent from (Send to the arranger), if any; transpose: semitones from the Key setting;
+ *   madeFrom: the recording whose transcription it was sent from (Send to the arranger), if any; swing: how long-short the eighths are, in percent (50 straight, chart/swing.js); transpose: semitones from the Key setting;
  *   mix: the mixer's settings (see mixSnapshot in mixer.svelte.js);
  *   dates are ISO strings
  */
@@ -86,6 +88,7 @@ export function createArrangement(fields = {}) {
 		recording: null,
 		madeFrom: null,
 		tempo: 120,
+		swing: SWING_STRAIGHT,
 		capo: 0,
 		transpose: 0,
 		mix: null,
@@ -152,7 +155,8 @@ function allSongs() {
  * version 4 `tab` (older songs have none); version 5 `recording` (none: a
  * song transcribed earlier gets it when its recording is opened again); version 6
  * `tune` and `bassTune` (older songs keep their tune and bass line whole); version 7
- * `madeFrom` (none: an arrangement sent earlier isn't linked back to its transcription).
+ * `madeFrom` (none: an arrangement sent earlier isn't linked back to its transcription);
+ * version 8 `swing` (older songs play straight).
  * @param {Arrangement} song
  * @returns {Arrangement}
  */

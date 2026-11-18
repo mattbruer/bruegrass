@@ -123,6 +123,8 @@ export const TIPS = Object.freeze({
 		metronomeMeter:
 			'Beats in a bar, and the note that gets one beat (4 = quarters, 8 = eighths). Used when the click plays on its own.',
 		metronomeLevel: 'How loud the click is.',
+		swing:
+			'How long-short the eighth notes are: straight at the left, a triplet feel at 66%, dotted at 75%. Tap the number for straight again.',
 		tempo:
 			'The speed, and a metronome to play along with. Tap to change the speed or start the click.',
 		slower: 'Slower. Hold it down to keep going.',

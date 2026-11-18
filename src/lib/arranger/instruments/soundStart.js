@@ -1,10 +1,14 @@
 /**
- * Where a sample's sound begins, in seconds: the samples are MP3s, which
- * start with the encoder's silence (about 23 ms), so the pick lands after it.
+ * Where a sample's note is struck, in seconds. Every MP3 starts with the
+ * encoder's silence (about 23 ms; browsers decode it differently), and some
+ * recordings have a quiet scrape of the pick before the string really sounds
+ * (ee8, the high e's 8th fret, about 35 ms of it). Both are passed over:
+ * the strike is where the sound first reaches a fifth of the sample's peak.
+ * Measured here, as each sample loads, so new samples need nothing.
  */
 
-/** The sound has begun at this share of the sample's peak. */
-const START_SHARE = 0.05;
+/** The note has been struck at this share of the sample's peak (a scrape stays under it). */
+const STRIKE_SHARE = 0.2;
 
 /** @type {WeakMap<object, number>} */
 const measured = new WeakMap();
@@ -16,7 +20,7 @@ export function soundStart(buffer) {
 		const data = buffer.getChannelData(0);
 		let peak = 0;
 		for (const sample of data) peak = Math.max(peak, Math.abs(sample));
-		const index = data.findIndex((sample) => Math.abs(sample) >= peak * START_SHARE);
+		const index = data.findIndex((sample) => Math.abs(sample) >= peak * STRIKE_SHARE);
 		start = Math.max(0, index) / buffer.sampleRate;
 		measured.set(buffer, start);
 	}

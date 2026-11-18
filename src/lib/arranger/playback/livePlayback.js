@@ -29,7 +29,7 @@ const TICK = 0.1;
  *   capo?: number, transpose?: number, bpm?: number,
  *   melody?: import('../melody/melody.js').MelodyPart | null,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null, offset?: number,
- *   bassStyle?: import('../instruments/bassStyles.js').BassStyle,
+ *   bassStyle?: import('../instruments/bassStyles.js').BassStyle, swing?: number,
  *   takes?: import('../takes/playTakes.js').PlayableTake[],
  *   regionStart?: number, countIn?: number, passes?: number
  * }} options

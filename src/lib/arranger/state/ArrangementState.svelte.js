@@ -8,6 +8,7 @@ import { chordLabel, keyOfChord, songKey, validChordDisplay } from '../chart/key
 import { keyChoicesFor } from '../chart/keyChoices.js';
 import { TEMPO_DEFAULT, validTempo } from '../chart/tempo.js';
 import { validCapo } from '../chart/capo.js';
+import { SWING_STRAIGHT } from '../chart/swing.js';
 import { chartAnalysis, functionOnItsOwn, placeId } from '../chart/chartAnalysis.js';
 import { setMark } from '../chart/analysisMarks.js';
 import { unknownChordProblem } from '../chart/knownChords.js';
@@ -20,6 +21,8 @@ export class ArrangementState {
 	text = $state(STARTER_SONG.arrangement);
 	/** Beats per minute, as typed (tidied by tidyTempo when you leave the field). */
 	tempo = $state(TEMPO_DEFAULT);
+	/** How long-short the eighths are, in percent (chart/swing.js). */
+	swing = $state(SWING_STRAIGHT);
 	/** Capo fret, 0 = none. */
 	capo = $state(0);
 	/** Semitones up or down from the written key, for a singer (the Key menu). */
