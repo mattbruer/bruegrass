@@ -116,12 +116,15 @@
 	--shadow-sunk:
 		inset 0 calc(2px * var(--sink)) calc(5px * var(--sink)) rgb(0 0 0 / calc(0.2 * var(--sink))),
 		inset 0 -1px 0 rgb(255 255 255 / calc(0.05 * var(--sink)));
-	/* For a big area holding content (the piano roll, Transcribe's lanes): the
-	   rim's shadow falls further in, and the sides darken too */
+	/* For a big area holding content (the piano roll, Transcribe's lanes): dark
+	   at the rim and fading fast, so controls in the top row stay lit; the sides
+	   darken too. --sunk-rim is the room a top row leaves for it */
 	--shadow-sunk-deep:
-		inset 0 calc(5px * var(--sink)) calc(12px * var(--sink)) rgb(0 0 0 / calc(0.24 * var(--sink))),
+		inset 0 calc(2px * var(--sink)) calc(4px * var(--sink)) rgb(0 0 0 / calc(0.22 * var(--sink))),
+		inset 0 calc(3px * var(--sink)) calc(9px * var(--sink)) rgb(0 0 0 / calc(0.1 * var(--sink))),
 		inset 0 0 calc(3px * var(--sink)) rgb(0 0 0 / calc(0.14 * var(--sink))),
 		inset 0 -1px 0 rgb(255 255 255 / calc(0.06 * var(--sink)));
+	--sunk-rim: calc(4px * var(--sink));
 
 	/* Corner sizes, scaled by the roundness choice */
 	--corner-small: calc(0.4rem * var(--theme-roundness)); /* readouts, small caps */
