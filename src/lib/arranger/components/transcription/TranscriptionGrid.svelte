@@ -49,7 +49,7 @@
 	const { melody, bass } = useArranger();
 
 	/** The names column (px); the lanes scroll under it. */
-	const HEADER_WIDTH = 170;
+	const HEADER_WIDTH = 186;
 	/** Room for a chord on every beat. */
 	const PIXELS_PER_QUARTER = 44;
 	/** The playhead sits this far across the lanes while following. */
@@ -280,6 +280,7 @@
 		--beats-row-height: 1.5rem;
 		--lane-height: calc(2.75rem * var(--zoom-down));
 		--recording-lane-height: calc(5rem * var(--zoom-down));
+		--header-padding: 0.75rem;
 		position: relative;
 		display: grid;
 		grid-template-columns: var(--header-width) var(--lanes-width);
@@ -290,7 +291,7 @@
 		display: flex;
 		align-items: center;
 		gap: 0.3rem;
-		padding: 0 0.4rem;
+		padding: 0 var(--header-padding);
 		z-index: 3;
 	}
 
@@ -315,11 +316,11 @@
 		top: 0;
 		bottom: -1px;
 		left: 100%;
-		width: 24px;
+		width: 16px;
 		background: linear-gradient(
 			to right,
-			rgb(0 0 0 / calc(0.3 * var(--drop))),
-			rgb(0 0 0 / calc(0.1 * var(--drop))) 35%,
+			rgb(0 0 0 / calc(0.18 * var(--drop))),
+			rgb(0 0 0 / calc(0.06 * var(--drop))) 35%,
 			transparent
 		);
 		pointer-events: none;
@@ -331,7 +332,7 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.15rem 0.3rem;
-		padding: 0 0.4rem;
+		padding: 0.3rem var(--header-padding);
 		text-align: left;
 	}
 
@@ -342,6 +343,7 @@
 	}
 
 	.beats-header {
+		padding-block: 0;
 		flex-wrap: nowrap;
 		justify-content: flex-start;
 	}
@@ -356,12 +358,14 @@
 
 	.header.picked-lane {
 		background: var(--color-raised);
-		box-shadow: inset 3px 0 0 var(--color-accent);
+		box-shadow:
+			inset 3px 0 0 var(--color-accent),
+			inset -1px 0 0 var(--shadow-light-edge);
 	}
 
 	.header.add {
 		border-bottom: none;
-		padding: 0.35rem 0.5rem;
+		padding: 0.35rem var(--header-padding);
 	}
 
 	.name {
@@ -388,7 +392,7 @@
 	.cycle-header {
 		height: var(--cycle-row-height);
 		flex-wrap: nowrap;
-		padding: 0 0.5rem;
+		padding: 0 var(--header-padding);
 	}
 
 	.cycle-shade {

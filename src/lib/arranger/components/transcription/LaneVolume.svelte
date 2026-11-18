@@ -22,6 +22,6 @@
 <style>
 	.lane-volume {
 		flex-basis: 100%;
-		--slider-length: calc(var(--header-width) - 1.2rem);
+		--slider-length: calc(var(--header-width) - 2 * var(--header-padding) - 0.4rem);
 	}
 </style>
