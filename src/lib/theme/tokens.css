@@ -102,6 +102,10 @@
 	/* A small shape (an icon on a key) standing up off its face: lit above, shaded below */
 	--filter-raised: drop-shadow(0 -1px 0 rgb(255 255 255 / calc(0.25 * var(--drop))))
 		drop-shadow(0 1.5px 1px rgb(0 0 0 / calc(0.3 * var(--drop))));
+	/* The same for text (a button's label) */
+	--text-raised:
+		0 -1px 0 rgb(255 255 255 / calc(0.25 * var(--drop))),
+		0 1.5px 1px rgb(0 0 0 / calc(0.3 * var(--drop)));
 
 	/* 3D: a lit top edge and a shaded bottom edge, and a face that curves away
 	   from the light, so raised things read as solid; wells sink in deeper */

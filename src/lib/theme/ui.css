@@ -55,7 +55,9 @@
 		color: var(--color-accent);
 	}
 
-	/* its icon stands up off the face, and goes down with it when pressed */
+	/* its label and icon stand up off the face, and go down with it when pressed */
+	text-shadow: var(--text-raised);
+
 	& svg {
 		filter: var(--filter-raised);
 	}
@@ -64,6 +66,7 @@
 		background: var(--color-surface-deep);
 		background-image: none;
 		box-shadow: var(--shadow-inset-small);
+		text-shadow: none;
 
 		& svg {
 			filter: none;
@@ -122,6 +125,7 @@
 	background-image: none;
 	box-shadow: var(--shadow-sunk);
 	color: var(--color-accent);
+	text-shadow: none;
 
 	& svg {
 		filter: none;
