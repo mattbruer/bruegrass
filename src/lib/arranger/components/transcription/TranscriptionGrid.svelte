@@ -275,7 +275,7 @@
 	}
 
 	.tracks {
-		--cycle-row-height: 2rem;
+		--cycle-row-height: 2.5rem;
 		--ruler-height: 2.5rem;
 		--beats-row-height: 1.5rem;
 		--lane-height: calc(2.75rem * var(--zoom-down));
