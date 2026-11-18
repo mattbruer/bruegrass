@@ -1,7 +1,7 @@
 /**
  * The user's appearance choices, applied to the page.
  *
- * The five choices map one-to-one onto the CSS variables at the top of
+ * The choices map one-to-one onto the CSS variables at the top of
  * tokens.css. Applying a theme just sets those variables on <html>; the
  * CSS works out everything else.
  *
@@ -15,6 +15,7 @@
  *   background: string,
  *   text: string,
  *   accent: string,
+ *   waveform: string,
  *   depth: number,
  *   roundness: number
  * }} Appearance colours are #rrggbb; depth and roundness are 0–2 (1 = normal)
@@ -25,6 +26,7 @@ export const DEFAULT_APPEARANCE = Object.freeze({
 	background: '#2b2f37',
 	text: '#e7e9ee',
 	accent: '#f5a524',
+	waveform: '#7ee08a',
 	depth: 1,
 	roundness: 1
 });
@@ -37,6 +39,7 @@ export const APPEARANCE_PRESETS = Object.freeze([
 			background: '#e4e9f0',
 			text: '#283041',
 			accent: '#d97706',
+			waveform: '#1d8a63',
 			depth: 1,
 			roundness: 1
 		}
@@ -48,6 +51,7 @@ export const APPEARANCE_PRESETS = Object.freeze([
 			background: '#e2ebe3',
 			text: '#24332a',
 			accent: '#3f7d4f',
+			waveform: '#2f5fa8',
 			depth: 1,
 			roundness: 1
 		}
@@ -58,6 +62,7 @@ export const APPEARANCE_PRESETS = Object.freeze([
 			background: '#efe7da',
 			text: '#3a3024',
 			accent: '#b4530a',
+			waveform: '#1d7a72',
 			depth: 1,
 			roundness: 1
 		}
@@ -68,6 +73,7 @@ export const APPEARANCE_PRESETS = Object.freeze([
 			background: '#e1e9f4',
 			text: '#1f2d40',
 			accent: '#2563eb',
+			waveform: '#1d8a63',
 			depth: 1,
 			roundness: 1
 		}
@@ -79,6 +85,7 @@ const CSS_VARIABLE_FOR = {
 	background: '--theme-background',
 	text: '--theme-text',
 	accent: '--theme-accent',
+	waveform: '--theme-waveform',
 	depth: '--theme-depth',
 	roundness: '--theme-roundness'
 };

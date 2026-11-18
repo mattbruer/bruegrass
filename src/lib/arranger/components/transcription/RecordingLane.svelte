@@ -3,11 +3,11 @@
 	 * The recording on the song's bars, like an audio region in Logic after
 	 * "Apply Region Tempo to Project Tempo": its waveform, and its hits
 	 * (accent) when they're turned on, bent so every beat is a quarter on the
-	 * ruler. When the beats are right, the hits sit on the beat lines. Tap
+	 * ruler. When the beats are right, the hits sit under the beat dots. Tap
 	 * to play from there.
 	 */
 	import { waveformPath } from '../../takes/waveformPeaks.js';
-	import { bentWaveform, spikesPath } from '../../transcription/recordingShape.js';
+	import { WAVE_FILL, bentWaveform, spikesPath } from '../../transcription/recordingShape.js';
 	import { PEAKS_PER_SECOND } from '../../transcription/TranscriptionState.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -25,6 +25,7 @@
 	const pieces = $derived.by(() => {
 		const { peaks, hits, grid } = transcription;
 		if (!peaks || !hits || !grid) return [];
+		const waveScale = WAVE_FILL / peaks.reduce((loudest, peak) => Math.max(loudest, peak), 1e-6);
 		const first = grid.bars.firstBeat;
 		const stretches = [
 			...(first > 0 ? [{ from: 0, to: first }] : []),
@@ -37,7 +38,7 @@
 				left: scale.toX(from - first),
 				width: scale.toX(to - first) - scale.toX(from - first),
 				columns: wave.length,
-				wave: waveformPath(wave),
+				wave: waveformPath(wave.map((peak) => peak * waveScale)),
 				hits: spikesPath(hitShape)
 			};
 		});
@@ -85,12 +86,6 @@
 		position: relative;
 		height: var(--recording-lane-height);
 		border-bottom: 1px solid var(--color-line);
-		background-image: repeating-linear-gradient(
-			to right,
-			transparent 0 calc(var(--quarter) - 1px),
-			var(--color-line) calc(var(--quarter) - 1px) var(--quarter)
-		);
-		background-position-x: var(--grid-offset);
 		cursor: pointer;
 	}
 
@@ -103,11 +98,10 @@
 	}
 
 	.wave {
-		fill: var(--color-ink-soft);
-		opacity: 0.6;
+		fill: var(--color-waveform);
 	}
 	.wave.behind-hits {
-		opacity: 0.3;
+		opacity: 0.4;
 	}
 
 	.hits {

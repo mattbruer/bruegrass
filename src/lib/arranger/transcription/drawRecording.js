@@ -3,11 +3,12 @@
  * on screen, one column per pixel, so it can zoom in as far as you like
  * (down to single samples) and stay sharp. The waveform swings above and
  * below its zero line, as the samples do (scaled so the recording's
- * loudest moment fills the lane): each column from its lowest to
+ * loudest moment nearly fills the lane): each column from its lowest to
  * its highest sample (the channels mixed), or, zoomed in past one sample a
  * pixel, a line through the samples themselves. The hits (onset strength, 0–1) are drawn over it
  * in the accent; a time is written every so often.
  */
+import { WAVE_FILL } from './recordingShape.js';
 
 /** Times are written about this far apart (px), on a round number of seconds. */
 const TICK_SPACING = 110;
@@ -44,7 +45,7 @@ function drawWave(context, { audio, from, pixelsPerSecond, width, height, colour
 	);
 	const samplesPerPixel = audio.sampleRate / pixelsPerSecond;
 	const zero = height / 2;
-	const scale = 1 / loudestOf(audio, channels);
+	const scale = WAVE_FILL / loudestOf(audio, channels);
 	const y = (/** @type {number} */ value) => zero - Math.max(-1, Math.min(1, value * scale)) * zero;
 
 	context.fillStyle = colours.line;

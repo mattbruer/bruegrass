@@ -195,7 +195,7 @@
 
 <style>
 	.scroller {
-		--wave: color-mix(in oklab, var(--color-ink-soft) 40%, transparent);
+		--wave: var(--color-waveform);
 		--hits: color-mix(in oklab, var(--color-accent) 85%, transparent);
 		overflow-x: auto;
 		overflow-y: hidden;

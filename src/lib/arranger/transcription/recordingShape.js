@@ -5,6 +5,9 @@
  */
 import { secondsAtBeat } from './tempoMap.js';
 
+/** How much of its lane's height a recording's loudest moment reaches (the rest is padding). */
+export const WAVE_FILL = 0.92;
+
 /** Columns per beat. */
 const COLUMNS_PER_BEAT = 15;
 

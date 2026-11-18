@@ -1,12 +1,12 @@
 /*
  * THEME TOKENS
  *
- * The whole look of the app comes from the five choices in section 1.
+ * The whole look of the app comes from the choices in section 1.
  * Everything else (softer text, the light and dark edges of the soft
  * shadows, corner sizes) is worked out from them in section 2.
  *
  *   - To restyle the app by hand: change the values in section 1.
- *   - The Appearance settings change these same five variables while the
+ *   - The Appearance settings change these same variables while the
  *     app runs (see theme.js), so a user's choices override the defaults.
  *   - Components never use raw colours; they use the variables below
  *     (or the Tailwind classes made from them, like `text-ink-soft`).
@@ -20,6 +20,7 @@
 	--theme-background: #2b2f37; /* the soft surface everything sits on (Night by default) */
 	--theme-text: #e7e9ee;
 	--theme-accent: #f5a524; /* "on", "selected", "playing" */
+	--theme-waveform: #7ee08a; /* a recording's waveform */
 	--theme-depth: 1; /* shadow strength: 0 = flat, 1 = normal, 2 = deep */
 	--theme-roundness: 1; /* corners: 0 = square, 1 = normal, 2 = extra round */
 
@@ -130,5 +131,6 @@
 	--color-ink-faint: color-mix(in oklab, var(--theme-text), var(--theme-background) 50%);
 	--color-accent: var(--theme-accent);
 	--color-accent-soft: color-mix(in oklab, var(--theme-accent), var(--theme-background) 35%);
+	--color-waveform: var(--theme-waveform);
 	--color-danger: #c2410c;
 }

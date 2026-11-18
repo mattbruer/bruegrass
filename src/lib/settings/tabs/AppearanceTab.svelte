@@ -1,6 +1,6 @@
 <script>
 	/**
-	 * Settings → Appearance: the five theme choices (see $lib/theme).
+	 * Settings → Appearance: the theme choices (see $lib/theme).
 	 * Changes show immediately: the root layout applies settings.appearance
 	 * to the page whenever it changes.
 	 */
@@ -92,6 +92,14 @@
 			description="Buttons that are on, the playing note, the page you're on."
 		>
 			<ColorSwatch bind:color={settings.appearance.accent} labelledBy="setting-accent" />
+		</SettingRow>
+
+		<SettingRow
+			id="setting-waveform"
+			label="Waveform"
+			description="A recording's sound wave in Transcribe."
+		>
+			<ColorSwatch bind:color={settings.appearance.waveform} labelledBy="setting-waveform" />
 		</SettingRow>
 	</section>
 

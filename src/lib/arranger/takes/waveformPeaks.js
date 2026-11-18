@@ -30,11 +30,18 @@ export function waveformPeaks(channels, sampleRate, perSecond = PEAKS_PER_SECOND
 /**
  * The outline, mirrored about the middle, in a box `peaks.length` wide and
  * 2 high (draw it with `viewBox="0 -1 {peaks.length} 2"`, stretched to fit).
+ * Each peak sits in the middle of its column and the first and last reach the
+ * box's edges, so outlines drawn side by side join without a gap.
  * @param {Float32Array} peaks
  */
 export function waveformPath(peaks) {
 	if (peaks.length === 0) return '';
-	const top = Array.from(peaks, (peak, i) => `${i} ${(-peak).toFixed(3)}`);
-	const bottom = Array.from(peaks, (peak, i) => `${i} ${peak.toFixed(3)}`).reverse();
+	const points = [
+		[0, peaks[0]],
+		...Array.from(peaks, (peak, i) => [i + 0.5, peak]),
+		[peaks.length, peaks[peaks.length - 1]]
+	];
+	const top = points.map(([x, peak]) => `${x} ${(-peak).toFixed(3)}`);
+	const bottom = points.map(([x, peak]) => `${x} ${peak.toFixed(3)}`).reverse();
 	return `M${top.join('L')}L${bottom.join('L')}Z`;
 }
