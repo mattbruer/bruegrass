@@ -55,10 +55,19 @@
 		color: var(--color-accent);
 	}
 
+	/* its icon stands up off the face, and goes down with it when pressed */
+	& svg {
+		filter: var(--filter-raised);
+	}
+
 	&:active:not(:disabled) {
 		background: var(--color-surface-deep);
 		background-image: none;
 		box-shadow: var(--shadow-inset-small);
+
+		& svg {
+			filter: none;
+		}
 	}
 
 	&:disabled {
@@ -96,16 +105,8 @@
 			var(--shadow-bevel);
 	}
 
-	& > .ui-button svg {
-		filter: var(--filter-raised);
-	}
-
 	& > .ui-button:active:not(:disabled) {
 		box-shadow: var(--shadow-inset-small);
-
-		& svg {
-			filter: none;
-		}
 	}
 }
 
@@ -121,6 +122,10 @@
 	background-image: none;
 	box-shadow: var(--shadow-sunk);
 	color: var(--color-accent);
+
+	& svg {
+		filter: none;
+	}
 }
 
 /* Something to type into or choose from (inputs, selects, text areas) */
