@@ -181,6 +181,9 @@ export const TIPS = Object.freeze({
 		fit: 'Let the chart pick the largest text that fits the song on one page.'
 	},
 
+	tuner: {
+		open: 'A tuner: play a string and tune it until the needle sits in the middle and the stripes stand still.'
+	},
 	transcription: {
 		sectionPickup:
 			'Where this section’s tune starts: on the bar, or a beat or more before it, when the singer comes in early (“I was…”). Only the tune: the chords stay on the bar.',

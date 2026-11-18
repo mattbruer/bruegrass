@@ -16,13 +16,15 @@ import limiterUrl from './truePeakLimiterProcessor.js?url';
 import loudnessUrl from './loudnessMeterProcessor.js?url';
 import takeRecorderUrl from './takeRecorderProcessor.js?url';
 import stretchPlayerUrl from './stretchPlayerProcessor.js?worker&url';
+import tunerUrl from './tunerProcessor.js?worker&url';
 
 /** Each processor's registered name, and the file that registers it. */
 const PROCESSORS = Object.freeze({
 	'true-peak-limiter': limiterUrl,
 	'loudness-meter': loudnessUrl,
 	'take-recorder': takeRecorderUrl,
-	'stretch-player': stretchPlayerUrl
+	'stretch-player': stretchPlayerUrl,
+	tuner: tunerUrl
 });
 
 /** @typedef {keyof typeof PROCESSORS} ProcessorName */

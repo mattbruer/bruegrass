@@ -2,8 +2,8 @@
 	/**
 	 * Transcribe's control bar, centred: where you are (play, start over, a
 	 * bar back or forward, the clock) and how it sounds (speed with the pitch
-	 * kept, and Count along as the metronome: a click on every beat, higher
-	 * on ONE). + Marker and Zoom are beside the grid's ruler, and the
+	 * kept, Count along as the metronome: a click on every beat, higher
+	 * on ONE, and the tuner). + Marker and Zoom are beside the grid's ruler, and the
 	 * recording's own settings in its lane's menu (RecordingMenu). It stays
 	 * in view under the top bar, so Play is at hand while you write in the
 	 * piano roll below. Only in the workspace: placing beat 1 has its own few
@@ -17,6 +17,7 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import PlayClock from './PlayClock.svelte';
+	import TunerButton from '$lib/tuner/TunerButton.svelte';
 
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
 	let { transcription } = $props();
@@ -112,6 +113,7 @@
 		<div class="cluster listening">
 			<SpeedControl {player} />
 			<CountAlongButton {transcription} class="h-10 w-12" />
+			<TunerButton class="h-10 w-12" onopen={() => player.pause()} />
 		</div>
 	</div>
 </div>

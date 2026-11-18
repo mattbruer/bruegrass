@@ -63,12 +63,6 @@
 			"addedAt": "2026-11-08T00:00:00.000Z"
 		},
 		{
-			"id": "tuner",
-			"text": "Tuner using the microphone",
-			"done": false,
-			"addedAt": "2026-11-06T00:00:00.000Z"
-		},
-		{
 			"id": "latency-calibration",
 			"text": "Latency calibration so recordings line up with the band",
 			"done": false,
