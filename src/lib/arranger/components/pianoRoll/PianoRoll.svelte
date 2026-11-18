@@ -382,7 +382,10 @@
 	>
 		<div class="relative" style:width="{LABEL_WIDTH + width}px">
 			<div class="sticky top-0 z-20 flex" style:height="{RULER_HEIGHT}px">
-				<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
+				<div
+					class="corner ui-side-column sticky left-0 z-10 shrink-0"
+					style:width="{LABEL_WIDTH}px"
+				></div>
 				<!-- svelte-ignore a11y_click_events_have_key_events (the page's own keys move around) -->
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
@@ -400,7 +403,10 @@
 			</div>
 
 			<div class="flex">
-				<div class="labels sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px">
+				<div
+					class="labels ui-side-column sticky left-0 z-10 shrink-0"
+					style:width="{LABEL_WIDTH}px"
+				>
 					{#each rows as row (row.midi)}
 						<div
 							class="label"
@@ -494,7 +500,10 @@
 			</div>
 
 			<div class="sticky bottom-0 z-20 flex" style:height="{CHORD_HEIGHT}px">
-				<div class="corner sticky left-0 z-10 shrink-0" style:width="{LABEL_WIDTH}px"></div>
+				<div
+					class="corner ui-side-column sticky left-0 z-10 shrink-0"
+					style:width="{LABEL_WIDTH}px"
+				></div>
 				<div class="chords relative" style:width="{width}px">
 					{#each chordsUnder as chord, index (index)}
 						<span
@@ -514,9 +523,7 @@
 		padding: 0;
 		touch-action: pan-x pan-y;
 	}
-	.corner,
 	.ruler,
-	.labels,
 	.chords {
 		background: var(--color-surface-deep);
 	}

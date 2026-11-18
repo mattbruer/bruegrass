@@ -126,7 +126,7 @@
 			style:--zoom-down={zoom.down}
 			style:--grid-offset="{scale.toX(0)}px"
 		>
-			<div class="header cycle-header">
+			<div class="header cycle-header ui-side-column">
 				<button
 					type="button"
 					class="ui-button px-2 py-0.5 text-xs"
@@ -147,7 +147,7 @@
 			</div>
 			<CycleStrip {transcription} {ruler} {scale} />
 
-			<div class="corner ruler-corner">
+			<div class="corner ruler-corner ui-side-column">
 				<button
 					type="button"
 					class="ui-button px-1.5 py-0.5 text-xs"
@@ -165,7 +165,7 @@
 				<TrackRuler bars={ruler} {scale} />
 			</div>
 
-			<div class="header beats-header" class:quiet={!transcription.fixingBeats}>
+			<div class="header beats-header ui-side-column" class:quiet={!transcription.fixingBeats}>
 				<span class="name">Beats</span>
 				{#if transcription.fixingBeats}
 					<button
@@ -185,7 +185,7 @@
 			</div>
 			<BeatDots {transcription} {scale} />
 
-			<div class="header recording">
+			<div class="header recording ui-side-column">
 				<span class="name">Recording</span>
 				<RecordingMenu {transcription} />
 				<MuteSoloButtons settings={transcription.recordingLane} name="Recording" />
@@ -193,7 +193,7 @@
 			</div>
 			<RecordingLane {transcription} {scale} />
 
-			<div class="header">
+			<div class="header ui-side-column">
 				<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
 				<MuteSoloButtons settings={transcription.band.lane} name="Band" />
 				<LaneVolume level={transcription.band.lane} name="Band" />
@@ -202,7 +202,7 @@
 
 			{#each parts as lane (lane.id)}
 				{@const channel = mixer.channels.find((each) => each.id === lane.id)}
-				<div class="header" class:picked-lane={transcription.lane === lane.id}>
+				<div class="header ui-side-column" class:picked-lane={transcription.lane === lane.id}>
 					<button
 						type="button"
 						class="name pick"
@@ -241,7 +241,7 @@
 			{/each}
 
 			{#if transcription.linked}
-				<div class="header add">
+				<div class="header add ui-side-column">
 					<button
 						type="button"
 						class="ui-button px-2 py-1 text-xs"
@@ -295,35 +295,12 @@
 		z-index: 3;
 	}
 
-	/* The lane names stand up off the lanes, which scroll under them: a raised
-	   tone, and a shadow cast across the lanes (a slice per cell, so the
-	   slices meet without seams) */
 	.corner,
 	.header {
 		position: sticky;
 		left: 0;
 		z-index: 2;
-		background: var(--color-raised);
-		border-right: 1px solid var(--color-line);
 		border-bottom: 1px solid var(--color-line);
-		box-shadow: inset -1px 0 0 var(--shadow-light-edge);
-	}
-
-	.corner::after,
-	.header::after {
-		content: '';
-		position: absolute;
-		top: 0;
-		bottom: -1px;
-		left: 100%;
-		width: 16px;
-		background: linear-gradient(
-			to right,
-			rgb(0 0 0 / calc(0.18 * var(--drop))),
-			rgb(0 0 0 / calc(0.06 * var(--drop))) 35%,
-			transparent
-		);
-		pointer-events: none;
 	}
 
 	.header {

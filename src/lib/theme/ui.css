@@ -110,6 +110,33 @@
 	}
 }
 
+/* A column that stays put while the rest scrolls sideways under it (the
+   piano roll's note names, Transcribe's lane names): it stands up off the
+   scrolling part, with a lit edge and a shadow cast across it. Put it on each
+   cell of the column (each draws its own slice of the shadow, so they meet
+   without seams); the cell must be positioned (sticky). */
+@utility ui-side-column {
+	background: var(--color-raised);
+	border-right: 1px solid var(--color-line);
+	box-shadow: inset -1px 0 0 var(--shadow-light-edge);
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: -1px;
+		left: 100%;
+		width: 16px;
+		background: linear-gradient(
+			to right,
+			rgb(0 0 0 / calc(0.18 * var(--drop))),
+			rgb(0 0 0 / calc(0.06 * var(--drop))) 35%,
+			transparent
+		);
+		pointer-events: none;
+	}
+}
+
 /* The main action on a screen (Play): a button in the accent colour */
 @utility ui-button-primary {
 	color: var(--color-accent);
