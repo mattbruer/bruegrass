@@ -387,6 +387,8 @@ export const TIPS = Object.freeze({
 		bassFromChart:
 			"Throw away your changes to the bass line and go back to the band's own, written from the chart's chords.",
 		roll: {
+			tempoLane:
+				'How fast the song goes, bar by bar. Click to add a point and drag it up or down to slow down or speed up there, for a ritard at the end. Double-click a point to remove it.',
 			grids: {
 				eighth: 'Notes snap to eighth notes: two to a beat.',
 				sixteenth: 'Notes snap to sixteenth notes: four to a beat, for fast fiddle runs.',

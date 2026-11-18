@@ -9,6 +9,12 @@
 	],
 	"suggestions": [
 		{
+			"id": "midi-tempo-track",
+			"text": "MIDI file: the tempo lane as a tempo track, so a ritard reaches Logic",
+			"done": false,
+			"addedAt": "2026-11-18"
+		},
+		{
 			"id": "limits-take-storage",
 			"text": "Takes: ask the browser to protect them (persist), keep the take in use + last few, offer to clear the rest",
 			"done": false,

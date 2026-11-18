@@ -44,7 +44,8 @@ const TAIL_MAX = 8;
  *   melody: import('../melody/melody.js').Melody | null,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null,
  *   bassStyle?: import('../instruments/bassStyles.js').BassStyle,
- *   swing?: number
+ *   swing?: number,
+ *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[]
  * }} Song
  *   bass: the edited bass line (BassState.written), or null for the band's own
  * @typedef {ReturnType<typeof import('../mixer/mixer.svelte.js').mixSnapshot>} Mix
@@ -185,13 +186,14 @@ function planRender(song, mix) {
 		melody,
 		bass: song.bass ?? null,
 		bassStyle: song.bassStyle,
-		swing: song.swing
+		swing: song.swing,
+		tempoCurve: song.tempoCurve
 	});
 
 	// The .mid file's lead-in: a bar for the pickup, so bar 1 is on a bar line
 	const firstMeter = slotPositions(sections)[0]?.meter ?? DEFAULT_METER;
 	const barOne =
-		melody && melody.intro.length > 0 ? barQuarters(firstMeter) * performance.quarter : 0;
+		melody && melody.intro.length > 0 ? -performance.clock.secondsAt(-barQuarters(firstMeter)) : 0;
 
 	const decay = mix.reverb.plugin.enabled ? mix.reverb.plugin.decay : 0;
 	const tail = Math.min(TAIL_MAX, Math.max(TAIL_MIN, decay + TAIL_PAST_DECAY));

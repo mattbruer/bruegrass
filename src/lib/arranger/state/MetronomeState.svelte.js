@@ -8,6 +8,7 @@ import { getMetronomeInput } from '../mixer/mixerGraph.svelte.js';
 import { soloClickGrid } from '../playback/metronome/clickGrid.js';
 import { startClicks } from '../playback/metronome/clicker.js';
 import { clickSoundById } from '../playback/metronome/sounds.js';
+import { tempoClock } from '../chart/tempoCurve.js';
 
 /** Lead before the first click when it starts alone (seconds). */
 const START_DELAY = 0.1;
@@ -112,7 +113,7 @@ export class MetronomeState {
 	 */
 	beatsNow() {
 		const clock = this.#clock;
-		return clock ? (clock.now() - clock.origin) / clock.beatSeconds : null;
+		return clock ? clock.beatsAt(clock.now() - clock.origin) : null;
 	}
 
 	#halt() {
@@ -123,24 +124,26 @@ export class MetronomeState {
 
 	/** @param {typeof import('tone')} Tone */
 	#soloClicks(Tone) {
+		const grid = soloClickGrid({ beats: this.prefs.beats, unit: this.prefs.unit });
 		return {
 			origin: Tone.now() + START_DELAY,
-			quarterSeconds: 60 / this.#arrangement.bpm,
-			grid: soloClickGrid({ beats: this.prefs.beats, unit: this.prefs.unit })
+			clock: tempoClock([], this.#arrangement.bpm, grid.lengthQuarters),
+			grid
 		};
 	}
 }
 
 /**
  * @param {typeof import('tone')} Tone
- * @param {{ origin: number, quarterSeconds: number, grid: import('../playback/metronome/clickGrid.js').ClickGrid }} clicks
+ * @param {{ origin: number, clock: import('../chart/tempoCurve.js').TempoClock, grid: import('../playback/metronome/clickGrid.js').ClickGrid }} clicks
  */
-function clickClock(Tone, { origin, quarterSeconds, grid }) {
+function clickClock(Tone, { origin, clock, grid }) {
 	if (grid.beats.length === 0) return null;
 	const raw = /** @type {AudioContext} */ (/** @type {unknown} */ (Tone.getContext().rawContext));
 	return {
 		origin,
-		beatSeconds: (quarterSeconds * grid.lengthQuarters) / grid.beats.length,
+		/** @param {number} seconds since the first click */
+		beatsAt: (seconds) => (clock.quartersAt(seconds) * grid.beats.length) / grid.lengthQuarters,
 		// What's heard lags the audio clock by the output's latency (a lot, over Bluetooth)
 		now: () => Tone.immediate() - (raw.outputLatency || 0)
 	};

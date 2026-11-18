@@ -9,6 +9,8 @@ import { keyChoicesFor } from '../chart/keyChoices.js';
 import { TEMPO_DEFAULT, validTempo } from '../chart/tempo.js';
 import { validCapo } from '../chart/capo.js';
 import { SWING_STRAIGHT } from '../chart/swing.js';
+import { tempoClock } from '../chart/tempoCurve.js';
+import { rhythm } from '../chart/timeline.js';
 import { chartAnalysis, functionOnItsOwn, placeId } from '../chart/chartAnalysis.js';
 import { setMark } from '../chart/analysisMarks.js';
 import { unknownChordProblem } from '../chart/knownChords.js';
@@ -23,6 +25,11 @@ export class ArrangementState {
 	tempo = $state(TEMPO_DEFAULT);
 	/** How long-short the eighths are, in percent (chart/swing.js). */
 	swing = $state(SWING_STRAIGHT);
+	/**
+	 * The tempo lane's points: a ritard, say (chart/tempoCurve.js).
+	 * @type {import('../chart/tempoCurve.js').TempoPoint[]}
+	 */
+	tempoCurve = $state.raw([]);
 	/** Capo fret, 0 = none. */
 	capo = $state(0);
 	/** Semitones up or down from the written key, for a singer (the Key menu). */
@@ -42,6 +49,8 @@ export class ArrangementState {
 
 	bpm = $derived(Number(this.tempo) || TEMPO_DEFAULT);
 	capoFret = $derived(validCapo(this.capo));
+	/** The whole song's time (quarters from bar 1) in seconds, the tempo lane's bends included. */
+	clock = $derived(tempoClock(this.tempoCurve, this.bpm, rhythm(this.sections).quarters));
 	/** How far the sound is from the chords as written: capo plus key change. */
 	pitchShift = $derived(this.capoFret + this.transpose);
 	/** How far the shapes a guitarist plays with this capo are from the chords as written: the key change. */

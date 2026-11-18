@@ -112,7 +112,7 @@ export class RecordingState {
 			const Tone = await import('tone');
 			rig = await openRecordAlong(Tone, null);
 			const bar = firstBar(loop.sectionsToPlay, arrangement.bpm);
-			const regionStart = (loop.startInSong * 60) / arrangement.bpm;
+			const regionStart = arrangement.clock.secondsAt(loop.startInSong);
 			const countInSeconds = settings.recording.countInBars * bar.seconds;
 			/** @type {Recording} */
 			const recording = {

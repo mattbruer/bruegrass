@@ -19,6 +19,8 @@ chord chart text
 sections
    │  chart/timeline.js           where every chord and beat falls (in quarter notes)
    │  chart/swing.js              swing: each beat bent so its second eighth lands later
+   │  chart/tempoCurve.js         the tempo lane's curve (a ritard), and the clock: song quarters ⇄ seconds
+   │  chart/editTempoCurve.js     adding, moving and removing its points
    ▼
 timeline
    │  instruments/performance.js  every instrument's notes (guitar.js, mandolin.js, bassline.js)

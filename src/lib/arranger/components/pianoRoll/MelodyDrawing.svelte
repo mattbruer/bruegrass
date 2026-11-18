@@ -13,6 +13,10 @@
 	 * (`bassStartsEmpty`, to write by ear) instead of showing the band's own,
 	 * and leave out the Key menu when it has its own (`keyMenu`).
 	 *
+	 * In the arranger (no `clock`) a tempo lane sits above the roll, to
+	 * draw tempo changes (a ritard at the end); on a recording the
+	 * recording sets the tempo.
+	 *
 	 * `view`: the notes on the piano roll, or the same part as TAB (fix
 	 * where each note is played; the bass has no TAB yet).
 	 */
@@ -22,6 +26,7 @@
 	import { auditionBassNote, auditionNote } from '../../playback/auditionNote.js';
 	import PianoRoll from './PianoRoll.svelte';
 	import RollToolbar from './RollToolbar.svelte';
+	import TempoLane from './TempoLane.svelte';
 	import VoicePicker from './VoicePicker.svelte';
 	import HarmonyOptions from './HarmonyOptions.svelte';
 	import { voiceColour } from '../../melody/roll/MelodyDrawing.svelte.js';
@@ -187,6 +192,12 @@
 		drawing.commit(drawing.notes.filter((each) => each !== note));
 	}
 
+	/** @param {import('../../chart/tempoCurve.js').TempoPoint[]} points */
+	function changeTempoCurve(points) {
+		arrangement.tempoCurve = points;
+		player.restartIfPlaying();
+	}
+
 	/** @param {number} midi */
 	function sound(midi) {
 		const heard = drawing.isBass
@@ -274,7 +285,27 @@
 				onSound={sound}
 				onSeek={clock?.seek ? seek : undefined}
 				{zoom}
+				lane={clock ? undefined : { name: 'Tempo', draw: tempoLane }}
 			/>
+			{#snippet tempoLane(
+				/** @type {{ width: number, height: number, tickWidth: number }} */ {
+					width,
+					height,
+					tickWidth
+				}
+			)}
+				<TempoLane
+					points={arrangement.tempoCurve}
+					bpm={arrangement.bpm}
+					{width}
+					{height}
+					{tickWidth}
+					gridStep={drawing.gridStep}
+					tickAt={drawing.tickAt}
+					timeAt={drawing.timeAt}
+					onChange={changeTempoCurve}
+				/>
+			{/snippet}
 			{#if drawing.problem}
 				<p class="mt-2 text-sm text-ink-soft">{drawing.problem}</p>
 			{:else}

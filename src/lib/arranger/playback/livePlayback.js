@@ -30,6 +30,7 @@ const TICK = 0.1;
  *   melody?: import('../melody/melody.js').MelodyPart | null,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null, offset?: number,
  *   bassStyle?: import('../instruments/bassStyles.js').BassStyle, swing?: number,
+ *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[],
  *   takes?: import('../takes/playTakes.js').PlayableTake[],
  *   regionStart?: number, countIn?: number, passes?: number
  * }} options
@@ -48,7 +49,7 @@ const TICK = 0.1;
  *   pickup: number,
  *   passLength: number,
  *   beats: () => { elapsed: number, length: number } | null,
- *   clicks: { origin: number, quarterSeconds: number, grid: import('./metronome/clickGrid.js').ClickGrid },
+ *   clicks: { origin: number, clock: import('../chart/tempoCurve.js').TempoClock, grid: import('./metronome/clickGrid.js').ClickGrid },
  *   position: () => (import('../chart/timeline.js').SlotPosition & { beat: number, role: 'boom' | 'chuck', progress: number }) | null
  * }>}
  */
@@ -63,7 +64,7 @@ export async function playArrangement(sections, options = {}) {
 	if (audioSession && audioSession.type !== 'play-and-record') audioSession.type = 'playback';
 
 	const performance = preparePerformance(sections, { ...options, loop: true });
-	const { passLength: duration, quarter } = performance;
+	const { passLength: duration, quarter, clock } = performance;
 	const { slots: positions, beats: grid } = rhythm(sections);
 
 	const Tone = await import('tone');
@@ -141,25 +142,25 @@ export async function playArrangement(sections, options = {}) {
 		 */
 		beats() {
 			if (stopped) return null;
-			return { elapsed: (Tone.immediate() - start) / quarter, length: duration / quarter };
+			return { elapsed: clock.quartersAt(Tone.immediate() - start), length: clock.passQuarters };
 		},
 		/** Where playback is right now, by the audio clock. */
 		position() {
 			const elapsed = Tone.immediate() - start;
 			if (stopped || elapsed < 0) return null;
-			const inPass = elapsed % duration;
-			const q = Math.min(Math.floor(inPass / quarter), grid.length - 1);
+			const inPass = clock.quartersAt(elapsed) % clock.passQuarters;
+			const q = Math.min(Math.floor(inPass), grid.length - 1);
 			const slot = positions[grid[q].slot];
 			return {
 				...slot,
 				beat: q - slot.start, // quarter note within this chord
 				role: grid[q].role,
 				// progress: 0–1 through the current pass, for smooth scrolling
-				progress: inPass / duration
+				progress: inPass / clock.passQuarters
 			};
 		},
 		/** The song's clicks, on this playback's clock (for a metronome that follows the bars). */
-		clicks: { origin: start, quarterSeconds: quarter, grid: songClickGrid(sections) },
+		clicks: { origin: start, clock, grid: songClickGrid(sections) },
 		stop() {
 			stopped = true;
 			if (timer !== undefined) context.clearTimeout(timer);

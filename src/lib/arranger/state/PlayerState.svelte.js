@@ -83,9 +83,10 @@ export class PlayerState {
 				bass: this.#bass.written,
 				bassStyle: chosenBassStyle(),
 				swing: this.#arrangement.swing,
+				tempoCurve: this.#arrangement.tempoCurve,
 				offset: this.#loop.startInSong,
 				takes: await this.takesToPlay(leaveOutTrack ?? null),
-				regionStart: (this.#loop.startInSong * 60) / bpm,
+				regionStart: this.#arrangement.clock.secondsAt(this.#loop.startInSong),
 				countIn,
 				passes
 			});

@@ -21,18 +21,17 @@ let stopSounding = () => {};
  * @param {{
  *   grid: import('./clickGrid.js').ClickGrid,
  *   sound: import('./sounds.js').ClickSound,
- *   origin: number, quarterSeconds: number,
+ *   origin: number, clock: import('../../chart/tempoCurve.js').TempoClock,
  *   destination: import('tone').ToneAudioNode
- * }} run origin: the audio-clock time of the first pass's top; quarterSeconds: one quarter note
+ * }} run origin: the audio-clock time of the first pass's top; clock: the song's quarters in seconds
  * @returns {() => void} stop
  */
-export function startClicks(Tone, { grid, sound, origin, quarterSeconds, destination }) {
+export function startClicks(Tone, { grid, sound, origin, clock, destination }) {
 	stopSounding();
 	if (grid.beats.length === 0) return () => {};
 
 	const context = Tone.getContext();
 	const buffers = clickBuffers(context, sound);
-	const passSeconds = grid.lengthQuarters * quarterSeconds;
 	/** @type {Set<AudioBufferSourceNode>} */
 	const sounding = new Set();
 	let nextIndex = 0;
@@ -44,7 +43,7 @@ export function startClicks(Tone, { grid, sound, origin, quarterSeconds, destina
 	function clickAt(index) {
 		const { at, accent } = grid.beats[index % grid.beats.length];
 		const pass = Math.floor(index / grid.beats.length);
-		return { time: origin + pass * passSeconds + at * quarterSeconds, accent };
+		return { time: origin + clock.secondsAt(pass * grid.lengthQuarters + at), accent };
 	}
 
 	/** @param {{ time: number, accent: boolean }} click */

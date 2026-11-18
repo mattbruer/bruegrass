@@ -77,7 +77,8 @@
 			melody: melody.line,
 			bass: arranger.bass.written,
 			bassStyle: chosenBassStyle(),
-			swing: arrangement.swing
+			swing: arrangement.swing,
+			tempoCurve: arrangement.tempoCurve
 		};
 		try {
 			if (choice === 'midi') downloadArrangementMidi(songToExport);

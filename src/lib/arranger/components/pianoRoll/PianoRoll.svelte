@@ -17,6 +17,9 @@
 	 *
 	 * While the band plays, a line shows where it is and the roll scrolls
 	 * with it (it lets go for a moment when you scroll it yourself).
+	 *
+	 * `lane`: a lane of the page's own under the ruler (the tempo lane),
+	 * scrolling across with the roll; it's given the roll's width and scale.
 	 */
 	import { onMount, tick as rendered, untrack } from 'svelte';
 	import { onEveryFrame } from '../../../audio/analysis/frameLoop.js';
@@ -40,6 +43,7 @@
 	const LABEL_WIDTH = 44;
 	const RULER_HEIGHT = 22;
 	const CHORD_HEIGHT = 28;
+	const LANE_HEIGHT = 56;
 	const ROW_HEIGHT = { mouse: 22, touch: 32 };
 	/* Gestures */
 	const MOVE_THRESHOLD = 6; // px before a press counts as a drag
@@ -69,7 +73,8 @@
 	 *   onCommit: (notes: import('../../melody/roll/editNotes.js').DrawnNote[], length?: number) => void,
 	 *   onSound: (midi: number) => void,
 	 *   onSeek?: (ticks: number) => void,
-	 *   zoom?: { across: number, down: number }
+	 *   zoom?: { across: number, down: number },
+	 *   lane?: { name: string, draw: import('svelte').Snippet<[{ width: number, height: number, tickWidth: number }]> }
 	 * }}
 	 */
 	let {
@@ -93,8 +98,11 @@
 		onCommit,
 		onSound,
 		onSeek,
-		zoom = { across: 1, down: 1 }
+		zoom = { across: 1, down: 1 },
+		lane
 	} = $props();
+	/** Everything that stays at the top while the rows scroll: the ruler, and the lane if any. */
+	let headHeight = $derived(RULER_HEIGHT + (lane ? LANE_HEIGHT : 0));
 
 	let touchScreen = $state(false);
 	/** @type {HTMLElement | undefined} */
@@ -116,7 +124,7 @@
 		};
 		shownSize = { tickWidth, rowHeight };
 		if (!scroller || (change.across === 1 && change.down === 1)) return;
-		keepMiddleInView(scroller, change, { left: LABEL_WIDTH, top: RULER_HEIGHT });
+		keepMiddleInView(scroller, change, { left: LABEL_WIDTH, top: headHeight });
 		pauseFollowing();
 	});
 
@@ -172,7 +180,7 @@
 
 		const view = {
 			width: scroller.clientWidth - LABEL_WIDTH,
-			height: scroller.clientHeight - RULER_HEIGHT - CHORD_HEIGHT,
+			height: scroller.clientHeight - headHeight - CHORD_HEIGHT,
 			top: scroller.scrollTop
 		};
 		const { left, top } = followScroll(tick, notes, view, {
@@ -192,7 +200,7 @@
 	function scrollToTune() {
 		if (!scroller) return;
 		const middle = middlePitch(notes, tonic, usualRange);
-		const y = (range.highest - middle) * rowHeight + RULER_HEIGHT - scroller.clientHeight / 2;
+		const y = (range.highest - middle) * rowHeight + headHeight - scroller.clientHeight / 2;
 		scroller.scrollTop = Math.max(0, y);
 	}
 
@@ -372,7 +380,8 @@
 <div class="ui-sunk-frame rounded-[var(--corner-card)]">
 	<div
 		bind:this={scroller}
-		class="roll relative h-72 overflow-auto ui-well outline-offset-2 pointer-coarse:h-80"
+		class="roll relative h-[calc(18rem+var(--lane-height))] overflow-auto ui-well outline-offset-2 pointer-coarse:h-[calc(20rem+var(--lane-height))]"
+		style:--lane-height="{lane ? LANE_HEIGHT : 0}px"
 		role="application"
 		aria-label="Piano roll: draw the melody"
 		tabindex="0"
@@ -401,6 +410,18 @@
 					{/each}
 				</div>
 			</div>
+
+			{#if lane}
+				<div class="sticky z-20 flex" style:top="{RULER_HEIGHT}px" style:height="{LANE_HEIGHT}px">
+					<div
+						class="lane-name ui-side-column sticky left-0 z-10 shrink-0"
+						style:width="{LABEL_WIDTH}px"
+					>
+						{lane.name}
+					</div>
+					{@render lane.draw({ width, height: LANE_HEIGHT, tickWidth })}
+				</div>
+			{/if}
 
 			<div class="flex">
 				<div
@@ -539,6 +560,15 @@
 		position: absolute;
 		top: 0.15rem;
 		padding-left: 0.25rem;
+	}
+	.lane-name {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		padding-right: 0.35rem;
+		font-size: 0.7rem;
+		color: var(--color-ink-soft);
+		border-bottom: 1px solid var(--color-line);
 	}
 	.label {
 		display: flex;

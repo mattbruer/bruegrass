@@ -20,6 +20,7 @@ import { rhythm } from '../chart/timeline.js';
 import { endBeforeStops, sectionsToPlay, stops, withoutStops } from '../chart/noChord.js';
 import { secondsPerQuarter } from '../chart/tempo.js';
 import { SWING_STRAIGHT, swungTime } from '../chart/swing.js';
+import { tempoClock } from '../chart/tempoCurve.js';
 
 /**
  * @typedef {ReturnType<typeof preparePerformance>} Performance
@@ -32,7 +33,8 @@ import { SWING_STRAIGHT, swungTime } from '../chart/swing.js';
  *   bpm?: number, capo?: number, transpose?: number, loop?: boolean,
  *   melody?: import('../melody/melody.js').MelodyPart | null,
  *   bass?: import('./bassline.js').BassNote[] | null, offset?: number,
- *   bassStyle?: import('./bassStyles.js').BassStyle, swing?: number
+ *   bassStyle?: import('./bassStyles.js').BassStyle, swing?: number,
+ *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[]
  * }} options
  *   transpose: semitones on top of the capo, for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo (looping
@@ -41,7 +43,8 @@ import { SWING_STRAIGHT, swungTime } from '../chart/swing.js';
  *   bass: the song's edited bass line (BassState.written), or null for the
  *   band's own; offset: where these sections start in the song (quarters),
  *   for the edited bass; bassStyle: how busy the band's own bass is;
- *   swing: how long-short the eighths are (chart/swing.js), for every instrument
+ *   swing: how long-short the eighths are (chart/swing.js), for every instrument;
+ *   tempoCurve: the tempo lane's points (chart/tempoCurve.js), a ritard say
  */
 export function preparePerformance(
 	written,
@@ -54,17 +57,25 @@ export function preparePerformance(
 		bass = null,
 		offset = 0,
 		bassStyle = undefined,
-		swing = SWING_STRAIGHT
+		swing = SWING_STRAIGHT,
+		tempoCurve = []
 	} = {}
 ) {
+	// Every part is written at the song's steady tempo, then each note's time is swung and bent by the tempo lane, once, here
 	const quarter = secondsPerQuarter(bpm);
-	/** @param {number} seconds */
-	const swung = (seconds) => swungTime(seconds, quarter, swing);
-	/** @template {{ time: number, stop: number }} T @param {T[]} notes */
-	const swingNotes = (notes) =>
-		notes.map((note) => ({ ...note, time: swung(note.time), stop: swung(note.stop) }));
 	const passQuarters = rhythm(written).quarters;
-	const passLength = passQuarters * quarter;
+	const clock = tempoClock(tempoCurve, bpm, passQuarters, offset);
+	/** @param {number} seconds at the steady tempo */
+	const timeOnTheClock = (seconds) => clock.secondsAt(swungTime(seconds, quarter, swing) / quarter);
+	/** @template {{ time: number, stop: number }} T @param {T[]} notes */
+	const onTheClock = (notes) =>
+		notes.map((note) => ({
+			...note,
+			time: timeOnTheClock(note.time),
+			stop: timeOnTheClock(note.stop)
+		}));
+	const steadyPass = passQuarters * quarter;
+	const passLength = clock.passSeconds;
 	const shift = capo + transpose;
 	// No-chord bars (N.C.): every part is worked out as if the chord before
 	// carried on, then the notes starting in them are left out
@@ -76,8 +87,8 @@ export function preparePerformance(
 	// Guitar: the capo where it reaches, resampling for the rest
 	const tuning = guitarTuning(sections, shift);
 	const built = buildEvents(sections, { bpm, capo: tuning.capo, loop });
-	const duration = built.duration;
-	const events = swingNotes(
+	const guitarPeriod = clock.secondsAt(built.duration / quarter);
+	const events = onTheClock(
 		quiet(built.events).map((event) => ({
 			...event,
 			stop:
@@ -101,14 +112,14 @@ export function preparePerformance(
 	);
 	const chops = quiet(chopNotes(sections, concert)).map((note) => ({
 		...note,
-		time: swung(note.time)
+		time: timeOnTheClock(note.time)
 	}));
 	const bassNotes = bassLine.notes.map((note) => {
-		const time = swung(note.time);
-		return { ...note, time, duration: swung(note.time + note.duration) - time };
+		const time = timeOnTheClock(note.time);
+		return { ...note, time, duration: timeOnTheClock(note.time + note.duration) - time };
 	});
 
-	if (melody && loop && Math.abs(melody.period - passLength) > 1e-6) {
+	if (melody && loop && Math.abs(melody.period - steadyPass) > 1e-6) {
 		throw new Error('The melody was prepared for a different arrangement or tempo');
 	}
 	/** @param {import('../melody/melody.js').MelodyEvent} note */
@@ -117,13 +128,15 @@ export function preparePerformance(
 	return {
 		bpm,
 		quarter,
+		/** The song's time (quarters) to seconds and back, the tempo lane's bends included. */
+		clock,
 		/** One pass of the arrangement, in seconds. */
 		passLength,
 		guitar: {
 			events,
 			urls: events.map((event) => sampleUrl(event.string, event.fret)),
 			/** When looping, the guitar repeats every this many seconds (it spans several passes). */
-			period: loop ? duration : passLength,
+			period: loop ? guitarPeriod : passLength,
 			/** Any transposition the capo can't reach is made by resampling. */
 			rate: 2 ** (tuning.detune / 12),
 			/** A lighter pick stroke at faster tempos (level, filter, attack). */
@@ -140,11 +153,11 @@ export function preparePerformance(
 		},
 		melody: melody
 			? {
-					events: swingNotes(melody.events),
+					events: onTheClock(melody.events),
 					/** The pickup before bar 1 (negative times). */
-					intro: swingNotes(melody.intro),
+					intro: onTheClock(melody.intro),
 					/** How long the band waits for the pickup, in seconds. */
-					leadIn: melody.leadIn,
+					leadIn: -clock.secondsAt(-melody.leadIn / quarter),
 					urls: melody.events.map(melodyUrl),
 					introUrls: melody.intro.map(melodyUrl)
 				}
