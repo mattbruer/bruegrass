@@ -1,17 +1,14 @@
 <script>
 	/**
 	 * The recording on the song's bars, like an audio region in Logic after
-	 * "Apply Region Tempo to Project Tempo": its waveform, and its hits
-	 * (accent) when they're turned on, bent so every beat is a quarter on the
-	 * ruler. When the beats are right, the hits sit under the beat dots. Tap
-	 * to play from there.
+	 * "Apply Region Tempo to Project Tempo": its waveform, bent so every beat
+	 * is a quarter on the ruler. Tap to play from there.
 	 */
 	import { waveformPath } from '../../takes/waveformPeaks.js';
-	import { WAVE_FILL, bentWaveform, spikesPath } from '../../transcription/recordingShape.js';
+	import { WAVE_FILL, bentWaveform } from '../../transcription/recordingShape.js';
 	import { PEAKS_PER_SECOND } from '../../transcription/TranscriptionState.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
-	import { settings } from '$lib/settings/settings.svelte.js';
 
 	/**
 	 * @type {{
@@ -23,8 +20,8 @@
 
 	/** The recording a bar at a time (the lead-in as one stretch), each drawn in its own place. */
 	const pieces = $derived.by(() => {
-		const { peaks, hits, grid } = transcription;
-		if (!peaks || !hits || !grid) return [];
+		const { peaks, grid } = transcription;
+		if (!peaks || !grid) return [];
 		const waveScale = WAVE_FILL / peaks.reduce((loudest, peak) => Math.max(loudest, peak), 1e-6);
 		const first = grid.bars.firstBeat;
 		const stretches = [
@@ -33,13 +30,11 @@
 		];
 		return stretches.map(({ from, to }) => {
 			const wave = bentWaveform(peaks, PEAKS_PER_SECOND, grid.beats, from, to);
-			const hitShape = bentWaveform(hits.values, hits.perSecond, grid.beats, from, to, hits.offset);
 			return {
 				left: scale.toX(from - first),
 				width: scale.toX(to - first) - scale.toX(from - first),
 				columns: wave.length,
-				wave: waveformPath(wave.map((peak) => peak * waveScale)),
-				hits: spikesPath(hitShape)
+				wave: waveformPath(wave.map((peak) => peak * waveScale))
 			};
 		});
 	});
@@ -57,7 +52,6 @@
 	{#each pieces as piece, index (index)}
 		<svg
 			class="wave"
-			class:behind-hits={settings.transcribe.showHits}
 			style:left="{piece.left}px"
 			style:width="{piece.width}px"
 			viewBox="0 -1 {piece.columns} 2"
@@ -66,18 +60,6 @@
 		>
 			<path d={piece.wave} />
 		</svg>
-		{#if settings.transcribe.showHits}
-			<svg
-				class="hits"
-				style:left="{piece.left}px"
-				style:width="{piece.width}px"
-				viewBox="0 0 {piece.columns} 1"
-				preserveAspectRatio="none"
-				aria-hidden="true"
-			>
-				<path d={piece.hits} />
-			</svg>
-		{/if}
 	{/each}
 </div>
 
@@ -89,8 +71,7 @@
 		cursor: pointer;
 	}
 
-	.wave,
-	.hits {
+	.wave {
 		position: absolute;
 		top: 0;
 		height: 100%;
@@ -100,13 +81,5 @@
 	.wave {
 		fill: var(--color-waveform);
 		filter: var(--filter-drop);
-	}
-	.wave.behind-hits {
-		opacity: 0.4;
-	}
-
-	.hits {
-		fill: var(--color-accent);
-		opacity: 0.85;
 	}
 </style>

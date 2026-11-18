@@ -1,6 +1,6 @@
 <script>
 	/**
-	 * The whole recording on one lane: its waveform, its hits (when on) and the times,
+	 * The whole recording on one lane: its waveform and the times,
 	 * drawn from the audio itself for just the stretch on screen
 	 * (drawRecording.js), so it zooms in as far as you like (its own zoom,
 	 * − and +). The playhead (it follows playing, and the lane scrolls to keep
@@ -11,8 +11,6 @@
 	import { drawRecording } from '../../transcription/drawRecording.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
-	import { settings } from '$lib/settings/settings.svelte.js';
-	import HitsCheckbox from './HitsCheckbox.svelte';
 
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
 	let { transcription } = $props();
@@ -50,7 +48,6 @@
 		context.setTransform(ratio, 0, 0, ratio, 0, 0);
 		drawRecording(context, {
 			audio: transcription.audio,
-			hits: settings.transcribe.showHits ? transcription.hits : null,
 			from: scrollLeft / pixelsPerSecond,
 			pixelsPerSecond,
 			width: viewWidth,
@@ -74,7 +71,6 @@
 		const style = getComputedStyle(node);
 		return {
 			wave: style.getPropertyValue('--wave').trim(),
-			hits: style.getPropertyValue('--hits').trim(),
 			line: style.getPropertyValue('--color-line').trim(),
 			text: style.getPropertyValue('--color-ink-soft').trim()
 		};
@@ -131,7 +127,6 @@
 
 <div class="flex flex-wrap items-center justify-between gap-2">
 	<p class="text-sm text-ink-soft">↔ Drag the playhead, or click the recording, to move it.</p>
-	<div class="ml-auto"><HitsCheckbox /></div>
 	<div class="flex items-center gap-1" role="group" aria-label="Zoom">
 		<span class="mr-1 text-sm text-ink-soft">Zoom</span>
 		<button
@@ -196,7 +191,6 @@
 <style>
 	.scroller {
 		--wave: var(--color-waveform);
-		--hits: color-mix(in oklab, var(--color-accent) 85%, transparent);
 		overflow-x: auto;
 		overflow-y: hidden;
 	}

@@ -1,7 +1,6 @@
 /**
- * Drawing the recording on the song's time: its waveform and its hits
- * (how strongly something starts), bent so every beat is the same width.
- * When the beats are right, every hit sits on its beat line.
+ * Drawing the recording on the song's time: its waveform, bent so every
+ * beat is the same width.
  */
 import { secondsAtBeat } from './tempoMap.js';
 
@@ -46,15 +45,4 @@ function loudest(peaks, from, to) {
 	const last = Math.min(peaks.length - 1, Math.ceil(to));
 	for (let i = Math.max(0, Math.floor(from)); i <= last; i++) peak = Math.max(peak, peaks[i]);
 	return peak;
-}
-
-/**
- * Values from 0 to 1 as spikes rising from the bottom, in a box
- * `values.length` wide and 1 high (`viewBox="0 0 {length} 1"`).
- * @param {Float32Array} values
- */
-export function spikesPath(values) {
-	if (values.length === 0) return '';
-	const tops = Array.from(values, (value, i) => `${i} ${(1 - value).toFixed(3)}`);
-	return `M0 1L${tops.join('L')}L${values.length} 1Z`;
 }

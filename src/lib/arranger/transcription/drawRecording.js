@@ -5,8 +5,8 @@
  * below its zero line, as the samples do (scaled so the recording's
  * loudest moment nearly fills the lane): each column from its lowest to
  * its highest sample (the channels mixed), or, zoomed in past one sample a
- * pixel, a line through the samples themselves. The hits (onset strength, 0–1) are drawn over it
- * in the accent; a time is written every so often.
+ * pixel, a line through the samples themselves. A time is
+ * written every so often.
  */
 import { WAVE_FILL } from './recordingShape.js';
 
@@ -15,14 +15,13 @@ const TICK_SPACING = 110;
 const TICK_STEPS = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 30, 60];
 
 /**
- * @typedef {{ values: Float32Array | number[], perSecond: number, offset: number }} Hits
- * @typedef {{ wave: string, hits: string, line: string, text: string }} Colours
+ * @typedef {{ wave: string, line: string, text: string }} Colours
  */
 
 /**
  * @param {CanvasRenderingContext2D} context
  * @param {{
- *   audio: AudioBuffer | null, hits: Hits | null, from: number,
+ *   audio: AudioBuffer | null, from: number,
  *   pixelsPerSecond: number, width: number, height: number, colours: Colours
  * }} view from: the second at the canvas's left edge
  */
@@ -30,7 +29,6 @@ export function drawRecording(context, view) {
 	const { width, height } = view;
 	context.clearRect(0, 0, width, height);
 	if (view.audio) drawWave(context, view);
-	if (view.hits) drawHits(context, view);
 	drawTicks(context, view);
 }
 
@@ -119,37 +117,6 @@ function rangeBetween(channels, start, end, step = Math.max(1, Math.floor((end -
 		if (value > high) high = value;
 	}
 	return { low, high };
-}
-
-/**
- * @param {CanvasRenderingContext2D} context
- * @param {Parameters<typeof drawRecording>[1]} view
- */
-function drawHits(context, { hits, from, pixelsPerSecond, width, height, colours }) {
-	if (!hits) return;
-	context.fillStyle = colours.hits;
-	context.beginPath();
-	context.moveTo(0, height);
-	for (let x = 0; x <= width; x++) {
-		const frame = (from + x / pixelsPerSecond - hits.offset) * hits.perSecond;
-		const value = valueAt(hits.values, frame);
-		context.lineTo(x, height - value * height);
-	}
-	context.lineTo(width, height);
-	context.closePath();
-	context.fill();
-}
-
-/**
- * A value between frames, read straight across (frames are the analysis's own steps).
- * @param {Float32Array | number[]} values
- * @param {number} frame
- */
-function valueAt(values, frame) {
-	const before = Math.floor(frame);
-	if (before < 0 || before + 1 >= values.length) return 0;
-	const along = frame - before;
-	return values[before] * (1 - along) + values[before + 1] * along;
 }
 
 /**

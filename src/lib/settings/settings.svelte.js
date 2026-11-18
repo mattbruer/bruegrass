@@ -61,8 +61,6 @@ export const settings = $state({
 		snapCycle: true,
 		/** Transcribe's clock: where the playhead is as 'bars' (bar, beat, sixteenth) or 'time'. */
 		clock: 'bars',
-		/** The recording's hits (onset strength) drawn over its waveform. */
-		showHits: false,
 		/** Transcribe's track grid and piano roll: size multipliers (components/zoom/). */
 		zoom: { across: 1, down: 1 }
 	},

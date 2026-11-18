@@ -244,8 +244,7 @@ export const TIPS = Object.freeze({
 			'A beat. If its hit sits off the line below, drag the dot onto the hit; it snaps. Tap it for more.',
 		undoBeats: 'Put the beats back as they were before your last change to them (⌘Z).',
 		doneFixingBeats: 'Hide the beats again, so they can’t move by accident.',
-		recordingLane:
-			'The recording, fitted to the bars. Its hits (orange) should sit under the beat dots. Tap to play from there.',
+		recordingLane: 'The recording, fitted to the bars. Tap to play from there.',
 		chordBar:
 			'Tap to type this bar’s chords: a box on each beat a chord can change on (1 and 3 in 4/4), the chord where it changes.',
 		partLane: 'Edit this part in the piano roll below.',
@@ -264,8 +263,6 @@ export const TIPS = Object.freeze({
 			tab: 'The picked part as TAB, for guitar, mandolin or banjo: pick a number to change its fret or string.'
 		},
 		clock: 'Where the playhead is: bar, beat and sixteenth, or the time. Click to switch.',
-		showHits:
-			'Show the hits: where each pick or strum starts, drawn over the waveform. Handy for putting beats right on them.',
 		laneVolume:
 			'How loud this lane plays. Turn the recording down or a part up to hear the part over it. Double-click to put it back.',
 		fewerBeats: 'This bar has a beat fewer. The bars after it move along.',
