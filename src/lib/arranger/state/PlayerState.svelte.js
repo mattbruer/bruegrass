@@ -12,6 +12,9 @@ import { chosenBassStyle } from '../bass/songBassStyle.svelte.js';
 
 /** @typedef {Awaited<ReturnType<typeof playArrangement>>} Playback */
 
+/** How long the band keeps sounding after its last pass, for the last chord to ring (seconds). */
+const RING_OUT = 2;
+
 export class PlayerState {
 	/** @type {import('./ArrangementState.svelte.js').ArrangementState} */
 	#arrangement;
@@ -43,6 +46,8 @@ export class PlayerState {
 
 	/** Called once when this playback stops (recording saves its take then). */
 	#onStop = /** @type {(() => void) | null} */ (null);
+	/** Stops a playback that doesn't loop once it has rung out. */
+	#endTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
 
 	/**
 	 * @param {import('./ArrangementState.svelte.js').ArrangementState} arrangement
@@ -59,11 +64,12 @@ export class PlayerState {
 	}
 
 	/**
+	 * Loops until stopped, or with the loop switched off plays once and stops.
 	 * @param {{ countIn?: number, passes?: number, leaveOutTrack?: string, onStop?: () => void }} [options]
 	 *   for recording: countIn (seconds before bar 1), passes (stop after this many),
 	 *   leaveOutTrack (don't play the track being recorded on), onStop
 	 */
-	async play({ countIn, passes, leaveOutTrack, onStop } = {}) {
+	async play({ countIn, passes = this.#loop.repeats ? undefined : 1, leaveOutTrack, onStop } = {}) {
 		this.stop();
 		this.problem = '';
 		if (this.#arrangement.error) {
@@ -91,6 +97,13 @@ export class PlayerState {
 				passes
 			});
 			this.#onStop = onStop ?? null;
+			const playback = this.playback;
+			const endsIn = playback.secondsLeft() + RING_OUT;
+			if (Number.isFinite(endsIn)) {
+				this.#endTimer = setTimeout(() => {
+					if (this.playback === playback) this.stop();
+				}, endsIn * 1000);
+			}
 			// Each play is measured afresh, so the loudness reading is this song as it is now
 			audioTaps.current?.output.resetLoudness();
 			this.metronome.sync();
@@ -100,6 +113,7 @@ export class PlayerState {
 	}
 
 	stop() {
+		clearTimeout(this.#endTimer);
 		this.playback?.stop();
 		this.playback = null;
 		this.metronome.sync();

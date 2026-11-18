@@ -1,7 +1,7 @@
 <script>
 	/**
-	 * Choose what loops: the whole arrangement, one section, or a range of
-	 * bars. The bar is pressed in and lit while only part is chosen, so it's
+	 * Loop on or off (off: Play goes through once and stops), and what plays:
+	 * the whole arrangement, one section, or a range of bars. The bar is pressed in and lit while only part is chosen, so it's
 	 * obvious only part of the song will play. Changes take effect at once,
 	 * even while playing.
 	 */
@@ -22,6 +22,11 @@
 		player.restartIfPlaying();
 	}
 
+	function switchLoop() {
+		loop.repeats = !loop.repeats;
+		player.restartIfPlaying();
+	}
+
 	function loopEverything() {
 		loop.loopEverything();
 		player.restartIfPlaying();
@@ -29,7 +34,16 @@
 </script>
 
 <div class="loopbar" class:partial={loop.isPartial}>
-	<span class="font-semibold">Loop</span>
+	<button
+		type="button"
+		class="ui-button px-3 py-1 font-semibold"
+		class:ui-button-on={loop.repeats}
+		aria-pressed={loop.repeats}
+		onclick={switchLoop}
+		use:tooltip={TIPS.player.loopSwitch}
+	>
+		Loop
+	</button>
 
 	<select
 		bind:value={loop.section}

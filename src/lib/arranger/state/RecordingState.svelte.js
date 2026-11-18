@@ -28,8 +28,6 @@ import { settings } from '$lib/settings/settings.svelte.js';
 import { readAudioFile, takeAsWav } from '../takes/takeFiles.js';
 import { firstSound } from '../takes/takePickup.js';
 
-/** How long recording runs past the song's end, for the last chord to ring (seconds). */
-const RING_OUT = 2;
 /** Shorter takes are stopped too soon to be worth keeping (seconds). */
 const SHORTEST_TAKE = 1;
 
@@ -149,8 +147,6 @@ export class RecordingState {
 			rig.recorder.start(countInAt);
 			recording.started = true;
 
-			const endsIn = playback.barOne + playback.passLength + RING_OUT - rig.audio.currentTime;
-			this.#endTimer = setTimeout(() => player.stop(), endsIn * 1000);
 			addEventListener('visibilitychange', this.#stopWhenHidden);
 			this.status = 'recording';
 		} catch (problem) {
@@ -164,9 +160,6 @@ export class RecordingState {
 		this.#arranger.player.stop();
 	}
 
-	/** @type {ReturnType<typeof setTimeout> | undefined} */
-	#endTimer;
-
 	// Switching apps on a phone: keep what's been recorded so far
 	#stopWhenHidden = () => {
 		if (document.visibilityState === 'hidden') this.stop();
@@ -177,7 +170,6 @@ export class RecordingState {
 	 * @param {Recording} recording
 	 */
 	async #finish({ rig, songId, trackId, regionStart, bpm, barOne, started, stopClicks }) {
-		clearTimeout(this.#endTimer);
 		removeEventListener('visibilitychange', this.#stopWhenHidden);
 		stopClicks();
 		if (!started) return; // stopped before it began: record() lets go of the mic

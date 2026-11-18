@@ -24,6 +24,9 @@ export const settings = $state({
 	/** Show tooltips (a short summary of what each control does). */
 	showTips: true,
 
+	/** The arranger's Play goes round and round (off: once through, then stop). */
+	loopPlayback: true,
+
 	/** On touch screens, type arrangements with the music keypad (else the phone's keyboard). */
 	musicKeypad: true,
 

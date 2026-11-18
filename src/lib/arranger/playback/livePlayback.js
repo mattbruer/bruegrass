@@ -49,6 +49,7 @@ const TICK = 0.1;
  *   pickup: number,
  *   passLength: number,
  *   beats: () => { elapsed: number, length: number } | null,
+ *   secondsLeft: () => number,
  *   clicks: { origin: number, clock: import('../chart/tempoCurve.js').TempoClock, grid: import('./metronome/clickGrid.js').ClickGrid },
  *   position: () => (import('../chart/timeline.js').SlotPosition & { beat: number, role: 'boom' | 'chuck', progress: number }) | null
  * }>}
@@ -136,18 +137,20 @@ export async function playArrangement(sections, options = {}) {
 		pickup: performance.melody?.leadIn ?? 0,
 		/** One pass, in seconds. */
 		passLength: duration,
+		/** Seconds until the last pass ends (Infinity while it loops). */
+		secondsLeft: () => start + end - Tone.now(),
 		/**
 		 * The audio clock in quarter notes: `elapsed` from bar 1 of the first
 		 * pass (negative during the melody's pickup), `length` of one pass.
 		 */
 		beats() {
-			if (stopped) return null;
+			if (stopped || Tone.immediate() - start >= end) return null; // done, only ringing
 			return { elapsed: clock.quartersAt(Tone.immediate() - start), length: clock.passQuarters };
 		},
 		/** Where playback is right now, by the audio clock. */
 		position() {
 			const elapsed = Tone.immediate() - start;
-			if (stopped || elapsed < 0) return null;
+			if (stopped || elapsed < 0 || elapsed >= end) return null;
 			const inPass = clock.quartersAt(elapsed) % clock.passQuarters;
 			const q = Math.min(Math.floor(inPass), grid.length - 1);
 			const slot = positions[grid[q].slot];

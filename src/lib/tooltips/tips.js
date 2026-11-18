@@ -115,7 +115,7 @@ export const TIPS = Object.freeze({
 			'Add a take from a WAV file someone sent you (one made with Download here), onto the chosen track.'
 	},
 	player: {
-		play: 'Play the arrangement from the start, looping. Changes you make while it plays are picked up.',
+		play: 'Play the arrangement from the start (round and round while Loop is on). Changes you make while it plays are picked up.',
 		stop: 'Stop playing.',
 		metronome:
 			'Start or stop a steady click to play along with, with or without the music. While the song plays, it follows the song’s bars.',
@@ -140,7 +140,9 @@ export const TIPS = Object.freeze({
 			roll: 'Show the tune on a piano roll, to draw and change its notes.',
 			sheet: 'Show the tune as sheet music, with the chords over it.'
 		},
-		loopSection: 'Choose which part of the song repeats while it plays.',
+		loopSwitch:
+			'Loop on: the song (or the part you chose) goes round and round. Off: it plays once and stops, for an ending.',
+		loopSection: 'Choose which part of the song plays.',
 		loopFrom: 'The first bar of the loop.',
 		loopTo: 'The last bar of the loop.',
 		loopEverything: 'Go back to looping the whole arrangement.',
