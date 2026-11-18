@@ -38,6 +38,9 @@ export function rulerFromBars(bars, beatsPerBar, leadInBeats, markers = {}) {
 	];
 }
 
+/** Quarters of room before the first bar, so the lead-in's first beat isn't on the edge. */
+const ROOM_BEFORE = 1;
+
 /**
  * The whole ruler's span, in quarters.
  * @param {import('../tracks/ruler.js').RulerBar[]} ruler
@@ -46,7 +49,7 @@ export function rulerFromBars(bars, beatsPerBar, leadInBeats, markers = {}) {
 export function rulerSpanWithRoom(ruler, beatsPerBar) {
 	const last = ruler.at(-1);
 	return {
-		start: ruler[0]?.start ?? 0,
+		start: (ruler[0]?.start ?? 0) - ROOM_BEFORE,
 		end: last ? last.start + last.beats + beatsPerBar : beatsPerBar
 	};
 }
