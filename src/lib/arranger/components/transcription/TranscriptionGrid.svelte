@@ -294,14 +294,35 @@
 		z-index: 3;
 	}
 
+	/* The lane names stand up off the lanes, which scroll under them: a raised
+	   tone, and a shadow cast across the lanes (a slice per cell, so the
+	   slices meet without seams) */
 	.corner,
 	.header {
 		position: sticky;
 		left: 0;
 		z-index: 2;
-		background: var(--color-surface);
+		background: var(--color-raised);
 		border-right: 1px solid var(--color-line);
 		border-bottom: 1px solid var(--color-line);
+		box-shadow: inset -1px 0 0 var(--shadow-light-edge);
+	}
+
+	.corner::after,
+	.header::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: -1px;
+		left: 100%;
+		width: 24px;
+		background: linear-gradient(
+			to right,
+			rgb(0 0 0 / calc(0.3 * var(--drop))),
+			rgb(0 0 0 / calc(0.1 * var(--drop))) 35%,
+			transparent
+		);
+		pointer-events: none;
 	}
 
 	.header {
