@@ -16,6 +16,7 @@ import { abcWithWords } from '../words/abcWithWords.js';
 import { MELODY_CHANNEL, voiceChannels } from '../harmony/partChannels.js';
 import { HARMONY_PARTS } from '../harmony/harmonyParts.js';
 import { concertChordAt } from '../../chart/concertChords.js';
+import { transposed } from './octaves.js';
 
 /**
  * @typedef {import('./readScore.js').Score} Score
@@ -80,6 +81,22 @@ export function respellDrawnMelody(abc, voices, key) {
 		text = rewriteAbc(text, { ...score, key: key.spelling }, score.notes, { every: true });
 	}
 	return withKeySignature(text, key.keyText);
+}
+
+/**
+ * The same tune with these voices moved by some semitones (an octave): the
+ * melody takes its harmony parts along, so hand edits to them stay.
+ * @param {string} abc
+ * @param {DrawnVoice[]} voices read from this ABC
+ * @param {number} semitones
+ */
+export function transposedDrawnMelody(abc, voices, semitones) {
+	let text = abc;
+	// The last voice first, so the earlier ones' places in the text still hold
+	for (const { score } of [...voices].reverse()) {
+		text = rewriteAbc(text, score, transposed(score.notes, semitones));
+	}
+	return text;
 }
 
 /** @param {string} id */

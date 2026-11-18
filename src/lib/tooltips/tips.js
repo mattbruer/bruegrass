@@ -394,7 +394,11 @@ export const TIPS = Object.freeze({
 				triplet: 'Notes snap to triplets: three to a beat, as in Irish tunes.'
 			},
 			key: 'The key the song is in. It’s guessed from the first chord; pick it here if the guess is wrong. With a capo, it says which shapes you play.',
-			delete: 'Delete the picked note (or press Delete).'
+			delete: 'Delete the picked note (or press Delete).',
+			octaveUp:
+				'Move every note of this part up an octave. The melody takes its harmony lines with it.',
+			octaveDown:
+				'Move every note of this part down an octave. The melody takes its harmony lines with it.'
 		},
 		abcLink: 'Learn ABC notation, a simple way to write a tune as text.',
 		startFromChart:

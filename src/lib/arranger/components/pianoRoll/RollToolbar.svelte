@@ -1,7 +1,7 @@
 <script>
 	/**
-	 * Above the piano roll: how finely notes snap, the song's key, and
-	 * deleting the picked note.
+	 * Above the piano roll: how finely notes snap, the song's key, moving
+	 * the part an octave, and deleting the picked note.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { GRIDS } from '../../melody/roll/ticks.js';
@@ -76,6 +76,23 @@
 			</select>
 		</label>
 	{/if}
+
+	<div class="flex gap-1" role="group" aria-label="Octave">
+		<button
+			type="button"
+			class="ui-button px-3 py-1.5"
+			disabled={!drawing.canMoveOctave(-1)}
+			onclick={() => drawing.moveOctave(-1)}
+			use:tooltip={TIPS.melody.roll.octaveDown}>Octave down</button
+		>
+		<button
+			type="button"
+			class="ui-button px-3 py-1.5"
+			disabled={!drawing.canMoveOctave(1)}
+			onclick={() => drawing.moveOctave(1)}
+			use:tooltip={TIPS.melody.roll.octaveUp}>Octave up</button
+		>
+	</div>
 
 	<button
 		type="button"

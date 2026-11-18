@@ -16,7 +16,8 @@ import { concertChord } from '../../chart/concertChords.js';
 import { isNoChord } from '../../chart/noChord.js';
 import { MELODY_CHANNEL } from '../harmony/partChannels.js';
 import { HARMONY_PARTS } from '../harmony/harmonyParts.js';
-import { writeDrawnMelody } from './drawnMelody.js';
+import { transposedDrawnMelody, writeDrawnMelody } from './drawnMelody.js';
+import { OCTAVE, staysOnPiano, transposed } from './octaves.js';
 import { blankScoreForSong } from './scoreFromChart.js';
 import { chordsUnderBars } from './chordsUnderBars.js';
 import { chordToneOptions } from './chordToneOptions.js';
@@ -190,6 +191,40 @@ export class MelodyDrawing {
 		const own = withoutPickupEcho(notes, this.current?.score.notes ?? [], this.echo);
 		this.notes = withPickupEcho(own, this.echo);
 		this.#write(this.current?.id ?? MELODY_CHANNEL, own);
+	}
+
+	/**
+	 * The voices an octave move takes: the melody brings its harmony parts
+	 * along (they're written from it); any other part moves alone.
+	 */
+	#octaveVoices = $derived.by(() => {
+		const current = this.current;
+		if (!current || this.read?.lineStarts) return [];
+		if (current.id !== MELODY_CHANNEL) return [current];
+		return this.voices.filter(
+			(each) => each.id === MELODY_CHANNEL || VOICE_ORDER.includes(each.id)
+		);
+	});
+
+	/** @param {1 | -1} direction up or down */
+	canMoveOctave(direction) {
+		const voices = this.#octaveVoices;
+		return (
+			voices.some((each) => each.score.notes.length > 0) &&
+			voices.every((each) => !each.problem && staysOnPiano(each.score.notes, OCTAVE * direction))
+		);
+	}
+
+	/**
+	 * Move the edited part (the melody with its harmony parts) up or down an octave.
+	 * @param {1 | -1} direction
+	 */
+	moveOctave(direction) {
+		if (!this.canMoveOctave(direction)) return;
+		const semitones = OCTAVE * direction;
+		if (this.voice !== MELODY_CHANNEL) return this.commit(transposed(this.notes, semitones));
+		const { melody } = this.arranger;
+		melody.notation = transposedDrawnMelody(melody.notation, this.#octaveVoices, semitones);
 	}
 
 	/** The voice's notes as the roll shows them. */
