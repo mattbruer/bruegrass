@@ -54,18 +54,20 @@
 <!-- svelte-ignore a11y_click_events_have_key_events (Space plays; the ruler and keys move around) -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="lane" onclick={playFrom} use:tooltip={TIPS.transcription.recordingLane}>
-	{#each pieces as piece, index (index)}
-		<svg
-			class="wave"
-			style:left="{piece.left}px"
-			style:width="{piece.width}px"
-			viewBox="0 -1 {piece.columns} 2"
-			preserveAspectRatio="none"
-			aria-hidden="true"
-		>
-			<path d={piece.wave} />
-		</svg>
-	{/each}
+	<div class="waveform">
+		{#each pieces as piece, index (index)}
+			<svg
+				class="wave"
+				style:left="{piece.left}px"
+				style:width="{piece.width}px"
+				viewBox="0 -1 {piece.columns} 2"
+				preserveAspectRatio="none"
+				aria-hidden="true"
+			>
+				<path d={piece.wave} />
+			</svg>
+		{/each}
+	</div>
 </div>
 
 <style>
@@ -83,8 +85,15 @@
 		pointer-events: none;
 	}
 
+	/* One shadow for the whole waveform: a shadow per bar darkened every join */
+	.waveform {
+		position: absolute;
+		inset: 0;
+		filter: var(--filter-drop);
+		pointer-events: none;
+	}
+
 	.wave {
 		fill: var(--color-waveform);
-		filter: var(--filter-drop);
 	}
 </style>
