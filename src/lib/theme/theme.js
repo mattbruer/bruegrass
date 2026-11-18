@@ -33,7 +33,7 @@ export const DEFAULT_APPEARANCE = Object.freeze({
 	depth: 1,
 	roundness: 1,
 	dropShadows: true,
-	dropStrength: 1
+	dropStrength: 2
 });
 
 /** Ready-made looks, offered in Settings → Appearance. */

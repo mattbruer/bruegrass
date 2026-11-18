@@ -24,7 +24,7 @@
 	--theme-depth: 1; /* shadow strength: 0 = flat, 1 = normal, 2 = deep */
 	--theme-roundness: 1; /* corners: 0 = square, 1 = normal, 2 = extra round */
 	--theme-drop-shadows: 1; /* 1 = things float above the page on big drop shadows, 0 = off */
-	--theme-drop-strength: 1; /* how strong the drop shadows are, 0–2 */
+	--theme-drop-strength: 2; /* how strong the drop shadows are, 0–2 */
 
 	/* ------------------------------------------------------------------ */
 	/* 2. Worked out from the choices (no need to edit)                    */
