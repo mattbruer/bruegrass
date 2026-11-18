@@ -275,7 +275,7 @@
 	}
 
 	.tracks {
-		--cycle-row-height: 1.25rem;
+		--cycle-row-height: 2rem;
 		--ruler-height: 2.5rem;
 		--beats-row-height: 1.5rem;
 		--lane-height: calc(2.75rem * var(--zoom-down));
@@ -366,7 +366,8 @@
 
 	.cycle-header {
 		height: var(--cycle-row-height);
-		padding: 0 0.35rem;
+		flex-wrap: nowrap;
+		padding: 0 0.25rem;
 	}
 
 	.cycle-shade {
