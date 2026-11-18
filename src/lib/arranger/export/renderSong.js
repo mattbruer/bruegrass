@@ -43,9 +43,11 @@ const TAIL_MAX = 8;
  *   bpm: number, capo: number, transpose: number,
  *   melody: import('../melody/melody.js').Melody | null,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null,
- *   bassStyle?: import('../instruments/bassStyles.js').BassStyle
+ *   bassStyle?: import('../instruments/bassStyles.js').BassStyle,
+ *   samplesInTune?: boolean
  * }} Song
- *   bass: the edited bass line (BassState.written), or null for the band's own
+ *   bass: the edited bass line (BassState.written), or null for the band's own;
+ *   samplesInTune: the guitar samples put in tune (instruments/sampleTuning.js)
  * @typedef {ReturnType<typeof import('../mixer/mixer.svelte.js').mixSnapshot>} Mix
  * @typedef {{ name: string, channels: Float32Array[] }} RenderedFile
  *   channels: one (mono) or two (stereo) arrays of samples, -1 to 1
@@ -196,7 +198,14 @@ function planRender(song, mix) {
 
 	/** @param {string} channelId */
 	const instrumentOf = (channelId) => channelInstrument(mix.channels, channelId);
-	return { performance, barOne, instrumentOf, seconds: barOne + performance.passLength + tail };
+	const samplesInTune = () => song.samplesInTune ?? false;
+	return {
+		performance,
+		barOne,
+		instrumentOf,
+		samplesInTune,
+		seconds: barOne + performance.passLength + tail
+	};
 }
 
 /**
@@ -205,10 +214,11 @@ function planRender(song, mix) {
  * @param {ReturnType<typeof planRender>} plan
  * @param {import('../../audio/mixer/buildMixerGraph.js').MixerGraph} graph
  */
-async function playOnePass(Tone, { performance, barOne, instrumentOf }, graph) {
+async function playOnePass(Tone, { performance, barOne, instrumentOf, samplesInTune }, graph) {
 	const band = await createBand(Tone, performance, graph.channelInput, {
 		live: false,
-		instrumentOf
+		instrumentOf,
+		samplesInTune
 	});
 	band.playIntro(barOne);
 	for (const { notes, play } of band.streams) {
@@ -232,4 +242,3 @@ function withoutMutes(mix) {
 	copy.reverb.mute = false;
 	return copy;
 }
-

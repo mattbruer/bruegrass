@@ -25,6 +25,7 @@ timeline
    │  instruments/tuneInstruments.js  what the tune's voices play on (guitar samples or a synth), picked per strip in components/mixer/instruments/
    │  instruments/strumPatterns.js  the guitar's strum patterns, as data
    │  instruments/articulation.js  pluck and graze (how the pick meets a string), as data; soundStart.js finds where a sample's sound begins
+   │  instruments/sampleTuning.js  puts each guitar sample in tune as it plays (fixes in guitarSampleFixes.js, written by scripts/measureSampleTuning.js)
    │  instruments/seededRandom.js the repeatable random choices
    │  instruments/mandolin.js     off-beat chops
    │  instruments/bassline.js     the band's own bass part (instruments/upright.js plays it; bassFills.js walks under held tune notes)

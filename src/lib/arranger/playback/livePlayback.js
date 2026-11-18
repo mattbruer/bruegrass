@@ -4,6 +4,7 @@
  */
 import { preparePerformance } from '../instruments/performance.js';
 import { createBand } from '../instruments/band.js';
+import { settings } from '$lib/settings/settings.svelte.js';
 import { getChannel } from '../mixer/mixerGraph.svelte.js';
 import { mixer } from '../mixer/mixer.svelte.js';
 import { channelInstrument } from '../instruments/tuneInstruments.js';
@@ -69,7 +70,8 @@ export async function playArrangement(sections, options = {}) {
 	const Tone = await import('tone');
 	await Tone.start();
 	const band = await createBand(Tone, performance, getChannel, {
-		instrumentOf: (channelId) => channelInstrument(mixer.channels, channelId)
+		instrumentOf: (channelId) => channelInstrument(mixer.channels, channelId),
+		samplesInTune: () => settings.samplesInTune
 	});
 
 	/*

@@ -12,6 +12,8 @@ import { createUpright, uprightPitch } from '../instruments/upright.js';
 import { BASS_VOICE } from '../bass/readBass.js';
 import { channelInstrument, createTuneSynth } from '../instruments/tuneInstruments.js';
 import { mixer } from '../mixer/mixer.svelte.js';
+import { tuningFix } from '../instruments/sampleTuning.js';
+import { settings } from '$lib/settings/settings.svelte.js';
 
 /** Seconds a drawn note rings when heard on its own. */
 const AUDITION_SECONDS = 0.7;
@@ -49,7 +51,7 @@ export async function auditionNote(midi, shift, channelId = MELODY_CHANNEL, at =
 		url: buffer,
 		volume: LEVEL_DB,
 		fadeOut: FADE_OUT,
-		playbackRate: rate
+		playbackRate: rate * tuningFix(string, fret, settings.samplesInTune)
 	});
 	player.connect(output);
 	player.onstop = () => player.dispose();

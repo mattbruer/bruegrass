@@ -11,6 +11,7 @@ import { melodyPitch } from '../melody/melody.js';
 import { ARTICULATIONS } from './articulation.js';
 import { soundStart } from './soundStart.js';
 import { CHOP_ARTICULATION } from './mandolin.js';
+import { tuningFix } from './sampleTuning.js';
 
 /** Seconds; avoids clicks when a note is cut off. */
 const FADE_OUT = 0.03;
@@ -50,19 +51,25 @@ export function loadBuffer(Tone, url) {
  * @param {import('./performance.js').Performance} performance
  * @param {(id: string) => import('tone').ToneAudioNode | Promise<import('tone').ToneAudioNode>} channelInput
  *   where each instrument plays into the mixer
- * @param {{ live?: boolean, instrumentOf?: (channelId: string) => import('./tuneInstruments.js').TuneInstrument }} [options]
+ * @param {{
+ *   live?: boolean,
+ *   instrumentOf?: (channelId: string) => import('./tuneInstruments.js').TuneInstrument,
+ *   samplesInTune?: () => boolean
+ * }} [options]
  *   live: playing for as long as you listen, so each finished note's player
  *   is let go (an offline render is thrown away whole once it's done; and
  *   there, Tone reports a player stopped before it has even played, so
  *   letting it go then would silence it); instrumentOf: what each tune
  *   channel plays on, asked at each note, so a change is heard while playing
- *   (the guitar samples when not given)
+ *   (the guitar samples when not given); samplesInTune: whether each
+ *   guitar sample is put in tune (sampleTuning.js), asked at each note so
+ *   it can be switched while playing
  */
 export async function createBand(
 	Tone,
 	performance,
 	channelInput,
-	{ live = true, instrumentOf } = {}
+	{ live = true, instrumentOf, samplesInTune = () => false } = {}
 ) {
 	const { guitar, mandolin, bass, melody } = performance;
 
@@ -163,6 +170,7 @@ export async function createBand(
 	 * @param {number} at
 	 */
 	const playMelody = (note, buffer, at) => {
+		const rate = note.rate * tuningFix(note.string, note.fret, samplesInTune());
 		const synth = instrumentOf && tuneSynth(note.channel, instrumentOf(note.channel));
 		if (synth) {
 			synth.play(melodyPitch(note), note.stop - note.time, at, note.levelDb);
@@ -175,14 +183,14 @@ export async function createBand(
 				volume: note.levelDb,
 				fadeIn: grazed ? ARTICULATIONS.graze.attack : 0,
 				fadeOut: FADE_OUT,
-				playbackRate: note.rate
+				playbackRate: rate
 			}).connect(
 				grazed
 					? grazeOut(note.channel)
 					: /** @type {import('tone').ToneAudioNode} */ (melodyOuts.get(note.channel))
 			)
 		);
-		const skip = grazed ? ARTICULATIONS.graze.skip / note.rate : 0;
+		const skip = grazed ? ARTICULATIONS.graze.skip / rate : 0;
 		startSkipping(player, buffer, at, skip).stop(at + note.stop - note.time);
 	};
 
@@ -193,16 +201,17 @@ export async function createBand(
 			period: guitar.period,
 			/** @param {import('./guitar.js').NoteEvent} event @param {number} i @param {number} at */
 			play: (event, i, at) => {
+				const rate = guitar.rate * tuningFix(event.string, event.fret, samplesInTune());
 				const player = track(
 					new Tone.Player({
 						url: guitarSounds[i],
 						volume: event.levelDb,
 						fadeIn: guitar.feel.fadeIn[event.part],
 						fadeOut: event.fadeOut,
-						playbackRate: guitar.rate
+						playbackRate: rate
 					}).connect(guitarOut[event.part])
 				);
-				const skip = guitar.feel.skip[event.part] / guitar.rate;
+				const skip = guitar.feel.skip[event.part] / rate;
 				startSkipping(player, guitarSounds[i], at, skip).stop(at + event.stop - event.time);
 			}
 		},

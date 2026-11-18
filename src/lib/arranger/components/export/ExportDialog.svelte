@@ -19,6 +19,7 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import { chosenBassStyle } from '../../bass/songBassStyle.svelte.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
 
 	/** @type {{ open: boolean }} */
 	let { open = $bindable(false) } = $props();
@@ -76,7 +77,8 @@
 			transpose: arrangement.transpose,
 			melody: melody.line,
 			bass: arranger.bass.written,
-			bassStyle: chosenBassStyle()
+			bassStyle: chosenBassStyle(),
+			samplesInTune: settings.samplesInTune
 		};
 		try {
 			if (choice === 'midi') downloadArrangementMidi(songToExport);
