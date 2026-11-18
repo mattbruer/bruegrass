@@ -91,6 +91,10 @@
 		0 4px 10px rgb(0 0 0 / calc(0.25 * var(--drop))),
 		0 22px 44px -8px rgb(0 0 0 / calc(0.6 * var(--drop))); /* the top bar */
 
+	/* The same lift for shapes that aren't boxes (a waveform, an icon): CSS filter */
+	--filter-drop: drop-shadow(0 2px 2px rgb(0 0 0 / calc(0.35 * var(--drop))))
+		drop-shadow(0 6px 8px rgb(0 0 0 / calc(0.35 * var(--drop))));
+
 	/* 3D: a lit top edge and a shaded bottom edge, and a face that curves away
 	   from the light, so raised things read as solid; wells sink in deeper */
 	--shadow-bevel:

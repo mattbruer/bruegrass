@@ -99,6 +99,7 @@
 
 	.wave {
 		fill: var(--color-waveform);
+		filter: var(--filter-drop);
 	}
 	.wave.behind-hits {
 		opacity: 0.4;

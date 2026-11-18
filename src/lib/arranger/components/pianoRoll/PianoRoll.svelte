@@ -608,6 +608,7 @@
 			color-mix(in oklab, var(--voice-colour) 70%, var(--color-ink)) 0 4px,
 			transparent 4px
 		);
+		box-shadow: var(--shadow-bevel), var(--shadow-drop-small);
 	}
 	.playhead {
 		display: none;
@@ -629,6 +630,7 @@
 		opacity: 0.3;
 		pointer-events: none;
 		background-image: none;
+		box-shadow: none;
 	}
 	.option {
 		position: absolute;
@@ -651,10 +653,12 @@
 		border: 2px solid var(--voice-colour);
 		background: var(--color-raised);
 	}
+	/* picked up: it rises off the grid */
 	.note.selected {
 		outline: 2px solid var(--color-ink);
 		outline-offset: 1px;
 		z-index: 1;
+		box-shadow: var(--shadow-bevel), var(--shadow-drop-floating);
 	}
 	.chord {
 		position: absolute;

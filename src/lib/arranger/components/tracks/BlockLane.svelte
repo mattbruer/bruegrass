@@ -65,6 +65,8 @@
 		border: 1px solid var(--color-line);
 		border-radius: var(--corner-small);
 		background: var(--color-raised);
+		background-image: var(--face-3d);
+		box-shadow: var(--shadow-bevel), var(--shadow-drop-small);
 		overflow: hidden;
 		white-space: nowrap;
 		font-size: 0.75rem;
@@ -76,5 +78,8 @@
 		min-height: 3px;
 		border-radius: 1px;
 		background: var(--color-accent);
+		box-shadow:
+			inset 0 1px 0 rgb(255 255 255 / calc(0.35 * var(--drop))),
+			0 3px 6px rgb(0 0 0 / calc(0.6 * var(--drop)));
 	}
 </style>
