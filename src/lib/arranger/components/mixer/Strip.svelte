@@ -41,7 +41,8 @@
 		background: var(--mixer-strip);
 		border: 1px solid var(--color-line);
 		padding: 0.85rem 0.75rem 1rem;
-		box-shadow: var(--shadow-raised-small);
+		background-image: var(--face-3d);
+		box-shadow: var(--shadow-raised-small), var(--shadow-bevel), var(--shadow-drop);
 		/*
 		 * Inside a strip, the strip's tone is the "surface": knobs, caps,
 		 * readouts and buttons (which use --color-surface) match it.

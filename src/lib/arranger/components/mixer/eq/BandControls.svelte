@@ -131,7 +131,10 @@
 		padding: 0.25rem 0.5rem;
 		font-size: 0.7rem;
 		font-weight: 700;
-		box-shadow: 0 1px 3px var(--shadow-dark-edge);
+		box-shadow:
+			var(--shadow-bevel),
+			0 1px 3px var(--shadow-dark-edge),
+			var(--shadow-drop-small);
 	}
 
 	.chip.selected {

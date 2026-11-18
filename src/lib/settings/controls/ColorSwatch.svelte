@@ -26,7 +26,7 @@
 		border-radius: var(--corner-control);
 		background: var(--color-raised);
 		padding: 0.25rem;
-		box-shadow: var(--shadow-raised-small);
+		box-shadow: var(--shadow-raised-small), var(--shadow-bevel), var(--shadow-drop-small);
 	}
 
 	.swatch::-webkit-color-swatch-wrapper {

@@ -520,6 +520,8 @@ export const TIPS = Object.freeze({
 
 	settings: {
 		preset: 'Use this colour scheme.',
-		resetAppearance: 'Go back to the original colours and shape.'
+		resetAppearance: 'Go back to the original colours and shape.',
+		dropShadows:
+			'Cards, buttons, menus and bars float above the page on deep shadows, lit from above.'
 	}
 });

@@ -20,7 +20,11 @@
 	border-radius: var(--corner-card);
 	background: var(--color-raised);
 	border: 1px solid var(--color-line);
-	box-shadow: 0 2px 8px var(--shadow-dark-edge);
+	background-image: var(--face-3d);
+	box-shadow:
+		var(--shadow-bevel),
+		0 2px 8px var(--shadow-dark-edge),
+		var(--shadow-drop);
 }
 
 /* A well sunk into the page, holding content (the chord chart, sheet music) */
@@ -28,7 +32,7 @@
 	border-radius: var(--corner-card);
 	background: var(--color-surface-deep);
 	border: 1px solid var(--color-line);
-	box-shadow: var(--shadow-inset-small);
+	box-shadow: var(--shadow-inset-small), var(--shadow-sunk);
 }
 
 /* A button: raised, and it presses in while tapped */
@@ -36,20 +40,38 @@
 	border-radius: var(--corner-control);
 	background: var(--color-raised);
 	border: 1px solid var(--color-line);
-	box-shadow: 0 1px 3px var(--shadow-dark-edge);
+	background-image: var(--face-3d);
+	box-shadow:
+		var(--shadow-bevel),
+		0 1px 3px var(--shadow-dark-edge),
+		var(--shadow-drop-small);
 	font-weight: 600;
 	color: var(--color-ink);
 	transition:
 		box-shadow 0.15s ease,
+		translate 0.15s ease,
 		color 0.15s ease;
 
 	&:hover:not(:disabled) {
 		color: var(--color-accent);
 	}
 
+	/* With drop shadows on, a button rises toward the mouse */
+	@media (hover: hover) {
+		&:hover:not(:disabled):not(:active) {
+			translate: 0 calc(-1px * var(--drop));
+			box-shadow:
+				var(--shadow-bevel),
+				0 1px 3px var(--shadow-dark-edge),
+				var(--shadow-drop);
+		}
+	}
+
 	&:active:not(:disabled) {
 		background: var(--color-surface-deep);
-		box-shadow: var(--shadow-inset-small);
+		background-image: none;
+		box-shadow: var(--shadow-inset-small), var(--shadow-sunk);
+		translate: none;
 	}
 
 	&:disabled {
@@ -71,7 +93,8 @@
 @utility ui-button-on {
 	background: color-mix(in oklab, var(--color-accent) 16%, var(--color-raised));
 	border-color: var(--color-accent);
-	box-shadow: none;
+	background-image: none;
+	box-shadow: var(--shadow-sunk);
 	color: var(--color-accent);
 }
 
@@ -115,4 +138,11 @@
 /* A voice of the tune (melody, harmony parts): a turn round the colour wheel from the accent. Set --voice to its place (0 = melody). */
 @utility voice-colour {
 	--voice-colour: oklch(from var(--color-accent) l c calc(h + var(--voice, 0) * 75));
+}
+
+/* Cards that float over the page (menus and panels in the top layer) cast the biggest shadow */
+.ui-card:popover-open,
+:popover-open > .ui-card,
+.ui-floating {
+	box-shadow: var(--shadow-bevel), var(--shadow-drop-floating);
 }

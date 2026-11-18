@@ -15,7 +15,9 @@
 	font-size: 0.8rem;
 	line-height: 1.35;
 	color: var(--color-surface);
-	box-shadow: 0 4px 14px var(--shadow-dark-edge);
+	box-shadow:
+		0 4px 14px var(--shadow-dark-edge),
+		var(--shadow-drop-floating);
 	pointer-events: none;
 	animation: tooltip-in 0.12s ease-out;
 }

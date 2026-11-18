@@ -53,7 +53,7 @@
 		height: 1.45rem;
 		border-radius: 9999px;
 		background: var(--color-ink);
-		box-shadow: var(--shadow-raised-small);
+		box-shadow: var(--shadow-raised-small), var(--shadow-bevel), var(--shadow-drop-small);
 		transition: transform 0.2s ease;
 	}
 

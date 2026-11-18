@@ -17,8 +17,10 @@
  *   accent: string,
  *   waveform: string,
  *   depth: number,
- *   roundness: number
- * }} Appearance colours are #rrggbb; depth and roundness are 0–2 (1 = normal)
+ *   roundness: number,
+ *   dropShadows?: boolean
+ * }} Appearance colours are #rrggbb; depth and roundness are 0–2 (1 = normal);
+ *   dropShadows: 3D depth, things lifted off the page on big drop shadows (on unless false)
  */
 
 /** The look the app ships with, Night (the same values as tokens.css). */
@@ -28,7 +30,8 @@ export const DEFAULT_APPEARANCE = Object.freeze({
 	accent: '#f5a524',
 	waveform: '#7ee08a',
 	depth: 1,
-	roundness: 1
+	roundness: 1,
+	dropShadows: true
 });
 
 /** Ready-made looks, offered in Settings → Appearance. */
@@ -87,7 +90,8 @@ const CSS_VARIABLE_FOR = {
 	accent: '--theme-accent',
 	waveform: '--theme-waveform',
 	depth: '--theme-depth',
-	roundness: '--theme-roundness'
+	roundness: '--theme-roundness',
+	dropShadows: '--theme-drop-shadows'
 };
 
 /**
@@ -98,7 +102,7 @@ export function applyTheme(appearance) {
 	/** @type {Record<string, string>} */
 	const variables = {};
 	for (const [choice, variable] of Object.entries(CSS_VARIABLE_FOR)) {
-		variables[variable] = String(appearance[/** @type {keyof Appearance} */ (choice)]);
+		variables[variable] = cssValue(appearance[/** @type {keyof Appearance} */ (choice)]);
 	}
 	// Tell the browser whether the page is light or dark, so its own controls
 	// (the audio player, dropdown menus, scroll bars) match
@@ -109,6 +113,16 @@ export function applyTheme(appearance) {
 		document.documentElement.style.setProperty(variable, value);
 	}
 	rememberForFirstPaint(variables);
+}
+
+/**
+ * A choice as CSS reads it: a switch is 1 or 0, so CSS can multiply by it.
+ * @param {string | number | boolean | undefined} choice
+ */
+function cssValue(choice) {
+	if (choice === undefined) return '1';
+	if (typeof choice === 'boolean') return choice ? '1' : '0';
+	return String(choice);
 }
 
 /** Read by src/app.html before the page first paints. */

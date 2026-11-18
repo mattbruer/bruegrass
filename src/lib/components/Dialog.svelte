@@ -85,7 +85,8 @@
 		border-radius: var(--corner-panel);
 		background: var(--color-surface);
 		color: var(--color-ink);
-		box-shadow: var(--shadow-raised);
+		background-image: var(--face-3d);
+		box-shadow: var(--shadow-raised), var(--shadow-bevel), var(--shadow-drop-floating);
 		padding: 0;
 	}
 

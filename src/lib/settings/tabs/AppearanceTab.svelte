@@ -7,6 +7,7 @@
 	import { settings } from '../settings.svelte.js';
 	import SettingRow from '../controls/SettingRow.svelte';
 	import ColorSwatch from '../controls/ColorSwatch.svelte';
+	import ToggleSwitch from '../controls/ToggleSwitch.svelte';
 	import {
 		APPEARANCE_PRESETS,
 		DEFAULT_APPEARANCE,
@@ -46,7 +47,7 @@
 			{#each APPEARANCE_PRESETS as preset (preset.name)}
 				<button
 					type="button"
-					class="flex items-center gap-2 ui-button px-3 py-2 text-sm"
+					class="flex ui-button items-center gap-2 px-3 py-2 text-sm"
 					class:ui-button-on={isCurrentLook(preset.appearance)}
 					aria-pressed={isCurrentLook(preset.appearance)}
 					onclick={() => useAppearance(preset.appearance)}
@@ -106,6 +107,18 @@
 	<section class="ui-well px-4 py-3">
 		<h3 class="mb-1 text-xs font-bold tracking-wider text-ink-faint uppercase">Shape</h3>
 
+		<SettingRow
+			id="setting-drop-shadows"
+			label="3D depth"
+			description="Things float above the page on deep drop shadows. Off: flat."
+		>
+			<ToggleSwitch
+				bind:on={settings.appearance.dropShadows}
+				labelledBy="setting-drop-shadows"
+				tip={TIPS.settings.dropShadows}
+			/>
+		</SettingRow>
+
 		<label class="block py-2">
 			<span class="flex justify-between font-semibold">
 				Shadow depth
@@ -143,7 +156,7 @@
 
 	<button
 		type="button"
-		class="self-start ui-button px-4 py-2 text-sm"
+		class="ui-button self-start px-4 py-2 text-sm"
 		onclick={() => useAppearance(DEFAULT_APPEARANCE)}
 		use:tooltip={TIPS.settings.resetAppearance}
 	>

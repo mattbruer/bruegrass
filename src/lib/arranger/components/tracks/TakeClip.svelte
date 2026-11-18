@@ -89,7 +89,10 @@
 
 	.clip.dragging {
 		cursor: grabbing;
-		box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+		box-shadow:
+			var(--shadow-bevel),
+			0 2px 8px rgb(0 0 0 / 0.25),
+			var(--shadow-drop-small);
 	}
 
 	.label {

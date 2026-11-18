@@ -215,7 +215,9 @@
 		z-index: 30;
 		background: var(--color-surface);
 		padding-bottom: env(safe-area-inset-bottom, 0px);
-		box-shadow: 0 -8px 20px var(--shadow-dark-edge);
+		box-shadow:
+			0 -8px 20px var(--shadow-dark-edge),
+			var(--shadow-drop-up);
 		touch-action: manipulation; /* no double-tap zoom on fast taps */
 		user-select: none;
 		-webkit-user-select: none;
@@ -244,7 +246,11 @@
 		font-size: 1.05rem;
 		font-weight: 600;
 		color: var(--color-ink);
-		box-shadow: 0 1px 3px var(--shadow-dark-edge);
+		background-image: var(--face-3d);
+		box-shadow:
+			var(--shadow-bevel),
+			0 1px 3px var(--shadow-dark-edge),
+			var(--shadow-drop-small);
 	}
 
 	.key:active {
@@ -318,7 +324,11 @@
 		padding: 0.5rem 0.9rem;
 		font-weight: 700;
 		color: var(--color-accent);
-		box-shadow: 0 1px 3px var(--shadow-dark-edge);
+		background-image: var(--face-3d);
+		box-shadow:
+			var(--shadow-bevel),
+			0 1px 3px var(--shadow-dark-edge),
+			var(--shadow-drop-small);
 	}
 
 	.letters-bar button:active {

@@ -48,7 +48,7 @@
 
 {#if anchor !== null}
 	<div
-		class="menu ui-card"
+		class="menu ui-floating ui-card"
 		style:left="calc(var(--header-width) + {scale.toX(anchor - firstBeat)}px)"
 	>
 		{#if transcription.bar}

@@ -277,7 +277,9 @@
 		background: white;
 		color: black;
 		border: 1px solid #ccc;
-		box-shadow: 0 var(--shadow-reach-small) var(--shadow-reach-large) var(--shadow-dark-edge);
+		box-shadow:
+			0 var(--shadow-reach-small) var(--shadow-reach-large) var(--shadow-dark-edge),
+			var(--shadow-drop-floating);
 	}
 
 	@page {

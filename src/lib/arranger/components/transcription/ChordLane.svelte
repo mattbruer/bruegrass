@@ -214,7 +214,9 @@
 		border-left-width: 4px;
 		border-radius: var(--corner-small);
 		background: var(--color-raised);
-		box-shadow: 0 2px 8px var(--shadow-dark-edge);
+		box-shadow:
+			0 2px 8px var(--shadow-dark-edge),
+			var(--shadow-drop);
 	}
 
 	.problem.leftward {

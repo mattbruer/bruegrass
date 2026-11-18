@@ -113,7 +113,7 @@
 		background: var(--mixer-strip);
 		border: 1px solid var(--color-line);
 		padding: 0.85rem;
-		box-shadow: var(--shadow-raised-small);
+		box-shadow: var(--shadow-raised-small), var(--shadow-bevel), var(--shadow-drop-small);
 		--color-surface: var(--mixer-strip);
 		/* The visualiser's size: change these two to make it bigger or smaller */
 		--scope-width: 12rem;

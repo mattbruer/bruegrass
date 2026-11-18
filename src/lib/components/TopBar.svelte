@@ -111,7 +111,7 @@
 
 		<a
 			href={resolve('/storage')}
-			class="flex h-9 w-9 shrink-0 items-center justify-center ui-button rounded-full"
+			class="flex h-9 w-9 shrink-0 ui-button items-center justify-center rounded-full"
 			class:ui-button-on={isCurrentSection('/storage')}
 			aria-label="Stored on this device"
 			aria-current={isCurrentSection('/storage') ? 'page' : undefined}
@@ -122,7 +122,7 @@
 
 		<button
 			type="button"
-			class="flex h-9 w-9 shrink-0 items-center justify-center ui-button rounded-full"
+			class="flex h-9 w-9 shrink-0 ui-button items-center justify-center rounded-full"
 			class:ui-button-on={settingsOpen}
 			aria-label="Settings"
 			use:tooltip={TIPS.app.settings}
@@ -148,6 +148,9 @@
 		padding-block: 0.6rem;
 		padding-top: max(0.6rem, env(safe-area-inset-top)); /* clear the iPhone notch */
 		background: var(--player-bar);
-		box-shadow: 0 6px 14px var(--shadow-dark-edge);
+		box-shadow:
+			inset 0 -1px 0 rgb(0 0 0 / calc(0.3 * var(--drop))),
+			0 6px 14px var(--shadow-dark-edge),
+			var(--shadow-drop-down);
 	}
 </style>

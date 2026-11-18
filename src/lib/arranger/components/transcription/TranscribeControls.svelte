@@ -10,6 +10,7 @@
 	 * controls.
 	 */
 	import PlayPauseGlyph from '../icons/PlayPauseGlyph.svelte';
+	import TransportGlyph from '../icons/TransportGlyph.svelte';
 	import SpeedControl from './SpeedControl.svelte';
 	import CountAlongButton from './CountAlongButton.svelte';
 	import { soundById } from '$lib/slowDowner/sounds.js';
@@ -82,21 +83,21 @@
 					class="ui-button"
 					onclick={() => transcription.startOver()}
 					aria-label="Start over"
-					use:tooltip={TIPS.transcription.startOver}>⏮︎</button
+					use:tooltip={TIPS.transcription.startOver}><TransportGlyph shape="start" /></button
 				>
 				<button
 					type="button"
 					class="ui-button"
 					onclick={() => transcription.stepBar(-1)}
 					aria-label="A bar back"
-					use:tooltip={TIPS.transcription.barBack}>‹</button
+					use:tooltip={TIPS.transcription.barBack}><TransportGlyph shape="back" /></button
 				>
 				<button
 					type="button"
 					class="ui-button"
 					onclick={() => transcription.stepBar(1)}
 					aria-label="A bar forward"
-					use:tooltip={TIPS.transcription.barForward}>›</button
+					use:tooltip={TIPS.transcription.barForward}><TransportGlyph shape="forward" /></button
 				>
 			</div>
 			<div class="readout ui-well">
@@ -165,7 +166,10 @@
 	.keys .ui-button {
 		width: 2.75rem;
 		height: 2.5rem;
-		font-size: 1.1rem;
+		display: grid;
+		place-items: center;
+		font-size: 1.25rem;
+		line-height: 1;
 		border-radius: 0;
 	}
 	.keys .ui-button + .ui-button {

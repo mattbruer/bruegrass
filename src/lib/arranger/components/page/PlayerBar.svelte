@@ -46,7 +46,8 @@
 		padding-bottom: env(safe-area-inset-bottom, 0px);
 		box-shadow:
 			inset 0 1px 0 var(--shadow-light-edge),
-			0 -4px 14px var(--shadow-dark-edge);
+			0 -4px 14px var(--shadow-dark-edge),
+			var(--shadow-drop-up);
 	}
 
 	.hidden-by-keypad {

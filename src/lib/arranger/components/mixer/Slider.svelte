@@ -222,7 +222,7 @@
 		position: absolute;
 		background: var(--color-raised);
 		border: 1px solid var(--color-ink-soft);
-		box-shadow: var(--shadow-raised-small);
+		box-shadow: var(--shadow-raised-small), var(--shadow-bevel), var(--shadow-drop-small);
 		cursor: grab;
 		touch-action: none; /* the cap's drag is ours, never a scroll */
 	}

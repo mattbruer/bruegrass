@@ -76,7 +76,10 @@
 		background: var(--color-raised);
 		border: 1px solid var(--color-line);
 		padding: 0.6rem 0.75rem;
-		box-shadow: 0 1px 3px var(--shadow-dark-edge);
+		box-shadow:
+			var(--shadow-bevel),
+			0 1px 3px var(--shadow-dark-edge),
+			var(--shadow-drop-small);
 	}
 
 	.text {

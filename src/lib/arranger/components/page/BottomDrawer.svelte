@@ -75,7 +75,10 @@
 		max-height: 75dvh;
 		overflow-y: auto;
 		background: var(--color-surface);
-		box-shadow: 0 -8px 20px var(--shadow-dark-edge);
+		box-shadow:
+			inset 0 1px 0 rgb(255 255 255 / calc(0.12 * var(--drop))),
+			0 -8px 20px var(--shadow-dark-edge),
+			var(--shadow-drop-up);
 		/* Closed: slid down behind the player bar. Hidden only once it has slid away. */
 		transform: translateY(100%);
 		visibility: hidden;

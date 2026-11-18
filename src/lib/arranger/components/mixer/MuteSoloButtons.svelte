@@ -54,7 +54,10 @@
 		font-size: 0.7rem;
 		font-weight: 800;
 		color: var(--color-ink);
-		box-shadow: 0 1px 3px var(--shadow-dark-edge);
+		box-shadow:
+			var(--shadow-bevel),
+			0 1px 3px var(--shadow-dark-edge),
+			var(--shadow-drop-small);
 	}
 
 	.toggle.on {
