@@ -10,12 +10,16 @@
 	 * point to move it, double-click it to delete. Touch: tap to add, drag
 	 * a point, double-tap to delete; a swipe scrolls. Keys, once a point is
 	 * picked: ↑ ↓ a BPM, Delete removes it.
+	 *
+	 * There's no limit: the lane's span widens to take in every point, and
+	 * a point dragged past the lane's edge keeps going.
 	 */
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import { snapDown, TICKS_PER_QUARTER } from '../../melody/roll/ticks.js';
-	import { shareAt, TEMPO_SHARE_MAX, TEMPO_SHARE_MIN } from '../../chart/tempoCurve.js';
+	import { shareAt } from '../../chart/tempoCurve.js';
 	import {
+		laneRange,
 		movedPoint,
 		wholeBpmShare,
 		withoutPoint,
@@ -46,13 +50,15 @@
 	let preview = $state.raw(/** @type {typeof points | null} */ (null));
 	let selected = $state(-1);
 	let shown = $derived(preview ?? points);
+	/** Held still while dragging, so the point stays under the pointer. */
+	let heldRange = $state.raw(/** @type {ReturnType<typeof laneRange> | null} */ (null));
+	let range = $derived(heldRange ?? laneRange(points));
 
 	/** @param {number} share */
 	const yOf = (share) =>
-		PAD + ((TEMPO_SHARE_MAX - share) / (TEMPO_SHARE_MAX - TEMPO_SHARE_MIN)) * (height - 2 * PAD);
+		PAD + ((range.high - share) / (range.high - range.low)) * (height - 2 * PAD);
 	/** @param {number} y */
-	const shareOf = (y) =>
-		TEMPO_SHARE_MAX - ((y - PAD) / (height - 2 * PAD)) * (TEMPO_SHARE_MAX - TEMPO_SHARE_MIN);
+	const shareOf = (y) => range.high - ((y - PAD) / (height - 2 * PAD)) * (range.high - range.low);
 	/** @param {number} quarters */
 	const xOf = (quarters) => {
 		const ticks = tickAt(quarters);
@@ -102,6 +108,7 @@
 	/** @param {PointerEvent} event */
 	function press(event) {
 		if (event.button !== 0) return;
+		heldRange = range;
 		const at = locate(event);
 		lane?.focus({ preventScroll: true });
 		const grabbed = /** @type {Element} */ (event.target).closest('[data-index]');
@@ -145,6 +152,7 @@
 	function release(event) {
 		const done = gesture;
 		gesture = null;
+		heldRange = null;
 		const edited = preview;
 		preview = null;
 		if (!done) return;
@@ -166,6 +174,7 @@
 
 	function cancel() {
 		gesture = null;
+		heldRange = null;
 		preview = null;
 	}
 

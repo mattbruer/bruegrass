@@ -2,18 +2,32 @@
  * Changing the tempo lane's points: each edit gives back a new list, in
  * order, with one point to a place.
  */
-import { TEMPO_SHARE_MAX, TEMPO_SHARE_MIN } from './tempoCurve.js';
-
 /** @typedef {import('./tempoCurve.js').TempoPoint} TempoPoint */
 
+const SLOWEST_BPM = 1; // the band has to keep moving
+const USUAL_RANGE = { low: 0.5, high: 1.5 }; // the lane's span before any point goes past it
+const HEADROOM = 0.25; // room past the furthest point, so it can be dragged further
+
 /**
- * A share of the song's tempo that comes out as a whole BPM, within the lane.
+ * A share of the song's tempo that comes out as a whole BPM.
  * @param {number} share
  * @param {number} bpm the song's tempo
  */
 export function wholeBpmShare(share, bpm) {
-	const kept = Math.min(TEMPO_SHARE_MAX, Math.max(TEMPO_SHARE_MIN, share));
-	return Math.round(kept * bpm) / bpm;
+	return Math.max(SLOWEST_BPM, Math.round(share * bpm)) / bpm;
+}
+
+/**
+ * The span of tempos the lane shows, as shares of the song's tempo: the
+ * usual span, widened to take in every point with room to go further.
+ * @param {TempoPoint[]} points
+ */
+export function laneRange(points) {
+	const shares = points.map((point) => point.share);
+	return {
+		low: Math.min(USUAL_RANGE.low, ...shares.map((share) => share * (1 - HEADROOM))),
+		high: Math.max(USUAL_RANGE.high, ...shares.map((share) => share * (1 + HEADROOM)))
+	};
 }
 
 /**

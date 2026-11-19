@@ -15,10 +15,6 @@
  */
 import { secondsPerQuarter } from './tempo.js';
 
-/** The lane's range, as a share of the song's tempo. */
-export const TEMPO_SHARE_MIN = 0.5;
-export const TEMPO_SHARE_MAX = 1.5;
-
 /**
  * @typedef {{ at: number, share: number }} TempoPoint
  *   at: quarters from bar 1, as played; share: times the song's tempo
@@ -149,18 +145,21 @@ function quartersInto({ start, opening, slope }, seconds, quarter) {
 }
 
 /**
- * Whatever was saved, as usable points: in range, in order, one per place.
+ * Whatever was saved, as usable points: moving forward, in order, one per place.
  * @param {unknown} saved
  * @returns {TempoPoint[]}
  */
 export function validTempoCurve(saved) {
 	if (!Array.isArray(saved)) return [];
 	const points = saved
-		.filter((point) => Number.isFinite(point?.at) && Number.isFinite(point?.share) && point.at >= 0)
-		.map(({ at, share }) => ({
-			at,
-			share: Math.min(TEMPO_SHARE_MAX, Math.max(TEMPO_SHARE_MIN, share))
-		}))
+		.filter(
+			(point) =>
+				Number.isFinite(point?.at) &&
+				Number.isFinite(point?.share) &&
+				point.at >= 0 &&
+				point.share > 0
+		)
+		.map(({ at, share }) => ({ at, share }))
 		.sort((a, b) => a.at - b.at);
 	return points.filter((point, i) => i === 0 || point.at !== points[i - 1].at);
 }
