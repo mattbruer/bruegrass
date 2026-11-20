@@ -232,7 +232,9 @@
 					{:else if channel}
 						<MuteSoloButtons settings={channel} name={lane.name} />
 						<LaneVolume level={channel} name={lane.name} />
-						{#if isTuneChannel(lane.id)}<InstrumentButton {channel} />{/if}
+						{#if isTuneChannel(lane.id)}<div class="instrument-row">
+								<InstrumentButton {channel} />
+							</div>{/if}
 					{/if}
 				</div>
 				<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
@@ -360,6 +362,16 @@
 			var(--shadow-bevel),
 			inset 3px 0 0 var(--color-accent),
 			inset -1px 0 0 var(--shadow-light-edge);
+	}
+
+	.instrument-row {
+		width: 100%;
+		margin: 0.25rem 0 0.35rem;
+	}
+
+	.instrument-row :global(.instrument) {
+		padding: 0.45rem 0.6rem;
+		font-size: 0.78rem;
 	}
 
 	.header.add {
