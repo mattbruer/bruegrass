@@ -88,7 +88,7 @@ const HIT_SCALE = 6;
 /** Hearing beat 1 starts this long before it, so the count leads into it. */
 const LISTEN_BEFORE_SECONDS = 2.5;
 /** The recording's and the band's lane ids among the lanes that can be muted and soloed. */
-const RECORDING_LANE = 'recording';
+const REFERENCE_LANE = 'reference';
 const BAND_LANE = 'band';
 
 /** How many changes to the beats Undo remembers. */
@@ -129,7 +129,7 @@ export class TranscriptionState {
 	 */
 	parts = $state.raw([]);
 	/** The recording's own volume (dB), mute and solo (the parts' are their mixer channels'). */
-	recordingLane = $state({ volume: 0, mute: false, solo: false });
+	referenceLane = $state({ volume: 0, mute: false, solo: false });
 
 	/** @type {Float32Array | null} */
 	peaks = $state.raw(null);
@@ -236,10 +236,10 @@ export class TranscriptionState {
 				)
 			: []
 	);
-	/** How loud the recording and each part are (volume, mute and solo). */
+	/** How loud the reference recording and each part are (volume, mute and solo). */
 	levels = $derived.by(() => {
 		const lanes = [
-			{ id: RECORDING_LANE, ...this.recordingLane },
+			{ id: REFERENCE_LANE, ...this.referenceLane },
 			...(this.band.performance ? [{ id: BAND_LANE, ...this.band.lane }] : []),
 			...this.parts.map((part) => {
 				const channel = mixer.channels.find((each) => each.id === part.id);
@@ -251,8 +251,8 @@ export class TranscriptionState {
 				};
 			})
 		];
-		const { [RECORDING_LANE]: recording, [BAND_LANE]: band = 0, ...parts } = laneLevels(lanes);
-		return { recording, band, parts };
+		const { [REFERENCE_LANE]: reference, [BAND_LANE]: band = 0, ...parts } = laneLevels(lanes);
+		return { reference, band, parts };
 	});
 	/** The recording's usual tempo (beats a minute). */
 	tempo = $derived.by(() => {
@@ -290,7 +290,7 @@ export class TranscriptionState {
 
 	/** How loud the recording, the band and each part are heard now. */
 	hearLevels() {
-		this.player.setLevels(this.levels);
+		this.player.setLevels({ recording: this.levels.reference });
 		this.writtenParts.setLevels(this.levels.parts);
 		this.band.setLevels(
 			this.levels,

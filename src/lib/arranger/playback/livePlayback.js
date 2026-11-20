@@ -2,6 +2,7 @@
  * Live playback: the band (instruments/band.js) playing the song on a loop
  * through the live mixer, until stopped.
  */
+import { forPlayback } from '$lib/audio/audioSession.js';
 import { preparePerformance } from '../instruments/performance.js';
 import { createBand } from '../instruments/band.js';
 import { getChannel } from '../mixer/mixerGraph.svelte.js';
@@ -61,9 +62,7 @@ export async function playArrangement(sections, options = {}) {
 	 * plays music, as a music app does (Safari 16.4+'s Audio Session API).
 	 * Set before anything is awaited, while we're still inside the tap.
 	 */
-	const audioSession = /** @type {any} */ (globalThis.navigator)?.audioSession;
-	// (Recording has set it to play-and-record: leave that, or the mic stops)
-	if (audioSession && audioSession.type !== 'play-and-record') audioSession.type = 'playback';
+	forPlayback();
 
 	const performance = preparePerformance(sections, { ...options, loop: true });
 	const { passLength: duration, quarter, clock } = performance;

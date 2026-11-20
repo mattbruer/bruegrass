@@ -250,7 +250,7 @@ export const TIPS = Object.freeze({
 			'A beat. If its hit sits off the line below, drag the dot onto the hit; it snaps. Tap it for more.',
 		undoBeats: 'Put the beats back as they were before your last change to them (⌘Z).',
 		doneFixingBeats: 'Hide the beats again, so they can’t move by accident.',
-		recordingLane: 'The recording, fitted to the bars. Tap to play from there.',
+		referenceLane: 'The reference recording, fitted to the bars. Tap to play from there.',
 		waveformColour:
 			"The waveform's colour. It's the same choice as Settings → Appearance → Waveform.",
 		chordBar:

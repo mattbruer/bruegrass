@@ -2,6 +2,7 @@
  * Play one written note now, the way its part sounds (partVoice.js), so a
  * note drawn on the piano roll is heard straight away.
  */
+import { forPlayback } from '$lib/audio/audioSession.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { getChannel } from '../mixer/mixerGraph.svelte.js';
 import { BASS_VOICE } from '../bass/readBass.js';
@@ -20,8 +21,7 @@ const LET_GO_AFTER = 1;
  */
 export async function auditionNote(midi, shift, channelId = MELODY_CHANNEL, at = 0) {
 	// iPhone: play through the silent switch, as playArrangement does (set before any await)
-	const audioSession = /** @type {any} */ (globalThis.navigator)?.audioSession;
-	if (audioSession) audioSession.type = 'playback';
+	forPlayback();
 
 	const Tone = await import('tone');
 	await Tone.start();

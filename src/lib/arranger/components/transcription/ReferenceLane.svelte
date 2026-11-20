@@ -2,10 +2,11 @@
 	/**
 	 * The recording on the song's bars, like an audio region in Logic after
 	 * "Apply Region Tempo to Project Tempo": its waveform, bent so every beat
-	 * is a quarter on the ruler. Tap to play from there.
+	 * is a quarter on the ruler. Tap to play from there. Drawn on a canvas as
+	 * wide as the view, kept beside the lane names (drawReference.js says why).
 	 */
-	import { waveformPath } from '../../takes/waveformPeaks.js';
 	import { WAVE_FILL, bentWaveform } from '../../transcription/recordingShape.js';
+	import { drawReference } from '../../transcription/drawReference.js';
 	import { PEAKS_PER_SECOND } from '../../transcription/TranscriptionState.svelte.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -14,10 +15,11 @@
 	/**
 	 * @type {{
 	 *   transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState,
-	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>
-	 * }}
+	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>,
+	 *   view: { left: number, width: number }
+	 * }} view: the stretch of the lanes on screen (px)
 	 */
-	let { transcription, scale } = $props();
+	let { transcription, scale, view } = $props();
 
 	/**
 	 * The waveform as a relief map: its outline softened into a height map
@@ -46,14 +48,37 @@
 			...(first > 0 ? [{ from: 0, to: first }] : []),
 			...transcription.bars.map((bar) => ({ from: bar.firstBeat, to: bar.firstBeat + bar.beats }))
 		];
-		return stretches.map(({ from, to }) => {
-			const wave = bentWaveform(peaks, PEAKS_PER_SECOND, grid.beats, from, to);
-			return {
-				left: scale.toX(from - first),
-				width: scale.toX(to - first) - scale.toX(from - first),
-				columns: wave.length,
-				wave: waveformPath(wave.map((peak) => peak * waveScale))
-			};
+		return stretches.map(({ from, to }) => ({
+			left: scale.toX(from - first),
+			width: scale.toX(to - first) - scale.toX(from - first),
+			wave: bentWaveform(peaks, PEAKS_PER_SECOND, grid.beats, from, to).map(
+				(peak) => peak * waveScale
+			)
+		}));
+	});
+
+	/** @type {HTMLCanvasElement | undefined} */
+	let canvas = $state();
+	let height = $state(0);
+	const canvasWidth = $derived(Math.max(0, Math.min(view.width, scale.width)));
+	/** Where the canvas sits in the lane: kept beside the names, up to the lane's end. */
+	const canvasLeft = $derived(Math.max(0, Math.min(view.left, scale.width - canvasWidth)));
+
+	$effect(() => {
+		if (!canvas || canvasWidth === 0 || height === 0) return;
+		settings.appearance.waveform; // its colour
+		const ratio = window.devicePixelRatio || 1;
+		canvas.width = Math.round(canvasWidth * ratio);
+		canvas.height = Math.round(height * ratio);
+		const context = canvas.getContext('2d');
+		if (!context) return;
+		context.setTransform(ratio, 0, 0, ratio, 0, 0);
+		drawReference(context, {
+			pieces,
+			from: canvasLeft,
+			width: canvasWidth,
+			height,
+			colour: getComputedStyle(canvas).color
 		});
 	});
 
@@ -66,9 +91,9 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events (Space plays; the ruler and keys move around) -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="lane" onclick={playFrom} use:tooltip={TIPS.transcription.recordingLane}>
+<div class="lane" onclick={playFrom} use:tooltip={TIPS.transcription.referenceLane}>
 	<svg class="light" aria-hidden="true">
-		<filter id="recording-relief" color-interpolation-filters="sRGB">
+		<filter id="reference-relief" color-interpolation-filters="sRGB">
 			<feGaussianBlur in="SourceAlpha" stdDeviation={RELIEF.softness} result="height" />
 			<feDiffuseLighting
 				in="height"
@@ -82,51 +107,38 @@
 		</filter>
 	</svg>
 	<div class="ground"></div>
-	<div class="waveform" class:relief={settings.appearance.dropShadows}>
-		{#each pieces as piece, index (index)}
-			<svg
-				class="wave"
-				style:left="{piece.left}px"
-				style:width="{piece.width + 1}px"
-				viewBox="0 -1 {piece.columns} 2"
-				preserveAspectRatio="none"
-				aria-hidden="true"
-			>
-				<path d={piece.wave} />
-			</svg>
-		{/each}
-	</div>
+	<canvas
+		bind:this={canvas}
+		bind:clientHeight={height}
+		class="waveform"
+		class:relief={settings.appearance.dropShadows}
+		style:width="{canvasWidth}px"
+		aria-hidden="true"
+	></canvas>
 </div>
 
 <style>
 	.lane {
 		position: relative;
-		min-height: var(--recording-lane-height);
+		height: 100%;
+		min-height: var(--reference-lane-height);
 		border-bottom: var(--lane-divider, 1px solid var(--color-line));
 		cursor: pointer;
 	}
 
-	.wave {
-		position: absolute;
-		top: 0;
-		height: 100%;
-		pointer-events: none;
-	}
-
-	/* One shadow for the whole waveform: a shadow per bar darkened every join */
+	/* Stays beside the lane names while the lanes scroll (left: past the names column) */
 	.waveform {
-		position: absolute;
-		inset: 0;
+		position: sticky;
+		left: var(--header-width);
+		display: block;
+		height: 100%;
+		color: var(--color-waveform);
 		filter: var(--filter-drop);
 		pointer-events: none;
 	}
 
-	.wave {
-		fill: var(--color-waveform);
-	}
-
 	.waveform.relief {
-		filter: url(#recording-relief) var(--filter-drop);
+		filter: url(#reference-relief) var(--filter-drop);
 	}
 
 	.light {

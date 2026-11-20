@@ -5,7 +5,7 @@
 	 * kept, Count along as the metronome: a click on every beat, higher
 	 * on ONE, and the tuner) and how much of the grid you see (Zoom, across and
 	 * down; the piano roll has its own in its toolbar). + Marker is beside the grid's ruler, and the
-	 * recording's own settings in its lane's menu (RecordingMenu). It stays
+	 * recording's own settings in its lane's menu (ReferenceMenu). It stays
 	 * in view under the top bar, so Play is at hand while you write in the
 	 * piano roll below. Only in the workspace: placing beat 1 has its own few
 	 * controls.

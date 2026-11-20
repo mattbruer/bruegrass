@@ -34,12 +34,12 @@
 	import { isTuneChannel } from '../../melody/harmony/partChannels.js';
 	import LaneColour from './LaneColour.svelte';
 	import { mixer } from '../../mixer/mixer.svelte.js';
-	import RecordingLane from './RecordingLane.svelte';
+	import ReferenceLane from './ReferenceLane.svelte';
 	import ChordLane from './ChordLane.svelte';
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
-	import RecordingMenu from './RecordingMenu.svelte';
+	import ReferenceMenu from './ReferenceMenu.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -85,6 +85,10 @@
 	/** @type {HTMLDivElement | undefined} */
 	let scroller = $state();
 	let lanesHeight = $state(0);
+	let scrollLeft = $state(0);
+	let scrollerWidth = $state(0);
+	/** The stretch of the lanes on screen (px), for what draws only that. */
+	const lanesView = $derived({ left: scrollLeft, width: scrollerWidth - HEADER_WIDTH });
 
 	$effect(() => {
 		if (!transcription.player.playing || !scroller) return;
@@ -117,7 +121,12 @@
 </script>
 
 <div class="ui-sunk-frame rounded-[var(--corner-card)]">
-	<div class="scroller" bind:this={scroller}>
+	<div
+		class="scroller"
+		bind:this={scroller}
+		bind:clientWidth={scrollerWidth}
+		onscroll={() => (scrollLeft = scroller?.scrollLeft ?? 0)}
+	>
 		<div
 			class="tracks"
 			bind:clientHeight={lanesHeight}
@@ -183,20 +192,20 @@
 			</div>
 			<BeatDots {transcription} {scale} />
 
-			<div class="header recording ui-side-column">
-				<span class="name">Recording</span>
-				<RecordingMenu {transcription} />
+			<div class="header reference ui-side-column">
+				<span class="name">Reference</span>
+				<ReferenceMenu {transcription} />
 				<span class="lane-buttons">
-					<MuteSoloButtons settings={transcription.recordingLane} name="Recording" />
+					<MuteSoloButtons settings={transcription.referenceLane} name="Reference" />
 					<LaneColour
 						bind:color={settings.appearance.waveform}
 						label="Waveform colour"
 						tip={TIPS.transcription.waveformColour}
 					/>
 				</span>
-				<LaneVolume level={transcription.recordingLane} name="Recording" />
+				<LaneVolume level={transcription.referenceLane} name="Reference" />
 			</div>
-			<RecordingLane {transcription} {scale} />
+			<ReferenceLane {transcription} {scale} view={lanesView} />
 
 			<div class="header ui-side-column">
 				<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
@@ -287,7 +296,7 @@
 		--ruler-height: 2.5rem;
 		--beats-row-height: 1.5rem;
 		--lane-height: calc(2.75rem * var(--zoom-down));
-		--recording-lane-height: calc(5rem * var(--zoom-down));
+		--reference-lane-height: calc(5rem * var(--zoom-down));
 		--header-padding: 0.75rem;
 		/* Between rows, across the names and the lanes: a groove cut between raised cells
 		   (the cell below gives it its lit lip); with 3D off, a plain line */

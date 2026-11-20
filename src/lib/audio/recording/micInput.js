@@ -8,6 +8,8 @@
  * the browser kept anyway.
  */
 
+import { holdForMic } from '../audioSession.js';
+
 /** What we ask the browser for. One place for these, so every recording gets the same. */
 const RAW_INPUT = Object.freeze({
 	echoCancellation: false,
@@ -56,14 +58,10 @@ export function watchInputs(onChange) {
  * @param {{ channels?: number }} [options] how many input channels to ask for
  */
 export async function openMicInput(context, deviceId, { channels = WANTED_CHANNELS } = {}) {
-	const stream = await navigator.mediaDevices.getUserMedia({
-		audio: {
-			...RAW_INPUT,
-			...(deviceId ? { deviceId: { exact: deviceId } } : {}),
-			channelCount: { ideal: channels },
-			sampleRate: { ideal: context.sampleRate },
-			sampleSize: { ideal: 24 }
-		}
+	const releaseSession = holdForMic(); // before the first await, while still in the tap
+	const stream = await openStream(context, deviceId, channels).catch((problem) => {
+		releaseSession();
+		throw problem;
 	});
 	const track = stream.getAudioTracks()[0];
 	const settings = track.getSettings();
@@ -86,8 +84,26 @@ export async function openMicInput(context, deviceId, { channels = WANTED_CHANNE
 		close() {
 			source.disconnect();
 			for (const each of stream.getTracks()) each.stop();
+			releaseSession();
 		}
 	};
+}
+
+/**
+ * @param {BaseAudioContext} context
+ * @param {string | null} deviceId
+ * @param {number} channels
+ */
+function openStream(context, deviceId, channels) {
+	return navigator.mediaDevices.getUserMedia({
+		audio: {
+			...RAW_INPUT,
+			...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+			channelCount: { ideal: channels },
+			sampleRate: { ideal: context.sampleRate },
+			sampleSize: { ideal: 24 }
+		}
+	});
 }
 
 /** @typedef {Awaited<ReturnType<typeof openMicInput>>} MicInput */

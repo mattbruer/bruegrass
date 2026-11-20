@@ -11,6 +11,7 @@
  * when the take is done: that lets go of the mic.
  */
 import { openMicInput } from '$lib/audio/recording/micInput.js';
+import { holdForMic } from '$lib/audio/audioSession.js';
 import { createTakeRecorder } from '$lib/audio/recording/takeRecorder.js';
 import { createWorkletNode } from '../../audio/worklets/worklets.js';
 
@@ -22,10 +23,14 @@ const BLUETOOTH_NAMES = /airpods|bluetooth|hands-?free|beats|buds/i;
  * @param {string | null} deviceId which input (null: the device's default)
  */
 export async function openRecordAlong(Tone, deviceId) {
-	setAudioSession('play-and-record'); // iPhone: before the mic opens, while still in the tap
-	await Tone.start();
+	const releaseSession = holdForMic(); // iPhone/iPad: before anything is awaited, while still in the tap
 	const audio = /** @type {AudioContext} */ (/** @type {unknown} */ (Tone.getContext().rawContext));
-	const mic = await openMicInput(audio, deviceId, { channels: 1 });
+	const mic = await Tone.start()
+		.then(() => openMicInput(audio, deviceId, { channels: 1 }))
+		.catch((problem) => {
+			releaseSession();
+			throw problem;
+		});
 	try {
 		const recorder = await createTakeRecorder(audio, mic.source, 1, (options) =>
 			createWorkletNode(Tone, 'take-recorder', options)
@@ -43,12 +48,12 @@ export async function openRecordAlong(Tone, deviceId) {
 			close() {
 				recorder.dispose();
 				mic.close();
-				setAudioSession('playback');
+				releaseSession();
 			}
 		};
 	} catch (problem) {
 		mic.close();
-		setAudioSession('playback');
+		releaseSession();
 		throw problem;
 	}
 }
@@ -62,14 +67,4 @@ export async function openRecordAlong(Tone, deviceId) {
  */
 function outputLatency(audio) {
 	return audio.outputLatency || audio.baseLatency || 0;
-}
-
-/**
- * iPhone (Safari 16.4+): 'play-and-record' keeps the mic on while music
- * plays; 'playback' plays through the silent switch, like a music app.
- * @param {'playback' | 'play-and-record'} type
- */
-function setAudioSession(type) {
-	const session = /** @type {any} */ (globalThis.navigator)?.audioSession;
-	if (session) session.type = type;
 }
