@@ -3,13 +3,9 @@
  * link and a song file carry, so the app on the other end can put back
  * exactly what was sent. Plain data, no audio: a song file keeps each
  * take's audio beside it (songFile.js), named by `audio.file`.
- *
- * Raise PACKAGE_VERSION and convert in `readPackage` when the shape changes.
  */
-import { ARRANGEMENT_VERSION } from '$lib/storage/arrangements.js';
 
 export const PACKAGE_KIND = 'bluegrass-song';
-export const PACKAGE_VERSION = 1;
 
 /**
  * @typedef {import('./takeFormat.js').TakeAudio} TakeAudio
@@ -20,7 +16,6 @@ export const PACKAGE_VERSION = 1;
  * @typedef {{ name: string, frets: (number | null)[] }} SharedChord
  * @typedef {{
  *   kind: typeof PACKAGE_KIND,
- *   version: number,
  *   song: SharedSong,
  *   chords: SharedChord[],
  *   takes: SharedTake[]
@@ -39,7 +34,7 @@ export class ShareProblem extends Error {}
  * @returns {SongPackage}
  */
 export function makePackage(song, chords, takes) {
-	return { kind: PACKAGE_KIND, version: PACKAGE_VERSION, song, chords, takes };
+	return { kind: PACKAGE_KIND, song, chords, takes };
 }
 
 /**
@@ -51,14 +46,5 @@ export function readPackage(value) {
 	if (value?.kind !== PACKAGE_KIND || typeof value.song?.arrangement !== 'string') {
 		throw new ShareProblem('This isn’t a song from this app.');
 	}
-	if (value.version > PACKAGE_VERSION || value.song.version > ARRANGEMENT_VERSION) {
-		throw new ShareProblem(
-			'This song was sent from a newer version of the app. Reload the page to update, then try again.'
-		);
-	}
-	return {
-		...value,
-		chords: Array.isArray(value.chords) ? value.chords : [],
-		takes: Array.isArray(value.takes) ? value.takes : []
-	};
+	return value;
 }

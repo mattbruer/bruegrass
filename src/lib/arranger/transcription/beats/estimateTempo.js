@@ -12,7 +12,7 @@ const LIKELY_BPM = 200;
 const LEAN_OCTAVES = 1;
 
 /**
- * @param {Float32Array} strength from analyseRecording
+ * @param {Float32Array} strength from analyseReference
  * @param {number} framesPerSecond
  * @returns {number} frames between beats (not a whole number)
  */

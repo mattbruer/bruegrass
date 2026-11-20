@@ -154,9 +154,9 @@ export function mixSnapshot() {
 }
 
 /**
- * Put a saved mix back. Channels are matched by id, so a mix saved
- * before an instrument was added (or after one was removed) still loads
- * (older mixes' guitar boom and strum levels are left behind), and only settings of the right type are taken. Solos are cleared.
+ * Put a saved mix back. Channels are matched by id (a song has only the
+ * harmony parts it uses), and only settings of the right type are taken.
+ * Solos are cleared.
  * @param {unknown} saved
  */
 export function applyMix(saved) {
@@ -167,24 +167,16 @@ export function applyMix(saved) {
 		channel.solo = false;
 		const stored = findById(mix.channels, channel.id);
 		if (!stored) continue;
-		// Settings a mix saved before they existed take their defaults
-		const withDefaults = { ...defaultChannel(channel.id), ...stored };
-		copyMatching(channel, withDefaults, ['volume', 'pan', 'send', 'mute', 'instrument']);
+		copyMatching(channel, stored, ['volume', 'pan', 'send', 'mute', 'instrument']);
 		applyEq(channel.eq, stored.eq);
 	}
 
-	if (mix.reverb) {
-		copyMatching(mixer.reverb, mix.reverb, ['volume', 'mute']);
-		applyEq(mixer.reverb.eq, mix.reverb.eq);
-		const plugin = mix.reverb.plugin ?? { decay: mix.reverb.decay }; // older mixes kept only a decay
-		copyMatching(mixer.reverb.plugin, plugin, Object.keys(REVERB_DEFAULTS));
-	}
-	if (mix.master) {
-		copyMatching(mixer.master, mix.master, ['volume']);
-		applyEq(mixer.master.eq, mix.master.eq);
-	}
-	// Songs saved before the output stage existed get the default gain
-	copyMatching(mixer.output, mix.output ?? DEFAULT_MIX.output, ['gain']);
+	copyMatching(mixer.reverb, mix.reverb, ['volume', 'mute']);
+	applyEq(mixer.reverb.eq, mix.reverb.eq);
+	copyMatching(mixer.reverb.plugin, mix.reverb.plugin, Object.keys(REVERB_DEFAULTS));
+	copyMatching(mixer.master, mix.master, ['volume']);
+	applyEq(mixer.master.eq, mix.master.eq);
+	copyMatching(mixer.output, mix.output, ['gain']);
 }
 
 /**
@@ -233,16 +225,14 @@ export function applyEqs(saved) {
 }
 
 /**
- * Put a saved EQ back, band by band, taking only settings of the right
- * type. A mix saved before EQs existed has none, which leaves the EQ flat.
+ * Put a saved EQ back, band by band, taking only settings of the right type.
  * @param {import('../../audio/eq/eqBands.js').EqSettings} target
  * @param {any} saved
  */
 export function applyEq(target, saved) {
-	const savedEq = saved ?? flatEq();
-	copyMatching(target, savedEq, ['enabled']);
+	copyMatching(target, saved, ['enabled']);
 	for (const band of target.bands) {
-		const savedBand = findById(savedEq.bands, band.id);
+		const savedBand = findById(saved.bands, band.id);
 		if (savedBand) copyMatching(band, savedBand, ['on', 'frequency', 'gain', 'q', 'slope']);
 	}
 }

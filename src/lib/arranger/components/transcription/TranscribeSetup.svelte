@@ -4,8 +4,8 @@
 	 * and time signature (the bars are found from them). Anything else about
 	 * the bars and beats is fixed in the workspace.
 	 */
-	import RecordingChoice from './RecordingChoice.svelte';
-	import AnalysingRecording from './AnalysingRecording.svelte';
+	import ReferenceChoice from './ReferenceChoice.svelte';
+	import AnalysingReference from './AnalysingReference.svelte';
 	import DownbeatStep from './DownbeatStep.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -17,18 +17,18 @@
 </script>
 
 <section class="flex flex-col gap-5 ui-card p-5" aria-labelledby="setup-title">
-	{#if step === 'recording'}
+	{#if step === 'reference'}
 		<h2 id="setup-title" class="text-2xl font-bold">Which recording do you want to work out?</h2>
-		<RecordingChoice
-			current={transcription.recording}
-			onChoose={(recording) => transcription.open(recording)}
+		<ReferenceChoice
+			current={transcription.reference}
+			onChoose={(reference) => transcription.open(reference)}
 		/>
-		{#if transcription.recording}
+		{#if transcription.reference}
 			<div>
 				<button
 					type="button"
 					class="ui-button px-5 py-2 ui-button-primary"
-					onclick={() => transcription.keepRecording()}>Keep {transcription.recording.name}</button
+					onclick={() => transcription.keepReference()}>Keep {transcription.reference.name}</button
 				>
 			</div>
 		{/if}
@@ -38,14 +38,14 @@
 			<button
 				type="button"
 				class="ui-button px-3 py-1.5 text-sm"
-				onclick={() => transcription.chooseRecordingAgain()}
-				use:tooltip={TIPS.transcription.changeRecording}>Another recording…</button
+				onclick={() => transcription.chooseReferenceAgain()}
+				use:tooltip={TIPS.transcription.changeReference}>Another recording…</button
 			>
 		</div>
 		{#if transcription.player.loading}
 			<p class="text-ink-soft">Loading the recording…</p>
 		{:else if transcription.finding}
-			<AnalysingRecording />
+			<AnalysingReference />
 		{:else}
 			<DownbeatStep {transcription} />
 		{/if}

@@ -2,13 +2,13 @@
 	/**
 	 * The whole recording on one lane: its waveform and the times,
 	 * drawn from the audio itself for just the stretch on screen
-	 * (drawRecording.js), so it zooms in as far as you like (its own zoom,
+	 * (drawReferenceStrip.js), so it zooms in as far as you like (its own zoom,
 	 * − and +). The playhead (it follows playing, and the lane scrolls to keep
 	 * it in view) and beat 1's mark sit over it. Click to move the playhead
 	 * there, or drag it: by its knob, or anywhere with a mouse (a finger
 	 * elsewhere scrolls the lane).
 	 */
-	import { drawRecording } from '../../transcription/drawRecording.js';
+	import { drawReferenceStrip } from '../../transcription/drawReferenceStrip.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -46,7 +46,7 @@
 		const context = canvas.getContext('2d');
 		if (!context) return;
 		context.setTransform(ratio, 0, 0, ratio, 0, 0);
-		drawRecording(context, {
+		drawReferenceStrip(context, {
 			audio: transcription.audio,
 			from: scrollLeft / pixelsPerSecond,
 			pixelsPerSecond,

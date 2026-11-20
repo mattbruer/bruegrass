@@ -48,14 +48,14 @@
 	let arrived = false;
 	$effect(() => {
 		if (!song.ready) return;
-		if (song.recording) untrack(() => transcription.reopenSongsRecording());
+		if (song.reference) untrack(() => transcription.reopenSongsReference());
 		else if (!arrived && song.madeFrom) untrack(() => transcription.openWhatItWasMadeFrom());
 		arrived = true;
 	});
 	/** A file from this device can't be reopened by the page: its name, to pick it again. */
 	const fileToOpenAgain = $derived.by(() => {
-		const wanted = song.recording ?? song.madeFrom;
-		return wanted?.key.startsWith('file:') && transcription.recording?.key !== wanted.key
+		const wanted = song.reference ?? song.madeFrom;
+		return wanted?.key.startsWith('file:') && transcription.reference?.key !== wanted.key
 			? wanted.name
 			: null;
 	});
@@ -164,7 +164,7 @@
 		</div>
 	</div>
 
-	{#if fileToOpenAgain && !transcription.recording}
+	{#if fileToOpenAgain && !transcription.reference}
 		<p class="text-sm text-ink-soft">
 			This song was written from <strong>{fileToOpenAgain}</strong>. Open it again to carry on.
 		</p>
@@ -172,17 +172,17 @@
 
 	{#if transcription.setupStep}
 		<TranscribeSetup {transcription} />
-	{:else if transcription.recording && transcription.grid}
+	{:else if transcription.reference && transcription.grid}
 		<div class="flex flex-wrap items-center gap-3">
 			<SongBar />
 			<span class="text-sm text-ink-soft"
-				>Recording: <strong>{transcription.recording.name}</strong></span
+				>Reference: <strong>{transcription.reference.name}</strong></span
 			>
 			<button
 				type="button"
 				class="ui-button px-3 py-1.5 text-sm"
-				onclick={() => transcription.chooseRecordingAgain()}
-				use:tooltip={TIPS.transcription.changeRecording}>Change…</button
+				onclick={() => transcription.chooseReferenceAgain()}
+				use:tooltip={TIPS.transcription.changeReference}>Change…</button
 			>
 		</div>
 		<TranscribeControls {transcription} />

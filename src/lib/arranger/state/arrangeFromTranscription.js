@@ -59,7 +59,7 @@ export async function arrangeFromTranscription(arranger, chosen, name, pickups) 
 	}
 	const bassLine = split(bass.notation);
 	const chart = chartOfSections(named, chosen);
-	const madeFrom = song.recording;
+	const madeFrom = song.reference;
 
 	song.startNew({
 		...readSongFields(arranger),
@@ -68,7 +68,7 @@ export async function arrangeFromTranscription(arranger, chosen, name, pickups) 
 		tune: tune?.tune ? tuneOfChart(tune.tune, chart) : null,
 		bass: '',
 		bassTune: bassLine?.tune ? tuneOfChart(bassLine.tune, chart) : null,
-		recording: null,
+		reference: null,
 		madeFrom
 	});
 	song.name = name;

@@ -11,8 +11,7 @@ import {
 	fromPlayedTune,
 	fromTuneBySectionText,
 	playedTune,
-	tuneBySectionText,
-	upgradedTune
+	tuneBySectionText
 } from '../melody/sections/tuneBySection.js';
 import {
 	hasLaterPickups,
@@ -122,7 +121,7 @@ export class SectionedText {
 	 * @param {TuneBySection | null} bySection
 	 */
 	load(abc, bySection) {
-		this.bySection = upgradedTune(bySection);
+		this.bySection = bySection;
 		this.#whole = abc;
 	}
 

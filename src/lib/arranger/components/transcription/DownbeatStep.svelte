@@ -11,7 +11,7 @@
 	 * click on every beat, higher on ONE. Sounds right goes on; Try again
 	 * goes back to marking it.
 	 */
-	import RecordingStrip from './RecordingStrip.svelte';
+	import ReferenceStrip from './ReferenceStrip.svelte';
 	import PlayClock from './PlayClock.svelte';
 	import SpeedControl from './SpeedControl.svelte';
 	import TranscriptionKeySelect from './TranscriptionKeySelect.svelte';
@@ -86,7 +86,7 @@
 		<SpeedControl {player} />
 	</div>
 
-	<RecordingStrip {transcription} />
+	<ReferenceStrip {transcription} />
 
 	<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Time signature">
 		<span class="mr-1">Time signature</span>

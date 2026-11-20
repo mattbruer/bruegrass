@@ -63,36 +63,12 @@ export function shares(beats, n) {
 }
 
 /**
- * Chords typed into a bar at once ("G C" or "G,C"), spread evenly over its
- * chord places. Only for drafts from when a bar's chords were kept as typed.
- * @param {string} typed
- * @param {number} beats
- * @returns {Slots}
- */
-export function slotsFromTyped(typed, beats) {
-	const places = chordPlaces(beats);
-	const names = typed
-		.split(/[\s,|]+/)
-		.filter(Boolean)
-		.slice(0, places.length);
-	/** @type {Slots} */
-	const slots = Array(beats).fill(null);
-	let at = 0;
-	shares(places.length, names.length).forEach((length, i) => {
-		slots[places[at]] = names[i];
-		at += length;
-	});
-	return slots;
-}
-
-/**
- * A bar's slots as stored (an older draft kept the typed text), fitted to its beats.
- * @param {Slots | string | undefined} stored
+ * A bar's slots as stored, fitted to its beats.
+ * @param {Slots | undefined} stored
  * @param {number} beats
  * @returns {Slots}
  */
 export function slotsOf(stored, beats) {
-	if (typeof stored === 'string') return slotsFromTyped(stored, beats);
 	const slots = (stored ?? []).slice(0, beats);
 	return [...slots, ...Array(beats - slots.length).fill(null)];
 }
@@ -106,7 +82,7 @@ export function isEmptyBar(slots) {
  * A bar left empty in the chart (`|G| |`): it holds the chord before.
  * Stored as slots with no chord in any; a bar with no chord (N.C.) has
  * nothing stored.
- * @param {Slots | string | undefined} stored
+ * @param {Slots | undefined} stored
  */
 export function isHeld(stored) {
 	return Array.isArray(stored) && isEmptyBar(stored);

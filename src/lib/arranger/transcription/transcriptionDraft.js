@@ -8,59 +8,42 @@
  * One draft per recording, found again by the recording's key.
  */
 import { clearDraft, readDraft, writeDraft } from '$lib/storage/drafts.js';
-import { DEFAULT_TIME } from './timeSignatures.js';
-
-const VERSION = 4;
-/** Version 3 also kept the chords, key and markers (now read from the song's chart). */
-const READABLE = [3, VERSION];
 
 /**
  * @typedef {{
  *   grid: import('./beatGrid.js').BeatGrid,
  *   time: string, lanes: import('./extraLanes.js').ExtraLane[],
- *   cents: number, downbeat: number | null,
+ *   cents: number, downbeat: number,
  *   pickups: Record<number, number>
  * }} Transcription
- *   downbeat: where you placed beat 1 of bar 1 (seconds; null in an older draft)
+ *   downbeat: where you placed beat 1 of bar 1 (seconds)
  *   cents: the recording's pitch moved by this much (fine tuning)
  *   pickups: bar number → how many beats before it its section's tune starts (a marker's pickup)
  */
 
-/** @param {string} recordingKey */
-function draftName(recordingKey) {
-	return `transcription:${recordingKey}`;
+/** @param {string} referenceKey */
+function draftName(referenceKey) {
+	return `transcription:${referenceKey}`;
 }
 
 /**
- * @param {string} recordingKey
- * @returns {(Transcription & { savedAt: string, written: string }) | null}
- *   savedAt: when it was last kept; written: a version 3 draft's chart, to know its song by
+ * @param {string} referenceKey
+ * @returns {(Transcription & { savedAt: string }) | null} savedAt: when it was last kept
  */
-export function readTranscriptionDraft(recordingKey) {
-	const draft = readDraft(draftName(recordingKey));
-	const value = draft?.value;
-	if (!READABLE.includes(value?.version) || !Array.isArray(value.grid?.beats)) return null;
-	return {
-		savedAt: draft.savedAt,
-		grid: value.grid,
-		time: typeof value.time === 'string' ? value.time : DEFAULT_TIME,
-		lanes: Array.isArray(value.lanes) ? value.lanes : [],
-		cents: typeof value.cents === 'number' ? value.cents : 0,
-		downbeat: typeof value.downbeat === 'number' ? value.downbeat : null,
-		pickups: value.pickups && typeof value.pickups === 'object' ? value.pickups : {},
-		written: typeof value.written === 'string' ? value.written : ''
-	};
+export function readTranscriptionDraft(referenceKey) {
+	const draft = readDraft(draftName(referenceKey));
+	return draft ? { ...draft.value, savedAt: draft.savedAt } : null;
 }
 
 /**
- * @param {string} recordingKey
+ * @param {string} referenceKey
  * @param {Transcription} transcription
  */
-export function writeTranscriptionDraft(recordingKey, transcription) {
-	writeDraft(draftName(recordingKey), { version: VERSION, ...transcription });
+export function writeTranscriptionDraft(referenceKey, transcription) {
+	writeDraft(draftName(referenceKey), transcription);
 }
 
-/** @param {string} recordingKey */
-export function clearTranscriptionDraft(recordingKey) {
-	clearDraft(draftName(recordingKey));
+/** @param {string} referenceKey */
+export function clearTranscriptionDraft(referenceKey) {
+	clearDraft(draftName(referenceKey));
 }

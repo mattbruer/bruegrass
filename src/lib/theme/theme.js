@@ -118,7 +118,6 @@ export function applyTheme(appearance) {
 	for (const [variable, value] of Object.entries(variables)) {
 		document.documentElement.style.setProperty(variable, value);
 	}
-	for (const variable of RETIRED_VARIABLES) document.documentElement.style.removeProperty(variable);
 	rememberForFirstPaint(variables);
 }
 
@@ -131,9 +130,6 @@ function cssValue(choice) {
 	if (typeof choice === 'boolean') return choice ? '1' : '0';
 	return String(choice);
 }
-
-/** Once set here, so a first paint saved before they moved to tokens.css could still hold them. */
-const RETIRED_VARIABLES = ['--shadow-light-edge', '--shadow-dark-edge'];
 
 /** Read by src/app.html before the page first paints. */
 const FIRST_PAINT_KEY = 'bruegrass.firstPaint';

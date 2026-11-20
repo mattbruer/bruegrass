@@ -8,7 +8,7 @@
  * pixel, a line through the samples themselves. A time is
  * written every so often.
  */
-import { WAVE_FILL } from './recordingShape.js';
+import { WAVE_FILL } from './referenceShape.js';
 
 /** Times are written about this far apart (px), on a round number of seconds. */
 const TICK_SPACING = 110;
@@ -25,7 +25,7 @@ const TICK_STEPS = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 
  *   pixelsPerSecond: number, width: number, height: number, colours: Colours
  * }} view from: the second at the canvas's left edge
  */
-export function drawRecording(context, view) {
+export function drawReferenceStrip(context, view) {
 	const { width, height } = view;
 	context.clearRect(0, 0, width, height);
 	if (view.audio) drawWave(context, view);
@@ -34,7 +34,7 @@ export function drawRecording(context, view) {
 
 /**
  * @param {CanvasRenderingContext2D} context
- * @param {Parameters<typeof drawRecording>[1]} view
+ * @param {Parameters<typeof drawReferenceStrip>[1]} view
  */
 function drawWave(context, { audio, from, pixelsPerSecond, width, height, colours }) {
 	if (!audio) return;
@@ -121,7 +121,7 @@ function rangeBetween(channels, start, end, step = Math.max(1, Math.floor((end -
 
 /**
  * @param {CanvasRenderingContext2D} context
- * @param {Parameters<typeof drawRecording>[1]} view
+ * @param {Parameters<typeof drawReferenceStrip>[1]} view
  */
 function drawTicks(context, { from, pixelsPerSecond, width, height, colours }) {
 	const step = TICK_STEPS.find((each) => each * pixelsPerSecond >= TICK_SPACING) ?? 60;

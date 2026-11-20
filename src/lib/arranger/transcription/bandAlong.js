@@ -32,22 +32,22 @@ const TOO_LATE = 0.02;
  * @param {import('./beatGrid.js').BeatGrid} grid
  * @returns {SongStream[]}
  */
-export function streamsOnRecording(streams, quarter, grid) {
+export function streamsOnReference(streams, quarter, grid) {
 	/** @param {number} seconds into the performance */
-	const onRecording = (seconds) => secondsAt(grid, seconds / quarter);
+	const onReference = (seconds) => secondsAt(grid, seconds / quarter);
 	return streams.map(({ notes, play }) => ({
 		play,
 		notes: notes
 			.map((note, index) => {
 				const { time, stop, duration } =
 					/** @type {{ time: number, stop?: number, duration?: number }} */ (note);
-				const start = onRecording(time);
+				const start = onReference(time);
 				return {
 					note,
 					index,
 					start,
-					stop: stop === undefined ? null : onRecording(stop),
-					duration: duration === undefined ? null : onRecording(time + duration) - start
+					stop: stop === undefined ? null : onReference(stop),
+					duration: duration === undefined ? null : onReference(time + duration) - start
 				};
 			})
 			.toSorted((a, b) => a.start - b.start)

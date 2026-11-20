@@ -9,13 +9,9 @@
  */
 import { savedCollection } from './collection.js';
 
-/** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
-export const LISTENING_SETUP_VERSION = 1;
-
 /**
  * @typedef {{
  *   id: string,
- *   version: number,
  *   name: string,
  *   eqs: Record<string, import('$lib/audio/eq/eqBands.js').EqSettings>,
  *   createdAt: string,
@@ -26,7 +22,7 @@ export const LISTENING_SETUP_VERSION = 1;
  *   dates are ISO strings
  */
 
-const setups = savedCollection('bruegrass.listeningSetups', upgrade);
+const setups = savedCollection('bruegrass.listeningSetups');
 
 export const listListeningSetups = setups.list;
 export const getListeningSetup = setups.get;
@@ -38,18 +34,5 @@ export const deleteListeningSetup = setups.delete;
  * @returns {ListeningSetup}
  */
 export function saveListeningSetup(fields) {
-	return setups.save({ ...fields, version: LISTENING_SETUP_VERSION });
-}
-
-/**
- * @param {any} stored
- * @returns {ListeningSetup | null}
- */
-function upgrade(stored) {
-	if (!stored?.eqs || typeof stored.eqs !== 'object') return null;
-	return {
-		...stored,
-		name: typeof stored.name === 'string' && stored.name ? stored.name : 'Untitled setup',
-		version: LISTENING_SETUP_VERSION
-	};
+	return setups.save(fields);
 }

@@ -166,7 +166,7 @@ export function instrumentFamilies() {
 }
 
 /**
- * The instrument with this id, or `fallback`'s (an id no longer offered, from an older song).
+ * The instrument with this id, or `fallback`'s (no id, or one not in the list).
  * @param {string | undefined} id
  * @param {string} [fallback]
  * @returns {TuneInstrument}

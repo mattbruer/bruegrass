@@ -27,7 +27,7 @@ export function readSongFields(arranger) {
 		bass: arranger.bass.notation,
 		bassTune: arranger.bass.bySection,
 		tab: tabSnapshot(),
-		recording: arranger.song.recording,
+		reference: arranger.song.reference,
 		madeFrom: arranger.song.madeFrom,
 		tempo: arranger.arrangement.bpm,
 		tempoCurve: arranger.arrangement.tempoCurve,
@@ -41,7 +41,8 @@ export function readSongFields(arranger) {
 /**
  * Put a song on the page, replacing what's there: stop playing, show its
  * chart, melody and settings, use its mix (except the EQs, if this device
- * uses a listening setup), and loop the whole thing.
+ * uses a listening setup), and loop the whole thing. Examples and the
+ * starter song leave out the fields they don't use; those get their defaults.
  * @param {import('./Arranger.svelte.js').Arranger} arranger
  * @param {SongFields} song
  */
@@ -52,14 +53,14 @@ export function loadSongIntoPage(arranger, song) {
 	arranger.songsLoaded += 1; // another song's chart: nothing to follow from the last one's
 	arranger.arrangement.text = song.arrangement;
 	arranger.arrangement.tempo = song.tempo;
-	arranger.arrangement.swing = validSwing(song.swing); // examples, and drafts from before
+	arranger.arrangement.swing = validSwing(song.swing);
 	arranger.arrangement.tempoCurve = validTempoCurve(song.tempoCurve);
 	arranger.arrangement.capo = validCapo(song.capo);
 	arranger.arrangement.transpose = song.transpose;
-	arranger.melody.load(song.abc, song.tune ?? null); // songs from before the tune could be kept by section
-	arranger.bass.load(song.bass ?? '', song.bassTune ?? null); // drafts from before the bass could be edited, or kept by section
+	arranger.melody.load(song.abc, song.tune ?? null);
+	arranger.bass.load(song.bass ?? '', song.bassTune ?? null);
 	songTab.parts = song.tab ?? {};
-	arranger.song.recording = song.recording ?? null; // examples, and songs from before
+	arranger.song.reference = song.reference ?? null;
 	arranger.song.madeFrom = song.madeFrom ?? null;
 
 	applySongMix(song.mix); // keeps this device's listening setup on, if it has one

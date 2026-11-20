@@ -17,26 +17,16 @@
  * localStorage isn't, so when songs move to a server (SvelteKit server
  * routes or an API) only the bodies here change, not the pages.
  */
-import { readStored, removeStored, writeStored } from './localStore.js';
+import { readStored, writeStored } from './localStore.js';
 import { SWING_STRAIGHT } from '$lib/arranger/chart/swing.js';
 import { newId } from './newId.js';
-
-/** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
-export const ARRANGEMENT_VERSION = 11;
 
 /** Where every saved song is kept, as { [id]: Arrangement }. */
 const SONGS_KEY = 'bruegrass.arrangements';
 
 /**
- * An older way of remembering the last song opened (now storage/thisDevice.js
- * keeps it, since each device has its own), cleared when seen.
- */
-const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
-
-/**
  * @typedef {{
  *   id: string,
- *   version: number,
  *   title: string,
  *   arrangement: string,
  *   abc: string,
@@ -44,7 +34,7 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   bass: string,
  *   bassTune: import('$lib/arranger/melody/sections/tuneBySection.js').TuneBySection | null,
  *   tab: Record<string, import('$lib/arranger/tab/songTab.svelte.js').PartTab>,
- *   recording: { key: string, name: string } | null,
+ *   reference: { key: string, name: string } | null,
  *   madeFrom: { key: string, name: string } | null,
  *   tempo: number,
  *   tempoCurve: import('$lib/arranger/chart/tempoCurve.js').TempoPoint[],
@@ -60,7 +50,7 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   each section's bars (null: kept whole, in abc); bass: the bass line in ABC once it's been
  *   edited ('' while the band writes it from the chart); bassTune: the bass line kept by
  *   section (null: kept whole, in bass); tab: each part's TAB instrument
- *   and the strings chosen for its notes, and its tuning if not standard (tab/songTab.svelte.js); recording: the
+ *   and the strings chosen for its notes, and its tuning if not standard (tab/songTab.svelte.js); reference: the
  *   recording it was transcribed from (its key and name), if any (this song is that transcription);
  *   madeFrom: the recording whose transcription it was sent from (Send to the arranger), if any; tempoCurve: the tempo lane's points, each a share of `tempo` at a place in the song (chart/tempoCurve.js); swing: how long-short the eighths are, in percent (50 straight, chart/swing.js); transpose: semitones from the Key setting;
  *   mix: the mixer's settings (see mixSnapshot in mixer.svelte.js);
@@ -82,7 +72,7 @@ export function createArrangement(fields = {}) {
 		bass: '',
 		bassTune: null,
 		tab: {},
-		recording: null,
+		reference: null,
 		madeFrom: null,
 		tempo: 120,
 		tempoCurve: [],
@@ -92,7 +82,6 @@ export function createArrangement(fields = {}) {
 		mix: null,
 		...fields,
 		id: newId(),
-		version: ARRANGEMENT_VERSION,
 		createdAt: now,
 		updatedAt: now
 	};
@@ -103,9 +92,7 @@ export function createArrangement(fields = {}) {
  * @returns {Promise<Arrangement[]>}
  */
 export async function listArrangements() {
-	return Object.values(allSongs())
-		.map(upgrade)
-		.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+	return Object.values(allSongs()).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 /**
@@ -114,8 +101,7 @@ export async function listArrangements() {
  * @returns {Promise<Arrangement | null>}
  */
 export async function getArrangement(id) {
-	const song = allSongs()[id];
-	return song ? upgrade(song) : null;
+	return allSongs()[id] ?? null;
 }
 
 /**
@@ -124,7 +110,7 @@ export async function getArrangement(id) {
  * @returns {Promise<Arrangement>} the saved copy
  */
 export async function saveArrangement(song) {
-	const saved = { ...song, version: ARRANGEMENT_VERSION, updatedAt: new Date().toISOString() };
+	const saved = { ...song, updatedAt: new Date().toISOString() };
 	writeStored(SONGS_KEY, { ...allSongs(), [saved.id]: saved });
 	return saved;
 }
@@ -141,46 +127,6 @@ export async function deleteArrangement(id) {
 
 /** @returns {Record<string, Arrangement>} */
 function allSongs() {
-	removeStored(RETIRED_LAST_OPENED_KEY);
 	const songs = readStored(SONGS_KEY);
 	return songs && typeof songs === 'object' ? songs : {};
-}
-
-/**
- * Bring an older saved document up to the current shape. Version 2 added
- * `bass` (the defaults fill it in: older songs play the generated bass);
- * version 3 `bassStyle` (it was a device setting before: older songs get the default);
- * version 4 `tab` (older songs have none); version 5 `recording` (none: a
- * song transcribed earlier gets it when its recording is opened again); version 6
- * `tune` and `bassTune` (older songs keep their tune and bass line whole); version 7
- * `madeFrom` (none: an arrangement sent earlier isn't linked back to its transcription);
- * version 8 `swing` (older songs play straight); version 9 `tempoCurve` (none: a steady tempo);
- * version 10 drops `bassStyle` (the band's own bass is always root and fifth);
- * version 11 moves a melody on the guitar (the default for a few days, an octave
- * below the tune as written) onto the melody's default instrument.
- * @param {Arrangement} song
- * @returns {Arrangement}
- */
-function upgrade(song) {
-	const fields = /** @type {Arrangement & { bassStyle?: string }} */ ({ ...song });
-	delete fields.bassStyle;
-	if (song.version < 11) fields.mix = melodyOffTheGuitar(fields.mix);
-	return {
-		...createArrangement(),
-		...fields,
-		title: song.title || 'Untitled song',
-		version: ARRANGEMENT_VERSION
-	};
-}
-
-/** @param {any} mix */
-function melodyOffTheGuitar(mix) {
-	if (!Array.isArray(mix?.channels)) return mix;
-	const channels = mix.channels.map((/** @type {any} */ channel) => {
-		if (channel.id !== 'melody' || channel.instrument !== 'guitar') return channel;
-		const rest = { ...channel };
-		delete rest.instrument;
-		return rest;
-	});
-	return { ...mix, channels };
 }

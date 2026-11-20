@@ -22,13 +22,10 @@ import { newId } from './newId.js';
 
 const DATABASE = 'bruegrass.sampler';
 const DATABASE_VERSION = 1;
-/** The shape of a session document; raise it and convert in `upgrade` when it changes. */
-export const SESSION_VERSION = 1;
 
 /**
  * @typedef {{
  *   id: string,
- *   version: number,
  *   checklistId: string,
  *   name: string,
  *   createdAt: string,
@@ -53,17 +50,12 @@ const database = keptOpen(DATABASE, DATABASE_VERSION, (db) => {
 	db.createObjectStore('takeAudio', { keyPath: 'id' });
 });
 
-/** @param {SamplingSession} session */
-function upgrade(session) {
-	return { ...session, version: SESSION_VERSION };
-}
-
 /** Every session, the latest worked on first. */
 export async function listSessions() {
 	const db = await database();
 	/** @type {SamplingSession[]} */
 	const sessions = await result(db.transaction('sessions').objectStore('sessions').getAll());
-	return sessions.map(upgrade).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+	return sessions.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 /**
@@ -77,7 +69,6 @@ export async function createSession(checklistId, name) {
 	const now = new Date().toISOString();
 	const session = {
 		id: newId(),
-		version: SESSION_VERSION,
 		checklistId,
 		name,
 		createdAt: now,

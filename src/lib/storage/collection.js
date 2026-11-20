@@ -12,11 +12,8 @@ import { newId } from './newId.js';
 /**
  * @template {{ id: string, name: string, createdAt: string, updatedAt: string }} Doc
  * @param {string} storageKey
- * @param {(stored: any) => Doc | null} upgrade
- *   brings an older stored document up to the current shape, or returns
- *   null if it can't be used (then it's skipped)
  */
-export function savedCollection(storageKey, upgrade) {
+export function savedCollection(storageKey) {
 	/** @returns {Record<string, any>} */
 	function allStored() {
 		const stored = readStored(storageKey);
@@ -29,10 +26,9 @@ export function savedCollection(storageKey, upgrade) {
 		 * @returns {Doc[]}
 		 */
 		list() {
-			return Object.values(allStored())
-				.map(upgrade)
-				.filter((doc) => doc !== null)
-				.sort((a, b) => a.name.localeCompare(b.name));
+			return /** @type {Doc[]} */ (Object.values(allStored())).sort((a, b) =>
+				a.name.localeCompare(b.name)
+			);
 		},
 
 		/**
@@ -40,8 +36,7 @@ export function savedCollection(storageKey, upgrade) {
 		 * @returns {Doc | null}
 		 */
 		get(id) {
-			const stored = allStored()[id];
-			return stored ? upgrade(stored) : null;
+			return allStored()[id] ?? null;
 		},
 
 		/**

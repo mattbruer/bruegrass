@@ -4,7 +4,6 @@
  * audio compressed to travel (takeFormat.js). A take that was itself
  * received goes on in the file it came in, so it's never compressed twice.
  */
-import { ARRANGEMENT_VERSION } from '$lib/storage/arrangements.js';
 import { readSentAudio, readTakeAudio } from '$lib/storage/songTakes.js';
 import { readSongFields } from '../state/songFields.js';
 import { myChords } from '../voicings/myChords.svelte.js';
@@ -20,7 +19,6 @@ import { packTakeAudio } from './takeFormat.js';
 export async function gatherSong(arranger, { withTakes }) {
 	const song = {
 		id: arranger.song.savedId,
-		version: ARRANGEMENT_VERSION,
 		title: arranger.song.name || arranger.song.suggestedName,
 		...readSongFields(arranger)
 	};

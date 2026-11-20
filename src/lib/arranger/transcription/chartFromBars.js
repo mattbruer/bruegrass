@@ -21,7 +21,7 @@ import { SECTION_END, UNMARKED_SECTION } from './readChartOnBars.js';
 /**
  * @param {import('./barPlan.js').Bar[]} bars
  * @param {{ id: string, beatsPerBar: number }} time from timeSignatures.js
- * @param {Record<number, import('./barChords.js').Slots | string>} chords bar number → its slots
+ * @param {Record<number, import('./barChords.js').Slots>} chords bar number → its slots
  * @param {Record<number, string>} [markers] bar number → the name of the section starting there
  * @param {Record<number, string[]>} [lyrics] bar number → lyric lines starting there
  * @returns {string}

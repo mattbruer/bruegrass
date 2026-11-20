@@ -7,13 +7,9 @@
  */
 import { savedCollection } from './collection.js';
 
-/** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
-export const EQ_PRESET_VERSION = 1;
-
 /**
  * @typedef {{
  *   id: string,
- *   version: number,
  *   name: string,
  *   stripId: string,
  *   eq: import('$lib/audio/eq/eqBands.js').EqSettings,
@@ -24,7 +20,7 @@ export const EQ_PRESET_VERSION = 1;
  *   'master'), so that strip can list it first; dates are ISO strings
  */
 
-const presets = savedCollection('bruegrass.eqPresets', upgrade);
+const presets = savedCollection('bruegrass.eqPresets');
 
 export const listEqPresets = presets.list;
 export const deleteEqPreset = presets.delete;
@@ -35,19 +31,5 @@ export const deleteEqPreset = presets.delete;
  * @returns {EqPreset}
  */
 export function saveEqPreset(fields) {
-	return presets.save({ ...fields, version: EQ_PRESET_VERSION });
-}
-
-/**
- * @param {any} stored
- * @returns {EqPreset | null}
- */
-function upgrade(stored) {
-	if (!stored?.eq || typeof stored.eq !== 'object') return null;
-	return {
-		...stored,
-		name: typeof stored.name === 'string' && stored.name ? stored.name : 'Untitled preset',
-		stripId: typeof stored.stripId === 'string' ? stored.stripId : '',
-		version: EQ_PRESET_VERSION
-	};
+	return presets.save(fields);
 }

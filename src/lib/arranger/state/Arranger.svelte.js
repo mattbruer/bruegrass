@@ -209,7 +209,7 @@ export class Arranger {
 		await abcjsReady();
 		const { melody, arrangement } = this;
 		// A transcription's tune follows the recording bar for bar: arranging it is a new song
-		if (melody.bySection || this.song.recording) return '';
+		if (melody.bySection || this.song.reference) return '';
 		if (!arrangement.isPlayable) return 'Fix the chart first.';
 		if (!melody.tune) return 'There is no tune to split yet.';
 		const instances = sectionInstances(arrangement.text);

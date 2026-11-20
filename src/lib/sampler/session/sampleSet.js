@@ -8,7 +8,7 @@ import { encodeWav } from '$lib/arranger/export/wav.js';
 import { listTakes } from '$lib/storage/samplingSessions.js';
 import { findChecklist, listTargets } from '../checklists/targets.js';
 import { cutSample } from './cutSample.js';
-import { MANIFEST_FORMAT, MANIFEST_VERSION, manifestEntry, sampleFileName } from './sampleFiles.js';
+import { MANIFEST_FORMAT, manifestEntry, sampleFileName } from './sampleFiles.js';
 
 /**
  * @typedef {import('$lib/storage/samplingSessions.js').TakeRecord} TakeRecord
@@ -61,7 +61,6 @@ export function sampleFiles({ target, record }, channels, { includeRaw }) {
 export function manifestFile(session, checklist, samples) {
 	const manifest = {
 		format: MANIFEST_FORMAT,
-		version: MANIFEST_VERSION,
 		instrument: checklist.id,
 		session: session.name,
 		exportedAt: new Date().toISOString(),

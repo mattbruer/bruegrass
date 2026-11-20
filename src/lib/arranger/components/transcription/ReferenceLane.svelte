@@ -3,10 +3,10 @@
 	 * The recording on the song's bars, like an audio region in Logic after
 	 * "Apply Region Tempo to Project Tempo": its waveform, bent so every beat
 	 * is a quarter on the ruler. Tap to play from there. Drawn on a canvas as
-	 * wide as the view, kept beside the lane names (drawReference.js says why).
+	 * wide as the view, kept beside the lane names (drawReferenceLane.js says why).
 	 */
-	import { WAVE_FILL, bentWaveform } from '../../transcription/recordingShape.js';
-	import { drawReference } from '../../transcription/drawReference.js';
+	import { WAVE_FILL, bentWaveform } from '../../transcription/referenceShape.js';
+	import { drawReferenceLane } from '../../transcription/drawReferenceLane.js';
 	import { PEAKS_PER_SECOND } from '../../transcription/TranscriptionState.svelte.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -73,7 +73,7 @@
 		const context = canvas.getContext('2d');
 		if (!context) return;
 		context.setTransform(ratio, 0, 0, ratio, 0, 0);
-		drawReference(context, {
+		drawReferenceLane(context, {
 			pieces,
 			from: canvasLeft,
 			width: canvasWidth,

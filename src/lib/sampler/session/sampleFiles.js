@@ -8,9 +8,8 @@
  *   graze/D-f00-normal-80bpm-t1.wav   a layer recorded at a tempo
  */
 
-/** The manifest's format name and version: raise the version when its shape changes. */
+/** The manifest's format name. */
 export const MANIFEST_FORMAT = 'bruegrass-samples';
-export const MANIFEST_VERSION = 1;
 
 /**
  * Takes up to this number load everywhere; later takes only on a computer

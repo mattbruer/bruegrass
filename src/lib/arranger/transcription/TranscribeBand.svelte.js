@@ -9,7 +9,7 @@ import { preparePerformance } from '../instruments/performance.js';
 import { createBand } from '../instruments/band.js';
 import { getChannel } from '../mixer/mixerGraph.svelte.js';
 import { BASS_VOICE } from '../bass/readBass.js';
-import { createBandAlong, streamsOnRecording } from './bandAlong.js';
+import { createBandAlong, streamsOnReference } from './bandAlong.js';
 
 /** The mixer channels the band plays into. */
 export const BAND_CHANNELS = ['guitar', 'mandolin', 'bass'];
@@ -106,7 +106,7 @@ export class TranscribeBand {
 		const Tone = (this.#tone ??= await import('tone'));
 		const band = await createBand(Tone, performance, (id) => this.#levelFor(Tone, id));
 		this.#madeFrom = { performance, grid };
-		return { band, streams: streamsOnRecording(band.streams, performance.quarter, grid) };
+		return { band, streams: streamsOnReference(band.streams, performance.quarter, grid) };
 	}
 
 	/**

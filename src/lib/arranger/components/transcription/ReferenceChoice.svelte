@@ -3,14 +3,14 @@
 	 * Which recording to transcribe: one of the app's songs, or a file from this
 	 * device (an MP3, WAV or anything the browser plays).
 	 */
-	import { BUNDLED_RECORDINGS, bundledRecording } from '../../transcription/bundledRecordings.js';
+	import { BUNDLED_REFERENCES, bundledReference } from '../../transcription/bundledReferences.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
 	 * @type {{
-	 *   current: import('../../transcription/TranscriptionState.svelte.js').Recording | null,
-	 *   onChoose: (recording: import('../../transcription/TranscriptionState.svelte.js').Recording) => void
+	 *   current: import('../../transcription/TranscriptionState.svelte.js').Reference | null,
+	 *   onChoose: (reference: import('../../transcription/TranscriptionState.svelte.js').Reference) => void
 	 * }}
 	 */
 	let { current, onChoose } = $props();
@@ -20,8 +20,8 @@
 
 	/** @param {string} key */
 	function chooseSong(key) {
-		const recording = bundledRecording(key);
-		if (recording) onChoose(recording);
+		const reference = bundledReference(key);
+		if (reference) onChoose(reference);
 	}
 
 	/** @param {Event & { currentTarget: HTMLInputElement }} event */
@@ -43,8 +43,8 @@
 		<option value="" disabled>
 			{current?.key.startsWith('file:') ? current.name : 'Pick a song…'}
 		</option>
-		{#each BUNDLED_RECORDINGS as recording (recording.key)}
-			<option value={recording.key}>{recording.name}</option>
+		{#each BUNDLED_REFERENCES as reference (reference.key)}
+			<option value={reference.key}>{reference.name}</option>
 		{/each}
 	</select>
 	<button

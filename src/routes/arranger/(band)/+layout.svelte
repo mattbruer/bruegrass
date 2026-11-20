@@ -26,7 +26,6 @@
 	import ReceiveSongDialog from '$lib/arranger/components/share/ReceiveSongDialog.svelte';
 	import { startThisDevicesSetup } from '$lib/arranger/mixer/listeningSetup.svelte.js';
 	import { keepWorkSaved } from '$lib/arranger/state/autosave.svelte.js';
-	import { rescueOldDrafts } from '$lib/arranger/state/rescueOldDrafts.js';
 	import { keepBassWithChart } from '$lib/arranger/state/bassFollowsChart.svelte.js';
 	import { keepTuneWithChart } from '$lib/arranger/state/tuneFollowsChart.svelte.js';
 	import { loadMyChords } from '$lib/arranger/voicings/myChords.svelte.js';
@@ -54,10 +53,7 @@
 	onMount(() => {
 		loadMyChords();
 		startThisDevicesSetup();
-		arranger.song
-			.start()
-			.then(() => rescueOldDrafts(arranger))
-			.catch(console.error);
+		arranger.song.start().catch(console.error);
 		const offerSharedSong = () => arranger.receive.fromLink(location.hash);
 		offerSharedSong();
 		addEventListener('hashchange', offerSharedSong);

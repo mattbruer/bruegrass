@@ -14,7 +14,7 @@
  * @param {{ pieces: WavePiece[], from: number, width: number, height: number, colour: string }} view
  *   from: the lane's pixel at the canvas's left edge
  */
-export function drawReference(context, { pieces, from, width, height, colour }) {
+export function drawReferenceLane(context, { pieces, from, width, height, colour }) {
 	context.clearRect(0, 0, width, height);
 	const middle = height / 2;
 	context.fillStyle = colour;

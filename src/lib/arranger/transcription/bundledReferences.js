@@ -6,15 +6,15 @@
 import { songs } from '$lib/playlist/songs.js';
 
 /** Every bundled recording, by title. */
-export const BUNDLED_RECORDINGS = songs
+export const BUNDLED_REFERENCES = songs
 	.map((song) => ({ key: song.src, name: song.title.trim(), source: song.src }))
 	.toSorted((a, b) => a.name.localeCompare(b.name));
 
 /**
  * The bundled recording with this key, or null (a file from your device can't be reopened).
  * @param {string} key
- * @returns {import('./TranscriptionState.svelte.js').Recording | null}
+ * @returns {import('./TranscriptionState.svelte.js').Reference | null}
  */
-export function bundledRecording(key) {
-	return BUNDLED_RECORDINGS.find((recording) => recording.key === key) ?? null;
+export function bundledReference(key) {
+	return BUNDLED_REFERENCES.find((reference) => reference.key === key) ?? null;
 }

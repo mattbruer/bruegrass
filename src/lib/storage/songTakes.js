@@ -17,13 +17,10 @@ import { newId } from './newId.js';
 
 const DATABASE = 'bruegrass.takes';
 const DATABASE_VERSION = 1;
-/** The shape of a take document; raise it and convert in `upgrade` when it changes. */
-export const TAKE_VERSION = 2;
 
 /**
  * @typedef {{
  *   id: string,
- *   version: number,
  *   songId: string,
  *   trackId: string,
  *   inUse: boolean,
@@ -50,14 +47,6 @@ const database = keptOpen(DATABASE, DATABASE_VERSION, (db) => {
 });
 
 /**
- * Version 2 added `quality` (every older take was recorded or added here: full).
- * @param {TakeDocument} take
- */
-function upgrade(take) {
-	return { quality: 'full', ...take, version: TAKE_VERSION };
-}
-
-/**
  * A song's takes, oldest first.
  * @param {string} songId
  * @returns {Promise<TakeDocument[]>}
@@ -67,12 +56,12 @@ export async function listTakes(songId) {
 	const index = db.transaction('takes').objectStore('takes').index('bySong');
 	/** @type {TakeDocument[]} */
 	const takes = await result(index.getAll(songId));
-	return takes.map(upgrade).sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
+	return takes.sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
 }
 
 /**
  * Save a new take and its audio, and make it the one its track plays.
- * @param {Omit<TakeDocument, 'id' | 'version' | 'inUse' | 'recordedAt' | 'quality'>} details
+ * @param {Omit<TakeDocument, 'id' | 'inUse' | 'recordedAt' | 'quality'>} details
  * @param {Float32Array[]} channels
  * @returns {Promise<TakeDocument>}
  */
@@ -81,7 +70,6 @@ export function addTake(details, channels) {
 		{
 			...details,
 			id: newId(),
-			version: TAKE_VERSION,
 			inUse: true,
 			recordedAt: new Date().toISOString(),
 			quality: 'full'

@@ -10,7 +10,7 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	const FROM_A_RECORDING = 'recording';
+	const FROM_A_REFERENCE = 'reference';
 
 	const { song } = useArranger();
 
@@ -18,7 +18,7 @@
 	function startFrom(event) {
 		const choice = event.currentTarget.value;
 		event.currentTarget.value = ''; // the menu always shows "New from…"
-		if (choice === FROM_A_RECORDING) {
+		if (choice === FROM_A_REFERENCE) {
 			song.startNew();
 			goto(resolve('/arranger/transcribe'));
 			return;
@@ -41,5 +41,5 @@
 			<option value={example.id}>{example.title}</option>
 		{/each}
 	</optgroup>
-	<option value={FROM_A_RECORDING}>A recording (transcribe it)…</option>
+	<option value={FROM_A_REFERENCE}>A recording (transcribe it)…</option>
 </select>

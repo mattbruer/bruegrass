@@ -5,13 +5,9 @@
  */
 import { savedCollection } from './collection.js';
 
-/** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
-export const CHORD_VOICING_VERSION = 1;
-
 /**
  * @typedef {{
  *   id: string,
- *   version: number,
  *   name: string,
  *   frets: (number | null)[],
  *   createdAt: string,
@@ -21,7 +17,7 @@ export const CHORD_VOICING_VERSION = 1;
  *   frets: six, low E to high e, null for a muted string, without capo
  */
 
-const voicings = savedCollection('bruegrass.chordVoicings', upgrade);
+const voicings = savedCollection('bruegrass.chordVoicings');
 
 export const listChordVoicings = voicings.list;
 export const deleteChordVoicing = voicings.delete;
@@ -33,18 +29,5 @@ export const deleteChordVoicing = voicings.delete;
  */
 export function saveChordVoicing(fields) {
 	const existing = fields.id ? voicings.get(fields.id) : null;
-	return voicings.save({ ...existing, ...fields, version: CHORD_VOICING_VERSION });
-}
-
-/**
- * @param {any} stored
- * @returns {ChordVoicing | null}
- */
-function upgrade(stored) {
-	const frets = stored?.frets;
-	const validFret = (/** @type {unknown} */ fret) =>
-		fret === null || (Number.isInteger(fret) && /** @type {number} */ (fret) >= 0);
-	if (typeof stored?.name !== 'string' || !stored.name) return null;
-	if (!Array.isArray(frets) || frets.length !== 6 || !frets.every(validFret)) return null;
-	return { ...stored, version: CHORD_VOICING_VERSION };
+	return voicings.save({ ...existing, ...fields });
 }

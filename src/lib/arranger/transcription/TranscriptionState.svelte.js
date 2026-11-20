@@ -15,7 +15,7 @@
  *
  * The grid is plain data (beatGrid.js) and every change goes through its
  * functions; the recording is analysed once on opening
- * (beats/analyseRecording.js). The transcription is kept as a draft per
+ * (beats/analyseReference.js). The transcription is kept as a draft per
  * recording (transcriptionDraft.js), so nothing is lost on leaving.
  *
  * It lives on the Arranger, so the work stays while you visit its other
@@ -36,8 +36,8 @@ import {
 	withBeatsHalved,
 	tempoAt
 } from './beatGrid.js';
-import { ANALYSIS_VERSION, analyseRecording } from './beats/analyseRecording.js';
-import { readRecordingAnalysis, writeRecordingAnalysis } from '$lib/storage/recordingAnalyses.js';
+import { ANALYSIS_VERSION, analyseReference } from './beats/analyseReference.js';
+import { readReferenceAnalysis, writeReferenceAnalysis } from '$lib/storage/referenceAnalyses.js';
 import { detectBeats } from './beats/detectBeats.js';
 import { snapToHit, tapToHit } from './beats/snapToHit.js';
 import {
@@ -59,7 +59,7 @@ import { quartersAt, secondsAt } from './tempoMap.js';
 import { barStepTarget } from './barStep.js';
 import { findTuning } from '$lib/slowDowner/findTuning.js';
 import { clampCents } from '$lib/slowDowner/tuning.js';
-import { bundledRecording } from './bundledRecordings.js';
+import { bundledReference } from './bundledReferences.js';
 import { STARTER_SONG } from '../starterSong.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { BASS_VOICE, readBassScore, writtenBassNotes } from '../bass/readBass.js';
@@ -75,7 +75,7 @@ import { CycleState, leadInBefore } from './CycleState.svelte.js';
 import { pickupLength, withPickupLength } from '../melody/roll/pickupBar.js';
 
 /**
- * @typedef {{ key: string, name: string, source: string | Blob }} Recording
+ * @typedef {{ key: string, name: string, source: string | Blob }} Reference
  *   key: the same recording gets the same key (its URL, or a file's name and size)
  * @typedef {import('./beatGrid.js').BeatGrid} BeatGrid
  * @typedef {import('./barChords.js').Slots} Slots
@@ -96,8 +96,8 @@ const UNDO_STEPS = 50;
 
 export class TranscriptionState {
 	player = new StretchPlayer();
-	/** @type {Recording | null} */
-	recording = $state.raw(null);
+	/** @type {Reference | null} */
+	reference = $state.raw(null);
 	/** @type {BeatGrid | null} */
 	grid = $state.raw(null);
 	/** The time signature's id (timeSignatures.js). */
@@ -160,15 +160,15 @@ export class TranscriptionState {
 	/** The song you came from (sent from this transcription), to go back to in the arranger; null: none. */
 	returnTo = /** @type {{ id: string, name: string } | null} */ ($state.raw(null));
 	/** Choosing another recording, with one open. */
-	pickingRecording = $state(false);
+	pickingReference = $state(false);
 	/**
 	 * What has to happen before the workspace (null: nothing, it shows):
 	 * choosing a recording, then placing its beat 1.
-	 * @type {'recording' | 'downbeat' | null}
+	 * @type {'reference' | 'downbeat' | null}
 	 */
 	setupStep = $derived(
-		!this.recording || this.pickingRecording
-			? 'recording'
+		!this.reference || this.pickingReference
+			? 'reference'
 			: this.settingDownbeat || !this.grid
 				? 'downbeat'
 				: null
@@ -180,7 +180,7 @@ export class TranscriptionState {
 	bars = $derived(this.grid ? layOutBars(this.grid.beats.length, this.grid.bars) : []);
 	bar = $derived(this.bars.find((bar) => bar.number === this.openBar) ?? null);
 	/** The song open now is the one written from this recording. */
-	linked = $derived(!!this.recording && this.arranger.song.recording?.key === this.recording.key);
+	linked = $derived(!!this.reference && this.arranger.song.reference?.key === this.reference.key);
 	/** The open song's chart on the recording's bars (nothing while another song is open). */
 	#chartOnBars = $derived(
 		this.linked
@@ -268,7 +268,7 @@ export class TranscriptionState {
 	get audio() {
 		return this.#audio;
 	}
-	/** @type {import('./beats/analyseRecording.js').Analysis | null} */
+	/** @type {import('./beats/analyseReference.js').Analysis | null} */
 	#analysis = null;
 
 	/** @param {import('../state/Arranger.svelte.js').Arranger} arranger */
@@ -301,10 +301,10 @@ export class TranscriptionState {
 	/**
 	 * Open a recording: find (or bring back) its beats and bars, and make it
 	 * the open song's recording.
-	 * @param {Recording} recording
+	 * @param {Reference} reference
 	 */
-	async open(recording) {
-		this.recording = recording;
+	async open(reference) {
+		this.reference = reference;
 		this.grid = null;
 		this.#beatHistory = [];
 		this.time = DEFAULT_TIME;
@@ -316,25 +316,24 @@ export class TranscriptionState {
 		this.settingDownbeat = false;
 		this.movingDownbeat = false;
 		this.checkingDownbeat = false;
-		const placed = (readTranscriptionDraft(recording.key)?.downbeat ?? null) !== null;
-		this.timeChosen = placed;
-		this.pickingRecording = false;
+		this.timeChosen = readTranscriptionDraft(reference.key) !== null;
+		this.pickingReference = false;
 		this.cycle.clear();
 		this.player.setCents(0);
 		this.closeMenus();
 		this.#audio = null;
 		this.#analysis = null;
-		const audio = await this.player.load(recording.source);
-		if (!audio || this.recording !== recording) return;
+		const audio = await this.player.load(reference.source);
+		if (!audio || this.reference !== reference) return;
 		this.#audio = audio;
 		this.peaks = waveformPeaks(channelsOf(audio), audio.sampleRate, PEAKS_PER_SECOND);
 
-		const analysis = await this.#analysisOf(recording, audio);
+		const analysis = await this.#analysisOf(reference, audio);
 		if (!analysis || this.#audio !== audio) return;
 		this.#analysis = analysis;
 		this.hits = hitsOf(analysis);
 
-		await this.#carryOn(readTranscriptionDraft(recording.key));
+		await this.#carryOn(readTranscriptionDraft(reference.key));
 	}
 
 	/**
@@ -342,17 +341,13 @@ export class TranscriptionState {
 	 * @param {import('./transcriptionDraft.js').Transcription | null} draft
 	 */
 	async #carryOn(draft) {
-		// Beats come back only when you placed beat 1; an older draft's were guessed
 		if (draft) {
-			this.grid = draft.downbeat === null ? null : draft.grid;
+			this.grid = draft.grid;
 			this.time = draft.time;
 			this.extraLanes = draft.lanes;
 			this.pickups = draft.pickups;
 			this.player.setCents(draft.cents);
 			this.downbeat = draft.downbeat;
-			// A song written from it before songs named their recording
-			if (draft.written && draft.written === this.arranger.arrangement.text)
-				this.arranger.song.recording = this.#songsRecording();
 		}
 		if (!this.grid) this.settingDownbeat = true;
 		else if (!this.linked) await this.#openSongOrStart();
@@ -360,10 +355,10 @@ export class TranscriptionState {
 
 	/** Open the song last written from this recording, or start one. */
 	async #openSongOrStart() {
-		const key = this.recording?.key;
+		const key = this.reference?.key;
 		const songs = await listArrangements();
-		const written = songs.find((song) => song.recording?.key === key);
-		if (this.recording?.key !== key) return;
+		const written = songs.find((song) => song.reference?.key === key);
+		if (this.reference?.key !== key) return;
 		if (written) await this.arranger.song.open(written.id);
 		else this.startSong();
 	}
@@ -372,26 +367,26 @@ export class TranscriptionState {
 	 * What the recording's sound does (hits, bass, chords): kept on this device
 	 * after the first time, since it depends only on the audio. Null if another
 	 * recording was opened meanwhile.
-	 * @param {Recording} recording
+	 * @param {Reference} reference
 	 * @param {AudioBuffer} audio
 	 */
-	async #analysisOf(recording, audio) {
+	async #analysisOf(reference, audio) {
 		const stamp = {
 			version: ANALYSIS_VERSION,
 			samples: audio.length,
 			sampleRate: audio.sampleRate
 		};
-		const kept = await readRecordingAnalysis(recording.key, stamp).catch(() => null);
+		const kept = await readReferenceAnalysis(reference.key, stamp).catch(() => null);
 		if (kept || this.#audio !== audio) return kept;
 
 		this.finding = true;
 		// Let "Listening to the recording…" show: the analysis takes a second or two
 		await new Promise((done) => setTimeout(done, 30));
 		const analysis =
-			this.#audio === audio ? analyseRecording(channelsOf(audio), audio.sampleRate) : null;
+			this.#audio === audio ? analyseReference(channelsOf(audio), audio.sampleRate) : null;
 		this.finding = false;
 		if (!analysis) return null;
-		writeRecordingAnalysis(recording.key, stamp, analysis).catch(console.error);
+		writeReferenceAnalysis(reference.key, stamp, analysis).catch(console.error);
 		return analysis;
 	}
 
@@ -404,23 +399,23 @@ export class TranscriptionState {
 		const from = song.madeFrom;
 		if (!from) return;
 		this.returnTo = song.savedId ? { id: song.savedId, name: song.name } : null;
-		if (this.recording?.key !== from.key) {
-			const recording = bundledRecording(from.key);
-			if (recording) await this.open(recording);
+		if (this.reference?.key !== from.key) {
+			const reference = bundledReference(from.key);
+			if (reference) await this.open(reference);
 		} else if (this.grid && !this.linked) await this.#openSongOrStart();
 	}
 
 	/** Open the recording the open song was written from, if it's one of the app's own and isn't open. */
-	reopenSongsRecording() {
-		const wanted = this.arranger.song.recording;
-		if (!wanted || this.recording?.key === wanted.key) return;
-		const recording = bundledRecording(wanted.key);
-		if (recording) this.open(recording);
+	reopenSongsReference() {
+		const wanted = this.arranger.song.reference;
+		if (!wanted || this.reference?.key === wanted.key) return;
+		const reference = bundledReference(wanted.key);
+		if (reference) this.open(reference);
 	}
 
 	/** The open recording as the song keeps it: its key and name. */
-	#songsRecording() {
-		return this.recording ? { key: this.recording.key, name: this.recording.name } : null;
+	#songsReference() {
+		return this.reference ? { key: this.reference.key, name: this.reference.name } : null;
 	}
 
 	/**
@@ -469,16 +464,16 @@ export class TranscriptionState {
 	#findBeatsFromDownbeat() {
 		if (this.downbeat === null) return;
 		this.#findBeats();
-		if (this.recording) clearTranscriptionDraft(this.recording.key);
+		if (this.reference) clearTranscriptionDraft(this.reference.key);
 		this.#writeChart();
 		this.#keepDraft();
 	}
 
 	/** Back to choosing the recording (the open one stays until another is chosen). */
-	chooseRecordingAgain() {
+	chooseReferenceAgain() {
 		this.player.pause();
 		this.closeMenus();
-		this.pickingRecording = true;
+		this.pickingReference = true;
 	}
 
 	/**
@@ -494,8 +489,8 @@ export class TranscriptionState {
 	}
 
 	/** Keep the open recording: back from choosing another. */
-	keepRecording() {
-		this.pickingRecording = false;
+	keepReference() {
+		this.pickingReference = false;
 	}
 
 	/** The bar whose start is nearest the playhead (a tap is often a little early or late). */
@@ -543,9 +538,9 @@ export class TranscriptionState {
 				abc: '',
 				bass: '',
 				tempo: this.tempo || STARTER_SONG.tempo,
-				recording: this.#songsRecording()
+				reference: this.#songsReference()
 			},
-			this.recording?.name ?? ''
+			this.reference?.name ?? ''
 		);
 		song.keepAsYourOwn().catch(console.error);
 		if (this.#keyBeforeSong) this.arranger.nameSongKey(this.#keyBeforeSong).catch(console.error);
@@ -557,7 +552,7 @@ export class TranscriptionState {
 	findBeatsAgain() {
 		if (this.downbeat === null) return this.setDownbeatAgain();
 		this.#findBeats();
-		if (this.recording) clearTranscriptionDraft(this.recording.key);
+		if (this.reference) clearTranscriptionDraft(this.reference.key);
 		this.#writeChart();
 		this.#keepDraft();
 	}
@@ -887,7 +882,7 @@ export class TranscriptionState {
 	/** Put the beats back as they were before the last change to them. */
 	undoBeats() {
 		const before = this.#beatHistory.at(-1);
-		if (!before || !this.recording) return;
+		if (!before || !this.reference) return;
 		this.#beatHistory = this.#beatHistory.slice(0, -1);
 		this.grid = before;
 		this.selectedBeat = null;
@@ -937,7 +932,7 @@ export class TranscriptionState {
 
 	/** @param {(grid: BeatGrid) => BeatGrid} change */
 	#edit(change) {
-		if (!this.grid || !this.recording) return;
+		if (!this.grid || !this.reference) return;
 		this.#beatHistory = [...this.#beatHistory.slice(1 - UNDO_STEPS), this.grid];
 		this.grid = change(this.grid);
 		this.#keepDraft();
@@ -974,8 +969,8 @@ export class TranscriptionState {
 	}
 
 	#keepDraft() {
-		if (!this.recording || !this.grid) return;
-		writeTranscriptionDraft(this.recording.key, {
+		if (!this.reference || !this.grid) return;
+		writeTranscriptionDraft(this.reference.key, {
 			grid: this.grid,
 			time: this.time,
 			lanes: this.extraLanes,
@@ -988,7 +983,7 @@ export class TranscriptionState {
 
 /**
  * The onset strength scaled to 0–1 for drawing.
- * @param {import('./beats/analyseRecording.js').Analysis} analysis
+ * @param {import('./beats/analyseReference.js').Analysis} analysis
  */
 function hitsOf(analysis) {
 	return {

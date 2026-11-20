@@ -40,7 +40,7 @@ const CHROMA_HIGH_HZ = 2000;
  * @param {number} sampleRate
  * @returns {Analysis}
  */
-export function analyseRecording(channels, sampleRate) {
+export function analyseReference(channels, sampleRate) {
 	const mono = mixDown(channels);
 	const size = 1 << Math.round(Math.log2(FRAME_SECONDS * sampleRate));
 	const hop = Math.round(HOP_SECONDS * sampleRate);

@@ -19,7 +19,7 @@
 import { estimateBeatFrames } from './estimateTempo.js';
 import { evenGaps, trackBeatsThrough } from './trackBeats.js';
 import { localGaps } from './localTempo.js';
-import { frameAt, secondsAt } from './analyseRecording.js';
+import { frameAt, secondsAt } from './analyseReference.js';
 
 /** Hits halfway between beats this strong (against the hits on them) mean a beat was missed in between. */
 const HALFWAY_HITS_MEAN_DOUBLE = 0.4;
@@ -29,7 +29,7 @@ const FASTEST_BPM = 360;
 const STEADY = 400;
 
 /**
- * @param {import('./analyseRecording.js').Analysis} analysis
+ * @param {import('./analyseReference.js').Analysis} analysis
  * @param {number} downbeat seconds into the recording: beat 1 of bar 1
  * @param {number} leadInBeats how many beats before it to keep
  * @returns {{ beats: number[], firstBeat: number }} beats in seconds, and the index of the downbeat

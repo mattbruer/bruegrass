@@ -20,11 +20,6 @@ export const KNOWN_KEYS = {
 			'Work in progress that isn’t a song yet: transcriptions of recordings, a chord shape you’re typing.',
 		items: ['draft', 'drafts']
 	},
-	'bruegrass.songMixes': {
-		name: 'Each song’s mix between saves (no longer used)',
-		about: 'From before songs saved themselves. Safe to delete.',
-		items: ['mix', 'mixes']
-	},
 	'bruegrass.settings': {
 		name: 'Settings',
 		about: 'Tips, the music keypad, colours, the player’s look, the click.'
@@ -61,14 +56,6 @@ export const KNOWN_KEYS = {
 	'sveltekit:snapshot': {
 		name: 'Page snapshots',
 		about: 'What was typed on each page, for the Back button. Gone when the tab closes.'
-	},
-	'arranger.phoneKeyboard': {
-		name: 'Old keypad setting',
-		about: 'Left over from an older version. Safe to delete.'
-	},
-	'bruegrass.currentArrangement': {
-		name: 'Old “last opened song”',
-		about: 'Left over from an older version. Safe to delete.'
 	}
 };
 
@@ -79,7 +66,7 @@ export const KNOWN_DATABASES = {
 		about: 'Takes you recorded along with the band, or added from a file, kept with their song.',
 		stores: { takes: 'Take details', takeAudio: 'Take audio' }
 	},
-	'bruegrass.recordingAnalyses': {
+	'bruegrass.referenceAnalyses': {
 		name: 'Recordings worked out for Transcribe',
 		about:
 			'Where each recording’s beats, bass and chords fall, so a recording opens without working it out again. Safe to delete: it’s worked out again when needed.',

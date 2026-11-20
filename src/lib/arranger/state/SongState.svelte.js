@@ -30,7 +30,7 @@ export class SongState {
 	/** The open song's name ('' for a template). */
 	name = $state('');
 	/** The recording this song was transcribed from (its key and name), or null: most songs have none. */
-	recording = /** @type {{ key: string, name: string } | null} */ ($state.raw(null));
+	reference = /** @type {{ key: string, name: string } | null} */ ($state.raw(null));
 	/** The recording whose transcription this song was sent from (Send to the arranger), or null. */
 	madeFrom = /** @type {{ key: string, name: string } | null} */ ($state.raw(null));
 	/** The example this song started from, until it has a name of its own: it titles a new tune. */

@@ -3,7 +3,7 @@
  * meant for: the strongest onset near it. With nothing clear near it (a held note, a
  * rest), it stays where it was dropped.
  */
-import { frameAt, secondsAt } from './analyseRecording.js';
+import { frameAt, secondsAt } from './analyseReference.js';
 
 /** How far either side of the drop to look. */
 const REACH_SECONDS = 0.05;
@@ -15,7 +15,7 @@ const TAP_LATE_SECONDS = 0.35;
 
 /**
  * @param {number} seconds where the beat was dropped
- * @param {import('./analyseRecording.js').Analysis} analysis
+ * @param {import('./analyseReference.js').Analysis} analysis
  * @returns {number}
  */
 export function snapToHit(seconds, analysis) {
@@ -26,7 +26,7 @@ export function snapToHit(seconds, analysis) {
  * A beat tapped while the music plays, moved back onto the hit it was for:
  * a tap comes a little after the beat it means.
  * @param {number} seconds when the tap came
- * @param {import('./analyseRecording.js').Analysis} analysis
+ * @param {import('./analyseReference.js').Analysis} analysis
  * @returns {number}
  */
 export function tapToHit(seconds, analysis) {
@@ -42,7 +42,7 @@ export function tapToHit(seconds, analysis) {
  * @param {number} start
  * @param {number} end
  * @param {number} otherwise where it stays with no clear hit between them
- * @param {import('./analyseRecording.js').Analysis} analysis
+ * @param {import('./analyseReference.js').Analysis} analysis
  */
 function strongestHitBetween(start, end, otherwise, analysis) {
 	const seconds = otherwise;
