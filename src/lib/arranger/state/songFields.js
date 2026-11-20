@@ -10,7 +10,7 @@ import { songTab, tabSnapshot } from '../tab/songTab.svelte.js';
 
 /**
  * @typedef {Pick<import('$lib/storage/arrangements.js').Arrangement,
- *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'tab' | 'recording' | 'madeFrom' | 'tempo' | 'tempoCurve' | 'swing' | 'capo' | 'transpose' | 'mix'>} SongFields
+ *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'tab' | 'partNames' | 'recording' | 'madeFrom' | 'tempo' | 'tempoCurve' | 'swing' | 'capo' | 'transpose' | 'mix'>} SongFields
  *   what a song is made of (its name is kept separately)
  */
 
@@ -27,6 +27,7 @@ export function readSongFields(arranger) {
 		bass: arranger.bass.notation,
 		bassTune: arranger.bass.bySection,
 		tab: tabSnapshot(),
+		partNames: arranger.song.partNames,
 		reference: arranger.song.reference,
 		madeFrom: arranger.song.madeFrom,
 		tempo: arranger.arrangement.bpm,
@@ -60,6 +61,7 @@ export function loadSongIntoPage(arranger, song) {
 	arranger.melody.load(song.abc, song.tune ?? null);
 	arranger.bass.load(song.bass ?? '', song.bassTune ?? null);
 	songTab.parts = song.tab ?? {};
+	arranger.song.partNames = song.partNames ?? {};
 	arranger.song.reference = song.reference ?? null;
 	arranger.song.madeFrom = song.madeFrom ?? null;
 

@@ -75,6 +75,7 @@
 			transpose: arrangement.transpose,
 			melody: melody.line,
 			bass: arranger.bass.written,
+			partNames: song.partNames,
 			swing: arrangement.swing,
 			tempoCurve: arrangement.tempoCurve
 		};

@@ -15,12 +15,19 @@
 	import EqWindow from './eq/EqWindow.svelte';
 	import ListeningSetupsDialog from './listening/ListeningSetupsDialog.svelte';
 	import { useArranger } from '../../state/context.js';
-	import { channelsInUse, isTuneChannel } from '../../melody/harmony/partChannels.js';
+	import {
+		channelsInUse,
+		isTuneChannel,
+		voiceChannels
+	} from '../../melody/harmony/partChannels.js';
+	import { partName } from '../../melody/partNames.js';
 	import { isRecordTrack } from '../../takes/recordTracks.js';
 
-	const { melody, recording } = useArranger();
-	const tuneChannels = $derived(channelsInUse(melody.line));
-	/** Melody always; a harmony part's strip only while the song has that part, a track's while it has a take. */
+	const { melody, recording, song } = useArranger();
+	const tuneChannels = $derived(
+		new Set([...channelsInUse(melody.line), ...(melody.tune ? voiceChannels(melody.tune) : [])])
+	);
+	/** Melody always; a part's strip only while the song has that part, a track's while it has a take. */
 	const shown = $derived(
 		mixer.channels.filter((channel) => {
 			if (isRecordTrack(channel.id)) return recording.tracksInUse.has(channel.id);
@@ -32,7 +39,7 @@
 <section aria-label="Mixer">
 	<div class="console">
 		{#each shown as channel (channel.id)}
-			<ChannelStrip {channel} />
+			<ChannelStrip {channel} name={partName(channel.id, song.partNames, channel.name)} />
 		{/each}
 		<ReverbStrip />
 		<MasterStrip />

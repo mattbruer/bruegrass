@@ -14,19 +14,12 @@
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { BASS_VOICE } from '../../bass/readBass.js';
-	import { HARMONY_PARTS } from '../../melody/harmony/harmonyParts.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
 	let { transcription } = $props();
 
-	const laneName = $derived(
-		transcription.lane === BASS_VOICE
-			? 'Bass'
-			: (HARMONY_PARTS.find((part) => part.id === transcription.lane)?.name ??
-					transcription.extraLanes.find((lane) => lane.id === transcription.lane)?.name ??
-					'Melody')
-	);
+	const laneName = $derived(transcription.laneName(transcription.lane));
 
 	const isBass = $derived(transcription.lane === BASS_VOICE);
 	const sheetNotation = $derived(isBass ? transcription.arranger.bass.notation : undefined);
@@ -88,7 +81,6 @@
 		{:else}
 			<MelodyDrawing
 				voice={transcription.lane}
-				lanes={transcription}
 				{clock}
 				bassStartsEmpty
 				pickupQuarters={transcription.newTunePickup}

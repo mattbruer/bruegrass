@@ -33,6 +33,8 @@ export class SongState {
 	reference = /** @type {{ key: string, name: string } | null} */ ($state.raw(null));
 	/** The recording whose transcription this song was sent from (Send to the arranger), or null. */
 	madeFrom = /** @type {{ key: string, name: string } | null} */ ($state.raw(null));
+	/** The names you gave the song's parts (melody/partNames.js). */
+	partNames = /** @type {import('../melody/partNames.js').PartNames} */ ($state.raw({}));
 	/** The example this song started from, until it has a name of its own: it titles a new tune. */
 	exampleName = $state('');
 	/** The last song is open and its tune can be read (it names the song), so changes get saved from now on. */

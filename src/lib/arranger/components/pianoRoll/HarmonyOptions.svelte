@@ -13,7 +13,7 @@
 	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
 	import { mixer } from '../../mixer/mixer.svelte.js';
 	import { BASS_VOICE } from '../../bass/readBass.js';
-	import { isLaneId } from '../../melody/roll/extraLane.js';
+	import { isExtraPart } from '../../melody/extraParts.js';
 	import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
 	import { tuneReader } from '../../melody/abcjs.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -46,7 +46,7 @@
 	});
 	let barOnly = $derived(scope === 'bar' && pickedBar >= 0);
 	let singers = $derived(
-		drawing.voices.map((voice) => voice.id).filter((id) => id !== BASS_VOICE && !isLaneId(id))
+		drawing.voices.map((voice) => voice.id).filter((id) => id !== BASS_VOICE && !isExtraPart(id))
 	);
 	let singersOnly = $derived(
 		mixer.channels.every((channel) => channel.solo === singers.includes(channel.id))

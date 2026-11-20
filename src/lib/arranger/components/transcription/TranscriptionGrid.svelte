@@ -4,9 +4,10 @@
 	 * stretch over and over), a bar ruler that follows the recording,
 	 * the Beats row under it (a dot per beat), the recording bent onto the
 	 * bars (its menu: beats, tuning, the slowed-down sound), the chords by beat, and a lane for
-	 * each part being written (+ Lane adds the bass). Lane names stay put
-	 * while the lanes scroll sideways together; tap a part to edit it in the
-	 * piano roll below. Click the ruler to play from that spot; click a bar's
+	 * each part being written (+ Lane adds another line of the tune; its menu
+	 * names it, or makes it the bass). Lane names stay put while the lanes
+	 * scroll sideways together; tap anywhere on a part's lane to edit it in
+	 * the piano roll below. Click the ruler to play from that spot; click a bar's
 	 * number for its menu (its beats, Loop). The playhead follows the
 	 * recording and the lanes scroll with it. Beside the ruler: + Marker
 	 * (at the playhead's bar). Zoom (settings.transcribe.zoom, in the control
@@ -21,7 +22,6 @@
 		rulerSpanWithRoom
 	} from '../../transcription/rulerFromBars.js';
 	import { partLanes } from '../../transcription/partLanes.js';
-	import { isLaneId } from '../../melody/roll/extraLane.js';
 	import { timeSignature } from '../../transcription/timeSignatures.js';
 	import TrackRuler from '../tracks/TrackRuler.svelte';
 	import BlockLane from '../tracks/BlockLane.svelte';
@@ -33,6 +33,8 @@
 	import InstrumentButton from '../mixer/instruments/InstrumentButton.svelte';
 	import { isTuneChannel } from '../../melody/harmony/partChannels.js';
 	import LaneColour from './LaneColour.svelte';
+	import LaneMenu from './LaneMenu.svelte';
+	import { voiceChannels } from '../../melody/harmony/partChannels.js';
 	import { mixer } from '../../mixer/mixer.svelte.js';
 	import ReferenceLane from './ReferenceLane.svelte';
 	import ChordLane from './ChordLane.svelte';
@@ -48,7 +50,7 @@
 	 */
 	let { transcription } = $props();
 
-	const { melody, bass } = useArranger();
+	const { melody, bass, song } = useArranger();
 
 	/** The names column (px); the lanes scroll under it. */
 	const HEADER_WIDTH = 186;
@@ -73,7 +75,14 @@
 	const pixelsPerQuarter = $derived(PIXELS_PER_QUARTER * zoom.across);
 	const scale = $derived(trackScale(rulerSpanWithRoom(ruler, beatsPerBar), pixelsPerQuarter));
 	const parts = $derived(
-		transcription.linked ? partLanes(melody.line, writtenBass, transcription.laneNotes) : []
+		transcription.linked
+			? partLanes({
+					melody: melody.line,
+					voices: melody.tune ? voiceChannels(melody.tune) : [],
+					bass: writtenBass,
+					names: song.partNames
+				})
+			: []
 	);
 	const playheadX = $derived(scale.toX(transcription.quartersNow));
 
@@ -117,6 +126,17 @@
 		if (bar > 0) return transcription.openBarMenu(bar);
 		const box = event.currentTarget.getBoundingClientRect();
 		transcription.seekToQuarters(scale.toQuarters(event.clientX - box.left) + scale.start);
+	}
+
+	/**
+	 * A click on a part's header picks the part, unless it was on one of its controls.
+	 * @param {MouseEvent} event
+	 * @param {string} id
+	 */
+	function pickFromHeader(event, id) {
+		const target = /** @type {HTMLElement} */ (event.target);
+		if (target.closest('.pick') || !target.closest('button, input, select, label, [role="slider"]'))
+			transcription.lane = id;
 	}
 </script>
 
@@ -216,7 +236,13 @@
 
 			{#each parts as lane (lane.id)}
 				{@const channel = mixer.channels.find((each) => each.id === lane.id)}
-				<div class="header ui-side-column" class:picked-lane={transcription.lane === lane.id}>
+				<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div
+					class="header part-header ui-side-column"
+					class:picked-lane={transcription.lane === lane.id}
+					onclick={(event) => pickFromHeader(event, lane.id)}
+				>
 					<button
 						type="button"
 						class="name pick"
@@ -224,27 +250,14 @@
 						aria-pressed={transcription.lane === lane.id}
 						use:tooltip={TIPS.transcription.partLane}>{lane.name}</button
 					>
-					{#if isLaneId(lane.id)}
-						<button
-							type="button"
-							class="ui-button px-2 py-0.5 text-xs"
-							onclick={() => transcription.useLaneAsBass(lane.id)}
-							use:tooltip={TIPS.transcription.laneBass}>Bass</button
-						>
-						<button
-							type="button"
-							class="ui-button px-2 py-0.5 text-xs"
-							aria-label="Remove {lane.name}"
-							onclick={() => transcription.removeLane(lane.id)}
-							use:tooltip={TIPS.transcription.laneRemove}>×</button
-						>
-					{:else if channel}
+					{#if channel}
 						<MuteSoloButtons settings={channel} name={lane.name} />
 						<LaneVolume level={channel} name={lane.name} />
-						{#if isTuneChannel(lane.id)}<div class="instrument-row">
-								<InstrumentButton {channel} />
-							</div>{/if}
 					{/if}
+					<div class="instrument-row">
+						{#if channel && isTuneChannel(lane.id)}<InstrumentButton {channel} />{/if}
+						<LaneMenu {transcription} {lane} />
+					</div>
 				</div>
 				<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -262,6 +275,7 @@
 					<button
 						type="button"
 						class="ui-button px-2 py-1 text-xs"
+						disabled={!transcription.canAddLane}
 						onclick={() => transcription.addLane()}
 						use:tooltip={TIPS.transcription.addLane}>+ Lane</button
 					>
@@ -351,6 +365,10 @@
 		text-align: left;
 	}
 
+	.part-header {
+		cursor: pointer;
+	}
+
 	.beats-header {
 		padding-block: 0;
 		flex-wrap: nowrap;
@@ -374,8 +392,17 @@
 	}
 
 	.instrument-row {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 0.375rem;
 		width: 100%;
 		margin: 0.25rem 0 0.35rem;
+	}
+
+	.instrument-row > :global(:first-child:not(:last-child)) {
+		flex: 1;
+		min-width: 0;
 	}
 
 	.instrument-row :global(.instrument) {

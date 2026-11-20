@@ -1,8 +1,7 @@
 /**
  * A recording's transcription, kept on this device as you work, so leaving
  * the page (or an iPhone unloading it) never loses your fixes: what belongs
- * to the recording (where beat 1 is, the beats and bars, the time, lanes you
- * added, the fine tuning, how early each section's tune starts, the part
+ * to the recording (where beat 1 is, the beats and bars, the time, the fine tuning, how early each section's tune starts, the part
  * being worked on). The chords, sections and key are the song's own,
  * in its chart, which saves itself like any song.
  * One draft per recording, found again by the recording's key.
@@ -12,7 +11,7 @@ import { clearDraft, readDraft, writeDraft } from '$lib/storage/drafts.js';
 /**
  * @typedef {{
  *   grid: import('./beatGrid.js').BeatGrid,
- *   time: string, lanes: import('./extraLanes.js').ExtraLane[],
+ *   time: string,
  *   cents: number, downbeat: number,
  *   pickups: Record<number, number>
  * }} Transcription

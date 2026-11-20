@@ -53,7 +53,6 @@
 	 *   bassStartsEmpty?: boolean,
 	 *   pickupQuarters?: number,
 	 *   keyMenu?: boolean,
-	 *   lanes?: import('../../transcription/extraLanes.js').LaneStore,
 	 *   view?: 'roll' | 'tab'
 	 * }}
 	 */
@@ -63,7 +62,6 @@
 		bassStartsEmpty = false,
 		pickupQuarters = 0,
 		keyMenu = true,
-		lanes,
 		view = 'roll'
 	} = $props();
 
@@ -81,7 +79,6 @@
 	$effect.pre(() => {
 		drawing.bassStartsEmpty = bassStartsEmpty;
 		drawing.pickupQuarters = pickupQuarters;
-		drawing.lanes = lanes ?? null;
 	});
 
 	$effect(() => {
@@ -92,7 +89,6 @@
 		void arrangement.sections;
 		void arrangement.capoFret;
 		void arranger.melodyKey;
-		void lanes?.extraLanes;
 		void pickupQuarters;
 		untrack(() => drawing.load());
 	});
@@ -203,7 +199,7 @@
 	function sound(midi) {
 		const heard = drawing.isBass
 			? auditionBassNote(midi, arrangement.transpose)
-			: auditionNote(midi, arrangement.transpose, drawing.isLane ? undefined : drawing.current?.id);
+			: auditionNote(midi, arrangement.transpose, drawing.current?.id);
 		heard.catch(console.error);
 	}
 </script>

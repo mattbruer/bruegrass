@@ -1,10 +1,11 @@
 <script>
 	/**
-	 * Which line the piano roll edits: the melody or one of its harmony
-	 * parts, each in its own colour (the colour its notes have on the grid).
+	 * Which line the piano roll edits: the melody, one of its harmony or
+	 * extra parts, or the bass, each in its own colour (the colour its notes have on the grid).
 	 * Only there once the tune has a harmony part.
 	 */
 	import { voiceColour } from '../../melody/roll/MelodyDrawing.svelte.js';
+	import { partName } from '../../melody/partNames.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -31,7 +32,7 @@
 				use:tooltip={TIPS.melody.voices}
 			>
 				<span class="swatch voice-colour" style:--voice={voiceColour(voice.id)}></span>
-				{voice.name}
+				{partName(voice.id, drawing.arranger.song.partNames)}
 			</button>
 		{/each}
 	</div>

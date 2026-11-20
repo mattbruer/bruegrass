@@ -255,11 +255,13 @@ export const TIPS = Object.freeze({
 			"The waveform's colour. It's the same choice as Settings → Appearance → Waveform.",
 		chordBar:
 			'Tap to type this bar’s chords: a box on each beat a chord can change on (1 and 3 in 4/4), the chord where it changes.',
-		partLane: 'Edit this part in the piano roll below.',
+		partLane: 'Edit this part in the piano roll below. A click anywhere on its lane picks it too.',
 		bandLane:
 			'The band (guitar, mandolin, bass) plays these chords along with the recording. Tap a bar to type its chords. Each instrument’s own level is in the mixer.',
 		addLane:
-			'Add an empty lane to write by ear, for any instrument. Its Bass button makes it the song’s bass line.',
+			'Add another line of the tune to write by ear: the vocal, a mandolin break, a fiddle part. It has its own instrument and level, and goes to the arranger with the rest.',
+		laneMenu: 'Name this part, and more.',
+		laneName: 'Call this part what it is (Vocal, Mando break). Leave it empty for its own name.',
 		laneBass:
 			'Make this lane the song’s bass line. The lane goes; the bass is written from its notes.',
 		laneRemove: 'Take this lane away, with its notes.',

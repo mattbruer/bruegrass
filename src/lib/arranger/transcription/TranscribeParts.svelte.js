@@ -1,5 +1,5 @@
 /**
- * The parts written in Transcribe (the tune, harmony, a bass, generic lanes),
+ * The parts written in Transcribe (the tune, harmony, a bass, added lanes),
  * heard with the recording on the instruments their notes play on when
  * tapped (playback/partVoice.js), timed to the recording like the band
  * (bandAlong.js). Each lane's mute and solo (a level in front of its
@@ -7,21 +7,11 @@
  */
 import { getChannel } from '../mixer/mixerGraph.svelte.js';
 import { mixer } from '../mixer/mixer.svelte.js';
-import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
-import { isLaneId } from '../melody/roll/extraLane.js';
 import { createPartVoice } from '../playback/partVoice.js';
 import { createBandAlong } from './bandAlong.js';
 
 /** How quickly a part's level follows a change (seconds), so mute never clicks. */
 const LEVEL_SECONDS = 0.01;
-
-/**
- * The mixer channel a lane plays through: a generic lane plays as the melody does.
- * @param {string} laneId
- */
-export function partChannel(laneId) {
-	return isLaneId(laneId) ? MELODY_CHANNEL : laneId;
-}
 
 export class TranscribeParts {
 	/** @type {Map<string, import('tone').Gain>} one level per lane, made the first time it plays */
@@ -96,12 +86,7 @@ export class TranscribeParts {
 		const streams = await Promise.all(
 			lanes.map(async (lane) => {
 				const own = notes.filter((note) => note.part === lane);
-				const voice = createPartVoice(
-					Tone,
-					partChannel(lane),
-					await this.#levelFor(Tone, lane),
-					shift
-				);
+				const voice = createPartVoice(Tone, lane, await this.#levelFor(Tone, lane), shift);
 				await voice.prepare(own.map((note) => note.pitch));
 				return {
 					voice,
@@ -135,7 +120,7 @@ export class TranscribeParts {
 		if (made) return made;
 		const gain = new Tone.Gain(this.#levelOf[lane] ?? 1);
 		this.#levels.set(lane, gain);
-		gain.connect(await getChannel(partChannel(lane)));
+		gain.connect(await getChannel(lane));
 		return gain;
 	}
 }

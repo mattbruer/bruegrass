@@ -62,11 +62,14 @@ import { clampCents } from '$lib/slowDowner/tuning.js';
 import { bundledReference } from './bundledReferences.js';
 import { STARTER_SONG } from '../starterSong.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
-import { BASS_VOICE, readBassScore, writtenBassNotes } from '../bass/readBass.js';
+import { BASS_VOICE } from '../bass/readBass.js';
 import { blankBassAbc } from '../bass/bassAbc.js';
 import { bassSongOf } from '../bass/bassSong.js';
-import { abcjsIfLoaded } from '../state/abcjsLoaded.svelte.js';
-import { newExtraLane } from './extraLanes.js';
+import { abcjsReady } from '../state/abcjsLoaded.svelte.js';
+import { nextExtraPart, withExtraPart, withoutExtraPart } from '../melody/extraParts.js';
+import { partName, withPartName } from '../melody/partNames.js';
+import { rewriteAbc } from '../melody/roll/scoreToAbc.js';
+import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
 import { mixer } from '../mixer/mixer.svelte.js';
 import { heardNotes, laneLevels } from './heardParts.js';
 import { TranscribeParts } from './TranscribeParts.svelte.js';
@@ -102,8 +105,6 @@ export class TranscriptionState {
 	grid = $state.raw(null);
 	/** The time signature's id (timeSignatures.js). */
 	time = $state(DEFAULT_TIME);
-	/** @type {import('./extraLanes.js').ExtraLane[]} the generic lanes (+ Lane), to write by ear */
-	extraLanes = $state.raw([]);
 	/**
 	 * How early each section's tune starts, in beats before its marker's bar (its
 	 * pickup: "I was…" sung before the verse's first bar). Only the tune: the
@@ -111,14 +112,6 @@ export class TranscriptionState {
 	 * @type {Record<number, number>}
 	 */
 	pickups = $state.raw({});
-	/** The generic lanes' notes, as the grid shows them. */
-	laneNotes = $derived(
-		this.extraLanes.map((lane) => ({
-			id: lane.id,
-			name: lane.name,
-			notes: writtenBassNotes(readBassScore(this.laneAbc(lane), abcjsIfLoaded()))
-		}))
-	);
 	/** The part the piano roll edits (a voice id). */
 	lane = $state(MELODY_CHANNEL);
 	/** The open bar's menu is for naming its marker (its name box takes the keys). */
@@ -308,7 +301,6 @@ export class TranscriptionState {
 		this.grid = null;
 		this.#beatHistory = [];
 		this.time = DEFAULT_TIME;
-		this.extraLanes = [];
 		this.pickups = {};
 		this.peaks = null;
 		this.hits = null;
@@ -344,7 +336,6 @@ export class TranscriptionState {
 		if (draft) {
 			this.grid = draft.grid;
 			this.time = draft.time;
-			this.extraLanes = draft.lanes;
 			this.pickups = draft.pickups;
 			this.player.setCents(draft.cents);
 			this.downbeat = draft.downbeat;
@@ -647,49 +638,74 @@ export class TranscriptionState {
 		return slotsOf(this.chords[bar.number], bar.beats);
 	}
 
-	/** + Lane: an empty lane to write by ear, for any instrument. */
-	addLane() {
-		const lane = newExtraLane(this.extraLanes);
-		this.extraLanes = [...this.extraLanes, lane];
-		this.lane = lane.id;
-		this.#keepDraft();
-	}
+	/** Room for another lane (+ Lane): the tune has a free extra part (melody/extraParts.js). */
+	canAddLane = $derived(nextExtraPart(this.arranger.melody.notation) !== null);
 
-	/** @param {string} id */
-	removeLane(id) {
-		this.extraLanes = this.extraLanes.filter((lane) => lane.id !== id);
-		if (this.lane === id) this.lane = MELODY_CHANNEL;
-		this.#keepDraft();
+	/**
+	 * + Lane: another line of the tune to write by ear (the vocal, a mandolin
+	 * break), its bars empty, with its own channel and instrument. An
+	 * unwritten tune is started from the chart first.
+	 */
+	async addLane() {
+		await abcjsReady();
+		const { melody } = this.arranger;
+		if (!melody.hasNotation) this.arranger.startMelodyFromChart(this.newTunePickup);
+		const part = nextExtraPart(melody.notation);
+		const lead = melody.voices?.[0];
+		if (!part || !lead?.score.bars.length) return;
+		const resting = rewriteAbc(melody.notation, lead.score, [], { every: true });
+		melody.notation = withExtraPart(melody.notation, resting, part);
+		this.lane = part.id;
 	}
 
 	/**
-	 * The lane becomes the song's bass line: the bass is written from its
-	 * notes, and the lane goes.
+	 * Take an added lane out of the tune, its notes and name with it.
+	 * @param {string} id
+	 */
+	removeLane(id) {
+		const { melody, song } = this.arranger;
+		melody.notation = withoutExtraPart(melody.notation, id);
+		song.partNames = withPartName(song.partNames, id, '');
+		const channel = mixer.channels.find((each) => each.id === id);
+		if (channel) channel.solo = false; // a hidden lane mustn't keep the rest silent
+		if (this.lane === id) this.lane = MELODY_CHANNEL;
+	}
+
+	/**
+	 * An added lane becomes the song's bass line, written by ear: its notes
+	 * from bar 1 on (the bass keeps to the bar lines) and its name go to the
+	 * bass, and the lane goes.
 	 * @param {string} id
 	 */
 	useLaneAsBass(id) {
-		const lane = this.extraLanes.find((each) => each.id === id);
-		if (!lane) return;
-		this.arranger.bass.notation = this.laneAbc(lane);
+		const { melody, bass, song } = this.arranger;
+		const notes = (melody.line?.notes ?? [])
+			.filter((note) => note.channel === id && note.time >= 0)
+			.map((note) => ({
+				midi: note.pitch,
+				start: Math.round(note.time * TICKS_PER_QUARTER),
+				length: Math.round(note.length * TICKS_PER_QUARTER)
+			}));
+		const name = song.partNames[id];
+		bass.notation = blankBassAbc(bassSongOf(this.arranger), notes);
 		this.removeLane(id);
+		if (name) song.partNames = withPartName(song.partNames, BASS_VOICE, name);
 		this.lane = BASS_VOICE;
 	}
 
 	/**
-	 * A lane's ABC: what it holds, or an empty part shaped like the song.
-	 * @param {import('./extraLanes.js').ExtraLane} lane
+	 * Give a lane a name of your own ('' gives it back its own).
+	 * @param {string} id
+	 * @param {string} name
 	 */
-	laneAbc(lane) {
-		return lane.abc || blankBassAbc(bassSongOf(this.arranger));
+	renameLane(id, name) {
+		const { song } = this.arranger;
+		song.partNames = withPartName(song.partNames, id, name);
 	}
 
-	/**
-	 * @param {string} id
-	 * @param {string} abc
-	 */
-	setLaneAbc(id, abc) {
-		this.extraLanes = this.extraLanes.map((lane) => (lane.id === id ? { ...lane, abc } : lane));
-		this.#keepDraft();
+	/** @param {string} id a lane's name, as you named it */
+	laneName(id) {
+		return partName(id, this.arranger.song.partNames);
 	}
 
 	/** @param {import('./barPlan.js').Bar} bar the playhead to its first beat */
@@ -973,7 +989,6 @@ export class TranscriptionState {
 		writeTranscriptionDraft(this.reference.key, {
 			grid: this.grid,
 			time: this.time,
-			lanes: this.extraLanes,
 			cents: this.player.cents,
 			downbeat: this.downbeat,
 			pickups: this.pickups

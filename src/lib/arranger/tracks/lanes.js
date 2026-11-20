@@ -10,7 +10,9 @@
  */
 import { barsInPlayOrder } from '../chart/chartBars.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
+import { EXTRA_PARTS } from '../melody/extraParts.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
+import { partName } from '../melody/partNames.js';
 import { RECORD_TRACKS } from '../takes/recordTracks.js';
 import { takeStart } from '../takes/takeTiming.js';
 import { secondsPerQuarter } from '../chart/tempo.js';
@@ -28,17 +30,18 @@ import { secondsPerQuarter } from '../chart/tempo.js';
  * @param {{
  *   sections: import('../chart/timeline.js').Section[],
  *   bass: import('../instruments/bassline.js').BassNote[],
- *   melody: import('../melody/melody.js').Melody | null
- * }} song bass: what the bass plays (bass/songBass.js: edited or the band's own)
+ *   melody: import('../melody/melody.js').Melody | null,
+ *   names?: import('../melody/partNames.js').PartNames
+ * }} song bass: what the bass plays (bass/songBass.js: edited or the band's own); names: the names you gave the parts
  * @returns {BandLane[]}
  */
-export function bandLanes({ sections, bass, melody }) {
+export function bandLanes({ sections, bass, melody, names = {} }) {
 	const chords = chordBlocks(sections);
 	return [
 		{ id: 'guitar', name: 'Guitar', kind: 'chords', blocks: chords },
 		{ id: 'mandolin', name: 'Mandolin', kind: 'chords', blocks: chords },
-		{ id: 'bass', name: 'Bass', kind: 'notes', blocks: bassBlocks(bass) },
-		...tuneLanes(melody)
+		{ id: 'bass', name: partName('bass', names), kind: 'notes', blocks: bassBlocks(bass) },
+		...tuneLanes(melody, names)
 	];
 }
 
@@ -95,21 +98,22 @@ function bassBlocks(notes) {
 }
 
 /**
- * The melody and each harmony part it has, in the mixer's order.
+ * The melody and each harmony and extra part it has, in the mixer's order.
  * @param {import('../melody/melody.js').Melody | null} melody
+ * @param {import('../melody/partNames.js').PartNames} names
  * @returns {BandLane[]}
  */
-function tuneLanes(melody) {
+function tuneLanes(melody, names) {
 	if (!melody) return [];
-	const voices = [{ id: MELODY_CHANNEL, name: 'Melody' }, ...HARMONY_PARTS];
+	const voices = [MELODY_CHANNEL, ...[...HARMONY_PARTS, ...EXTRA_PARTS].map((part) => part.id)];
 	return voices
-		.map((voice) => ({
-			id: voice.id,
-			name: voice.name,
+		.map((id) => ({
+			id,
+			name: partName(id, names),
 			/** @type {'notes'} */
 			kind: 'notes',
 			blocks: melody.notes
-				.filter((note) => note.channel === voice.id)
+				.filter((note) => note.channel === id)
 				.map((note) => ({ start: note.time, length: note.length, pitch: note.pitch }))
 		}))
 		.filter((lane) => lane.blocks.length > 0);

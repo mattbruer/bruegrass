@@ -5,7 +5,9 @@
  */
 import { HARMONY_PARTS } from './harmonyParts.js';
 
-const PART_LINE = new RegExp(`^V:(${HARMONY_PARTS.map((part) => part.id).join('|')})\\b`, 'gm');
+const PART_IDS = HARMONY_PARTS.map((part) => part.id);
+/** Any voice's line: a part's block ends at the next voice, whichever it is (an extra part, say). */
+const VOICE_LINE = /^V:\s*(\S+)/gm;
 
 /**
  * The fresh ABC, with these parts put back as they were in the old one.
@@ -30,8 +32,13 @@ export function withPartsKept(fresh, old, keep) {
  * @returns {{ id: string, from: number, to: number }[]}
  */
 function partBlocks(abc) {
-	const starts = [...abc.matchAll(PART_LINE)].map((match) => ({ id: match[1], from: match.index }));
-	return starts.map((start, i) => ({ ...start, to: starts[i + 1]?.from ?? abc.length }));
+	const starts = [...abc.matchAll(VOICE_LINE)].map((match) => ({
+		id: match[1],
+		from: match.index
+	}));
+	return starts
+		.map((start, i) => ({ ...start, to: starts[i + 1]?.from ?? abc.length }))
+		.filter((block) => PART_IDS.includes(block.id));
 }
 
 /**

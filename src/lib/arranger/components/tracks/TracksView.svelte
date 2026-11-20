@@ -16,7 +16,7 @@
 	import BlockLane from './BlockLane.svelte';
 	import TakeClip from './TakeClip.svelte';
 
-	const { arrangement, melody, recording, player, bass } = useArranger();
+	const { arrangement, melody, recording, player, bass, song } = useArranger();
 
 	/** The names column (px); the lanes scroll under it. */
 	const HEADER_WIDTH = 104;
@@ -33,7 +33,8 @@
 				transpose: arrangement.transpose,
 				written: writtenBass
 			}).notes,
-			melody: melody.line
+			melody: melody.line,
+			names: song.partNames
 		})
 	);
 	const takes = $derived(takeLanes(recording.takes, arrangement.bpm));

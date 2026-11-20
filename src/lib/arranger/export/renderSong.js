@@ -26,6 +26,7 @@ import { channelInstrument } from '../instruments/tuneInstruments.js';
 import { buildMixerGraph } from '../../audio/mixer/buildMixerGraph.js';
 import { melodyEvents } from '../melody/melody.js';
 import { channelsInUse, isTuneChannel } from '../melody/harmony/partChannels.js';
+import { partName } from '../melody/partNames.js';
 import { isRecordTrack } from '../takes/recordTracks.js';
 import { DEFAULT_METER, barQuarters, slotPositions } from '../chart/timeline.js';
 
@@ -44,9 +45,11 @@ const TAIL_MAX = 8;
  *   melody: import('../melody/melody.js').Melody | null,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null,
  *   swing?: number,
- *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[]
+ *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[],
+ *   partNames?: import('../melody/partNames.js').PartNames
  * }} Song
- *   bass: the edited bass line (BassState.written), or null for the band's own
+ *   bass: the edited bass line (BassState.written), or null for the band's own;
+ *   partNames: the names you gave the parts (the stems are named so)
  * @typedef {ReturnType<typeof import('../mixer/mixer.svelte.js').mixSnapshot>} Mix
  * @typedef {{ name: string, channels: Float32Array[] }} RenderedFile
  *   channels: one (mono) or two (stereo) arrays of samples, -1 to 1
@@ -88,7 +91,10 @@ export async function renderStems(song, mix, { processed }) {
 			!isRecordTrack(channel.id) && (!isTuneChannel(channel.id) || tuneChannels.has(channel.id))
 	);
 	const stems = [
-		...instruments.map((channel) => ({ id: channel.id, name: channel.name })),
+		...instruments.map((channel) => ({
+			id: channel.id,
+			name: partName(channel.id, song.partNames, channel.name)
+		})),
 		...(processed ? [{ id: 'reverb', name: 'Reverb' }] : [])
 	];
 

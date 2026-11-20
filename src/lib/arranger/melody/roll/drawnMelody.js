@@ -14,7 +14,7 @@ import { changedBars, newAbc, rewriteAbc, withKeySignature } from './scoreToAbc.
 import { withFreshHarmonyBars } from './freshHarmonyBars.js';
 import { abcWithWords } from '../words/abcWithWords.js';
 import { MELODY_CHANNEL, voiceChannels } from '../harmony/partChannels.js';
-import { HARMONY_PARTS } from '../harmony/harmonyParts.js';
+import { ownName } from '../partNames.js';
 import { concertChordAt } from '../../chart/concertChords.js';
 import { transposed } from './octaves.js';
 
@@ -22,7 +22,7 @@ import { transposed } from './octaves.js';
  * @typedef {import('./readScore.js').Score} Score
  * @typedef {import('./editNotes.js').DrawnNote} DrawnNote
  * @typedef {{ id: string, name: string, score: Score, problem: string }} DrawnVoice
- *   id: its channel (MELODY_CHANNEL, or a harmony part's id)
+ *   id: its channel (MELODY_CHANNEL, a harmony part's or an extra part's id)
  * @typedef {{
  *   sections: import('../../chart/timeline.js').Section[],
  *   lyrics: import('../../chart/sectionLyrics.js').SectionLyrics[],
@@ -38,7 +38,7 @@ import { transposed } from './octaves.js';
 export function readVoices(abc, tune) {
 	const voices = voiceChannels(tune).map((id, index) => ({
 		id,
-		name: voiceName(id),
+		name: ownName(id),
 		...readScore(abc, tune, index)
 	}));
 	return voices[0] && voices[0].score.bars.length > 0 ? voices : null;
@@ -97,11 +97,6 @@ export function transposedDrawnMelody(abc, voices, semitones) {
 		text = rewriteAbc(text, score, transposed(score.notes, semitones));
 	}
 	return text;
-}
-
-/** @param {string} id */
-function voiceName(id) {
-	return HARMONY_PARTS.find((part) => part.id === id)?.name ?? 'Melody';
 }
 
 /**

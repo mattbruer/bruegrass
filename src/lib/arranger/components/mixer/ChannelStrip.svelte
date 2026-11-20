@@ -13,14 +13,15 @@
 	import { audioTaps } from '../../mixer/mixerGraph.svelte.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/** @type {{ channel: import('../../mixer/mixer.svelte.js').ChannelSettings }} */
-	let { channel } = $props();
+	/** @type {{ channel: import('../../mixer/mixer.svelte.js').ChannelSettings, name?: string }} name: as the song calls the part */
+	let { channel, name: givenName } = $props();
+	const name = $derived(givenName ?? channel.name);
 
 	/** Where resetting each control puts it back to. */
 	let defaults = $derived(defaultChannel(channel.id));
 </script>
 
-<Strip id={channel.id} name={channel.name}>
+<Strip id={channel.id} {name}>
 	{#if channel.instrument !== undefined}
 		<InstrumentButton {channel} />
 	{/if}
@@ -32,7 +33,7 @@
 		{...SEND_SCALE}
 		showValue={false}
 		reset={defaults.send}
-		label="{channel.name} reverb send"
+		label="{name} reverb send"
 		tip={TIPS.mixer.send}
 	/>
 
@@ -41,15 +42,15 @@
 		bind:value={channel.pan}
 		{...PAN_SCALE}
 		reset={defaults.pan}
-		label="{channel.name} pan"
+		label="{name} pan"
 		tip={TIPS.mixer.pan}
 	/>
 
-	<MuteSoloButtons settings={channel} name={channel.name} />
+	<MuteSoloButtons settings={channel} {name} />
 	<ChannelFader
 		level={channel}
 		reset={defaults.volume}
-		label={channel.name}
+		label={name}
 		meter={audioTaps.current?.channels.get(channel.id) ?? null}
 		tip={TIPS.mixer.fader}
 	/>

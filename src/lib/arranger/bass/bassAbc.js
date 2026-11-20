@@ -45,11 +45,13 @@ export function generatedBassAbc(song) {
 }
 
 /**
- * The song's bars with nothing in them yet, for a bass line written by ear.
+ * A bass line written by ear: the song's bars with nothing in them yet, or
+ * with these notes (ticks from bar 1, as `generatedBassAbc` takes them).
  * @param {BassSong} song
+ * @param {{ midi: number, start: number, length: number }[]} [notes]
  */
-export function blankBassAbc(song) {
-	return `${AS_PLAYED}\n${bassAbcWith(song, [])}`;
+export function blankBassAbc(song, notes = []) {
+	return `${AS_PLAYED}\n${bassAbcWith(song, notes)}`;
 }
 
 /**

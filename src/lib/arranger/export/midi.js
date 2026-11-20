@@ -3,6 +3,8 @@ import { endBeforeStops, sectionsToPlay, stops, withoutStops } from '../chart/no
 import { DEFAULT_METER, barQuarters, rhythm, slotPositions } from '../chart/timeline.js';
 import { melodyEvents, melodyPitch } from '../melody/melody.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
+import { EXTRA_PARTS } from '../melody/extraParts.js';
+import { partName } from '../melody/partNames.js';
 import { bassPart } from '../bass/songBass.js';
 import { mod12 } from '../chart/key.js';
 import { chopNotes } from '../instruments/mandolin.js';
@@ -29,6 +31,8 @@ const GUITAR_CHANNEL = 0;
 const BASS_CHANNEL = 1;
 const MANDO_CHANNEL = 2;
 const MELODY_CHANNEL = 3;
+/** General MIDI keeps channel 10 (9 counting from 0) for drums: no tune part goes there. */
+const DRUM_CHANNEL = 9;
 
 /*
  * Track names match the Logic instruments they're meant for. A MIDI file
@@ -39,8 +43,11 @@ const GUITAR_TRACK = { name: 'Bluegrass Guitar', program: 25 }; // GM 26: Acoust
 const BASS_TRACK = { name: 'Roots Upright', program: 32 }; // GM 33: Acoustic Bass
 const MANDO_TRACK = { name: 'Mandolin Chop', program: 25 }; // no GM mandolin; steel guitar is closest
 const MELODY_TRACK = { name: 'Melody', program: 25 }; // played on the guitar samples, like Bluegrass Guitar
-/* The melody and harmony parts, by mixer channel id, on MIDI channels from MELODY_CHANNEL up */
-const TUNE_TRACKS = [{ id: 'melody', name: MELODY_TRACK.name }, ...HARMONY_PARTS];
+/* The melody, harmony parts and extra parts, by mixer channel id, on MIDI channels from MELODY_CHANNEL up */
+const TUNE_TRACKS = ['melody', ...[...HARMONY_PARTS, ...EXTRA_PARTS].map((part) => part.id)];
+const TUNE_CHANNELS = TUNE_TRACKS.map((_, index) => MELODY_CHANNEL + index).map((channel) =>
+	channel >= DRUM_CHANNEL ? channel + 1 : channel
+);
 
 /**
  * @typedef {{ tick: number, end: number, note: number, velocity: number }} MidiNote
@@ -60,8 +67,9 @@ export function velocityFromDb(db) {
  * a tempo track, the guitar (bass notes + strums, channel 1), a
  * bluegrass bass part (channel 2, see bassline.js), the mandolin chop
  * (channel 3, see mandolin.js) and, when there is one, the ABC melody
- * (channel 4, see melody.js) and each harmony part (channels 5–8), on the
- * same guitar-sampler mapping.
+ * (channel 4, see melody.js), each harmony part (channels 5–8) and each
+ * extra part (from channel 9, skipping the drums' 10), on the same
+ * guitar-sampler mapping. A part's track is named as the song names it.
  *
  * A file can't start before its first tick, so when the melody has a
  * pickup, everything moves one bar later: the pickup ends that bar and the
@@ -71,13 +79,22 @@ export function velocityFromDb(db) {
  * @param {{
  *   capo?: number, transpose?: number, bpm?: number,
  *   melody?: import('../melody/melody.js').Melody | null, tuneDb?: Record<string, number>,
- *   bass?: import('../instruments/bassline.js').BassNote[] | null
- * }} options bass: the edited bass line, or null for the band's own; tuneDb: the Melody's and each harmony part's fader, by channel id,
+ *   bass?: import('../instruments/bassline.js').BassNote[] | null,
+ *   partNames?: import('../melody/partNames.js').PartNames
+ * }} options bass: the edited bass line, or null for the band's own; tuneDb: the Melody's and each harmony part's fader, by channel id; partNames: the names you gave the parts
  * @returns {Uint8Array}
  */
 export function arrangementToMidi(
 	sections,
-	{ capo = 0, transpose = 0, bpm = 120, melody = null, tuneDb = {}, bass: writtenBass = null } = {}
+	{
+		capo = 0,
+		transpose = 0,
+		bpm = 120,
+		melody = null,
+		tuneDb = {},
+		bass: writtenBass = null,
+		partNames = {}
+	} = {}
 ) {
 	const shift = capo + transpose;
 	// Same split as playback: capo where it reaches, plain transposition beyond
@@ -126,19 +143,19 @@ export function arrangementToMidi(
 	const tune = melody
 		? melodyEvents(melody, { sections, bpm, shift: transpose, loop: false })
 		: null;
-	// One track per voice: the melody, then each harmony part it has
+	// One track per voice: the melody, then each harmony and extra part it has
 	const tuneEvents = tune ? [...tune.intro, ...tune.events] : [];
-	const voiceTracks = TUNE_TRACKS.map((voice, index) => ({
-		track: { name: voice.name, program: MELODY_TRACK.program },
-		channel: MELODY_CHANNEL + index,
+	const voiceTracks = TUNE_TRACKS.map((id, index) => ({
+		track: { name: partName(id, partNames), program: MELODY_TRACK.program },
+		channel: TUNE_CHANNELS[index],
 		/** @type {MidiNote[]} */
 		notes: tuneEvents
-			.filter((event) => event.channel === voice.id)
+			.filter((event) => event.channel === id)
 			.map((event) => ({
 				tick: toTicks(event.time),
 				end: toTicks(event.stop),
 				note: melodyPitch(event) + GUITAR_OFFSET,
-				velocity: velocityFromDb((tuneDb[voice.id] ?? 0) + event.levelDb)
+				velocity: velocityFromDb((tuneDb[id] ?? 0) + event.levelDb)
 			}))
 	})).filter((voice) => voice.notes.length > 0);
 
@@ -162,7 +179,11 @@ export function arrangementToMidi(
 	return writeSmf([
 		tempoTrack(bpm, title, markers, meters),
 		noteTrack(GUITAR_TRACK, GUITAR_CHANNEL, later(guitar)),
-		noteTrack(BASS_TRACK, BASS_CHANNEL, later(bass)),
+		noteTrack(
+			{ ...BASS_TRACK, name: partNames.bass?.trim() || BASS_TRACK.name },
+			BASS_CHANNEL,
+			later(bass)
+		),
 		noteTrack(MANDO_TRACK, MANDO_CHANNEL, later(mando)),
 		...voiceTracks.map((voice) => noteTrack(voice.track, voice.channel, later(voice.notes)))
 	]);

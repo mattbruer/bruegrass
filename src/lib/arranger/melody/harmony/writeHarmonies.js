@@ -5,17 +5,24 @@
  * A part is the melody's own text with each note's pitch swapped for the
  * harmony note, so its rhythm, ties, bar lines and repeats are the melody's.
  * Chord symbols and lyrics stay with the melody. The melody is marked V:1
- * (abcjs needs that to play the voices together) and the parts follow it at
- * the end of the tune; writing them again replaces them.
+ * (abcjs needs that to play the voices together) and the parts follow it,
+ * before any extra part (extraParts.js), which stays as it is; writing them
+ * again replaces them.
  */
 import { HARMONY_PARTS } from './harmonyParts.js';
 import { harmonyStyle } from './harmonyStyles.js';
 import { abcPitch, noteInKey, tuneKey } from './abcPitch.js';
 import { chordFromName } from '../../theory/musicInKey.js';
 import { melodyFromTune } from '../melody.js';
+import { extraPartBlocks } from '../extraParts.js';
 
 const LEAD_VOICE = 'V:1';
 const PART_LINE = new RegExp(`^V:(${HARMONY_PARTS.map((part) => part.id).join('|')})\\b.*$`, 'gm');
+/** A harmony part's or an extra part's line (extraParts.js: kept as it is): where the melody ends. */
+const PARTS_START = new RegExp(
+	`^V:(${HARMONY_PARTS.map((part) => part.id).join('|')}|part-\\d+)\\b`,
+	'm'
+);
 /* A pitch, or a chord of pitches; decorations (!trill!) are matched only to be skipped */
 const PITCH = /(![^!]*!|\+[^+]*\+)|(\[[^\]:]*\]|[_=^]*[A-Ga-g][,']*)/g;
 
@@ -44,9 +51,10 @@ export function harmonyPartsIn(abc) {
  * @returns {{ abc: string, problem: string }}
  */
 export function withHarmonies(abc, tune, chordAt, partIds, styles = {}) {
-	const melodyEnd = PART_LINE.exec(abc)?.index ?? abc.length;
-	PART_LINE.lastIndex = 0;
 	const { headerEnd, bodyStart } = findBody(abc);
+	const partsStart = PARTS_START.exec(abc.slice(bodyStart));
+	const melodyEnd = partsStart ? bodyStart + partsStart.index : abc.length;
+	const extras = extraPartBlocks(abc).map((block) => abc.slice(block.from, block.to).trimEnd());
 	const header = abc.slice(0, headerEnd);
 	const body = abc.slice(bodyStart, melodyEnd).trimEnd();
 	if (/^V:|\[V:/m.test(body)) {
@@ -54,7 +62,10 @@ export function withHarmonies(abc, tune, chordAt, partIds, styles = {}) {
 	}
 
 	const parts = HARMONY_PARTS.filter((part) => partIds.includes(part.id));
-	if (parts.length === 0) return { abc: `${header}${body}\n`, problem: '' };
+	if (parts.length === 0) {
+		const lead = extras.length > 0 ? [`${header}${LEAD_VOICE}`, body] : [`${header}${body}`];
+		return { abc: [...lead, ...extras].join('\n') + '\n', problem: '' };
+	}
 
 	const notes = leadNotes(tune, melodyEnd);
 	const written = parts.map((part) => {
@@ -65,7 +76,10 @@ export function withHarmonies(abc, tune, chordAt, partIds, styles = {}) {
 		});
 		return `V:${part.id} name="${part.label}"\n${text}`;
 	});
-	return { abc: [`${header}${LEAD_VOICE}`, body, ...written].join('\n') + '\n', problem: '' };
+	return {
+		abc: [`${header}${LEAD_VOICE}`, body, ...written, ...extras].join('\n') + '\n',
+		problem: ''
+	};
 }
 
 /**

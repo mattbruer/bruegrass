@@ -1,53 +1,50 @@
 /**
  * The lanes of the parts being written, in the tracks view's shape
- * (tracks/lanes.js): the melody, each harmony part the tune has, the bass
- * once it's written, then each generic lane (+ Lane). Times in quarters from
- * bar 1. Each lane's id is the voice the piano roll edits for it.
+ * (tracks/lanes.js): the melody, each other voice the tune has (harmony
+ * parts, then lanes added with + Lane: melody/extraParts.js), then the bass
+ * once it's written. Times in quarters from bar 1. Each lane's id is the
+ * voice the piano roll edits for it, and the mixer channel it plays on.
  */
-import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
+import { isExtraPart } from '../melody/extraParts.js';
+import { partName } from '../melody/partNames.js';
 import { BASS_VOICE } from '../bass/readBass.js';
 
 /**
- * @typedef {{ id: string, name: string, notes: { beat: number, length: number, pitch: number }[] | null }} LaneNotes
- *   a generic lane's notes (null: none written yet)
- */
-
-/**
- * @param {import('../melody/melody.js').Melody | null} melody
- * @param {import('../instruments/bassline.js').BassNote[] | null} writtenBass the edited bass line, or null
- * @param {LaneNotes[]} extraLanes
+ * @param {{
+ *   melody: import('../melody/melody.js').Melody | null,
+ *   voices: string[],
+ *   bass: import('../instruments/bassline.js').BassNote[] | null,
+ *   names: import('../melody/partNames.js').PartNames
+ * }} song voices: the tune's voices (their channels) in order; bass: the
+ *   written bass line (null: the band plays its own); names: the names you gave the parts
  * @returns {import('../tracks/lanes.js').BandLane[]}
  */
-export function partLanes(melody, writtenBass, extraLanes) {
+export function partLanes({ melody, voices, bass, names }) {
 	const notes = melody?.notes ?? [];
-	const tune = [{ id: MELODY_CHANNEL, name: 'Melody' }, ...HARMONY_PARTS]
-		.map((voice) => ({
-			id: voice.id,
-			name: voice.name,
-			/** @type {'notes'} */
-			kind: 'notes',
-			blocks: notes
-				.filter((note) => note.channel === voice.id)
-				.map((note) => ({ start: note.time, length: note.length, pitch: note.pitch }))
-		}))
-		.filter((lane) => lane.id === MELODY_CHANNEL || lane.blocks.length > 0);
-	const bass = writtenBass?.length
-		? [{ id: BASS_VOICE, name: 'Bass', kind: 'notes', blocks: blocksOf(writtenBass) }]
-		: [];
-	const generic = extraLanes.map((lane) => ({
-		id: lane.id,
-		name: lane.name,
+	/** @param {string} id */
+	const lane = (id) => ({
+		id,
+		name: partName(id, names),
 		/** @type {'notes'} */
 		kind: 'notes',
-		blocks: blocksOf(lane.notes ?? [])
-	}));
-	return [...tune, ...bass, ...generic];
-}
-
-/**
- * @param {{ beat: number, length: number, pitch: number }[]} notes
- */
-function blocksOf(notes) {
-	return notes.map((note) => ({ start: note.beat, length: note.length, pitch: note.pitch }));
+		blocks: notes
+			.filter((note) => note.channel === id)
+			.map((note) => ({ start: note.time, length: note.length, pitch: note.pitch }))
+	});
+	const others = [...new Set(voices)].filter((id) => id !== MELODY_CHANNEL);
+	const bassLane = bass
+		? [
+				{
+					...lane(BASS_VOICE),
+					blocks: bass.map((note) => ({ start: note.beat, length: note.length, pitch: note.pitch }))
+				}
+			]
+		: [];
+	return [
+		lane(MELODY_CHANNEL),
+		...others.filter((id) => !isExtraPart(id)).map(lane),
+		...bassLane,
+		...others.filter(isExtraPart).map(lane)
+	];
 }

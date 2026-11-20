@@ -26,7 +26,7 @@ import { playedTime, playheadTicks } from './playheadTicks.js';
 import { rewriteAbc } from './scoreToAbc.js';
 import { BASS_ROWS, LANE_ROWS, MELODY_ROWS } from './pitchRows.js';
 import { UPRIGHT_RANGE, isOutside } from '../../instruments/instrumentRanges.js';
-import { isLaneId, laneNumber } from './extraLane.js';
+import { EXTRA_PARTS, isExtraPart } from '../extraParts.js';
 import { echoZone, withoutPickupEcho, withPickupEcho } from './pickupEcho.js';
 import { isShortBar } from './rollLayout.js';
 import { BASS_VOICE, bassVoice, readBassScore } from '../../bass/readBass.js';
@@ -38,7 +38,7 @@ import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
 const VOICE_ORDER = [MELODY_CHANNEL, ...HARMONY_PARTS.map((part) => part.id)];
 /** The bass sits opposite the melody on the wheel (each step turns 75°, theme/ui.css). */
 const BASS_COLOUR = 2.4;
-/** Generic lanes start past the harmony parts on the wheel, a step each. */
+/** Extra parts (+ Lane) start past the harmony parts on the wheel, a step each. */
 const LANE_COLOUR = 3.6;
 const LANE_COLOUR_STEP = 0.8;
 
@@ -70,12 +70,6 @@ export class MelodyDrawing {
 	bassStartsEmpty = false;
 	/** A tune not written yet starts with a pickup bar this long (quarters; 0: none). Transcribe sets it from the recording's lead-in. */
 	pickupQuarters = 0;
-	/**
-	 * The generic lanes (+ Lane) and how to read and write them: the
-	 * transcription's, or null on a page without them. Set by the component.
-	 * @type {import('../../transcription/extraLanes.js').LaneStore | null}
-	 */
-	lanes = null;
 	/** New notes are drawn this long (ticks): the last length drawn. */
 	drawLength = $state(gridTicks('eighth'));
 
@@ -84,16 +78,16 @@ export class MelodyDrawing {
 	score = $derived(this.current?.score ?? null);
 	problem = $derived(this.current?.problem ?? '');
 	isBass = $derived(this.current?.id === BASS_VOICE);
-	/** A generic lane: its own ABC, written by ear for any instrument. */
-	isLane = $derived(isLaneId(this.current?.id ?? ''));
-	/** The bass and the lanes are written as played, bar for bar with the chart: their own bars. */
-	ownBars = $derived(this.isBass || this.isLane);
-	/** A harmony part: one of the tune's voices, not the melody. */
+	/** An extra part (+ Lane): a line of the tune written by ear, for any instrument. */
+	isExtra = $derived(isExtraPart(this.current?.id ?? ''));
+	/** The bass is written as played, bar for bar with the chart: its own bars. */
+	ownBars = $derived(this.isBass);
+	/** A harmony part: one of the tune's voices written from the melody. */
 	isHarmonyPart = $derived(
-		Boolean(this.current) && !this.ownBars && this.current?.id !== MELODY_CHANNEL
+		Boolean(this.current) && !this.ownBars && !this.isExtra && this.current?.id !== MELODY_CHANNEL
 	);
 	/** Where this part usually plays (the rows are always the piano's). */
-	usualRange = $derived(this.isBass ? BASS_ROWS : this.isLane ? LANE_ROWS : MELODY_ROWS);
+	usualRange = $derived(this.isBass ? BASS_ROWS : this.isExtra ? LANE_ROWS : MELODY_ROWS);
 	/** Where this part's instrument can naturally play, or null when it isn't known. */
 	playable = $derived(this.isBass ? UPRIGHT_RANGE : null);
 	/** How many notes sit outside it. */
@@ -104,7 +98,7 @@ export class MelodyDrawing {
 	);
 	end = $derived(this.score ? totalTicks(this.score) : 0);
 	gridStep = $derived(gridTicks(this.grid));
-	/** Where the pickup shows again, in the last bar's closing beats (not on the bass or lanes: written as played). */
+	/** Where the pickup shows again, in the last bar's closing beats (not on the bass: written as played). */
 	echo = $derived(this.score && !this.ownBars ? echoZone(this.score.bars, isShortBar) : null);
 	/**
 	 * The tune's other voices, drawn faintly behind the one being edited.
@@ -114,7 +108,7 @@ export class MelodyDrawing {
 		this.ownBars
 			? []
 			: this.voices
-					.filter((each) => each !== this.current && each.id !== BASS_VOICE && !isLaneId(each.id))
+					.filter((each) => each !== this.current && each.id !== BASS_VOICE)
 					.map((each) => ({ colour: voiceColour(each.id), notes: each.score.notes }))
 	);
 
@@ -171,18 +165,8 @@ export class MelodyDrawing {
 		const bass = arrangement.isPlayable ? bassVoice(this.#bassRead()) : null;
 		const read = this.#fromAbc() ?? (arrangement.isPlayable ? this.#fromChart() : null);
 		if (!read) return this.#show(null);
-		const voices = [...read.voices, ...(bass ? [bass] : []), ...this.#laneVoices()];
+		const voices = [...read.voices, ...(bass ? [bass] : [])];
 		this.#show({ ...read, voices });
-	}
-
-	/** The generic lanes, read from their own ABC. */
-	#laneVoices() {
-		const lanes = this.lanes;
-		if (!lanes) return [];
-		return lanes.extraLanes.flatMap((lane) => {
-			const read = readBassScore(lanes.laneAbc(lane), abcjsIfLoaded());
-			return read ? [{ id: lane.id, name: lane.name, ...read }] : [];
-		});
 	}
 
 	/** @param {string} id */
@@ -253,7 +237,6 @@ export class MelodyDrawing {
 	 */
 	#write(voice, notes) {
 		if (voice === BASS_VOICE) return this.#writeBass(notes);
-		if (isLaneId(voice)) return this.#writeLane(voice, notes);
 		const { melody } = this.arranger;
 		const song = this.arranger.songForMelody();
 		const abc = melody.notation;
@@ -289,21 +272,6 @@ export class MelodyDrawing {
 		const read = this.#bassRead();
 		if (!read || read.problem) return;
 		this.arranger.bass.notation = rewriteAbc(this.#bassAbc(), read.score, notes);
-	}
-
-	/**
-	 * A generic lane's notes, written into its own ABC.
-	 * @param {string} id
-	 * @param {DrawnNote[]} notes
-	 */
-	#writeLane(id, notes) {
-		const lanes = this.lanes;
-		const lane = lanes?.extraLanes.find((each) => each.id === id);
-		if (!lanes || !lane) return;
-		const abc = lanes.laneAbc(lane);
-		const read = readBassScore(abc, abcjsIfLoaded());
-		if (!read || read.problem) return;
-		lanes.setLaneAbc(id, rewriteAbc(abc, read.score, notes));
 	}
 
 	/** The bass line in use, read: the song's edited one, else the band's own. */
@@ -352,7 +320,8 @@ export class MelodyDrawing {
  */
 export function voiceColour(id) {
 	if (id === BASS_VOICE) return BASS_COLOUR;
-	if (isLaneId(id)) return LANE_COLOUR + LANE_COLOUR_STEP * (laneNumber(id) - 1);
+	if (isExtraPart(id))
+		return LANE_COLOUR + LANE_COLOUR_STEP * EXTRA_PARTS.findIndex((part) => part.id === id);
 	return Math.max(0, VOICE_ORDER.indexOf(id));
 }
 
