@@ -145,7 +145,7 @@ export const TUNE_INSTRUMENTS = [
 
 /** What each tune channel starts on, so the parts stand apart from the lead and each other. */
 export const TUNE_INSTRUMENT_DEFAULTS = {
-	melody: 'organ',
+	melody: 'piano',
 	tenor: 'violin',
 	'high-baritone': 'flute',
 	baritone: 'clarinet',

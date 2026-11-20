@@ -157,7 +157,7 @@ function allSongs() {
  * version 8 `swing` (older songs play straight); version 9 `tempoCurve` (none: a steady tempo);
  * version 10 drops `bassStyle` (the band's own bass is always root and fifth);
  * version 11 moves a melody on the guitar (the default for a few days, an octave
- * below the tune as written) onto the organ.
+ * below the tune as written) onto the melody's default instrument.
  * @param {Arrangement} song
  * @returns {Arrangement}
  */
@@ -176,10 +176,11 @@ function upgrade(song) {
 /** @param {any} mix */
 function melodyOffTheGuitar(mix) {
 	if (!Array.isArray(mix?.channels)) return mix;
-	const channels = mix.channels.map((/** @type {any} */ channel) =>
-		channel.id === 'melody' && channel.instrument === 'guitar'
-			? { ...channel, instrument: 'organ' }
-			: channel
-	);
+	const channels = mix.channels.map((/** @type {any} */ channel) => {
+		if (channel.id !== 'melody' || channel.instrument !== 'guitar') return channel;
+		const rest = { ...channel };
+		delete rest.instrument;
+		return rest;
+	});
 	return { ...mix, channels };
 }
