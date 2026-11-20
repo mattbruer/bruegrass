@@ -93,7 +93,6 @@
 				bassStartsEmpty
 				pickupQuarters={transcription.newTunePickup}
 				keyMenu={false}
-				zoom={settings.transcribe.zoom}
 				view={settings.transcribe.bottomView === 'tab' ? 'tab' : 'roll'}
 			/>
 		{/if}

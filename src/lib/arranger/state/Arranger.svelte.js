@@ -54,7 +54,7 @@ import { readTuneText, MELODY_VOICE } from '../melody/sections/tuneBySection.js'
 import { renamedParts } from '../melody/sections/renamedParts.js';
 import { partsFollowingBars, sectionBarKeys } from '../melody/sections/barsFollowChart.js';
 import { generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
-import { bassSongOf } from '../bass/songBassStyle.svelte.js';
+import { bassSongOf } from '../bass/bassSong.js';
 import { withWordsFromChart } from '../melody/sections/wordsFromChart.js';
 import { tuneReader } from '../melody/abcjs.js';
 import { writeBar } from '../melody/roll/writeBar.js';

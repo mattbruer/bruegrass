@@ -8,7 +8,6 @@
 import { preparePerformance } from '../instruments/performance.js';
 import { createBand } from '../instruments/band.js';
 import { getChannel } from '../mixer/mixerGraph.svelte.js';
-import { chosenBassStyle } from '../bass/songBassStyle.svelte.js';
 import { BASS_VOICE } from '../bass/readBass.js';
 import { createBandAlong, streamsOnRecording } from './bandAlong.js';
 
@@ -32,8 +31,7 @@ export class TranscribeBand {
 			capo: arrangement.capoFret,
 			transpose: arrangement.transpose,
 			loop: false,
-			bass: bass.written,
-			bassStyle: chosenBassStyle()
+			bass: bass.written
 		});
 	});
 

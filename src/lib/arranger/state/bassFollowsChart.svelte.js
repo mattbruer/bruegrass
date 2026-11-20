@@ -9,17 +9,14 @@ import { untrack } from 'svelte';
 import { bassFollowingChart } from '../bass/bassFollowsChart.js';
 import { generatedBassAbc, isAsPlayed } from '../bass/bassAbc.js';
 import { readBassScore } from '../bass/readBass.js';
-import { bassSongOf } from '../bass/songBassStyle.svelte.js';
+import { bassSongOf } from '../bass/bassSong.js';
 import { abcjsIfLoaded } from './abcjsLoaded.svelte.js';
 
 /** @param {import('./Arranger.svelte.js').Arranger} arranger */
 export function keepBassWithChart(arranger) {
 	$effect(() => {
-		// Only the chart moves an edited line; the tune just shapes the bars it rewrites
-		const song = bassSongOf(
-			arranger,
-			untrack(() => arranger.melody.line)
-		);
+		// Only the chart moves an edited line
+		const song = bassSongOf(arranger);
 		void arranger.melodyKey;
 		const abcjs = abcjsIfLoaded();
 		if (!arranger.arrangement.isPlayable) return;

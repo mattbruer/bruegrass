@@ -166,7 +166,7 @@
 			var(--screen)
 		);
 		border: 1px solid var(--color-line);
-		box-shadow: inset 0 2px 10px oklch(0 0 0 / 0.35);
+		box-shadow: inset 0 2px 10px oklch(0 0 0 / calc(0.35 * var(--depth-on)));
 		user-select: none;
 	}
 

@@ -8,23 +8,27 @@ import { secondsAt } from './tempoMap.js';
 import { strumOffsets } from '../instruments/guitar.js';
 import { FADER_MIN } from '$lib/audio/mixer/faderTaper.js';
 
+/**
+ * @typedef {{ start: number, end: number, pitch: number, part: string }} HeardNote
+ *   start, end: seconds into the recording; pitch: MIDI as written; part: the lane's id
+ */
+
 /** A stack is strummed across neighbouring strings, the middle ones (0 = low E). */
 const MIDDLE_STRING = 2.5;
 
 /**
  * @param {import('../tracks/lanes.js').BandLane[]} lanes
  * @param {import('./beatGrid.js').BeatGrid} grid
- * @param {(laneId: string, pitch: number) => number} soundingPitch MIDI as heard
- * @returns {import('$lib/slowDowner/partNotes.js').PartNote[]}
+ * @returns {HeardNote[]}
  */
-export function heardNotes(lanes, grid, soundingPitch) {
+export function heardNotes(lanes, grid) {
 	return lanes
 		.flatMap((lane) => {
 			const notes = lane.blocks.filter((block) => typeof block.pitch === 'number');
 			return notes.map((block) => ({
 				start: secondsAt(grid, block.start) + strumDelay(notes, block, grid),
 				end: secondsAt(grid, block.start + block.length),
-				hz: frequencyOf(soundingPitch(lane.id, /** @type {number} */ (block.pitch))),
+				pitch: /** @type {number} */ (block.pitch),
 				part: lane.id
 			}));
 		})
@@ -71,9 +75,4 @@ export function laneLevels(lanes) {
 /** @param {number} db a fader's level (its bottom is silence) */
 function gainOf(db) {
 	return db <= FADER_MIN ? 0 : 10 ** (db / 20);
-}
-
-/** @param {number} midi */
-function frequencyOf(midi) {
-	return 440 * 2 ** ((midi - 69) / 12);
 }

@@ -1,6 +1,6 @@
 <script>
 	/** A tune channel's instrument, on its strip: tap to choose another. */
-	import { tuneInstrument } from '../../../instruments/tuneInstruments.js';
+	import { defaultTuneInstrument, tuneInstrument } from '../../../instruments/tuneInstruments.js';
 	import { instrumentWindow, openInstruments } from './instrumentWindowState.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -9,19 +9,20 @@
 	let { channel } = $props();
 
 	let isOpen = $derived(instrumentWindow.channelId === channel.id);
+	let name = $derived(tuneInstrument(channel.instrument, defaultTuneInstrument(channel.id)).name);
 </script>
 
 <button
 	type="button"
 	class="instrument ui-button"
 	class:ui-button-on={isOpen}
-	aria-label="{channel.name} plays on {tuneInstrument(channel.instrument).name}: choose another"
+	aria-label="{channel.name} plays on {name}: choose another"
 	aria-haspopup="dialog"
 	aria-expanded={isOpen}
 	onclick={() => openInstruments(channel.id)}
 	use:tooltip={TIPS.mixer.instrument}
 >
-	{tuneInstrument(channel.instrument).name}
+	{name}
 </button>
 
 <style>

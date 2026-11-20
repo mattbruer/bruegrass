@@ -15,7 +15,7 @@ import { flatEq } from '../../audio/eq/eqBands.js';
 import { DEFAULT_OUTPUT_GAIN_DB } from '../../audio/output/outputSettings.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { RECORD_TRACKS } from '../takes/recordTracks.js';
-import { GUITAR } from '../instruments/tuneInstruments.js';
+import { defaultTuneInstrument } from '../instruments/tuneInstruments.js';
 
 /*
  * The default mix: a loose, natural bluegrass balance. Change it here.
@@ -31,17 +31,6 @@ const PAN_SPREAD = 0.35; // 35% left/right
 const SEND_FULLY = 0; // dB: the top of the send's travel
 const SEND_NONE = FADER_MIN;
 const REVERB_LEVEL_DB = -15;
-/*
- *   - The tune's voices start on different instruments, so each harmony part
- *     stands apart from the lead and from each other (instruments/tuneInstruments.js).
- */
-const TUNE_INSTRUMENT_DEFAULTS = {
-	melody: 'keys',
-	tenor: 'fiddle',
-	'high-baritone': 'flute',
-	baritone: 'clarinet',
-	'low-tenor': 'cello'
-};
 
 /**
  * A part is a sub-level inside a channel (e.g. the guitar's bass notes vs.
@@ -71,9 +60,7 @@ function channelStrip({ id, name, pan = 0, send = SEND_FULLY }) {
  * @param {{ id: string, name: string }} channel
  */
 function tuneStrip({ id, name }) {
-	const instrument =
-		TUNE_INSTRUMENT_DEFAULTS[/** @type {keyof typeof TUNE_INSTRUMENT_DEFAULTS} */ (id)];
-	return { ...channelStrip({ id, name }), instrument: instrument ?? GUITAR };
+	return { ...channelStrip({ id, name }), instrument: defaultTuneInstrument(id) };
 }
 
 export const mixer = $state({

@@ -58,11 +58,13 @@
 		--tile-height: 5rem;
 		--tile-width: 5.5rem;
 		--tile-art: 4rem; /* every tile is a picture this tall */
-		--key-depth: 9px; /* how far a key stands up off the bar: its side wall */
+		--key-depth: calc(
+			9px * var(--depth-on)
+		); /* how far a key stands up off the bar: its side wall */
 
 		/* A key's colours, all from the theme (solid, by lightness): a convex face lit from above, a side wall in shade */
-		--key-face-top: oklch(from var(--color-raised) calc(l + 0.05) c h);
-		--key-face-bottom: oklch(from var(--color-raised) calc(l - 0.07) c h);
+		--key-face-top: oklch(from var(--color-raised) calc(l + 0.05 * var(--depth-on)) c h);
+		--key-face-bottom: oklch(from var(--color-raised) calc(l - 0.07 * var(--depth-on)) c h);
 		--key-edge: oklch(from var(--color-raised) calc(l - 0.2) c h);
 		--key-side-1: oklch(from var(--color-raised) calc(l - 0.12) c h);
 		--key-side-2: oklch(from var(--color-raised) calc(l - 0.17) c h);
@@ -130,7 +132,7 @@
 	/* Pressed, or on (playing, clicking, its drawer open): the key sinks almost flush with the bar */
 	.bar-content :global(.bar-tile:active),
 	.bar-content :global(.bar-tile.ui-button-on) {
-		transform: translateY(calc(var(--key-depth) - 2px));
+		transform: translateY(calc(var(--key-depth) - 2px * var(--depth-on)));
 		box-shadow:
 			inset 0 3px 8px var(--shadow-dark-edge),
 			inset 0 -1px 0 var(--shadow-light-edge),
@@ -202,7 +204,7 @@
 			--tile-height: 2.1rem;
 			--tile-width: 3.25rem;
 			--tile-art: 1.8rem;
-			--key-depth: 2px;
+			--key-depth: calc(2px * var(--depth-on));
 			padding-block: 0.2rem calc(0.2rem + var(--key-depth));
 		}
 

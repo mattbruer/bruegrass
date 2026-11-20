@@ -20,18 +20,13 @@ import { scoreFromChart } from '../melody/roll/scoreFromChart.js';
 import { newAbc } from '../melody/roll/scoreToAbc.js';
 import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
 import { mod12 } from '../chart/key.js';
-import { rhythm } from '../chart/timeline.js';
-import { leadOnsets } from './melodySpace.js';
-import { bassStyle, DEFAULT_BASS_STYLE } from '../instruments/bassStyles.js';
 
 /**
  * @typedef {{
  *   sections: import('../chart/timeline.js').Section[],
  *   songKey: import('../chart/key.js').Key | null,
  *   capo: number,
- *   melodyKey: { spelling: import('../theory/musicInKey.js').Key, keyText: string },
- *   tune?: import('../melody/melody.js').Melody | null,
- *   style?: import('../instruments/bassStyles.js').BassStyle
+ *   melodyKey: { spelling: import('../theory/musicInKey.js').Key, keyText: string }
  * }} BassSong what the bass line is written from (the melody's key is the concert key)
  */
 
@@ -40,13 +35,8 @@ const AS_PLAYED = '% bass as played';
 
 /** @param {BassSong} song */
 export function generatedBassAbc(song) {
-	const { sections, capo, tune = null } = song;
-	const tuneOnsets = leadOnsets(tune, { quarters: rhythm(sections).quarters });
-	const notes = bandsBassLine(sections, {
-		capo: mod12(capo),
-		tuneOnsets,
-		style: song.style ?? bassStyle(DEFAULT_BASS_STYLE)
-	}).map((note) => ({
+	const { sections, capo } = song;
+	const notes = bandsBassLine(sections, { capo: mod12(capo) }).map((note) => ({
 		midi: note.pitch,
 		start: Math.round(note.beat * TICKS_PER_QUARTER),
 		length: Math.round(note.length * TICKS_PER_QUARTER)

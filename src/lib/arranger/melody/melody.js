@@ -43,6 +43,7 @@ const MELODY_LEVEL_DB = -2;
 const ACCENT_VELOCITY = 105; // abcjs's downbeat velocity: plays at MELODY_LEVEL_DB
 const VELOCITY_DEPTH = 1; // 1 = follow abcjs's accents as written, 0 = all even
 const GATE = 0.95; // fraction of its written length a note rings (unless its string is needed)
+const SEPARATION = 0.04; // seconds a note running into the next of its voice stops before it, so two notes are heard
 
 /**
  * @typedef {{ time: number, length: number, pitch: number, volume: number, channel: string }} MelodyNote
@@ -168,10 +169,18 @@ export function melodyEvents(melody, { sections, offset = 0, bpm = 120, shift = 
 		.map((note) => ({ ...note, length: Math.min(note.length, quarters - note.time) }));
 
 	const fingered = finger(notes, shift);
+	const comingRound = loop ? notes.filter((note) => note.time < 0) : [];
+	const followers = [
+		...notes,
+		...comingRound.map((note) => ({ ...note, time: note.time + quarters }))
+	];
 	/** @type {MelodyEvent[]} */
 	const all = notes.map((note, i) => ({
 		time: note.time * quarter,
-		stop: (note.time + note.length * GATE) * quarter,
+		stop: Math.min(
+			(note.time + note.length * GATE) * quarter,
+			nextInVoice(note, followers) * quarter - Math.min(SEPARATION, (note.length * quarter) / 4)
+		),
 		...fingered[i],
 		channel: note.channel,
 		articulation: /** @type {const} */ ('pluck'),
@@ -194,6 +203,18 @@ export function melodyEvents(melody, { sections, offset = 0, bpm = 120, shift = 
 	cutOnStringReuse(events);
 
 	return { events, intro, leadIn: intro.length > 0 ? -intro[0].time : 0, period };
+}
+
+/**
+ * When the next note of this note's voice starts, in quarters (Infinity if none).
+ * @param {MelodyNote} note
+ * @param {MelodyNote[]} notes every note that may follow it, the pickup coming round included
+ */
+function nextInVoice(note, notes) {
+	const later = notes.filter(
+		(other) => other.channel === note.channel && other.time > note.time + 1e-9
+	);
+	return Math.min(Infinity, ...later.map((other) => other.time));
 }
 
 /**
@@ -299,17 +320,4 @@ function cutOnStringReuse(events) {
 			.find((other) => other.string === event.string && other.time > event.time);
 		if (next) event.stop = Math.min(event.stop, next.time);
 	});
-}
-
-/**
- * How the melody lines up with what the arrangement plays, in quarter
- * notes, for a gentle warning when they don't match.
- * @param {Melody} melody
- * @param {number} quarters length of one pass of the full arrangement
- * @returns {{ extra: number, missing: number }} extra: melody past the end
- *   (cut off); missing: arrangement left without melody at the end
- */
-export function melodyFit(melody, quarters) {
-	const over = melody.length - quarters;
-	return { extra: over > 1e-9 ? over : 0, missing: over < -1e-9 ? -over : 0 };
 }

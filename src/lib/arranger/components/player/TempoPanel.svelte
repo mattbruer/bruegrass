@@ -1,9 +1,9 @@
 <script>
 	/**
-	 * The tempo panel, opened from the tempo tile on the bar: big − and + for
-	 * the tempo (hold to keep going), the swing, the metronome's on/off, and,
-	 * while it clicks, its sound, beats and level. A native popover: a tap outside or
-	 * Escape closes it, and it sits just above the bar.
+	 * The tempo panel, opened from the tempo badge on the metronome key: big −
+	 * and + for the tempo (hold to keep going), the swing, and the click's
+	 * sound and level. A native popover: a tap outside or Escape closes it, and
+	 * it sits just above the bar.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { TEMPO_MAX, TEMPO_MIN } from '../../chart/tempo.js';
@@ -113,69 +113,29 @@
 			tip={TIPS.player.swing}
 		/>
 
-		<button
-			type="button"
-			class="click-toggle ui-button"
-			class:ui-button-on={metronome.on}
-			aria-pressed={metronome.on}
-			onclick={() => metronome.toggle()}
-			use:tooltip={TIPS.player.metronome}
-		>
-			{metronome.on ? 'Stop the click' : 'Start the click'}
-		</button>
+		<label class="row" use:tooltip={TIPS.player.metronomeSound}>
+			<span>Click</span>
+			<select
+				class="ui-field px-3 py-2"
+				value={prefs.sound}
+				onchange={(event) => metronome.setSound(event.currentTarget.value)}
+			>
+				{#each CLICK_SOUNDS as sound (sound.id)}
+					<option value={sound.id}>{sound.name}</option>
+				{/each}
+			</select>
+		</label>
 
-		{#if metronome.on}
-			<label class="row" use:tooltip={TIPS.player.metronomeSound}>
-				<span>Sound</span>
-				<select
-					class="ui-field px-3 py-2"
-					value={prefs.sound}
-					onchange={(event) => metronome.setSound(event.currentTarget.value)}
-				>
-					{#each CLICK_SOUNDS as sound (sound.id)}
-						<option value={sound.id}>{sound.name}</option>
-					{/each}
-				</select>
-			</label>
-
-			<div class="row" use:tooltip={TIPS.player.metronomeMeter}>
-				<span>Beats</span>
-				<span class="flex items-center gap-2">
-					<input
-						type="number"
-						inputmode="numeric"
-						min="1"
-						max="12"
-						class="w-16 ui-field px-3 py-2"
-						value={prefs.beats}
-						aria-label="Beats per bar"
-						onchange={(event) => metronome.setMeter(Number(event.currentTarget.value), prefs.unit)}
-					/>
-					<span>/</span>
-					<select
-						class="ui-field px-3 py-2"
-						value={prefs.unit}
-						aria-label="Beat note"
-						onchange={(event) => metronome.setMeter(prefs.beats, Number(event.currentTarget.value))}
-					>
-						<option value={4}>4</option>
-						<option value={8}>8</option>
-					</select>
-				</span>
-			</div>
-
-			<Slider
-				label="Level"
-				name="Level"
-				bind:value={prefs.level}
-				toPosition={levelPosition}
-				fromPosition={levelFromPosition}
-				format={formatLevel}
-				reset={-14}
-				tip={TIPS.player.metronomeLevel}
-			/>
-			<p class="hint">With the song playing, the click follows its bars.</p>
-		{/if}
+		<Slider
+			label="Click level"
+			name="Click level"
+			bind:value={prefs.level}
+			toPosition={levelPosition}
+			fromPosition={levelFromPosition}
+			format={formatLevel}
+			reset={-14}
+			tip={TIPS.player.metronomeLevel}
+		/>
 	</div>
 </div>
 
@@ -243,21 +203,11 @@
 		color: var(--color-ink-soft);
 	}
 
-	.click-toggle {
-		height: 3.5rem;
-		font-size: 1.15rem;
-	}
-
 	.row {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.75rem;
 		font-weight: 600;
-	}
-
-	.hint {
-		font-size: 0.85rem;
-		color: var(--color-ink-soft);
 	}
 </style>

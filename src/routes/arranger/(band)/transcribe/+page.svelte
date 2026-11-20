@@ -83,10 +83,6 @@
 	});
 
 	$effect(() => {
-		transcription.player.setNotes(transcription.heardNotes);
-	});
-
-	$effect(() => {
 		transcription.hearLevels();
 	});
 

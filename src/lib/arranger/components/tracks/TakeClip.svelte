@@ -91,7 +91,7 @@
 		cursor: grabbing;
 		box-shadow:
 			var(--shadow-bevel),
-			0 2px 8px rgb(0 0 0 / 0.25),
+			0 2px 8px rgb(0 0 0 / calc(0.25 * var(--depth-on))),
 			var(--shadow-drop-small);
 	}
 

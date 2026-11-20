@@ -20,10 +20,9 @@
 import { readStored, removeStored, writeStored } from './localStore.js';
 import { SWING_STRAIGHT } from '$lib/arranger/chart/swing.js';
 import { newId } from './newId.js';
-import { DEFAULT_BASS_STYLE } from '$lib/arranger/instruments/bassStyles.js';
 
 /** Bump when the document's shape changes, and migrate older ones in `upgrade`. */
-export const ARRANGEMENT_VERSION = 9;
+export const ARRANGEMENT_VERSION = 11;
 
 /** Where every saved song is kept, as { [id]: Arrangement }. */
 const SONGS_KEY = 'bruegrass.arrangements';
@@ -44,7 +43,6 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   tune: import('$lib/arranger/melody/sections/tuneBySection.js').TuneBySection | null,
  *   bass: string,
  *   bassTune: import('$lib/arranger/melody/sections/tuneBySection.js').TuneBySection | null,
- *   bassStyle: string,
  *   tab: Record<string, import('$lib/arranger/tab/songTab.svelte.js').PartTab>,
  *   recording: { key: string, name: string } | null,
  *   madeFrom: { key: string, name: string } | null,
@@ -61,8 +59,7 @@ const RETIRED_LAST_OPENED_KEY = 'bruegrass.currentArrangement';
  *   melody in ABC notation (as played); tune: the melody kept by section,
  *   each section's bars (null: kept whole, in abc); bass: the bass line in ABC once it's been
  *   edited ('' while the band writes it from the chart); bassTune: the bass line kept by
- *   section (null: kept whole, in bass); bassStyle: how the band
- *   writes its own bass line, an id in BASS_STYLES; tab: each part's TAB instrument
+ *   section (null: kept whole, in bass); tab: each part's TAB instrument
  *   and the strings chosen for its notes, and its tuning if not standard (tab/songTab.svelte.js); recording: the
  *   recording it was transcribed from (its key and name), if any (this song is that transcription);
  *   madeFrom: the recording whose transcription it was sent from (Send to the arranger), if any; tempoCurve: the tempo lane's points, each a share of `tempo` at a place in the song (chart/tempoCurve.js); swing: how long-short the eighths are, in percent (50 straight, chart/swing.js); transpose: semitones from the Key setting;
@@ -84,7 +81,6 @@ export function createArrangement(fields = {}) {
 		tune: null,
 		bass: '',
 		bassTune: null,
-		bassStyle: DEFAULT_BASS_STYLE,
 		tab: {},
 		recording: null,
 		madeFrom: null,
@@ -158,15 +154,32 @@ function allSongs() {
  * song transcribed earlier gets it when its recording is opened again); version 6
  * `tune` and `bassTune` (older songs keep their tune and bass line whole); version 7
  * `madeFrom` (none: an arrangement sent earlier isn't linked back to its transcription);
- * version 8 `swing` (older songs play straight); version 9 `tempoCurve` (none: a steady tempo).
+ * version 8 `swing` (older songs play straight); version 9 `tempoCurve` (none: a steady tempo);
+ * version 10 drops `bassStyle` (the band's own bass is always root and fifth);
+ * version 11 moves a melody on the guitar (the default for a few days, an octave
+ * below the tune as written) onto the organ.
  * @param {Arrangement} song
  * @returns {Arrangement}
  */
 function upgrade(song) {
+	const fields = /** @type {Arrangement & { bassStyle?: string }} */ ({ ...song });
+	delete fields.bassStyle;
+	if (song.version < 11) fields.mix = melodyOffTheGuitar(fields.mix);
 	return {
 		...createArrangement(),
-		...song,
+		...fields,
 		title: song.title || 'Untitled song',
 		version: ARRANGEMENT_VERSION
 	};
+}
+
+/** @param {any} mix */
+function melodyOffTheGuitar(mix) {
+	if (!Array.isArray(mix?.channels)) return mix;
+	const channels = mix.channels.map((/** @type {any} */ channel) =>
+		channel.id === 'melody' && channel.instrument === 'guitar'
+			? { ...channel, instrument: 'organ' }
+			: channel
+	);
+	return { ...mix, channels };
 }

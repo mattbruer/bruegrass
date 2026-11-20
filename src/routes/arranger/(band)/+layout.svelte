@@ -15,6 +15,7 @@
 	 * one, or one pasted into the address bar) or a song file dropped on the
 	 * page offers its song.
 	 */
+	import InstrumentWindow from '$lib/arranger/components/mixer/instruments/InstrumentWindow.svelte';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { showsTheBand } from '$lib/arranger/components/page/bandPages.js';
@@ -38,7 +39,6 @@
 	// A page without the band's controls has no Stop either, so the band and the click stop
 	$effect(() => {
 		if (showBand) return;
-		arranger.player.metronome.turnOff();
 		arranger.player.stop();
 		arranger.layout.close();
 	});
@@ -66,7 +66,6 @@
 		return () => {
 			removeEventListener('hashchange', offerSharedSong);
 			stopCatchingDrops();
-			arranger.player.metronome.turnOff();
 			arranger.player.stop();
 			arranger.transcription.dispose();
 		};
@@ -82,4 +81,5 @@
 		<MixerDrawer />
 	</div>
 {/if}
+<InstrumentWindow />
 <ReceiveSongDialog />

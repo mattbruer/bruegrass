@@ -36,6 +36,7 @@
 	} from '../../melody/roll/noteGestures.js';
 	import { followScroll, middlePitch } from '../../melody/roll/followView.js';
 	import { PIANO_ROWS, pitchRows } from '../../melody/roll/pitchRows.js';
+	import { isOutside } from '../../instruments/instrumentRanges.js';
 	import { barLabel, isShortBar, tickWidthFor } from '../../melody/roll/rollLayout.js';
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 
@@ -60,6 +61,7 @@
 	 *   spelling: import('../../theory/musicInKey.js').Key,
 	 *   tonic: number,
 	 *   usualRange: import('../../melody/roll/pitchRows.js').RowRange,
+	 *   playable?: import('../../melody/roll/pitchRows.js').RowRange | null,
 	 *   end: number,
 	 *   gridStep: number,
 	 *   drawLength: number,
@@ -85,6 +87,7 @@
 		spelling,
 		tonic,
 		usualRange,
+		playable = null,
 		end,
 		gridStep,
 		drawLength,
@@ -490,6 +493,7 @@
 							style:--voice={colour}
 							class:selected={!preview && index === selected}
 							class:echo={'echo' in note && note.echo}
+							class:outside={playable && isOutside(note.midi, playable)}
 							style:left="{note.start * tickWidth}px"
 							style:top="{(range.highest - note.midi) * rowHeight}px"
 							style:width="{note.length * tickWidth}px"
@@ -640,7 +644,8 @@
 		touch-action: none;
 		background: var(--voice-colour);
 		border: 1px solid color-mix(in oklab, var(--voice-colour) 60%, var(--color-ink));
-		border-radius: var(--corner-small);
+		/* square whatever the theme's roundness: a note's ends mark its exact start and length */
+		border-radius: 0;
 		/* the right end resizes */
 		background-image: linear-gradient(
 			to left,
@@ -664,6 +669,16 @@
 	.note.echo {
 		border: 2px dashed var(--color-ink);
 		background-color: color-mix(in oklab, var(--voice-colour) 65%, var(--color-raised));
+	}
+	/* Outside the instrument's natural range: striped */
+	.note.outside {
+		background-image:
+			linear-gradient(
+				to left,
+				color-mix(in oklab, var(--voice-colour) 70%, var(--color-ink)) 0 4px,
+				transparent 4px
+			),
+			repeating-linear-gradient(-45deg, var(--color-ink) 0 2px, transparent 2px 6px);
 	}
 	.note.other {
 		opacity: 0.3;

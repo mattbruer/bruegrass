@@ -29,7 +29,7 @@ const TICK = 0.1;
  *   capo?: number, transpose?: number, bpm?: number,
  *   melody?: import('../melody/melody.js').MelodyPart | null,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null, offset?: number,
- *   bassStyle?: import('../instruments/bassStyles.js').BassStyle, swing?: number,
+ *   swing?: number,
  *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[],
  *   takes?: import('../takes/playTakes.js').PlayableTake[],
  *   regionStart?: number, countIn?: number, passes?: number, from?: number
@@ -51,7 +51,7 @@ const TICK = 0.1;
  *   passLength: number,
  *   beats: () => { elapsed: number, length: number } | null,
  *   secondsLeft: () => number,
- *   clicks: { origin: number, clock: import('../chart/tempoCurve.js').TempoClock, grid: import('./metronome/clickGrid.js').ClickGrid },
+ *   clicks: { origin: number, from: number, clock: import('../chart/tempoCurve.js').TempoClock, grid: import('./metronome/clickGrid.js').ClickGrid },
  *   position: () => (import('../chart/timeline.js').SlotPosition & { beat: number, role: 'boom' | 'chuck', progress: number }) | null
  * }>}
  */
@@ -172,8 +172,16 @@ export async function playArrangement(sections, options = {}) {
 				progress: inPass / clock.passQuarters
 			};
 		},
-		/** The song's clicks, on this playback's clock (for a metronome that follows the bars). */
-		clicks: { origin: start, clock, grid: songClickGrid(sections) },
+		/**
+		 * The song's clicks, on this playback's clock (for a metronome that
+		 * follows the bars), from when the band comes in: before that is the count-in's.
+		 */
+		clicks: {
+			origin: start,
+			from: start + clock.secondsAt(from),
+			clock,
+			grid: songClickGrid(sections)
+		},
 		stop() {
 			stopped = true;
 			if (timer !== undefined) context.clearTimeout(timer);

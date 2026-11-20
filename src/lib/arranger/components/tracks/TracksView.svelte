@@ -8,8 +8,6 @@
 	import { useArranger } from '../../state/context.js';
 	import { bandLanes, takeLanes } from '../../tracks/lanes.js';
 	import { bassPart } from '../../bass/songBass.js';
-	import { leadOnsets } from '../../bass/melodySpace.js';
-	import { rhythm } from '../../chart/timeline.js';
 	import { rulerBars, rulerSpan } from '../../tracks/ruler.js';
 	import { trackScale } from '../../tracks/trackScale.js';
 	import { followPlayhead } from '../../tracks/followPlayhead.js';
@@ -17,7 +15,6 @@
 	import LaneHeader from './LaneHeader.svelte';
 	import BlockLane from './BlockLane.svelte';
 	import TakeClip from './TakeClip.svelte';
-	import { chosenBassStyle } from '../../bass/songBassStyle.svelte.js';
 
 	const { arrangement, melody, recording, player, bass } = useArranger();
 
@@ -34,9 +31,7 @@
 			bass: bassPart(arrangement.sections, {
 				capo: arrangement.capoFret,
 				transpose: arrangement.transpose,
-				written: writtenBass,
-				style: chosenBassStyle(),
-				tuneOnsets: leadOnsets(melody.line, { quarters: rhythm(arrangement.sections).quarters })
+				written: writtenBass
 			}).notes,
 			melody: melody.line
 		})

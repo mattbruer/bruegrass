@@ -9,6 +9,10 @@
 	const { melody } = useArranger();
 </script>
 
+{#if melody.error}
+	<p class="mt-2 text-sm text-danger">The melody can't be played: {melody.error}</p>
+{/if}
+
 {#if melody.warnings.length > 0}
 	<div class="mt-2 ui-well px-4 py-3 text-sm" role="status">
 		<p class="font-semibold text-danger">

@@ -99,7 +99,7 @@
 	.row {
 		position: relative;
 		height: var(--beats-row-height);
-		border-bottom: 1px solid var(--color-line);
+		border-bottom: var(--lane-divider, 1px solid var(--color-line));
 		background: var(--color-surface);
 	}
 

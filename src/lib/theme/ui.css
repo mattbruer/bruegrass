@@ -99,7 +99,7 @@
 
 	/* the seam between keys is a groove: a shaded wall, then a lit one */
 	& > .ui-button + .ui-button {
-		border-left: 1px solid var(--shadow-dark-edge);
+		border-left: 1px solid var(--edge-dark);
 		box-shadow:
 			inset 1px 0 0 var(--shadow-light-edge),
 			var(--shadow-bevel);

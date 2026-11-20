@@ -37,14 +37,28 @@
 	 * background colour made lighter or darker (in OKLCH, which keeps the
 	 * hue), so they suit any background, light or dark.
 	 */
-	--shadow-light-edge: oklch(from var(--theme-background) calc(l + 0.08) c h / 0.9);
-	--shadow-dark-edge: oklch(from var(--theme-background) calc(l - 0.16) c h / 0.75);
+	--edge-light: oklch(from var(--theme-background) calc(l + 0.08) c h / 0.9);
+	--edge-dark: oklch(from var(--theme-background) calc(l - 0.16) c h / 0.75);
+
+	/* 1 with 3D depth on, 0 when it's off: everything that looks raised or sunk
+	   multiplies by it, so off is flat */
+	--depth-on: var(--theme-drop-shadows);
+	--shadow-light-edge: color-mix(
+		in oklab,
+		var(--edge-light) calc(var(--depth-on) * 100%),
+		transparent
+	);
+	--shadow-dark-edge: color-mix(
+		in oklab,
+		var(--edge-dark) calc(var(--depth-on) * 100%),
+		transparent
+	);
 
 	/* How far shadows reach, scaled by the depth choice */
-	--shadow-reach-large: calc(6px * var(--theme-depth));
-	--shadow-reach-small: calc(3px * var(--theme-depth));
-	--shadow-reach-inset: calc(4px * var(--theme-depth));
-	--shadow-reach-inset-small: calc(2px * var(--theme-depth));
+	--shadow-reach-large: calc(6px * var(--theme-depth) * var(--depth-on));
+	--shadow-reach-small: calc(3px * var(--theme-depth) * var(--depth-on));
+	--shadow-reach-inset: calc(4px * var(--theme-depth) * var(--depth-on));
+	--shadow-reach-inset-small: calc(2px * var(--theme-depth) * var(--depth-on));
 
 	/* Raised: sits up off the surface (buttons, cards) */
 	--shadow-raised:
@@ -78,8 +92,8 @@
 	 * Each is added after a thing's own shadow; with drop shadows off they
 	 * fade to nothing.
 	 */
-	--drop: calc(var(--theme-drop-shadows) * var(--theme-drop-strength));
-	--sink: calc(var(--theme-drop-shadows) * var(--theme-sink-depth));
+	--drop: calc(var(--depth-on) * var(--theme-drop-strength));
+	--sink: calc(var(--depth-on) * var(--theme-sink-depth));
 	--shadow-drop-small:
 		0 2px 3px rgb(0 0 0 / calc(0.3 * var(--drop))),
 		0 6px 14px -3px rgb(0 0 0 / calc(0.45 * var(--drop))); /* buttons, keys */

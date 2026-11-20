@@ -15,7 +15,8 @@ export const TIPS = Object.freeze({
 			'/': 'Your recorded songs: play one, or play them all.',
 			'/arranger': 'Write a chord chart and hear a bluegrass band play it.',
 			'/arranger/transcribe':
-				'Write a song down from a recording: its bars are found for you, then you write the chords and parts on them.'
+				'Write a song down from a recording: its bars are found for you, then you write the chords and parts on them.',
+			'/metronome': 'A metronome: just a click, at any tempo.'
 		},
 		settings: 'Settings: tips, the music keypad, the bass line, colours and shape.',
 		storage: 'What the app keeps on this device: see it, and delete what you don’t want.',
@@ -104,7 +105,7 @@ export const TIPS = Object.freeze({
 		record:
 			'Start recording: the count-in clicks, then the band plays the song once. Press again (or Stop) to finish early.',
 		countIn:
-			'How many bars of clicks before the song starts. With a pickup, the clicks stop where it starts, unless the metronome is on.',
+			'How many bars of clicks before the song starts. A pickup comes in over the last of them.',
 		use: 'Play this take on its track. The other takes on the track are kept, but not played.',
 		earlier: 'Move the take a little earlier, if it sounds behind the band.',
 		later: 'Move the take a little later, if it sounds ahead of the band.',
@@ -114,22 +115,20 @@ export const TIPS = Object.freeze({
 		addFile:
 			'Add a take from a WAV file someone sent you (one made with Download here), onto the chosen track.'
 	},
+	metronome: {
+		startStop: 'Start or stop the click. Space does the same.'
+	},
 	player: {
 		play: 'Play the arrangement from the start (round and round while Loop is on). Changes you make while it plays are picked up.',
 		stop: 'Stop playing. With Loop off, Play carries on from here.',
 		toStart: 'Back to the start: the next Play begins at the top (or the first bar you chose).',
-		countIn:
-			'Count-in: tap for off, one bar or two bars of clicks before the band comes in (a row of 1234 for each bar). Recording always counts in, the same number of bars.',
 		metronome:
-			'Start or stop a steady click to play along with, with or without the music. While the song plays, it follows the song’s bars.',
+			'Click along with the band: tap to have the click play with the song when you press Play (it follows the song’s bars). Tap again to turn it off.',
 		metronomeSound: 'The sound of the click: woodblock, cowbell, beep or tick.',
-		metronomeMeter:
-			'Beats in a bar, and the note that gets one beat (4 = quarters, 8 = eighths). Used when the click plays on its own.',
 		metronomeLevel: 'How loud the click is.',
 		swing:
 			'How long-short the eighth notes are: straight at the left, a triplet feel at 66%, dotted at 75%. Tap the number for straight again.',
-		tempo:
-			'The speed, and a metronome to play along with. Tap to change the speed or start the click.',
+		tempoBadge: 'The speed. Tap to change it, the swing, and the click’s sound and level.',
 		slower: 'Slower. Hold it down to keep going.',
 		faster: 'Faster. Hold it down to keep going.',
 		tempoNumber: 'The speed, in beats per minute. Tap to type a number.',
@@ -252,6 +251,8 @@ export const TIPS = Object.freeze({
 		undoBeats: 'Put the beats back as they were before your last change to them (⌘Z).',
 		doneFixingBeats: 'Hide the beats again, so they can’t move by accident.',
 		recordingLane: 'The recording, fitted to the bars. Tap to play from there.',
+		waveformColour:
+			"The waveform's colour. It's the same choice as Settings → Appearance → Waveform.",
 		chordBar:
 			'Tap to type this bar’s chords: a box on each beat a chord can change on (1 and 3 in 4/4), the chord where it changes.',
 		partLane: 'Edit this part in the piano roll below.',
@@ -287,15 +288,14 @@ export const TIPS = Object.freeze({
 	},
 
 	zoom: {
-		folded: 'Zoom the grid and the piano roll, across and down.',
 		across: {
 			out: 'Zoom out across: more of the song fits.',
 			in: 'Zoom in across: more room for each beat.',
 			reset: 'Back to the usual width.'
 		},
 		down: {
-			out: 'Zoom out down: shorter lanes and piano-roll rows.',
-			in: 'Zoom in down: taller lanes and piano-roll rows.',
+			out: 'Zoom out down: shorter lanes or rows.',
+			in: 'Zoom in down: taller lanes or rows.',
 			reset: 'Back to the usual height.'
 		}
 	},
@@ -387,8 +387,6 @@ export const TIPS = Object.freeze({
 		},
 		voices:
 			"Pick which line to change: the melody, a harmony part or the bass. The tune's other lines show faintly behind it.",
-		bassStyle:
-			'How the band writes its own bass line for this song. Saved and shared with the song.',
 		bassFromChart:
 			"Throw away your changes to the bass line and go back to the band's own, written from the chart's chords.",
 		roll: {
@@ -529,6 +527,6 @@ export const TIPS = Object.freeze({
 		resetAppearance: 'Go back to the original colours and shape.',
 		popOut: 'Settings in a window of its own, beside the app: every change shows straight away.',
 		dropShadows:
-			'Cards, buttons, menus and bars float above the page on deep shadows, lit from above.'
+			'Cards, buttons, menus and bars stand up off the page, and lanes and fields sink into it. Off, the whole app is flat.'
 	}
 });

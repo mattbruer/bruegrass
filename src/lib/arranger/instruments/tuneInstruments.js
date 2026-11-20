@@ -1,338 +1,157 @@
 /**
  * What the tune's voices (the melody and each harmony part) can play on:
- * the guitar samples, or a Tone.js synth standing in until there are
- * samples, as the upright does for the bass. Each voice's channel picks one
- * on its mixer strip. A new instrument is one entry in TUNE_INSTRUMENTS.
+ * recorded instruments from free sample sets, chosen by ear. Each voice's channel picks one on its mixer strip. A new
+ * instrument is one entry in TUNE_INSTRUMENTS; a new sample set is one entry
+ * in SAMPLE_SETS. How they're played: tuneVoice.js.
+ *
+ * The samples load from where the sets are published (GitHub Pages) for
+ * now; copying them to our own storage is a change to `url` only.
+ * Licences: tonejs-instruments CC BY 3.0 (credit nbrosowsky), FluidR3 GM MIT.
  */
-
-export const GUITAR = 'guitar';
 
 /**
  * @typedef {{
  *   id: string,
  *   name: string,
  *   family: string,
- *   synth?: {
- *     voice: 'Synth' | 'MonoSynth' | 'FMSynth' | 'AMSynth',
- *     options: Record<string, any>,
- *     vibrato?: { frequency: number, depth: number },
- *     octave?: number,
- *     volumeDb: number
- *   }
+ *   set: keyof typeof SAMPLE_SETS,
+ *   folder: string,
+ *   notes: number[],
+ *   octave: number,
+ *   volumeDb: number
  * }} TuneInstrument
- *   family: the heading it's listed under; synth: none for the guitar
- *   samples; octave: semitones above where the guitar sounds the tune (the
- *   guitar sounds an octave below written, so 12 is as written)
+ *   family: the heading it's listed under; folder: the instrument's name in its set;
+ *   notes: the MIDI notes it has a sample of (the others are pitched from the nearest);
+ *   octave: semitones above where the guitar sounds the tune (12 is as written)
  */
 
-/** Envelope shapes the recipes below share. */
-const BOWED = { attack: 0.06, decay: 0.2, sustain: 0.85, release: 0.2 };
-const BLOWN = { attack: 0.03, decay: 0.1, sustain: 0.9, release: 0.08 };
-const STRUCK = { attack: 0.001, decay: 1.2, sustain: 0, release: 0.8 };
-const HELD = { attack: 0.005, decay: 0.1, sustain: 1, release: 0.06 };
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const FLAT_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+const octaveOf = (/** @type {number} */ midi) => Math.floor(midi / 12) - 1;
+
+/** The notes loaded: a voice is never pitched further than this range allows. */
+const LOWEST = 36;
+const HIGHEST = 96;
+/** A General MIDI set has every note; a sample every this many semitones is plenty. */
+const GM_STEP = 3;
+
+export const SAMPLE_SETS = {
+	tonejs: {
+		/** @param {string} folder @param {number} midi */
+		url: (folder, midi) =>
+			`https://nbrosowsky.github.io/tonejs-instruments/samples/${folder}/${NOTE_NAMES[midi % 12].replace('#', 's')}${octaveOf(midi)}.mp3`
+	},
+	fluidR3: {
+		/** @param {string} folder @param {number} midi */
+		url: (folder, midi) =>
+			`https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/${folder}-mp3/${FLAT_NAMES[midi % 12]}${octaveOf(midi)}.mp3`
+	}
+};
+
+/** @param {string} list notes as tonejs-instruments names its files: "A3,As3,C4" */
+function tonejsNotes(list) {
+	return list
+		.split(',')
+		.map((name) => {
+			const octave = Number(name.slice(-1));
+			return (octave + 1) * 12 + NOTE_NAMES.indexOf(name.slice(0, -1).replace('s', '#'));
+		})
+		.filter((midi) => midi >= LOWEST && midi <= HIGHEST);
+}
+
+const GM_NOTES = Array.from(
+	{ length: Math.floor((HIGHEST - LOWEST) / GM_STEP) + 1 },
+	(_, i) => LOWEST + i * GM_STEP
+);
 
 /**
- * @param {number} baseFrequency
- * @param {number} octaves
- * @param {number} [attack]
+ * @param {string} id
+ * @param {string} name
+ * @param {string} family
+ * @param {string} list
+ * @param {number} [octave]
+ * @returns {TuneInstrument}
  */
-const filterSweep = (baseFrequency, octaves, attack = 0.08) => ({
-	filter: { type: 'lowpass', Q: 1.5, rolloff: -24 },
-	filterEnvelope: { attack, decay: 0.3, sustain: 0.6, release: 0.2, baseFrequency, octaves }
+const tonejs = (id, name, family, list, octave = 12) => ({
+	id,
+	name,
+	family,
+	set: 'tonejs',
+	folder: id,
+	notes: tonejsNotes(list),
+	octave,
+	volumeDb: 0
 });
 
-/*
- * Levels (volumeDb) were set by measuring a three-note phrase: held sounds
- * match the guitar samples' loudness, struck ones sit a little under it.
+/**
+ * @param {string} folder
+ * @param {string} name
+ * @param {string} family
+ * @param {number} [octave]
+ * @returns {TuneInstrument}
  */
+const fluidR3 = (folder, name, family, octave = 12) => ({
+	id: folder.replaceAll('_', '-'),
+	name,
+	family,
+	set: 'fluidR3',
+	folder,
+	notes: GM_NOTES,
+	octave,
+	volumeDb: 0
+});
+
 /** @type {TuneInstrument[]} */
 export const TUNE_INSTRUMENTS = [
-	{ id: GUITAR, name: 'Guitar', family: 'Plucked and struck' },
-	{
-		id: 'harp',
-		name: 'Harp',
-		family: 'Plucked and struck',
-		synth: {
-			voice: 'Synth',
-			options: { oscillator: { type: 'triangle' }, envelope: { ...STRUCK, decay: 1.6 } },
-			octave: 12,
-			volumeDb: -6
-		}
-	},
-	{
-		id: 'pizzicato',
-		name: 'Pizzicato',
-		family: 'Plucked and struck',
-		synth: {
-			voice: 'MonoSynth',
-			options: {
-				oscillator: { type: 'sawtooth' },
-				envelope: { attack: 0.003, decay: 0.35, sustain: 0, release: 0.2 },
-				...filterSweep(300, 3, 0.003)
-			},
-			octave: 12,
-			volumeDb: -3
-		}
-	},
-	{
-		id: 'marimba',
-		name: 'Marimba',
-		family: 'Plucked and struck',
-		synth: {
-			voice: 'FMSynth',
-			options: {
-				harmonicity: 4,
-				modulationIndex: 1.5,
-				envelope: { attack: 0.001, decay: 0.6, sustain: 0, release: 0.4 },
-				modulationEnvelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 }
-			},
-			octave: 12,
-			volumeDb: 3
-		}
-	},
-	{
-		id: 'bells',
-		name: 'Bells',
-		family: 'Plucked and struck',
-		synth: {
-			voice: 'FMSynth',
-			options: {
-				harmonicity: 3.5,
-				modulationIndex: 12,
-				envelope: { ...STRUCK, decay: 2 },
-				modulationEnvelope: { attack: 0.001, decay: 1, sustain: 0, release: 0.5 }
-			},
-			octave: 24,
-			volumeDb: -2
-		}
-	},
-	{
-		id: 'fiddle',
-		name: 'Fiddle',
-		family: 'Strings',
-		synth: {
-			voice: 'MonoSynth',
-			options: { oscillator: { type: 'sawtooth' }, envelope: BOWED, ...filterSweep(700, 2.5) },
-			vibrato: { frequency: 5.5, depth: 0.08 },
-			octave: 12,
-			volumeDb: -10
-		}
-	},
-	{
-		id: 'cello',
-		name: 'Cello',
-		family: 'Strings',
-		synth: {
-			voice: 'MonoSynth',
-			options: {
-				oscillator: { type: 'sawtooth' },
-				envelope: { ...BOWED, attack: 0.12 },
-				...filterSweep(300, 2, 0.15)
-			},
-			vibrato: { frequency: 5, depth: 0.06 },
-			volumeDb: -10
-		}
-	},
-	{
-		id: 'strings',
-		name: 'String section',
-		family: 'Strings',
-		synth: {
-			voice: 'Synth',
-			options: {
-				oscillator: { type: 'fatsawtooth', count: 3, spread: 20 },
-				envelope: { attack: 0.3, decay: 0.3, sustain: 0.8, release: 0.6 }
-			},
-			octave: 12,
-			volumeDb: -3
-		}
-	},
-	{
-		id: 'whistle',
-		name: 'Whistle',
-		family: 'Winds',
-		synth: {
-			voice: 'Synth',
-			options: { oscillator: { type: 'triangle' }, envelope: BLOWN },
-			vibrato: { frequency: 5, depth: 0.04 },
-			octave: 24,
-			volumeDb: -11
-		}
-	},
-	{
-		id: 'flute',
-		name: 'Flute',
-		family: 'Winds',
-		synth: {
-			voice: 'Synth',
-			options: { oscillator: { type: 'sine' }, envelope: { ...BLOWN, attack: 0.06 } },
-			vibrato: { frequency: 5, depth: 0.05 },
-			octave: 12,
-			volumeDb: -13
-		}
-	},
-	{
-		id: 'clarinet',
-		name: 'Clarinet',
-		family: 'Winds',
-		synth: {
-			voice: 'MonoSynth',
-			options: { oscillator: { type: 'square' }, envelope: BLOWN, ...filterSweep(900, 1) },
-			octave: 12,
-			volumeDb: -15
-		}
-	},
-	{
-		id: 'harmonica',
-		name: 'Harmonica',
-		family: 'Winds',
-		synth: {
-			voice: 'MonoSynth',
-			options: {
-				oscillator: { type: 'pulse', width: 0.3 },
-				envelope: { ...BLOWN, attack: 0.02 },
-				...filterSweep(1200, 1.5, 0.03)
-			},
-			vibrato: { frequency: 6, depth: 0.06 },
-			octave: 12,
-			volumeDb: -17
-		}
-	},
-	{
-		id: 'accordion',
-		name: 'Accordion',
-		family: 'Winds',
-		synth: {
-			voice: 'Synth',
-			options: { oscillator: { type: 'fatsquare', count: 2, spread: 12 }, envelope: BLOWN },
-			octave: 12,
-			volumeDb: -9
-		}
-	},
-	{
-		id: 'trumpet',
-		name: 'Trumpet',
-		family: 'Brass',
-		synth: {
-			voice: 'MonoSynth',
-			options: {
-				oscillator: { type: 'sawtooth' },
-				envelope: { ...BLOWN, attack: 0.03 },
-				...filterSweep(400, 4, 0.05)
-			},
-			octave: 12,
-			volumeDb: -10
-		}
-	},
-	{
-		id: 'horn',
-		name: 'Horn',
-		family: 'Brass',
-		synth: {
-			voice: 'MonoSynth',
-			options: {
-				oscillator: { type: 'sawtooth' },
-				envelope: { ...BLOWN, attack: 0.08 },
-				...filterSweep(250, 2.5, 0.12)
-			},
-			volumeDb: -10
-		}
-	},
-	{
-		id: 'keys',
-		name: 'Electric piano',
-		family: 'Keys',
-		synth: {
-			voice: 'FMSynth',
-			options: {
-				harmonicity: 3,
-				modulationIndex: 8,
-				envelope: { attack: 0.002, decay: 1.4, sustain: 0.1, release: 0.6 },
-				modulationEnvelope: { attack: 0.002, decay: 0.4, sustain: 0.05, release: 0.4 }
-			},
-			octave: 12,
-			volumeDb: 2
-		}
-	},
-	{
-		id: 'organ',
-		name: 'Organ',
-		family: 'Keys',
-		synth: {
-			voice: 'Synth',
-			options: {
-				oscillator: { type: 'custom', partials: [1, 0.8, 0.6, 0, 0.4, 0, 0, 0.3] },
-				envelope: HELD
-			},
-			octave: 12,
-			volumeDb: -12
-		}
-	},
-	{
-		id: 'choir',
-		name: 'Choir “ooh”',
-		family: 'Voices and pads',
-		synth: {
-			voice: 'Synth',
-			options: {
-				oscillator: { type: 'fattriangle', count: 3, spread: 15 },
-				envelope: { attack: 0.15, decay: 0.2, sustain: 0.9, release: 0.5 }
-			},
-			vibrato: { frequency: 5, depth: 0.03 },
-			octave: 12,
-			volumeDb: -7
-		}
-	},
-	{
-		id: 'pad',
-		name: 'Warm pad',
-		family: 'Voices and pads',
-		synth: {
-			voice: 'AMSynth',
-			options: {
-				harmonicity: 2,
-				envelope: { attack: 0.5, decay: 0.3, sustain: 0.9, release: 1.2 },
-				modulationEnvelope: { attack: 0.8, decay: 0.3, sustain: 1, release: 1 }
-			},
-			octave: 12,
-			volumeDb: 7
-		}
-	},
-	{
-		id: 'square-lead',
-		name: 'Square lead',
-		family: 'Synths',
-		synth: {
-			voice: 'Synth',
-			options: { oscillator: { type: 'square' }, envelope: { ...HELD, sustain: 0.7 } },
-			octave: 12,
-			volumeDb: -12
-		}
-	},
-	{
-		id: 'saw-lead',
-		name: 'Saw lead',
-		family: 'Synths',
-		synth: {
-			voice: 'MonoSynth',
-			options: { oscillator: { type: 'sawtooth' }, envelope: HELD, ...filterSweep(1500, 2, 0.01) },
-			vibrato: { frequency: 5.5, depth: 0.05 },
-			octave: 12,
-			volumeDb: -11
-		}
-	},
-	{
-		id: 'chip',
-		name: 'Chiptune',
-		family: 'Synths',
-		synth: {
-			voice: 'Synth',
-			options: { oscillator: { type: 'pulse', width: 0.25 }, envelope: { ...HELD, sustain: 0.6 } },
-			octave: 12,
-			volumeDb: -13
-		}
-	}
+	tonejs(
+		'piano',
+		'Piano',
+		'Keys',
+		'A1,A2,A3,A4,A5,A6,C2,C3,C4,C5,C6,C7,Ds2,Ds3,Ds4,Ds5,Ds6,Fs2,Fs3,Fs4,Fs5,Fs6'
+	),
+	fluidR3('electric_piano_1', 'Electric piano', 'Keys'),
+	tonejs(
+		'organ',
+		'Organ',
+		'Organ',
+		'A1,A2,A3,A4,A5,C1,C2,C3,C4,C5,C6,Ds1,Ds2,Ds3,Ds4,Ds5,Fs1,Fs2,Fs3,Fs4,Fs5'
+	),
+	fluidR3('rock_organ', 'Rock organ', 'Organ'),
+	fluidR3('accordion', 'Accordion', 'Reeds'),
+	fluidR3('tango_accordion', 'Tango accordion', 'Reeds'),
+	fluidR3('banjo', 'Banjo', 'Plucked'),
+	fluidR3('sitar', 'Sitar', 'Plucked'),
+	fluidR3('pizzicato_strings', 'Pizzicato strings', 'Plucked'),
+	tonejs('violin', 'Violin', 'Strings', 'A3,A4,A5,A6,C4,C5,C6,C7,E4,E5,E6,G3,G4,G5,G6'),
+	tonejs(
+		'cello',
+		'Cello',
+		'Strings',
+		'A2,A3,A4,As2,As3,B2,B3,B4,C2,C3,C4,C5,Cs3,Cs4,D2,D3,D4,Ds2,Ds3,Ds4,E2,E3,E4,F2,F3,F4,Fs3,Fs4,G2,G3,G4,Gs2,Gs3,Gs4',
+		0
+	),
+	tonejs('flute', 'Flute', 'Winds', 'A4,A5,A6,C4,C5,C6,C7,E4,E5,E6', 24),
+	tonejs('clarinet', 'Clarinet', 'Winds', 'As3,As4,As5,D3,D4,D5,D6,F3,F4,F5,Fs6'),
+	fluidR3('oboe', 'Oboe', 'Winds'),
+	fluidR3('bassoon', 'Bassoon', 'Winds', 0),
+	tonejs('trumpet', 'Trumpet', 'Brass', 'A3,A5,As4,C4,C6,D5,Ds4,F3,F4,F5,G4'),
+	tonejs('xylophone', 'Xylophone', 'Tuned percussion', 'C5,C6,C7,C8,G4,G5,G6,G7', 24),
+	fluidR3('vibraphone', 'Vibraphone', 'Tuned percussion'),
+	fluidR3('marimba', 'Marimba', 'Tuned percussion'),
+	fluidR3('glockenspiel', 'Glockenspiel', 'Tuned percussion', 24),
+	fluidR3('celesta', 'Celesta', 'Tuned percussion', 24),
+	fluidR3('steel_drums', 'Steel drums', 'Tuned percussion')
 ];
+
+/** What each tune channel starts on, so the parts stand apart from the lead and each other. */
+export const TUNE_INSTRUMENT_DEFAULTS = {
+	melody: 'organ',
+	tenor: 'violin',
+	'high-baritone': 'flute',
+	baritone: 'clarinet',
+	'low-tenor': 'cello'
+};
+const FALLBACK = TUNE_INSTRUMENT_DEFAULTS.melody;
 
 /**
  * The instruments by family, in list order.
@@ -347,49 +166,26 @@ export function instrumentFamilies() {
 }
 
 /**
- * The instrument with this id, or the guitar for an unknown one.
+ * The instrument with this id, or `fallback`'s (an id no longer offered, from an older song).
  * @param {string | undefined} id
+ * @param {string} [fallback]
+ * @returns {TuneInstrument}
  */
-export function tuneInstrument(id) {
-	return TUNE_INSTRUMENTS.find((each) => each.id === id) ?? TUNE_INSTRUMENTS[0];
+export function tuneInstrument(id, fallback = FALLBACK) {
+	const found = (/** @type {string | undefined} */ each) =>
+		TUNE_INSTRUMENTS.find((instrument) => instrument.id === each);
+	return found(id) ?? found(fallback) ?? TUNE_INSTRUMENTS[0];
 }
 
 /**
- * A synth instrument, ready to play into a channel. Notes may overlap.
- * @param {typeof import('tone')} Tone
- * @param {NonNullable<TuneInstrument['synth']>} synth
- * @param {import('tone').InputNode} destination
+ * The tune channel's own starting instrument.
+ * @param {string} channelId
  */
-export function createTuneSynth(Tone, synth, destination) {
-	const vibrato = synth.vibrato ? new Tone.Vibrato(synth.vibrato).connect(destination) : null;
-	const poly = new Tone.PolySynth(/** @type {any} */ (Tone[synth.voice]), synth.options);
-	poly.volume.value = synth.volumeDb;
-	poly.connect(vibrato ?? destination);
-
-	return {
-		/**
-		 * @param {number} pitch MIDI, where the guitar would sound it
-		 * @param {number} duration seconds
-		 * @param {number} time audio-clock time
-		 * @param {number} levelDb the note's level as the guitar would play it
-		 */
-		play(pitch, duration, time, levelDb) {
-			poly.triggerAttackRelease(
-				Tone.Frequency(pitch + (synth.octave ?? 0), 'midi').toFrequency(),
-				duration,
-				time,
-				Math.min(1, Tone.dbToGain(levelDb))
-			);
-		},
-		/** Fade out quickly and let go of the synth (cancels anything scheduled). */
-		stop() {
-			poly.volume.rampTo(-Infinity, 0.03);
-			setTimeout(() => {
-				poly.dispose();
-				vibrato?.dispose();
-			}, 200);
-		}
-	};
+export function defaultTuneInstrument(channelId) {
+	return (
+		TUNE_INSTRUMENT_DEFAULTS[/** @type {keyof typeof TUNE_INSTRUMENT_DEFAULTS} */ (channelId)] ??
+		FALLBACK
+	);
 }
 
 /**
@@ -398,5 +194,6 @@ export function createTuneSynth(Tone, synth, destination) {
  * @param {string} channelId
  */
 export function channelInstrument(channels, channelId) {
-	return tuneInstrument(channels.find((channel) => channel.id === channelId)?.instrument);
+	const chosen = channels.find((channel) => channel.id === channelId)?.instrument;
+	return tuneInstrument(chosen, defaultTuneInstrument(channelId));
 }

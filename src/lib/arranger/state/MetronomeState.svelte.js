@@ -1,67 +1,46 @@
 /**
- * The metronome: a click you can turn on with or without the song. Alone it
- * clicks in the meter and sound chosen in its menu; while the song plays it
- * follows the song's bars. Off each time the page opens (not saved with the song).
+ * The band's click: armed with the metronome key, it clicks along whenever
+ * the band plays, following the song's bars, and is silent while stopped.
+ * Armed or not is this device's habit (settings), like the count-in. A click
+ * on its own is the Metronome page's ($lib/metronome/).
  */
 import { settings } from '$lib/settings/settings.svelte.js';
 import { getMetronomeInput } from '../mixer/mixerGraph.svelte.js';
-import { soloClickGrid } from '../playback/metronome/clickGrid.js';
 import { startClicks } from '../playback/metronome/clicker.js';
 import { clickSoundById } from '../playback/metronome/sounds.js';
-import { tempoClock } from '../chart/tempoCurve.js';
+import { clickClock, gainOf } from '../playback/metronome/clickClock.js';
 
-/** Lead before the first click when it starts alone (seconds). */
-const START_DELAY = 0.1;
-
-/** The level's range, in dB before the output stage. */
-export const LEVEL_MIN_DB = -40;
-export const LEVEL_MAX_DB = 0;
-
-const MAX_BEATS = 12;
-const UNITS = [4, 8];
-
-/** @param {number} db */
-function gainOf(db) {
-	return 10 ** (db / 20);
-}
+export { LEVEL_MAX_DB, LEVEL_MIN_DB } from '../playback/metronome/clickClock.js';
 
 export class MetronomeState {
-	/** Is the click on? */
-	on = $state(false);
-
 	/** The sound, level and meter, remembered in settings. */
 	prefs = settings.metronome;
 
 	/** @type {import('./PlayerState.svelte.js').PlayerState} */
 	#player;
-	/** @type {import('./ArrangementState.svelte.js').ArrangementState} */
-	#arrangement;
 	/** The metronome's gain node, once the audio is built (null before). */
 	#node = /** @type {import('tone').Gain | null} */ (null);
 	/** Stops the clicks now sounding (null when none). */
 	#stopClicks = /** @type {(() => void) | null} */ (null);
 	/** Counts every sync, so a start overtaken while it loads gives up. */
 	#run = 0;
-	/** The click's clock while it sounds: when the first click falls and how long a beat is (null when off). */
-	#clock = /** @type {{ origin: number, beatSeconds: number, now: () => number } | null} */ (null);
+	/** The click's clock while it sounds (null when silent). */
+	#clock = /** @type {ReturnType<typeof clickClock>} */ (null);
 
-	/**
-	 * @param {import('./PlayerState.svelte.js').PlayerState} player
-	 * @param {import('./ArrangementState.svelte.js').ArrangementState} arrangement
-	 */
-	constructor(player, arrangement) {
+	/** @param {import('./PlayerState.svelte.js').PlayerState} player */
+	constructor(player) {
 		this.#player = player;
-		this.#arrangement = arrangement;
 	}
 
+	/** Is the click armed to play with the band? */
+	get on() {
+		return this.prefs.withBand;
+	}
+
+	/** Arm or disarm it; a playing band gains or loses its click at once. */
 	async toggle() {
-		this.on = !this.on;
+		this.prefs.withBand = !this.prefs.withBand;
 		await this.sync();
-	}
-
-	turnOff() {
-		this.on = false;
-		this.sync();
 	}
 
 	/** @param {string} id a sound from sounds.js */
@@ -70,46 +49,32 @@ export class MetronomeState {
 		await this.sync();
 	}
 
-	/**
-	 * @param {number} beats
-	 * @param {number} unit 4 or 8
-	 */
-	async setMeter(beats, unit) {
-		this.prefs.beats = Math.min(MAX_BEATS, Math.max(1, Math.round(beats) || 1));
-		this.prefs.unit = UNITS.includes(unit) ? unit : 4;
-		await this.sync();
-	}
-
 	/** Apply the level the menu chose (no restart: it changes while the click plays). */
 	applyLevel() {
 		if (this.#node) this.#node.gain.value = gainOf(this.prefs.level);
 	}
 
-	/**
-	 * Start, restart or stop the click to match what's happening: the song's
-	 * clicks while it plays, otherwise a click alone in the chosen meter.
-	 */
+	/** Start, restart or stop the click to match the band: clicking while it plays and the key is lit. */
 	async sync() {
 		const run = ++this.#run;
 		this.#halt();
-		if (!this.on) return;
+		const clicks = this.#player.playback?.clicks;
+		if (!this.on || !clicks) return;
 
 		const Tone = await import('tone');
-		await Tone.start();
 		const node = await getMetronomeInput();
-		if (run !== this.#run || !this.on) return;
+		if (run !== this.#run) return;
 
 		this.#node = /** @type {import('tone').Gain} */ (node);
 		this.applyLevel();
-		const clicks = this.#player.playback?.clicks ?? this.#soloClicks(Tone);
 		const sound = clickSoundById(this.prefs.sound);
 		this.#stopClicks = startClicks(Tone, { ...clicks, sound, destination: node });
 		this.#clock = clickClock(Tone, clicks);
 	}
 
 	/**
-	 * Beats since the first click, by the clock you hear (null when off), for
-	 * drawing the pendulum on the beat.
+	 * Beats since the first click, by the clock you hear (null when silent),
+	 * for drawing the pendulum on the beat.
 	 */
 	beatsNow() {
 		const clock = this.#clock;
@@ -121,30 +86,4 @@ export class MetronomeState {
 		this.#stopClicks = null;
 		this.#clock = null;
 	}
-
-	/** @param {typeof import('tone')} Tone */
-	#soloClicks(Tone) {
-		const grid = soloClickGrid({ beats: this.prefs.beats, unit: this.prefs.unit });
-		return {
-			origin: Tone.now() + START_DELAY,
-			clock: tempoClock([], this.#arrangement.bpm, grid.lengthQuarters),
-			grid
-		};
-	}
-}
-
-/**
- * @param {typeof import('tone')} Tone
- * @param {{ origin: number, clock: import('../chart/tempoCurve.js').TempoClock, grid: import('../playback/metronome/clickGrid.js').ClickGrid }} clicks
- */
-function clickClock(Tone, { origin, clock, grid }) {
-	if (grid.beats.length === 0) return null;
-	const raw = /** @type {AudioContext} */ (/** @type {unknown} */ (Tone.getContext().rawContext));
-	return {
-		origin,
-		/** @param {number} seconds since the first click */
-		beatsAt: (seconds) => (clock.quartersAt(seconds) * grid.beats.length) / grid.lengthQuarters,
-		// What's heard lags the audio clock by the output's latency (a lot, over Bluetooth)
-		now: () => Tone.immediate() - (raw.outputLatency || 0)
-	};
 }

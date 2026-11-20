@@ -1,9 +1,9 @@
 <script>
 	/**
-	 * Tempo and metronome in one tile on the bar: the metronome, with the
-	 * tempo in a badge in the corner. While the click plays, the tile is lit
-	 * and the pendulum swings on the beat; hovering it swings at the tempo.
-	 * Tap it for the tempo panel.
+	 * The metronome key on the bar, with the tempo in a badge in its corner.
+	 * Tap the key to arm the click: lit, it plays along with the band when
+	 * Play is pressed, its pendulum swinging on the beat (hovering swings it
+	 * at the tempo). Tap the badge for the tempo panel.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -43,31 +43,38 @@
 	}
 </script>
 
-<button
-	type="button"
-	class="bar-tile ui-button"
-	class:ui-button-on={metronome.on}
-	style:--beat="{60 / arrangement.bpm}s"
-	popovertarget={PANEL_ID}
-	use:tooltip={TIPS.player.tempo}
->
-	<MetronomeIcon tempo={arrangement.bpm} bind:pendulum />
-	<span class="tile-label">Tempo and metronome</span>
-	<span class="badge">{arrangement.bpm}<span class="sr-only"> beats per minute</span></span>
-</button>
+<span class="tile" class:on={metronome.on}>
+	<button
+		type="button"
+		class="bar-tile ui-button"
+		class:ui-button-on={metronome.on}
+		style:--beat="{60 / arrangement.bpm}s"
+		aria-pressed={metronome.on}
+		onclick={() => metronome.toggle()}
+		use:tooltip={TIPS.player.metronome}
+	>
+		<MetronomeIcon tempo={arrangement.bpm} bind:pendulum />
+		<span class="tile-label">Click with the band</span>
+	</button>
+	<button type="button" class="badge" popovertarget={PANEL_ID} use:tooltip={TIPS.player.tempoBadge}>
+		{arrangement.bpm}<span class="sr-only"> beats per minute: change the tempo</span>
+	</button>
+</span>
 <TempoPanel id={PANEL_ID} />
 
 <style>
-	button {
+	.tile {
 		position: relative;
+		display: inline-flex;
 	}
 
-	/* The tempo, small in the corner: information, not a label */
+	/* The tempo, small in the corner: tap it for the tempo panel */
 	.badge {
 		position: absolute;
 		right: 0.3rem;
 		bottom: 0.3rem;
-		padding: 0.05rem 0.35rem;
+		padding: 0.15rem 0.45rem;
+		cursor: pointer;
 		border-radius: 999px;
 		background: var(--color-surface-deep);
 		border: 1px solid var(--color-line);
@@ -76,12 +83,27 @@
 		font-weight: 800;
 		line-height: 1.3;
 		font-variant-numeric: tabular-nums;
+		box-shadow: var(--shadow-drop-small);
 	}
 
-	/* A phone on its side: the tile is too small for a badge */
+	/* It sinks with the key when the key is lit */
+	.tile.on .badge {
+		transform: translateY(calc(var(--key-depth, 0px) - 2px * var(--depth-on)));
+	}
+
+	@media (hover: hover) {
+		.badge:hover {
+			border-color: var(--color-accent);
+		}
+	}
+
+	/* A phone on its side: the key is small, so the badge is too */
 	@media (max-height: 600px) {
 		.badge {
-			display: none;
+			right: 0;
+			bottom: 0;
+			padding: 0 0.25rem;
+			font-size: 0.6rem;
 		}
 	}
 </style>

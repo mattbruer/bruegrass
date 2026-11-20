@@ -43,10 +43,7 @@ export class StretchPlayer {
 	#loop = null;
 	/** @type {{ times: number[], accents: boolean[] }} */
 	#clicks = { times: [], accents: [] };
-	/** @type {import('./partNotes.js').PartNote[]} */
-	#notes = [];
-	/** @type {{ recording: number, parts: Record<string, number> }} */
-	#levels = { recording: 1, parts: {} };
+	#levels = { recording: 1 };
 
 	/**
 	 * The stretcher's frame length (see sounds.js). Takes effect at once, from where it is.
@@ -67,20 +64,11 @@ export class StretchPlayer {
 	}
 
 	/**
-	 * Written notes to play along with the song (empty: none).
-	 * @param {import('./partNotes.js').PartNote[]} notes in order of start
-	 */
-	setNotes(notes) {
-		this.#notes = notes;
-		this.#node?.port.postMessage({ type: 'notes', notes });
-	}
-
-	/**
-	 * How loud the recording and each part's notes are, 0 to 1 (0: muted).
-	 * @param {{ recording: number, parts: Record<string, number> }} levels
+	 * How loud the recording is, 0 to 1 (0: muted).
+	 * @param {{ recording: number }} levels
 	 */
 	setLevels(levels) {
-		this.#levels = { recording: levels.recording, parts: { ...levels.parts } };
+		this.#levels = { recording: levels.recording };
 		this.#node?.port.postMessage({ type: 'levels', ...this.#levels });
 	}
 
@@ -189,7 +177,6 @@ export class StretchPlayer {
 		node.connect(this.#context.destination);
 		if (this.#frameSeconds) node.port.postMessage({ type: 'frame', seconds: this.#frameSeconds });
 		node.port.postMessage({ type: 'clicks', ...this.#clicks });
-		node.port.postMessage({ type: 'notes', notes: this.#notes });
 		node.port.postMessage({ type: 'tune', cents: this.cents });
 		node.port.postMessage({ type: 'levels', ...this.#levels });
 		node.port.postMessage({

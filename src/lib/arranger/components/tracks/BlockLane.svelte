@@ -50,8 +50,8 @@
 <style>
 	.lane {
 		position: relative;
-		height: var(--lane-height);
-		border-bottom: 1px solid var(--color-line);
+		min-height: var(--lane-height);
+		border-bottom: var(--lane-divider, 1px solid var(--color-line));
 		overflow: hidden;
 	}
 

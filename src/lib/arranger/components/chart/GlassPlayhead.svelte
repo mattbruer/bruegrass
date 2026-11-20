@@ -34,8 +34,8 @@
 		box-shadow:
 			inset 0 0 0 1px rgb(255 255 255 / 0.6),
 			0 0 0 1px rgb(110 0 0 / 0.35),
-			9px 11px 12px rgb(0 0 0 / 0.28),
-			2px 3px 3px rgb(0 0 0 / 0.2);
+			9px 11px 12px rgb(0 0 0 / calc(0.28 * var(--depth-on))),
+			2px 3px 3px rgb(0 0 0 / calc(0.2 * var(--depth-on)));
 		backdrop-filter: saturate(1.35) brightness(1.04);
 	}
 

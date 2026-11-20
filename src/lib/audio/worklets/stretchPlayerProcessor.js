@@ -10,8 +10,7 @@
  *               { type: 'frame', seconds }  the stretcher's frame length (the page's Sound)
  *               { type: 'clicks', times, accents }  clicks on these song times (empty: none)
  *               { type: 'loop', from, to }  play this stretch over and over (from null: no loop)
- *               { type: 'notes', notes }  the written parts' notes to play (partNotes.js)
- *               { type: 'levels', recording, parts }  0 to 1: the recording's, and each part's
+ *               { type: 'levels', recording }  0 to 1: the recording's level
  *               { type: 'tune', cents }  move the song's pitch a little (fine tuning)
  * Messages out: { type: 'time', seconds, at, speed } about 40 times a second while
  *               playing, and at once after a jump: `seconds` into the song is heard
@@ -24,7 +23,6 @@
 import { createStretcher, frameSizeFor } from '../stretch/stretcher.js';
 import { withPitchShift } from '../stretch/withPitchShift.js';
 import { createBeatClicks } from '../../slowDowner/beatClicks.js';
-import { createPartNotes } from '../../slowDowner/partNotes.js';
 
 /** Play and pause fade over this long, so they never click. */
 const FADE_SECONDS = 0.01;
@@ -47,7 +45,6 @@ class StretchPlayerProcessor extends AudioWorkletProcessor {
 		this.quantaSinceReport = 0;
 		this.spareRight = new Float32Array(128);
 		this.clicks = createBeatClicks(sampleRate);
-		this.notes = createPartNotes(sampleRate);
 		this.recordingLevel = 1;
 		this.heardRecordingLevel = 1;
 		/** @type {{ from: number, to: number } | null} */
@@ -79,14 +76,11 @@ class StretchPlayerProcessor extends AudioWorkletProcessor {
 			this.loop = message.from === null ? null : { from: message.from, to: message.to };
 		} else if (message.type === 'clicks') {
 			this.clicks.set(message.times, message.accents);
-		} else if (message.type === 'notes') {
-			this.notes.set(message.notes);
 		} else if (message.type === 'tune') {
 			this.cents = message.cents;
 			this.stretcher?.setCents(this.cents);
 		} else if (message.type === 'levels') {
 			this.recordingLevel = message.recording;
-			this.notes.setLevels(message.parts);
 		}
 	}
 
@@ -103,7 +97,6 @@ class StretchPlayerProcessor extends AudioWorkletProcessor {
 		const from = stretcher.time;
 		stretcher.render(left, right, this.speed);
 		this.applyRecordingLevel(left, right);
-		this.notes.mixInto(left, right, from, stretcher.time);
 		this.fade(left, right);
 		if (this.playing) this.clicks.mixInto(left, right, from, stretcher.time);
 		if (this.playing && this.loop && stretcher.time >= this.loop.to) {

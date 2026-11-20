@@ -47,7 +47,7 @@
 			{#each APPEARANCE_PRESETS as preset (preset.name)}
 				<button
 					type="button"
-					class="flex ui-button items-center gap-2 px-3 py-2 text-sm"
+					class="flex items-center gap-2 ui-button px-3 py-2 text-sm"
 					class:ui-button-on={isCurrentLook(preset.appearance)}
 					aria-pressed={isCurrentLook(preset.appearance)}
 					onclick={() => useAppearance(preset.appearance)}
@@ -94,14 +94,6 @@
 		>
 			<ColorSwatch bind:color={settings.appearance.accent} labelledBy="setting-accent" />
 		</SettingRow>
-
-		<SettingRow
-			id="setting-waveform"
-			label="Waveform"
-			description="A recording's sound wave in Transcribe."
-		>
-			<ColorSwatch bind:color={settings.appearance.waveform} labelledBy="setting-waveform" />
-		</SettingRow>
 	</section>
 
 	<section class="ui-well px-4 py-3">
@@ -110,7 +102,7 @@
 		<SettingRow
 			id="setting-drop-shadows"
 			label="3D depth"
-			description="Things float above the page on deep drop shadows. Off: flat."
+			description="Things stand up off the page and sink into it. Off: the whole app is flat."
 		>
 			<ToggleSwitch
 				bind:on={settings.appearance.dropShadows}
@@ -156,25 +148,25 @@
 					class="range"
 				/>
 			</label>
+			<label class="block pb-2">
+				<span class="flex justify-between font-semibold">
+					Edge shading
+					<span class="font-mono text-sm text-ink-soft">{settings.appearance.depth.toFixed(1)}</span
+					>
+				</span>
+				<span class="block text-sm text-ink-soft"
+					>The soft shading around every edge, from none (0) to deep (2).</span
+				>
+				<input
+					type="range"
+					min="0"
+					max="2"
+					step="0.1"
+					bind:value={settings.appearance.depth}
+					class="range"
+				/>
+			</label>
 		{/if}
-
-		<label class="block py-2">
-			<span class="flex justify-between font-semibold">
-				Edge shading
-				<span class="font-mono text-sm text-ink-soft">{settings.appearance.depth.toFixed(1)}</span>
-			</span>
-			<span class="block text-sm text-ink-soft"
-				>The soft shading around every edge, from none (0) to deep (2).</span
-			>
-			<input
-				type="range"
-				min="0"
-				max="2"
-				step="0.1"
-				bind:value={settings.appearance.depth}
-				class="range"
-			/>
-		</label>
 
 		<label class="block py-2">
 			<span class="flex justify-between font-semibold">
@@ -197,7 +189,7 @@
 
 	<button
 		type="button"
-		class="ui-button self-start px-4 py-2 text-sm"
+		class="self-start ui-button px-4 py-2 text-sm"
 		onclick={() => useAppearance(DEFAULT_APPEARANCE)}
 		use:tooltip={TIPS.settings.resetAppearance}
 	>

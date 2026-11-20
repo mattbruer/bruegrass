@@ -157,9 +157,9 @@
 		padding: 7px;
 		text-shadow: none;
 		box-shadow:
-			inset 0 2px 5px rgb(0 0 0 / 0.8),
+			inset 0 2px 5px rgb(0 0 0 / calc(0.8 * var(--depth-on))),
 			var(--shadow-sunk-deep),
-			0 1px 0 rgb(255 255 255 / 0.5);
+			0 1px 0 rgb(255 255 255 / calc(0.5 * var(--depth-on)));
 	}
 
 	.stage {
@@ -174,7 +174,7 @@
 		/* Set back behind the bezel's lip, lit from behind when the look glows */
 		box-shadow:
 			inset 0 0 28px var(--strip-glow, transparent),
-			inset 0 7px 10px -5px rgb(0 0 0 / 0.45);
+			inset 0 7px 10px -5px rgb(0 0 0 / calc(0.45 * var(--depth-on)));
 		padding: 1.75rem 0 0.75rem;
 	}
 

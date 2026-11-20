@@ -96,8 +96,7 @@
 
 		<p class="hint">
 			Headphones on (wired if you can). You’ll hear the count-in clicks, then the band plays the
-			song once while you record. If the tune starts with a pickup, the clicks stop where it starts:
-			come in there.
+			song once while you record. If the tune starts with a pickup, sing it over the last clicks.
 		</p>
 
 		{#if recording.lastInput}

@@ -1,7 +1,7 @@
 <script>
 	/**
 	 * Above the piano roll: how finely notes snap, the song's key, moving
-	 * the part an octave, and deleting the picked note.
+	 * the part an octave, deleting the picked note, and the roll's zoom.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { GRIDS } from '../../melody/roll/ticks.js';
@@ -10,6 +10,8 @@
 	import { guessedKey, keyName } from '../../chart/key.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
+	import { settings } from '$lib/settings/settings.svelte.js';
 
 	/**
 	 * @type {{
@@ -101,4 +103,6 @@
 		onclick={deleteSelected}
 		use:tooltip={TIPS.melody.roll.delete}>Delete note</button
 	>
+
+	<ZoomControl zoom={settings.pianoRoll.zoom} />
 </div>

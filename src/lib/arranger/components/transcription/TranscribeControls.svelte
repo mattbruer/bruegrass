@@ -3,7 +3,8 @@
 	 * Transcribe's control bar, centred: where you are (play, start over, a
 	 * bar back or forward, the clock) and how it sounds (speed with the pitch
 	 * kept, Count along as the metronome: a click on every beat, higher
-	 * on ONE, and the tuner). + Marker and Zoom are beside the grid's ruler, and the
+	 * on ONE, and the tuner) and how much of the grid you see (Zoom, across and
+	 * down; the piano roll has its own in its toolbar). + Marker is beside the grid's ruler, and the
 	 * recording's own settings in its lane's menu (RecordingMenu). It stays
 	 * in view under the top bar, so Play is at hand while you write in the
 	 * piano roll below. Only in the workspace: placing beat 1 has its own few
@@ -19,6 +20,7 @@
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import PlayClock from './PlayClock.svelte';
 	import TunerButton from '$lib/tuner/TunerButton.svelte';
+	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
 
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
 	let { transcription } = $props();
@@ -116,11 +118,15 @@
 			<CountAlongButton {transcription} class="h-10 w-12" />
 			<TunerButton class="h-10 w-12" onopen={() => player.pause()} />
 		</div>
+
+		<div class="cluster">
+			<ZoomControl zoom={settings.transcribe.zoom} />
+		</div>
 	</div>
 </div>
 
 <style>
-	/* Two clusters, centred: where you are, and how it sounds. Every control is one
+	/* Three clusters, centred: where you are, how it sounds, and zoom. Every control is one
 	   height and sits on one centre line. The card is a container, so the
 	   layout follows the bar's own width. */
 	.controls {

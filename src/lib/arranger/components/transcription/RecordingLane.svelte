@@ -7,6 +7,7 @@
 	import { waveformPath } from '../../takes/waveformPeaks.js';
 	import { WAVE_FILL, bentWaveform } from '../../transcription/recordingShape.js';
 	import { PEAKS_PER_SECOND } from '../../transcription/TranscriptionState.svelte.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -17,6 +18,18 @@
 	 * }}
 	 */
 	let { transcription, scale } = $props();
+
+	/**
+	 * The waveform as a relief map: its outline softened into a height map
+	 * (highest along the middle line) and lit by a low sun from the top left.
+	 */
+	const RELIEF = {
+		softness: 3,
+		height: 2,
+		lightFrom: 225,
+		sunHeight: 40,
+		contrast: 1.6
+	};
 
 	/**
 	 * The recording a bar at a time (the lead-in as one stretch, and whatever
@@ -54,12 +67,27 @@
 <!-- svelte-ignore a11y_click_events_have_key_events (Space plays; the ruler and keys move around) -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="lane" onclick={playFrom} use:tooltip={TIPS.transcription.recordingLane}>
-	<div class="waveform">
+	<svg class="light" aria-hidden="true">
+		<filter id="recording-relief" color-interpolation-filters="sRGB">
+			<feGaussianBlur in="SourceAlpha" stdDeviation={RELIEF.softness} result="height" />
+			<feDiffuseLighting
+				in="height"
+				surfaceScale={RELIEF.height}
+				lighting-color="white"
+				result="light"
+			>
+				<feDistantLight azimuth={RELIEF.lightFrom} elevation={RELIEF.sunHeight} />
+			</feDiffuseLighting>
+			<feComposite in="SourceGraphic" in2="light" operator="arithmetic" k1={RELIEF.contrast} />
+		</filter>
+	</svg>
+	<div class="ground"></div>
+	<div class="waveform" class:relief={settings.appearance.dropShadows}>
 		{#each pieces as piece, index (index)}
 			<svg
 				class="wave"
 				style:left="{piece.left}px"
-				style:width="{piece.width}px"
+				style:width="{piece.width + 1}px"
 				viewBox="0 -1 {piece.columns} 2"
 				preserveAspectRatio="none"
 				aria-hidden="true"
@@ -73,8 +101,8 @@
 <style>
 	.lane {
 		position: relative;
-		height: var(--recording-lane-height);
-		border-bottom: 1px solid var(--color-line);
+		min-height: var(--recording-lane-height);
+		border-bottom: var(--lane-divider, 1px solid var(--color-line));
 		cursor: pointer;
 	}
 
@@ -95,5 +123,26 @@
 
 	.wave {
 		fill: var(--color-waveform);
+	}
+
+	.waveform.relief {
+		filter: url(#recording-relief) var(--filter-drop);
+	}
+
+	.light {
+		position: absolute;
+		width: 0;
+		height: 0;
+	}
+
+	/* The line the waveform rises from */
+	.ground {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 50%;
+		height: 1px;
+		background: var(--color-ink-faint);
+		pointer-events: none;
 	}
 </style>

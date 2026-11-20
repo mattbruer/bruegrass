@@ -13,6 +13,7 @@
 	import { page } from '$app/state';
 	import GearIcon from './GearIcon.svelte';
 	import StorageIcon from './StorageIcon.svelte';
+	import MetronomeIcon from '$lib/arranger/components/icons/MetronomeIcon.svelte';
 	import TipsToggle from '$lib/tooltips/TipsToggle.svelte';
 	import { isLocalDev } from '$lib/devOnly.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -28,10 +29,12 @@
 		return () => document.documentElement.style.removeProperty('--top-bar-height');
 	});
 
+	/** Sections. `phoneIcon` stands in for the name on a phone, so the bar still fits. */
 	const PAGES = /** @type {const} */ ([
 		{ path: '/', name: 'Songs' },
 		{ path: '/arranger', name: 'Arranger' },
-		{ path: '/arranger/transcribe', name: 'Transcribe' }
+		{ path: '/arranger/transcribe', name: 'Transcribe' },
+		{ path: '/metronome', name: 'Metronome', phoneIcon: MetronomeIcon }
 	]);
 
 	/**
@@ -78,12 +81,18 @@
 		{#each PAGES as section (section.path)}
 			<a
 				href={resolve(section.path)}
-				class="ui-button px-1.5 py-1.5 text-sm sm:px-3"
+				class="ui-button px-1 py-1.5 text-sm sm:px-3"
 				class:ui-button-on={isCurrentSection(section.path)}
 				aria-current={isCurrentSection(section.path) ? 'page' : undefined}
+				aria-label={section.name}
 				use:tooltip={TIPS.app.pages[/** @type {keyof typeof TIPS.app.pages} */ (section.path)]}
 			>
-				{section.name}
+				{#if 'phoneIcon' in section}
+					<span class="max-sm:hidden">{section.name}</span>
+					<span class="phone-icon sm:hidden" aria-hidden="true"><section.phoneIcon /></span>
+				{:else}
+					{section.name}
+				{/if}
 			</a>
 		{/each}
 
@@ -135,6 +144,12 @@
 </header>
 
 <style>
+	.phone-icon :global(svg) {
+		display: block;
+		height: 1.25rem;
+		width: auto;
+	}
+
 	/* Dev-only: dashed, so it's clearly not part of the real app */
 	.dev-link {
 		outline: 1.5px dashed var(--color-ink-faint);

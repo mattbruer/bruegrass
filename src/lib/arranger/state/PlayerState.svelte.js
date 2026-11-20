@@ -8,7 +8,6 @@ import { melodyEvents } from '../melody/melody.js';
 import { melodyTime } from '../melody/follow.js';
 import { MetronomeState } from './MetronomeState.svelte.js';
 import { abcjsReady } from './abcjsLoaded.svelte.js';
-import { chosenBassStyle } from '../bass/songBassStyle.svelte.js';
 import { rhythm } from '../chart/timeline.js';
 import { getMetronomeInput } from '../mixer/mixerGraph.svelte.js';
 import { countInClicks } from '../playback/metronome/countIn.js';
@@ -77,18 +76,17 @@ export class PlayerState {
 		this.#loop = loop;
 		this.#melody = melody;
 		this.#bass = bass;
-		this.metronome = new MetronomeState(this, arrangement);
+		this.metronome = new MetronomeState(this);
 	}
 
 	/**
 	 * Loops until stopped, or with the loop switched off plays once and stops,
-	 * and carries on from where Stop left it next time. Counts in first when
-	 * Count-in is on.
+	 * and carries on from where Stop left it next time. Only recording counts in.
 	 * @param {{ countIn?: boolean, passes?: number, leaveOutTrack?: string, onStop?: () => void }} [options]
 	 *   for recording: countIn (always, for a take), passes (stop after this many),
 	 *   leaveOutTrack (don't play the track being recorded on), onStop
 	 */
-	async play({ countIn = settings.metronome.countIn, passes, leaveOutTrack, onStop } = {}) {
+	async play({ countIn = false, passes, leaveOutTrack, onStop } = {}) {
 		this.stop();
 		const once = passes === undefined && !this.#loop.repeats;
 		this.problem = '';
@@ -110,7 +108,6 @@ export class PlayerState {
 				bpm,
 				melody: this.#melodyForThisPass(),
 				bass: this.#bass.written,
-				bassStyle: chosenBassStyle(),
 				swing: this.#arrangement.swing,
 				tempoCurve: this.#arrangement.tempoCurve,
 				offset: this.#loop.startInSong,
@@ -121,7 +118,7 @@ export class PlayerState {
 				from
 			});
 			this.countInAt = this.playback.startsAt;
-			if (countInBars > 0) await this.#countIn(this.playback, bar, countInBars, from > 0);
+			if (countInBars > 0) await this.#countIn(this.playback, bar, countInBars);
 			this.#resumable = once;
 			this.#onStop = onStop ?? null;
 			const playback = this.playback;
@@ -153,20 +150,13 @@ export class PlayerState {
 	}
 
 	/**
-	 * Clicks before the band comes in. A pickup is sung over the last of
-	 * them, so the clicks stop where it starts (unless the metronome is on).
+	 * Clicks before the band comes in (a pickup is sung over the last of them).
 	 * @param {Playback} playback
 	 * @param {{ seconds: number, quarters: number }} bar
 	 * @param {number} bars
-	 * @param {boolean} resuming carrying on part way through: no pickup
 	 */
-	async #countIn(playback, bar, bars, resuming) {
-		const clicks = countInClicks({
-			bars,
-			bar,
-			pickup: resuming ? 0 : playback.pickup,
-			clickThrough: this.metronome.on
-		});
+	async #countIn(playback, bar, bars) {
+		const clicks = countInClicks({ bars, bar });
 		this.countInAt = playback.startsAt - clicks.seconds;
 		const Tone = await import('tone');
 		const metronomeInput = /** @type {import('tone').ToneAudioNode} */ (await getMetronomeInput());

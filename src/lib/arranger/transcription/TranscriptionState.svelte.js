@@ -64,13 +64,12 @@ import { STARTER_SONG } from '../starterSong.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { BASS_VOICE, readBassScore, writtenBassNotes } from '../bass/readBass.js';
 import { blankBassAbc } from '../bass/bassAbc.js';
-import { bassSongOf } from '../bass/songBassStyle.svelte.js';
+import { bassSongOf } from '../bass/bassSong.js';
 import { abcjsIfLoaded } from '../state/abcjsLoaded.svelte.js';
 import { newExtraLane } from './extraLanes.js';
-import { uprightPitch } from '../instruments/upright.js';
-import { channelInstrument } from '../instruments/tuneInstruments.js';
 import { mixer } from '../mixer/mixer.svelte.js';
 import { heardNotes, laneLevels } from './heardParts.js';
+import { TranscribeParts } from './TranscribeParts.svelte.js';
 import { TranscribeBand } from './TranscribeBand.svelte.js';
 import { CycleState, leadInBefore } from './CycleState.svelte.js';
 import { pickupLength, withPickupLength } from '../melody/roll/pickupBar.js';
@@ -233,8 +232,7 @@ export class TranscriptionState {
 		this.grid
 			? heardNotes(
 					this.band.performance ? this.parts.filter((part) => part.id !== BASS_VOICE) : this.parts,
-					this.grid,
-					(lane, pitch) => this.#soundingPitch(lane, pitch)
+					this.grid
 				)
 			: []
 	);
@@ -278,13 +276,22 @@ export class TranscriptionState {
 		this.arranger = arranger;
 		/** The arranger's band playing the chart along with the recording. */
 		this.band = new TranscribeBand(this);
-		this.player.onClock = (clock) => this.band.follow(clock);
-		this.player.onPause = () => this.band.stop();
+		/** The parts written here, heard on their instruments. */
+		this.writtenParts = new TranscribeParts(this);
+		this.player.onClock = (clock) => {
+			this.band.follow(clock);
+			this.writtenParts.follow(clock);
+		};
+		this.player.onPause = () => {
+			this.band.stop();
+			this.writtenParts.stop();
+		};
 	}
 
 	/** How loud the recording, the band and each part are heard now. */
 	hearLevels() {
 		this.player.setLevels(this.levels);
+		this.writtenParts.setLevels(this.levels.parts);
 		this.band.setLevels(
 			this.levels,
 			this.parts.some((part) => part.id === BASS_VOICE)
@@ -915,20 +922,8 @@ export class TranscriptionState {
 
 	dispose() {
 		this.band.dispose();
+		this.writtenParts.dispose();
 		this.player.dispose();
-	}
-
-	/**
-	 * A written note's pitch as heard: as the roll plays it when you tap it
-	 * (the part's instrument, the bass on the upright).
-	 * @param {string} lane
-	 * @param {number} pitch as written
-	 */
-	#soundingPitch(lane, pitch) {
-		const shift = this.arranger.arrangement.transpose;
-		if (lane === BASS_VOICE) return uprightPitch(pitch + shift);
-		const octave = channelInstrument(mixer.channels, lane).synth?.octave ?? 0;
-		return pitch - 12 + shift + octave;
 	}
 
 	#findBeats() {

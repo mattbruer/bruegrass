@@ -9,8 +9,9 @@
 	 * piano roll below. Click the ruler to play from that spot; click a bar's
 	 * number for its menu (its beats, Loop). The playhead follows the
 	 * recording and the lanes scroll with it. Beside the ruler: + Marker
-	 * (at the playhead's bar) and Zoom (settings.transcribe.zoom, which widens
-	 * the quarters and heightens the lanes here and in the piano roll).
+	 * (at the playhead's bar). Zoom (settings.transcribe.zoom, in the control
+	 * bar) widens the quarters and heightens the lanes; the piano roll below
+	 * has its own.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { trackScale } from '../../tracks/trackScale.js';
@@ -29,6 +30,9 @@
 	import CycleStrip from './CycleStrip.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
 	import LaneVolume from './LaneVolume.svelte';
+	import InstrumentButton from '../mixer/instruments/InstrumentButton.svelte';
+	import { isTuneChannel } from '../../melody/harmony/partChannels.js';
+	import LaneColour from './LaneColour.svelte';
 	import { mixer } from '../../mixer/mixer.svelte.js';
 	import RecordingLane from './RecordingLane.svelte';
 	import ChordLane from './ChordLane.svelte';
@@ -36,8 +40,6 @@
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
 	import RecordingMenu from './RecordingMenu.svelte';
-	import Popover from '$lib/components/Popover.svelte';
-	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -154,10 +156,6 @@
 					onclick={() => transcription.markHere()}
 					use:tooltip={TIPS.transcription.addMarker}>+ Marker</button
 				>
-				<Popover class="px-1.5 py-0.5 text-xs" tip={TIPS.zoom.folded}>
-					{#snippet button()}Zoom <span aria-hidden="true">▾</span>{/snippet}
-					<ZoomControl zoom={settings.transcribe.zoom} />
-				</Popover>
 			</div>
 			<!-- svelte-ignore a11y_click_events_have_key_events (← → pick beats on a computer) -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -188,7 +186,14 @@
 			<div class="header recording ui-side-column">
 				<span class="name">Recording</span>
 				<RecordingMenu {transcription} />
-				<MuteSoloButtons settings={transcription.recordingLane} name="Recording" />
+				<span class="lane-buttons">
+					<MuteSoloButtons settings={transcription.recordingLane} name="Recording" />
+					<LaneColour
+						bind:color={settings.appearance.waveform}
+						label="Waveform colour"
+						tip={TIPS.transcription.waveformColour}
+					/>
+				</span>
 				<LaneVolume level={transcription.recordingLane} name="Recording" />
 			</div>
 			<RecordingLane {transcription} {scale} />
@@ -227,6 +232,7 @@
 					{:else if channel}
 						<MuteSoloButtons settings={channel} name={lane.name} />
 						<LaneVolume level={channel} name={lane.name} />
+						{#if isTuneChannel(lane.id)}<InstrumentButton {channel} />{/if}
 					{/if}
 				</div>
 				<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
@@ -281,6 +287,10 @@
 		--lane-height: calc(2.75rem * var(--zoom-down));
 		--recording-lane-height: calc(5rem * var(--zoom-down));
 		--header-padding: 0.75rem;
+		/* Between rows, across the names and the lanes: a groove cut between raised cells
+		   (the cell below gives it its lit lip); with 3D off, a plain line */
+		--lane-divider: 2px solid
+			color-mix(in oklab, var(--edge-dark) calc(var(--depth-on) * 100%), var(--color-line));
 		position: relative;
 		display: grid;
 		grid-template-columns: var(--header-width) var(--lanes-width);
@@ -300,7 +310,7 @@
 		position: sticky;
 		left: 0;
 		z-index: 2;
-		border-bottom: 1px solid var(--color-line);
+		border-bottom: var(--lane-divider);
 	}
 
 	.header {
@@ -308,9 +318,20 @@
 		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.15rem 0.3rem;
-		padding: 0.3rem var(--header-padding);
+		gap: 0.5rem 0.3rem;
+		padding: 0.55rem var(--header-padding) 0.65rem;
 		text-align: left;
+		/* Raised: a lit top edge, a shaded bottom and a face curving away from the light */
+		background: var(--face-3d), var(--color-raised);
+		box-shadow:
+			var(--shadow-bevel),
+			inset -1px 0 0 var(--shadow-light-edge);
+	}
+
+	.lane-buttons {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
 	}
 
 	.pick {
@@ -334,8 +355,9 @@
 	}
 
 	.header.picked-lane {
-		background: var(--color-raised);
+		background: var(--face-3d), var(--color-raised);
 		box-shadow:
+			var(--shadow-bevel),
 			inset 3px 0 0 var(--color-accent),
 			inset -1px 0 0 var(--shadow-light-edge);
 	}
@@ -358,8 +380,15 @@
 		cursor: pointer;
 	}
 
+	/* A lane fills its row, which is as tall as its header, so the dividers line up */
 	.part {
+		display: flex;
+		flex-direction: column;
 		cursor: pointer;
+	}
+
+	.part > :global(*) {
+		flex: 1;
 	}
 
 	.part.picked-lane {

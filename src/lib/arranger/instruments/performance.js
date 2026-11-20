@@ -13,7 +13,6 @@
 import { buildEvents, guitarTuning, sampleUrl, touch } from './guitar.js';
 import { bassEvents } from './upright.js';
 import { bassPart } from '../bass/songBass.js';
-import { leadOnsetsOfPart } from '../bass/melodySpace.js';
 import { chopNotes, mandoSampleUrl } from './mandolin.js';
 import { mod12 } from '../chart/key.js';
 import { rhythm } from '../chart/timeline.js';
@@ -33,7 +32,7 @@ import { tempoClock } from '../chart/tempoCurve.js';
  *   bpm?: number, capo?: number, transpose?: number, loop?: boolean,
  *   melody?: import('../melody/melody.js').MelodyPart | null,
  *   bass?: import('./bassline.js').BassNote[] | null, offset?: number,
- *   bassStyle?: import('./bassStyles.js').BassStyle, swing?: number,
+ *   swing?: number,
  *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[]
  * }} options
  *   transpose: semitones on top of the capo, for every instrument;
@@ -42,7 +41,7 @@ import { tempoClock } from '../chart/tempoCurve.js';
  *   channel (Melody, or a harmony part's);
  *   bass: the song's edited bass line (BassState.written), or null for the
  *   band's own; offset: where these sections start in the song (quarters),
- *   for the edited bass; bassStyle: how busy the band's own bass is;
+ *   for the edited bass;
  *   swing: how long-short the eighths are (chart/swing.js), for every instrument;
  *   tempoCurve: the tempo lane's points (chart/tempoCurve.js), a ritard say
  */
@@ -56,7 +55,6 @@ export function preparePerformance(
 		melody = null,
 		bass = null,
 		offset = 0,
-		bassStyle = undefined,
 		swing = SWING_STRAIGHT,
 		tempoCurve = []
 	} = {}
@@ -104,9 +102,7 @@ export function preparePerformance(
 			transpose,
 			written: bass,
 			offset,
-			passes: loop ? 2 : 1,
-			tuneOnsets: leadOnsetsOfPart(melody, bpm),
-			style: bassStyle
+			passes: loop ? 2 : 1
 		}),
 		{ bpm }
 	);
@@ -122,8 +118,6 @@ export function preparePerformance(
 	if (melody && loop && Math.abs(melody.period - steadyPass) > 1e-6) {
 		throw new Error('The melody was prepared for a different arrangement or tempo');
 	}
-	/** @param {import('../melody/melody.js').MelodyEvent} note */
-	const melodyUrl = (note) => sampleUrl(note.string, note.fret);
 
 	return {
 		bpm,
@@ -157,9 +151,7 @@ export function preparePerformance(
 					/** The pickup before bar 1 (negative times). */
 					intro: onTheClock(melody.intro),
 					/** How long the band waits for the pickup, in seconds. */
-					leadIn: -clock.secondsAt(-melody.leadIn / quarter),
-					urls: melody.events.map(melodyUrl),
-					introUrls: melody.intro.map(melodyUrl)
+					leadIn: -clock.secondsAt(-melody.leadIn / quarter)
 				}
 			: null
 	};

@@ -25,12 +25,13 @@ import { gridTicks } from './ticks.js';
 import { playedTime, playheadTicks } from './playheadTicks.js';
 import { rewriteAbc } from './scoreToAbc.js';
 import { BASS_ROWS, LANE_ROWS, MELODY_ROWS } from './pitchRows.js';
+import { UPRIGHT_RANGE, isOutside } from '../../instruments/instrumentRanges.js';
 import { isLaneId, laneNumber } from './extraLane.js';
 import { echoZone, withoutPickupEcho, withPickupEcho } from './pickupEcho.js';
 import { isShortBar } from './rollLayout.js';
 import { BASS_VOICE, bassVoice, readBassScore } from '../../bass/readBass.js';
 import { blankBassAbc, generatedBassAbc } from '../../bass/bassAbc.js';
-import { bassSongOf } from '../../bass/songBassStyle.svelte.js';
+import { bassSongOf } from '../../bass/bassSong.js';
 import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
 
 /** Every voice's place in the colour wheel: the melody, then each harmony part. */
@@ -93,6 +94,14 @@ export class MelodyDrawing {
 	);
 	/** Where this part usually plays (the rows are always the piano's). */
 	usualRange = $derived(this.isBass ? BASS_ROWS : this.isLane ? LANE_ROWS : MELODY_ROWS);
+	/** Where this part's instrument can naturally play, or null when it isn't known. */
+	playable = $derived(this.isBass ? UPRIGHT_RANGE : null);
+	/** How many notes sit outside it. */
+	notesOutside = $derived(
+		this.playable
+			? this.notes.filter((note) => isOutside(note.midi, /** @type {any} */ (this.playable))).length
+			: 0
+	);
 	end = $derived(this.score ? totalTicks(this.score) : 0);
 	gridStep = $derived(gridTicks(this.grid));
 	/** Where the pickup shows again, in the last bar's closing beats (not on the bass or lanes: written as played). */

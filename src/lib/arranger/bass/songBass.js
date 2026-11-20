@@ -6,7 +6,6 @@
 import { bassLine } from '../instruments/bassline.js';
 import { rhythm } from '../chart/timeline.js';
 import { mod12 } from '../chart/key.js';
-import { bassStyle, DEFAULT_BASS_STYLE } from '../instruments/bassStyles.js';
 import { sectionsToPlay, stops, withoutStops } from '../chart/noChord.js';
 
 const EPSILON = 1e-6;
@@ -19,48 +18,23 @@ const EPSILON = 1e-6;
  * @param {import('../chart/timeline.js').Section[]} sections the bars to play (a loop region, or the song)
  * @param {{
  *   capo?: number, transpose?: number, written?: BassNote[] | null,
- *   offset?: number, passes?: number, tuneOnsets?: number[] | null,
- *   style?: import('../instruments/bassStyles.js').BassStyle
+ *   offset?: number, passes?: number
  * }} options
  *   written: the edited line for the whole song (BassState.written), or null;
  *   offset: where these sections start in the song, in quarters;
  *   passes: how many passes the band's own line should span, so it varies
- *   when it repeats (an edited line plays as written every time);
- *   tuneOnsets: when the tune's lead notes start in one pass, from the first
- *   of these sections (bass/melodySpace.js), so the band's own line walks
- *   only where the tune leaves room; null without a tune;
- *   style: how busy the band's own line is (the song's bass style)
+ *   when it repeats (an edited line plays as written every time)
  * @returns {{ notes: BassNote[], passes: number }} beats in quarters from the
  *   first of these sections, at sounding pitch in the file's numbering
  */
 export function bassPart(
 	sections,
-	{
-		capo = 0,
-		transpose = 0,
-		written = null,
-		offset = 0,
-		passes = 1,
-		tuneOnsets = null,
-		style = bassStyle(DEFAULT_BASS_STYLE)
-	} = {}
+	{ capo = 0, transpose = 0, written = null, offset = 0, passes = 1 } = {}
 ) {
 	const quarters = rhythm(sections).quarters;
 	if (!written) {
 		const repeated = Array.from({ length: passes }, () => sections).flat();
-		const onsets =
-			tuneOnsets &&
-			Array.from({ length: passes }, (_, pass) =>
-				tuneOnsets.map((time) => time + pass * quarters)
-			).flat();
-		return {
-			notes: bandsBassLine(repeated, {
-				capo: mod12(capo + transpose),
-				tuneOnsets: onsets,
-				style
-			}),
-			passes
-		};
+		return { notes: bandsBassLine(repeated, { capo: mod12(capo + transpose) }), passes };
 	}
 	const end = offset + quarters;
 	const notes = written

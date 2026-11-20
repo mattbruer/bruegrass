@@ -1,9 +1,9 @@
 /**
  * Where the metronome clicks fall, in quarter notes from the top of a pass:
- * one click per quarter, the first of each bar accented. Alone, it's 4/4;
- * with the song, it follows the song's bars.
+ * one click per quarter. With the song, the first of each bar is accented;
+ * alone, it's a straight click.
  */
-import { barQuarters, rhythm } from '../../chart/timeline.js';
+import { rhythm } from '../../chart/timeline.js';
 
 /**
  * @typedef {{ at: number, accent: boolean }} Click
@@ -24,18 +24,9 @@ export function songClickGrid(sections) {
 }
 
 /**
- * A steady click on its own, one bar long: a click on every beat of the
- * meter (a beat is a quarter, or an eighth in x/8), the first accented.
- * @param {import('../../chart/timeline.js').Meter} meter
+ * A straight click on its own: every beat the same, no bars.
  * @returns {ClickGrid}
  */
-export function soloClickGrid(meter) {
-	const beatQuarters = 4 / meter.unit;
-	return {
-		lengthQuarters: barQuarters(meter),
-		beats: Array.from({ length: meter.beats }, (_, i) => ({
-			at: i * beatQuarters,
-			accent: i === 0
-		}))
-	};
+export function steadyClickGrid() {
+	return { lengthQuarters: 1, beats: [{ at: 0, accent: false }] };
 }

@@ -9,7 +9,7 @@
 	 * A page can instead say which voice to edit (`voice`: the transcription
 	 * grid's picked lane) and what to follow (`clock`: a recording's place in
 	 * the song, in quarters; with `seek`, a click on the roll's ruler plays
-	 * from there), a `zoom`, and have an unedited bass start empty
+	 * from there), and have an unedited bass start empty
 	 * (`bassStartsEmpty`, to write by ear) instead of showing the band's own,
 	 * and leave out the Key menu when it has its own (`keyMenu`).
 	 *
@@ -18,7 +18,8 @@
 	 * recording sets the tempo.
 	 *
 	 * `view`: the notes on the piano roll, or the same part as TAB (fix
-	 * where each note is played; the bass has no TAB yet).
+	 * where each note is played; the bass has no TAB yet). Both zoom with
+	 * settings.pianoRoll.zoom (TAB only across).
 	 */
 	import { untrack } from 'svelte';
 	import { useArranger } from '../../state/context.js';
@@ -31,7 +32,6 @@
 	import HarmonyOptions from './HarmonyOptions.svelte';
 	import { voiceColour } from '../../melody/roll/MelodyDrawing.svelte.js';
 	import BassLineNote from './BassLineNote.svelte';
-	import { songBassStyle } from '../../bass/songBassStyle.svelte.js';
 	import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
 	import TabView from './TabView.svelte';
 	import TabChoice from './TabChoice.svelte';
@@ -43,6 +43,8 @@
 	import { tunedBoard } from '../../tab/tunings.js';
 	import { ownNote } from '../../melody/roll/pickupEcho.js';
 	import { noteKey, pitchAt, stringToward, tabNotes } from '../../tab/fingering.js';
+	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
+	import { settings } from '$lib/settings/settings.svelte.js';
 
 	/**
 	 * @type {{
@@ -51,7 +53,6 @@
 	 *   bassStartsEmpty?: boolean,
 	 *   pickupQuarters?: number,
 	 *   keyMenu?: boolean,
-	 *   zoom?: { across: number, down: number },
 	 *   lanes?: import('../../transcription/extraLanes.js').LaneStore,
 	 *   view?: 'roll' | 'tab'
 	 * }}
@@ -62,7 +63,6 @@
 		bassStartsEmpty = false,
 		pickupQuarters = 0,
 		keyMenu = true,
-		zoom,
 		lanes,
 		view = 'roll'
 	} = $props();
@@ -76,6 +76,8 @@
 	const arranger = useArranger();
 	const { arrangement, melody, bass, player } = arranger;
 	const drawing = new MelodyDrawing(arranger);
+	/** One zoom for every piano roll and TAB view, apart from Transcribe's grid. */
+	const zoom = $derived(settings.pianoRoll.zoom);
 	$effect.pre(() => {
 		drawing.bassStartsEmpty = bassStartsEmpty;
 		drawing.pickupQuarters = pickupQuarters;
@@ -83,11 +85,10 @@
 	});
 
 	$effect(() => {
-		// Read again whenever the tune, the bass (or its style) or the chart it's drawn over changes
+		// Read again whenever the tune, the bass or the chart it's drawn over changes
 		void melody.voices;
 		void bass.read;
 		void abcjsIfLoaded();
-		void songBassStyle.id;
 		void arrangement.sections;
 		void arrangement.capoFret;
 		void arranger.melodyKey;
@@ -220,6 +221,7 @@
 				<div class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2">
 					<TabChoice voice={tabVoice} instrument={tabInstrument} />
 					<TuningChoice voice={tabVoice} instrument={tabInstrument} steps={partTab?.tuning} />
+					<ZoomControl {zoom} axes={['across']} />
 				</div>
 				<TabView
 					tabNotes={tab}
@@ -271,6 +273,7 @@
 				spelling={arranger.melodyKey.spelling}
 				tonic={arranger.melodyKey.tonic}
 				usualRange={drawing.usualRange}
+				playable={drawing.playable}
 				end={drawing.end}
 				gridStep={drawing.gridStep}
 				drawLength={drawing.drawLength}
@@ -318,7 +321,7 @@
 					length. Double-tap to delete.
 				</p>
 				{#if drawing.isBass}
-					<BassLineNote />
+					<BassLineNote notesOutside={drawing.notesOutside} />
 				{:else if drawing.isHarmonyPart}
 					<p class="mt-2 text-sm text-ink-soft">
 						There's more than one good harmony. Pick a note, and dots show the chord's other notes

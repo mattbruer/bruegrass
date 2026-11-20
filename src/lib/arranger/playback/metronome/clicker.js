@@ -12,6 +12,8 @@ import { clickBuffers } from './sounds.js';
 const LOOKAHEAD = 2;
 /** Seconds between queuing runs. */
 const TICK = 0.1;
+/** Times this close are the same moment (rounding). */
+const SAME_TIME = 0.001;
 
 /** Stops the clicker that's sounding (a no-op when none is). */
 let stopSounding = () => {};
@@ -21,12 +23,13 @@ let stopSounding = () => {};
  * @param {{
  *   grid: import('./clickGrid.js').ClickGrid,
  *   sound: import('./sounds.js').ClickSound,
- *   origin: number, clock: import('../../chart/tempoCurve.js').TempoClock,
+ *   origin: number, from?: number, clock: import('../../chart/tempoCurve.js').TempoClock,
  *   destination: import('tone').ToneAudioNode
- * }} run origin: the audio-clock time of the first pass's top; clock: the song's quarters in seconds
+ * }} run origin: the audio-clock time of the first pass's top; from: no click
+ *   before this audio-clock time; clock: the song's quarters in seconds
  * @returns {() => void} stop
  */
-export function startClicks(Tone, { grid, sound, origin, clock, destination }) {
+export function startClicks(Tone, { grid, sound, origin, from = origin, clock, destination }) {
 	stopSounding();
 	if (grid.beats.length === 0) return () => {};
 
@@ -65,7 +68,8 @@ export function startClicks(Tone, { grid, sound, origin, clock, destination }) {
 		let click = clickAt(nextIndex);
 		while (click.time < horizon) {
 			nextIndex++;
-			if (click.time >= Tone.now()) playClick(click); // never a click that's already gone
+			// Never a click that's already gone, nor one before `from` (a hair early still counts)
+			if (click.time >= Math.max(Tone.now(), from - SAME_TIME)) playClick(click);
 			click = clickAt(nextIndex);
 		}
 		timer = context.setTimeout(tick, TICK);

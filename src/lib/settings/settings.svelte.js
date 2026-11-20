@@ -38,15 +38,14 @@ export const settings = $state({
 
 	// Metronome: set from the menu beside its button on the arranger's bar
 
-	/** The metronome: its sound, level (dB, before the output) and meter when playing alone. */
+	/** The metronome: its sound, level (dB, before the output), and the Metronome page's tempo. */
 	metronome: {
 		sound: 'woodblock',
 		level: -14,
-		beats: 4,
-		unit: 4,
-		/** Play counts in first (recording always does). */
-		countIn: false,
-		/** Bars of clicks before the band, for Play and recording (a pickup is sung in the last of them). */
+		tempo: 120,
+		/** The click plays along with the band whenever it plays (the metronome key is lit). */
+		withBand: false,
+		/** Bars of clicks before the band when recording (a pickup is sung in the last of them). */
 		countInBars: 2
 	},
 
@@ -61,7 +60,14 @@ export const settings = $state({
 		snapCycle: true,
 		/** Transcribe's clock: where the playhead is as 'bars' (bar, beat, sixteenth) or 'time'. */
 		clock: 'bars',
-		/** Transcribe's track grid and piano roll: size multipliers (components/zoom/). */
+		/** Transcribe's track grid: size multipliers (components/zoom/). */
+		zoom: { across: 1, down: 1 }
+	},
+
+	// Piano rolls: set from the roll's toolbar
+
+	pianoRoll: {
+		/** Every piano roll and TAB view: size multipliers (components/zoom/). */
 		zoom: { across: 1, down: 1 }
 	},
 

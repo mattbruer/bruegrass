@@ -6,15 +6,13 @@
  * (export/renderSong.js). Both get the same sound from here.
  */
 import { createUpright } from './upright.js';
-import { createTuneSynth } from './tuneInstruments.js';
+import { createTuneVoice } from './tuneVoice.js';
+import { tuneInstrument } from './tuneInstruments.js';
 import { melodyPitch } from '../melody/melody.js';
-import { ARTICULATIONS } from './articulation.js';
 import { soundStart } from './soundStart.js';
 import { CHOP_ARTICULATION } from './mandolin.js';
 import { tuningFix } from './sampleTuning.js';
 
-/** Seconds; avoids clicks when a note is cut off. */
-const FADE_OUT = 0.03;
 /** Seconds of a plucked sample kept before its strike: the pick catching the string. */
 const PICK_BEFORE_STRIKE = 0.005;
 
@@ -62,7 +60,7 @@ export function loadBuffer(Tone, url) {
  *   there, Tone reports a player stopped before it has even played, so
  *   letting it go then would silence it); instrumentOf: what each tune
  *   channel plays on, asked at each note, so a change is heard while playing
- *   (the guitar samples when not given)
+ *   (the default when not given)
  */
 export async function createBand(
 	Tone,
@@ -95,28 +93,11 @@ export async function createBand(
 			melodyOuts.set(note.channel, await channelInput(note.channel));
 	}
 
-	const [guitarSounds, chopSounds, melodySounds, introSounds] = await Promise.all(
-		[guitar.urls, mandolin.urls, melody?.urls ?? [], melody?.introUrls ?? []].map((urls) =>
+	const [guitarSounds, chopSounds] = await Promise.all(
+		[guitar.urls, mandolin.urls].map((urls) =>
 			Promise.all(urls.map((url) => loadBuffer(Tone, url)))
 		)
 	);
-
-	/** A lowpass per tune channel for its grazed notes (a stack is strummed), made when first needed */
-	/** @type {Map<string, import('tone').Filter>} */
-	const grazeOuts = new Map();
-	/** @param {string} channel */
-	const grazeOut = (channel) => {
-		let filter = grazeOuts.get(channel);
-		if (!filter) {
-			filter = new Tone.Filter({
-				type: 'lowpass',
-				frequency: ARTICULATIONS.graze.brightness,
-				Q: Math.SQRT1_2
-			}).connect(/** @type {import('tone').ToneAudioNode} */ (melodyOuts.get(channel)));
-			grazeOuts.set(channel, filter);
-		}
-		return filter;
-	};
 
 	/**
 	 * Start a sample so its note is struck exactly at `at`, whatever silence
@@ -148,54 +129,35 @@ export async function createBand(
 		return player;
 	};
 
-	/** Tune synths, made when a channel first plays on one: key "channel:instrument" */
-	/** @type {Map<string, ReturnType<typeof createTuneSynth>>} */
-	const tuneSynths = new Map();
-	/**
-	 * @param {string} channel
-	 * @param {import('./tuneInstruments.js').TuneInstrument} instrument
-	 */
-	const tuneSynth = (channel, instrument) => {
+	/** What each tune channel plays on now (asked at each note, so a change is heard while playing). */
+	const instrumentFor = (/** @type {string} */ channel) =>
+		instrumentOf?.(channel) ?? tuneInstrument(undefined);
+
+	/** Tune voices, made when a channel first plays on an instrument: key "channel:instrument" */
+	/** @type {Map<string, ReturnType<typeof createTuneVoice>>} */
+	const tuneVoices = new Map();
+	/** @param {string} channel */
+	const tuneVoice = (channel) => {
+		const instrument = instrumentFor(channel);
 		const key = `${channel}:${instrument.id}`;
-		let synth = tuneSynths.get(key);
-		if (!synth && instrument.synth) {
+		let voice = tuneVoices.get(key);
+		if (!voice) {
 			const output = /** @type {import('tone').ToneAudioNode} */ (melodyOuts.get(channel));
-			synth = createTuneSynth(Tone, instrument.synth, output);
-			tuneSynths.set(key, synth);
+			voice = createTuneVoice(Tone, instrument, output, { live });
+			tuneVoices.set(key, voice);
 		}
-		return synth;
+		return voice;
 	};
+	// Every tune channel's samples are loaded before the first note
+	await Promise.all([...melodyOuts.keys()].map((channel) => tuneVoice(channel).ready));
 
 	/**
 	 * A melody note, on its channel's instrument.
 	 * @param {import('../melody/melody.js').MelodyEvent} note
-	 * @param {import('tone').ToneAudioBuffer} buffer the guitar sample
 	 * @param {number} at
 	 */
-	const playMelody = (note, buffer, at) => {
-		const rate = note.rate * tuningFix(note.string, note.fret);
-		const synth = instrumentOf && tuneSynth(note.channel, instrumentOf(note.channel));
-		if (synth) {
-			synth.play(melodyPitch(note), note.stop - note.time, at, note.levelDb);
-			return;
-		}
-		const grazed = note.articulation === 'graze';
-		const player = track(
-			new Tone.Player({
-				url: buffer,
-				volume: note.levelDb,
-				fadeIn: grazed ? ARTICULATIONS.graze.attack : 0,
-				fadeOut: FADE_OUT,
-				playbackRate: rate
-			}).connect(
-				grazed
-					? grazeOut(note.channel)
-					: /** @type {import('tone').ToneAudioNode} */ (melodyOuts.get(note.channel))
-			)
-		);
-		const skip = grazed ? ARTICULATIONS.graze.skip : 0;
-		startOnTheBeat(player, buffer, at, skip, rate).stop(at + note.stop - note.time);
-	};
+	const playMelody = (note, at) =>
+		tuneVoice(note.channel).play(melodyPitch(note), note.stop - note.time, at, note.levelDb);
 
 	/** @type {Stream[]} */
 	const streams = [
@@ -248,7 +210,7 @@ export async function createBand(
 			notes: melody.events,
 			period: performance.passLength,
 			/** @param {import('../melody/melody.js').MelodyEvent} note @param {number} i @param {number} at */
-			play: (note, i, at) => playMelody(note, melodySounds[i], at)
+			play: (note, _i, at) => playMelody(note, at)
 		});
 	}
 
@@ -260,7 +222,7 @@ export async function createBand(
 		 * @param {number} barOne the audio-clock time of bar 1
 		 */
 		playIntro(barOne) {
-			melody?.intro.forEach((note, i) => playMelody(note, introSounds[i], barOne + note.time));
+			melody?.intro.forEach((note) => playMelody(note, barOne + note.time));
 		},
 
 		/** Stop everything at once and let go of the players, synth and filters. */
@@ -275,15 +237,13 @@ export async function createBand(
 			}
 			players.clear();
 			upright.stop();
-			for (const synth of tuneSynths.values()) synth.stop();
-			tuneSynths.clear();
+			for (const voice of tuneVoices.values()) voice.stop();
+			tuneVoices.clear();
 			// Let any fade-outs finish before removing the touch and graze filters
 			setTimeout(() => {
 				guitarOut.bass.dispose();
 				guitarOut.strum.dispose();
 				mandolinOut.dispose();
-				for (const filter of grazeOuts.values()) filter.dispose();
-				grazeOuts.clear();
 			}, 200);
 		}
 	};

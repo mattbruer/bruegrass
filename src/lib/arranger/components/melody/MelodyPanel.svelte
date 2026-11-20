@@ -4,7 +4,6 @@
 	 * (SheetMusic.svelte) and played on the guitar along with the band.
 	 */
 	import { useArranger } from '../../state/context.js';
-	import MelodyFitNote from './MelodyFitNote.svelte';
 	import MelodyWarnings from './MelodyWarnings.svelte';
 	import ChordConversion from './ChordConversion.svelte';
 	import HarmonyParts from './HarmonyParts.svelte';
@@ -57,7 +56,6 @@
 		</p>
 		<HarmonyParts />
 		<MelodyDrawing />
-		<MelodyFitNote />
 	{:else if view === 'tab'}
 		<MelodyDrawing view="tab" />
 	{:else}
@@ -114,7 +112,6 @@
 			autocomplete="off"></textarea>
 
 		<MelodyWarnings />
-		<MelodyFitNote />
 		<ChordConversion />
 	{/if}
 </div>
