@@ -12,6 +12,7 @@
 	import ChordDisplayToggle from './ChordDisplayToggle.svelte';
 	import KeySummary from './KeySummary.svelte';
 	import ArrangementStrip from '../chart/ArrangementStrip.svelte';
+	import ChordEditDialog from '../chordEdit/ChordEditDialog.svelte';
 	import ChordTutorDialog from '../chordTutor/ChordTutorDialog.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -22,9 +23,17 @@
 
 	const { arrangement, layout, loop, melody, player } = useArranger();
 
-	/** The chord the tutor is open on (null: none). */
+	/** The chord whose edit box is open, and the one the tutor is open on (null: none). */
+	/** @type {import('../../chart/chartAnalysis.js').ChordPlace | null} */
+	let editOn = $state(null);
 	/** @type {import('../../chart/chartAnalysis.js').ChordPlace | null} */
 	let tutorOn = $state(null);
+
+	/** @param {import('../../chart/chartAnalysis.js').ChordPlace} place */
+	function learnAbout(place) {
+		editOn = null;
+		tutorOn = place;
+	}
 </script>
 
 <section class="mb-4 ui-card p-4" aria-label="Chart">
@@ -54,8 +63,9 @@
 			playback={player.playback}
 			restAt={player.resumeInPass()}
 			label={arrangement.chordName}
-			onChordTap={(place) => (tutorOn = place)}
+			onChordTap={(place) => (editOn = place)}
 		/>
+		<ChordEditDialog bind:place={editOn} onLearn={learnAbout} />
 		<ChordTutorDialog bind:place={tutorOn} />
 	{:else if showChords}
 		<p class="ui-well p-6 text-center text-ink-soft">

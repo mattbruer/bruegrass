@@ -11,11 +11,16 @@
  * @typedef {{ levelDb: number, brightness: number, skip: number, attack: number }} Articulation
  *   levelDb: against a pluck; brightness: low-pass cutoff in Hz; skip:
  *   seconds of the sample's start left out; attack: seconds of fade-in
- * @typedef {'pluck' | 'graze'} ArticulationId
+ * @typedef {'pluck' | 'graze' | 'chop'} ArticulationId
  */
 
-/** @type {Record<ArticulationId, Articulation>} */
+/**
+ * A chop keeps the pick's attack (no skip, no fade-in) and a brighter tone:
+ * its percussive "chk" is the point of it. Its sound is shaped in chopSound.js.
+ * @type {Record<ArticulationId, Articulation>}
+ */
 export const ARTICULATIONS = {
 	pluck: { levelDb: 0, brightness: 16000, skip: 0, attack: 0 },
-	graze: { levelDb: -4, brightness: 5000, skip: 0.006, attack: 0.004 }
+	graze: { levelDb: -4, brightness: 5000, skip: 0.006, attack: 0.004 },
+	chop: { levelDb: -4, brightness: 9000, skip: 0, attack: 0 }
 };

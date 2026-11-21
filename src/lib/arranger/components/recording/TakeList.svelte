@@ -1,30 +1,28 @@
 <script>
 	/**
-	 * The song's takes, by track: which one each track plays, moving a take
-	 * earlier or later by ear, downloading it to send, deleting it.
+	 * One audio lane's takes: which one it plays, moving a take earlier or
+	 * later by ear, downloading it to send, deleting it.
 	 */
 	import { useArranger } from '../../state/context.js';
-	import { RECORD_TRACKS } from '../../takes/recordTracks.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import { formatClock } from '$lib/utils/formatClock.js';
+
+	/** @type {{ trackId: string }} */
+	let { trackId } = $props();
 
 	const { recording, arrangement } = useArranger();
 
 	/** How far one tap of Earlier / Later moves a take (ms). */
 	const NUDGE_STEP_MS = 10;
 
-	const byTrack = $derived(
-		RECORD_TRACKS.map((track) => ({
-			...track,
-			takes: recording.takes.filter((take) => take.trackId === track.id)
-		})).filter((track) => track.takes.length > 0)
-	);
+	const takes = $derived(recording.takes.filter((take) => take.trackId === trackId));
+	const byTrack = $derived(takes.length > 0 ? [{ id: trackId, takes }] : []);
 </script>
 
 {#each byTrack as track (track.id)}
 	<section class="track">
-		<h3>{track.name}</h3>
+		<h3>Takes</h3>
 		<ul>
 			{#each track.takes as take, index (take.id)}
 				<li class:in-use={take.inUse}>

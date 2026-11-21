@@ -4,6 +4,7 @@
 	 * themselves (state/autosave.svelte.js), so there's no Save.
 	 */
 	import { useArranger } from '../../state/context.js';
+	import { EMPTY_SONG } from '../../starterSong.js';
 	import RenameSongDialog from './RenameSongDialog.svelte';
 	import OpenSongDialog from './OpenSongDialog.svelte';
 	import ExampleSongSelect from './ExampleSongSelect.svelte';
@@ -33,7 +34,7 @@
 	<button
 		type="button"
 		class="ui-button px-4 py-2"
-		onclick={() => song.startNew()}
+		onclick={() => song.startNew(EMPTY_SONG)}
 		use:tooltip={TIPS.song.new}>New</button
 	>
 	<button

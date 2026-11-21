@@ -1,7 +1,7 @@
 <script>
 	/**
 	 * The song's key, as the transcription names it (written into the chart as
-	 * `[K:]`, and the tune and bass respelled). Chosen with beat 1; needed before sending to the arranger.
+	 * `[K:]`, and the tune and bass respelled). Chosen with beat 1, and needed before the workspace.
 	 */
 	import { songKeyChoices } from '../../chart/keyChoices.js';
 	import SongKeyOptions from '../chart/SongKeyOptions.svelte';
@@ -28,7 +28,7 @@
 		onchange={(event) => transcription.setKey(event.currentTarget.value || null)}
 		use:tooltip={TIPS.transcription.key}
 	>
-		<option value={NOT_NAMED}>Not known yet</option>
+		<option value={NOT_NAMED}>Choose…</option>
 		<SongKeyOptions choices={keyChoices} />
 	</select>
 </label>

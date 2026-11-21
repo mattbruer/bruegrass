@@ -15,6 +15,11 @@
  * beat too, and fast bluegrass is easily counted on every other strum; so
  * when there's still a strong hit halfway between most of the beats found,
  * they're tracked again at half the gap.
+ *
+ * The beats are found in the hits and the bass notes together: where the
+ * band plays softly (a kick-off, a quiet verse) the hits fade but the
+ * booms stay clear (Poison Love's first bars: tracked on the hits alone,
+ * it counted 9 beats where there are 8).
  */
 import { estimateBeatFrames } from './estimateTempo.js';
 import { evenGaps, trackBeatsThrough } from './trackBeats.js';
@@ -35,7 +40,8 @@ const STEADY = 400;
  * @returns {{ beats: number[], firstBeat: number }} beats in seconds, and the index of the downbeat
  */
 export function detectBeats(analysis, downbeat, leadInBeats) {
-	const { strength, framesPerSecond } = analysis;
+	const { framesPerSecond } = analysis;
+	const strength = hitsAndBass(analysis);
 	const anchor = Math.max(0, Math.min(strength.length - 1, frameAt(analysis, downbeat)));
 	if (strength.length === 0) return { beats: [downbeat], firstBeat: 0 };
 	const beatFrames = estimateBeatFrames(strength, framesPerSecond);
@@ -53,6 +59,14 @@ export function detectBeats(analysis, downbeat, leadInBeats) {
 		.slice(dropped)
 		.map((frame) => Math.round(secondsAt(analysis, frame) * 1000) / 1000);
 	return { beats, firstBeat: found.anchorIndex - dropped };
+}
+
+/**
+ * How strongly each frame starts a hit or a bass note.
+ * @param {import('./analyseReference.js').Analysis} analysis
+ */
+function hitsAndBass({ strength, bass }) {
+	return strength.map((hit, frame) => hit + (bass[frame] ?? 0));
 }
 
 /**

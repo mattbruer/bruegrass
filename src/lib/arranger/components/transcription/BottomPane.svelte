@@ -12,7 +12,6 @@
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import { BOTTOM_VIEWS } from '../../transcription/bottomViews.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
-	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { BASS_VOICE } from '../../bass/readBass.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 
@@ -47,31 +46,7 @@
 				label="Show the part as"
 			/>
 			<h2 class="text-sm font-bold">{laneName}</h2>
-			{#if !isBass}
-				<label class="flex items-center gap-1.5 text-sm">
-					<span class="text-ink-soft">Pickup</span>
-					<select
-						class="ui-field px-2 py-1"
-						value={transcription.pickup}
-						onchange={(event) => {
-							transcription.setPickup(Number(event.currentTarget.value));
-							// A refused change leaves the pickup as it was: show that
-							event.currentTarget.value = String(transcription.pickup);
-						}}
-						use:tooltip={TIPS.transcription.pickup}
-					>
-						{#each transcription.pickupChoices as beats (beats)}
-							<option value={beats}
-								>{beats === 0 ? 'None' : `${beats} ${beats === 1 ? 'beat' : 'beats'}`}</option
-							>
-						{/each}
-					</select>
-				</label>
-			{/if}
 		</div>
-		{#if transcription.pickupProblem}
-			<p class="text-sm text-ink-soft" role="status">{transcription.pickupProblem}</p>
-		{/if}
 		{#if settings.transcribe.bottomView === 'sheet'}
 			{#if nothingWritten}
 				<p class="text-sm text-ink-soft">Nothing written yet. Draw it in the piano roll.</p>

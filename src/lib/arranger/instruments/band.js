@@ -11,6 +11,7 @@ import { tuneInstrument } from './tuneInstruments.js';
 import { melodyPitch } from '../melody/melody.js';
 import { soundStart } from './soundStart.js';
 import { CHOP_ARTICULATION } from './mandolin.js';
+import { CHOP_DECAY, CHOP_FADE_OUT, chopFilter, createChopTick } from './chopSound.js';
 import { tuningFix } from './sampleTuning.js';
 
 /** Seconds of a plucked sample kept before its strike: the pick catching the string. */
@@ -86,6 +87,7 @@ export async function createBand(
 		frequency: CHOP_ARTICULATION.brightness,
 		Q: Math.SQRT1_2
 	}).connect(await channelInput('mandolin'));
+	const chopTick = createChopTick(Tone, mandolinOut);
 	/** @type {Map<string, import('tone').ToneAudioNode>} the melody's and each harmony part's channel */
 	const melodyOuts = new Map();
 	for (const note of [...(melody?.events ?? []), ...(melody?.intro ?? [])]) {
@@ -116,16 +118,24 @@ export async function createBand(
 		return player.start(Math.max(0, at + (from - strike) / rate), from);
 	};
 
-	/** @type {Set<import('tone').Player>} */
-	const players = new Set();
+	/** Live players, each with the nodes made just for it (a chop's filter). */
+	/** @type {Map<import('tone').Player, import('tone').ToneAudioNode[]>} */
+	const players = new Map();
 	/** @param {import('tone').Player} player */
-	const track = (player) => {
+	const release = (player) => {
+		if (!players.has(player)) return;
+		for (const node of players.get(player) ?? []) node.dispose();
+		players.delete(player);
+		player.dispose();
+	};
+	/**
+	 * @param {import('tone').Player} player
+	 * @param {...import('tone').ToneAudioNode} ownNodes freed with the player
+	 */
+	const track = (player, ...ownNodes) => {
 		if (!live) return player;
-		player.onstop = () => {
-			players.delete(player);
-			player.dispose();
-		};
-		players.add(player);
+		player.onstop = () => release(player);
+		players.set(player, ownNodes);
 		return player;
 	};
 
@@ -183,17 +193,24 @@ export async function createBand(
 		{
 			notes: mandolin.chops,
 			period: performance.passLength,
-			// Mandolin chops play to the end of each sample (the choke is recorded)
 			/** @param {import('./mandolin.js').MandoNote} chop @param {number} i @param {number} at */
 			play: (chop, i, at) => {
+				const filter = chopFilter(Tone, at);
 				const player = track(
 					new Tone.Player({
 						url: chopSounds[i],
 						volume: chop.levelDb,
-						fadeIn: CHOP_ARTICULATION.attack
-					}).connect(mandolinOut)
+						fadeIn: CHOP_ARTICULATION.attack,
+						fadeOut: CHOP_FADE_OUT
+					})
+						.connect(filter)
+						.connect(mandolinOut),
+					filter
 				);
 				startOnTheBeat(player, chopSounds[i], at, CHOP_ARTICULATION.skip);
+				player.stop(at + CHOP_DECAY);
+				// One tk per chop, on its first course (struck first)
+				if (chop.course === 0) chopTick.strike(at);
 			}
 		},
 		{
@@ -227,15 +244,14 @@ export async function createBand(
 
 		/** Stop everything at once and let go of the players, synth and filters. */
 		stop() {
-			for (const player of players) {
+			for (const player of [...players.keys()]) {
 				try {
 					player.stop();
 				} catch {
 					// already stopped
 				}
-				player.dispose();
+				release(player);
 			}
-			players.clear();
 			upright.stop();
 			for (const voice of tuneVoices.values()) voice.stop();
 			tuneVoices.clear();
@@ -244,6 +260,7 @@ export async function createBand(
 				guitarOut.bass.dispose();
 				guitarOut.strum.dispose();
 				mandolinOut.dispose();
+				chopTick.dispose();
 			}, 200);
 		}
 	};

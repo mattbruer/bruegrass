@@ -46,19 +46,21 @@ export function bandLanes({ sections, bass, melody, names = {} }) {
 }
 
 /**
- * One lane per record track with takes.
+ * One audio lane per record track in use: one with takes, or one added on
+ * the Tracks page (added lanes are named, in the song's part names).
  * @param {TakeDocument[]} takes
  * @param {number} bpm the song's tempo now
+ * @param {import('../melody/partNames.js').PartNames} [names]
  * @returns {TakeLane[]}
  */
-export function takeLanes(takes, bpm) {
+export function takeLanes(takes, bpm, names = {}) {
 	const quarters = 1 / secondsPerQuarter(bpm);
 	return RECORD_TRACKS.map((track) => {
 		const onTrack = takes.filter((take) => take.trackId === track.id);
 		const inUse = onTrack.find((take) => take.inUse);
 		return {
 			id: track.id,
-			name: track.name,
+			name: partName(track.id, names, track.name),
 			/** @type {'take'} */
 			kind: 'take',
 			takes: onTrack,
@@ -66,7 +68,15 @@ export function takeLanes(takes, bpm) {
 				? { take: inUse, start: takeStart(inUse) * quarters, length: inUse.seconds * quarters }
 				: null
 		};
-	}).filter((lane) => lane.takes.length > 0);
+	}).filter((lane) => lane.takes.length > 0 || names[lane.id]);
+}
+
+/**
+ * The record track a new audio lane goes on (null: all are in use).
+ * @param {TakeLane[]} lanes the audio lanes shown now
+ */
+export function freeTrack(lanes) {
+	return RECORD_TRACKS.find((track) => !lanes.some((lane) => lane.id === track.id)) ?? null;
 }
 
 /** @param {import('../chart/timeline.js').Section[]} sections */

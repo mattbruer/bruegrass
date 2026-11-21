@@ -1,7 +1,7 @@
 /**
  * The song a brand-new arrangement starts with, so the page has something
  * to play straight away. It's what the arranger shows when you open it,
- * and what New starts from; your own songs open from the song bar.
+ * your own songs open from the song bar. New starts from EMPTY_SONG below.
  *
  * To change it, replace both: the chord chart (see chart/parseArrangement.js
  * for the format; the words under it are for the lyric chart) and the
@@ -51,4 +51,11 @@ export const STARTER_SONG = Object.freeze({
 	capo: 0,
 	transpose: 0,
 	mix: null
+});
+
+/** A song with no chart and no tune: what New starts from. */
+export const EMPTY_SONG = Object.freeze({
+	...STARTER_SONG,
+	arrangement: '',
+	abc: ''
 });

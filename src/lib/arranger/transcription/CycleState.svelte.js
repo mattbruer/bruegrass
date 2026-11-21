@@ -4,6 +4,7 @@
  * turning it on again (the Cycle button, C) brings it back.
  */
 import { secondsAt } from './tempoMap.js';
+import { sectionCycles } from './cycle.js';
 
 /** Turned on while stopped outside it, the player starts this many beats before it. */
 const LEAD_IN_BEATS = 2;
@@ -23,6 +24,12 @@ export class CycleState {
 		const grid = this.#transcription.grid;
 		if (!grid || !this.on || !this.region) return null;
 		return { from: secondsAt(grid, this.region.from), to: secondsAt(grid, this.region.to) };
+	});
+
+	/** The named sections as regions, for the Cycle menu (each with its name and bar). */
+	sections = $derived.by(() => {
+		const { markers, bars, grid } = this.#transcription;
+		return sectionCycles(markers, bars, grid?.bars.firstBeat ?? 0);
 	});
 
 	#transcription;
@@ -81,6 +88,11 @@ export class CycleState {
 		if (!region) return;
 		if (this.isJustBar(number)) this.turn(false);
 		else this.set(region);
+	}
+
+	/** @param {Cycle} region the cycle is on and is exactly this region */
+	isRegion(region) {
+		return this.on && this.region?.from === region.from && this.region?.to === region.to;
 	}
 
 	/** @param {number} number the cycle is on and is just this bar */

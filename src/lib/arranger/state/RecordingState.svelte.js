@@ -21,6 +21,8 @@ import {
 import { downloadFile } from '$lib/utils/downloadFile.js';
 import { slugify } from '$lib/utils/slugify.js';
 import { RECORD_TRACKS, trackName } from '../takes/recordTracks.js';
+import { freeTrack, takeLanes } from '../tracks/lanes.js';
+import { partName, withPartName } from '../melody/partNames.js';
 import { firstBar } from '../takes/takeTiming.js';
 import { openRecordAlong } from '../takes/recordAlong.js';
 import { readAudioFile, takeAsWav } from '../takes/takeFiles.js';
@@ -58,6 +60,15 @@ export class RecordingState {
 	);
 
 	isRecording = $derived(this.status === 'recording' || this.status === 'starting');
+	/** The audio lanes on the Tracks page: record tracks with takes, or added and named. */
+	lanes = $derived(
+		takeLanes(this.takes, this.#arranger.arrangement.bpm, this.#arranger.song.partNames)
+	);
+	/** The lane Record records on: the one armed, else the first (null: no lanes yet). */
+	armedTrack = $derived(
+		this.lanes.some((lane) => lane.id === this.trackId) ? this.trackId : (this.lanes[0]?.id ?? null)
+	);
+	canAddLane = $derived(freeTrack(this.lanes) !== null);
 	/** Tracks with a take in use: their mixer strips show. (Made afresh on each change, never changed.) */
 	tracksInUse = $derived(
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
@@ -93,12 +104,47 @@ export class RecordingState {
 		await this.#reload();
 	}
 
+	/**
+	 * + Audio lane: the next free record track, named, and armed to record on.
+	 * @param {string} name
+	 */
+	addLane(name) {
+		const track = freeTrack(this.lanes);
+		if (!track || !name.trim()) return;
+		this.#name(track.id, name);
+		this.trackId = track.id;
+	}
+
+	/**
+	 * @param {string} trackId
+	 * @param {string} name a blank one is refused: an empty lane without a name would go
+	 */
+	renameLane(trackId, name) {
+		if (name.trim()) this.#name(trackId, name);
+	}
+
+	/** @param {string} trackId an empty lane: one with takes stays while it has them */
+	removeLane(trackId) {
+		this.#name(trackId, '');
+	}
+
+	/** @param {string} trackId */
+	laneName(trackId) {
+		return partName(trackId, this.#arranger.song.partNames, trackName(trackId));
+	}
+
+	/** @param {string} trackId @param {string} name */
+	#name(trackId, name) {
+		const { song } = this.#arranger;
+		song.partNames = withPartName(song.partNames, trackId, name);
+	}
+
 	async record() {
 		const { player, song, arrangement, loop } = this.#arranger;
-		if (this.isRecording) return;
+		const trackId = this.armedTrack;
+		if (this.isRecording || !trackId) return;
 		await song.keepAsYourOwn(); // a take belongs to a song: a template becomes yours here
 		const songId = /** @type {string} */ (song.savedId);
-		const trackId = this.trackId;
 		this.problem = '';
 		this.status = 'starting';
 
@@ -195,8 +241,9 @@ export class RecordingState {
 	 * Add a take from a file someone sent (a take file from this app starts
 	 * one bar before bar 1, so it lines up).
 	 * @param {File} file
+	 * @param {string} trackId the audio lane it goes on
 	 */
-	async addFromFile(file) {
+	async addFromFile(file, trackId) {
 		const { song, arrangement } = this.#arranger;
 		await song.keepAsYourOwn();
 		this.problem = '';
@@ -207,7 +254,7 @@ export class RecordingState {
 			await addTake(
 				{
 					songId: song.savedId,
-					trackId: this.trackId,
+					trackId,
 					from: 'file',
 					fileName: file.name,
 					bpm: arrangement.bpm,
@@ -231,7 +278,7 @@ export class RecordingState {
 		const channels = await readTakeAudio(take.id);
 		if (!channels) return;
 		const bar = firstBar(this.#arranger.arrangement.sections, take.bpm);
-		const name = [this.#arranger.song.name, trackName(take.trackId), `${take.bpm}bpm`]
+		const name = [this.#arranger.song.name, this.laneName(take.trackId), `${take.bpm}bpm`]
 			.map(slugify)
 			.join('-');
 		downloadFile(takeAsWav(take, channels, bar.seconds), `${name}.wav`, 'audio/wav');
@@ -257,7 +304,8 @@ export class RecordingState {
 
 	/** @param {TakeDocument} take */
 	async remove(take) {
-		if (!confirm(`Delete this take from ${trackName(take.trackId)}? This can’t be undone.`)) return;
+		if (!confirm(`Delete this take from ${this.laneName(take.trackId)}? This can’t be undone.`))
+			return;
 		await deleteTake(take.id);
 		this.#buffers.delete(take.id);
 		await this.#reload();

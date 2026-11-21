@@ -24,7 +24,7 @@ export class LoopState {
 	 * habit, not the song's, so it stays as it is from song to song.
 	 */
 	get repeats() {
-		return settings.loopPlayback;
+		return !this.#playingThrough && settings.loopPlayback;
 	}
 	set repeats(on) {
 		settings.loopPlayback = on;
@@ -40,9 +40,13 @@ export class LoopState {
 	/** How many bars the chosen part has. */
 	barCount = $derived(loopScope(this.#arrangement.sections, this.section).length);
 
+	/** A page that plays the whole song once (Tracks) has set the loop aside. */
+	#playingThrough = $state(false);
+
 	/** Only part of the arrangement is chosen (so the loop bar is highlighted). */
 	isPartial = $derived(
-		this.barCount > 0 &&
+		!this.#playingThrough &&
+			this.barCount > 0 &&
 			(this.section !== WHOLE_ARRANGEMENT ||
 				(Number(this.from) || 1) > 1 ||
 				Math.min(this.to, this.barCount) < this.barCount)
@@ -62,6 +66,18 @@ export class LoopState {
 	useAllBarsOfSection() {
 		this.from = 1;
 		this.to = this.barCount;
+	}
+
+	/**
+	 * Play the whole song once, from wherever Play is, until the returned
+	 * function is called: for a page like Tracks, which plays like a DAW.
+	 * The loop you chose is kept for when you go back.
+	 */
+	playThroughWhile() {
+		this.#playingThrough = true;
+		return () => {
+			this.#playingThrough = false;
+		};
 	}
 
 	/** Go back to looping the whole arrangement. */

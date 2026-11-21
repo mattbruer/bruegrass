@@ -13,11 +13,12 @@ import { clearDraft, readDraft, writeDraft } from '$lib/storage/drafts.js';
  *   grid: import('./beatGrid.js').BeatGrid,
  *   time: string,
  *   cents: number, downbeat: number,
- *   pickups: Record<number, number>
+ *   pickups: Record<number, number>, pickup?: number
  * }} Transcription
  *   downbeat: where you placed beat 1 of bar 1 (seconds)
  *   cents: the recording's pitch moved by this much (fine tuning)
  *   pickups: bar number → how many beats before it its section's tune starts (a marker's pickup)
+ *   pickup: the pickup (quarters) chosen with beat 1, while the tune isn't written
  */
 
 /** @param {string} referenceKey */

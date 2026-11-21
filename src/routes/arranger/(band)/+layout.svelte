@@ -16,7 +16,7 @@
 	 * page offers its song.
 	 */
 	import InstrumentWindow from '$lib/arranger/components/mixer/instruments/InstrumentWindow.svelte';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { showsTheBand } from '$lib/arranger/components/page/bandPages.js';
 	import { provideArranger } from '$lib/arranger/state/context.js';
@@ -35,11 +35,14 @@
 
 	const arranger = provideArranger();
 	const showBand = $derived(showsTheBand(page.route.id));
-	// A page without the band's controls has no Stop either, so the band and the click stop
+	// Arriving on a page without the player bar stops the band and the click; a page with its
+	// own controls (Tracks) can start them again, so only the arrival counts
 	$effect(() => {
 		if (showBand) return;
-		arranger.player.stop();
-		arranger.layout.close();
+		untrack(() => {
+			arranger.player.stop();
+			arranger.layout.close();
+		});
 	});
 	keepWorkSaved(arranger);
 	keepBassWithChart(arranger);

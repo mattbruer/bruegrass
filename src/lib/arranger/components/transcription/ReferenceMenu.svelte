@@ -1,12 +1,10 @@
 <script>
 	/**
 	 * The recording's menu, on its lane: the whole song's beats (Move beat
-	 * 1, counting twice or half as fast, finding them again), tuning the
-	 * recording, and how the slowed-down sound is made.
+	 * 1, counting twice or half as fast, finding them again) and how the slowed-down sound is made.
 	 */
 	import Popover from '$lib/components/Popover.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
-	import TuningControl from './TuningControl.svelte';
 	import { SOUNDS } from '$lib/slowDowner/sounds.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -45,8 +43,6 @@
 		onclick={() => transcription.findBeatsAgain()}
 		use:tooltip={TIPS.transcription.findAgain}>Find the beats again</button
 	>
-	<span class="heading">Tune the recording</span>
-	<TuningControl {transcription} />
 	<span class="heading">Slowed-down sound</span>
 	<TabSwitch
 		tabs={SOUNDS}

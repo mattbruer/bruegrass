@@ -5,7 +5,8 @@
  *
  * Samples live in static/samples/mando/{G,D,A,E}{0..14}.mp3, one per course
  * and fret, with the choke already recorded, so each note plays to its end.
- * A chop is a strum, so it grazes (articulation.js), never plucks.
+ * A chop is a strum, but a percussive one: its own articulation (articulation.js)
+ * and the sound on top of it (chopSound.js).
  */
 import { rootPitchClass } from './guitar.js';
 import { rhythm } from '../chart/timeline.js';
@@ -39,7 +40,7 @@ const STROKE_GAP = 0.004; // s between courses on the downstroke (G → E)
 const LEVEL_JITTER_DB = 1.5; // per chop, so it doesn't sound machine-gunned
 
 /** How the pick meets the strings on a chop. */
-export const CHOP_ARTICULATION = ARTICULATIONS.graze;
+export const CHOP_ARTICULATION = ARTICULATIONS.chop;
 
 /**
  * @typedef {{ time: number, course: number, fret: number, pitch: number, levelDb: number }} MandoNote

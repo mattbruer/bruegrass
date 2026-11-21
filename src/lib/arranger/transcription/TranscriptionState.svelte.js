@@ -49,6 +49,7 @@ import { chartFromBars } from './chartFromBars.js';
 import { readChartOnBars } from './readChartOnBars.js';
 import { namedSections, withUniqueSectionNames } from './arrangementFromTranscription.js';
 import { chartCell, isEmptyBar, isHeld, slotsOf } from './barChords.js';
+import { guessChords } from './chords/guessChords.js';
 import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
 import { keyFieldName, withKeyField } from '../chart/keyField.js';
 import { withBarChords } from '../chart/withBarChords.js';
@@ -66,7 +67,12 @@ import { BASS_VOICE } from '../bass/readBass.js';
 import { blankBassAbc } from '../bass/bassAbc.js';
 import { bassSongOf } from '../bass/bassSong.js';
 import { abcjsReady } from '../state/abcjsLoaded.svelte.js';
-import { nextExtraPart, withExtraPart, withoutExtraPart } from '../melody/extraParts.js';
+import {
+	isExtraPart,
+	nextExtraPart,
+	withExtraPart,
+	withoutExtraPart
+} from '../melody/extraParts.js';
 import { partName, withPartName } from '../melody/partNames.js';
 import { rewriteAbc } from '../melody/roll/scoreToAbc.js';
 import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
@@ -198,6 +204,12 @@ export class TranscriptionState {
 	/** @type {string | null} the key chosen while placing beat 1, before the song is made */
 	#keyBeforeSong = $state(null);
 	key = $derived(this.linked ? keyFieldName(this.arranger.arrangement.text) : this.#keyBeforeSong);
+	/** The song's name, typed while placing beat 1, before the song is made. */
+	nameBeforeSong = $state('');
+	/** The song's name: the open song's, or the one typed for the song about to be made. */
+	songName = $derived(this.linked ? this.arranger.song.name : this.nameBeforeSong);
+	/** A song from a recording needs a name and a key before the workspace (the user's call). */
+	readyForWorkspace = $derived(!!this.songName.trim() && !!this.key);
 	/** Where the recording is now, in the song's quarters from bar 1. */
 	quartersNow = $derived(this.grid ? quartersAt(this.grid, this.player.time) : 0);
 	/**
@@ -211,14 +223,30 @@ export class TranscriptionState {
 	pickupProblem = $derived(
 		this.#pickupRefused?.abc === this.arranger.melody.notation ? this.#pickupRefused.message : ''
 	);
+	/** The written tune's voices, when the open song is this recording's (null: none written yet). */
+	#writtenVoices = $derived(
+		this.linked && this.arranger.melody.hasNotation ? this.arranger.melody.voices : null
+	);
 	/** The tune's pickup now (quarters): the written tune's, or the one an unwritten tune will start with. */
-	pickup = $derived.by(() => {
-		const voices = this.arranger.melody.voices;
-		return voices ? pickupLength(voices.map((voice) => voice.score)) : this.newTunePickup;
-	});
+	pickup = $derived(
+		this.#writtenVoices
+			? pickupLength(this.#writtenVoices.map((voice) => voice.score))
+			: this.newTunePickup
+	);
 	/** The pickups to choose from (quarters): none, up to a beat short of a bar. */
 	pickupChoices = $derived(
-		Array.from({ length: this.grid?.bars.beatsPerBar ?? 4 }, (_, beats) => beats)
+		Array.from(
+			{ length: this.grid?.bars.beatsPerBar ?? timeSignature(this.time).beatsPerBar },
+			(_, beats) => beats
+		)
+	);
+	/**
+	 * Where the song starts in the recording (seconds): beat 1, or a bar
+	 * before it when the tune has a pickup. Anything earlier (a false start,
+	 * an intro) is skipped when playing from the start.
+	 */
+	startSeconds = $derived(
+		this.grid ? (this.grid.beats[this.pickup > 0 ? 0 : this.grid.bars.firstBeat] ?? 0) : 0
 	);
 	/** The written parts' notes, on the recording's time (a written bass plays on the band's upright instead). */
 	heardNotes = $derived(
@@ -302,6 +330,7 @@ export class TranscriptionState {
 		this.#beatHistory = [];
 		this.time = DEFAULT_TIME;
 		this.pickups = {};
+		this.newTunePickup = 0;
 		this.peaks = null;
 		this.hits = null;
 		this.downbeat = null;
@@ -310,6 +339,8 @@ export class TranscriptionState {
 		this.checkingDownbeat = false;
 		this.timeChosen = readTranscriptionDraft(reference.key) !== null;
 		this.pickingReference = false;
+		this.#keyBeforeSong = null;
+		this.nameBeforeSong = '';
 		this.cycle.clear();
 		this.player.setCents(0);
 		this.closeMenus();
@@ -337,21 +368,30 @@ export class TranscriptionState {
 			this.grid = draft.grid;
 			this.time = draft.time;
 			this.pickups = draft.pickups;
+			this.newTunePickup = draft.pickup ?? 0;
 			this.player.setCents(draft.cents);
 			this.downbeat = draft.downbeat;
 		}
 		if (!this.grid) this.settingDownbeat = true;
-		else if (!this.linked) await this.#openSongOrStart();
+		else if (!this.linked) await this.#openSongOrAsk();
+		if (this.grid && this.player.time < this.startSeconds) this.player.seek(this.startSeconds);
 	}
 
-	/** Open the song last written from this recording, or start one. */
-	async #openSongOrStart() {
+	/** Open the song last written from this recording; with none, ask for its name and key first. */
+	async #openSongOrAsk() {
+		if (await this.#openWrittenSong()) return;
+		this.settingDownbeat = true;
+		this.checkingDownbeat = this.downbeat !== null;
+	}
+
+	/** Open the song last written from this recording, if there is one. */
+	async #openWrittenSong() {
 		const key = this.reference?.key;
 		const songs = await listArrangements();
 		const written = songs.find((song) => song.reference?.key === key);
-		if (this.reference?.key !== key) return;
-		if (written) await this.arranger.song.open(written.id);
-		else this.startSong();
+		if (!written || this.reference?.key !== key) return false;
+		await this.arranger.song.open(written.id);
+		return true;
 	}
 
 	/**
@@ -393,7 +433,7 @@ export class TranscriptionState {
 		if (this.reference?.key !== from.key) {
 			const reference = bundledReference(from.key);
 			if (reference) await this.open(reference);
-		} else if (this.grid && !this.linked) await this.#openSongOrStart();
+		} else if (this.grid && !this.linked) await this.#openSongOrAsk();
 	}
 
 	/** Open the recording the open song was written from, if it's one of the app's own and isn't open. */
@@ -440,15 +480,30 @@ export class TranscriptionState {
 		if (this.downbeat !== null) this.player.seek(this.downbeat);
 	}
 
-	/** Beat 1 sounds right: on to the workspace. */
-	downbeatSoundsRight() {
+	/** Beat 1 sounds right: on to the workspace, once the song has a name and a key. */
+	async downbeatSoundsRight() {
+		if (!this.readyForWorkspace) return;
 		this.player.pause();
-		this.player.seek(0);
+		this.player.seek(this.startSeconds);
 		this.closeMenus();
 		this.checkingDownbeat = false;
 		this.settingDownbeat = false;
 		this.movingDownbeat = false;
-		if (!this.linked) this.#openSongOrStart();
+		if (this.linked) return;
+		const name = this.nameBeforeSong;
+		const key = this.#keyBeforeSong;
+		if (!(await this.#openWrittenSong())) return this.startSong();
+		await this.arranger.song.rename(name);
+		await this.arranger.nameSongKey(key);
+	}
+
+	/**
+	 * Name the song. The open song is renamed at once; before it's made, the name is held.
+	 * @param {string} name
+	 */
+	setName(name) {
+		if (this.linked) this.arranger.song.rename(name).catch(console.error);
+		else this.nameBeforeSong = name;
 	}
 
 	/** The beats and bars found through the placed beat 1, and the chart written on them. */
@@ -516,7 +571,7 @@ export class TranscriptionState {
 
 	/**
 	 * A new song on the recording's bars, at its tempo, with no tune yet,
-	 * named for the recording and saved at once (the open song is saved first).
+	 * with the name and key you gave it, saved at once (the open song is saved first).
 	 */
 	startSong() {
 		if (!this.grid) return;
@@ -533,9 +588,11 @@ export class TranscriptionState {
 			},
 			this.reference?.name ?? ''
 		);
+		song.name = this.nameBeforeSong.trim();
 		song.keepAsYourOwn().catch(console.error);
 		if (this.#keyBeforeSong) this.arranger.nameSongKey(this.#keyBeforeSong).catch(console.error);
 		this.#keyBeforeSong = null;
+		this.nameBeforeSong = '';
 		this.#keepDraft();
 	}
 
@@ -556,11 +613,12 @@ export class TranscriptionState {
 	setPickup(quarters) {
 		const { melody } = this.arranger;
 		this.#pickupRefused = null;
-		if (!melody.voices) {
+		if (!this.#writtenVoices) {
 			this.newTunePickup = quarters;
+			this.#keepDraft();
 			return;
 		}
-		const scores = melody.voices.map((voice) => voice.score);
+		const scores = this.#writtenVoices.map((voice) => voice.score);
 		const result = withPickupLength(melody.notation, scores, quarters);
 		if (result.blocked)
 			this.#pickupRefused = {
@@ -612,6 +670,26 @@ export class TranscriptionState {
 	}
 
 	/**
+	 * Fill the bars with no chord yet with a guess from the recording, to fix
+	 * by ear. Chords you wrote are left alone. It's heard at the band's own
+	 * tuning (measured), so it doesn't matter whether you've tuned it yet.
+	 */
+	guessChords() {
+		const audio = this.#audio;
+		if (!audio || !this.grid || !this.linked) return;
+		const channels = channelsOf(audio);
+		const guessed = guessChords({
+			channels,
+			sampleRate: audio.sampleRate,
+			cents: findTuning(channels, audio.sampleRate) ?? 0,
+			beats: this.grid.beats,
+			bars: this.bars.filter((bar) => !(bar.number in this.chords)),
+			duration: audio.duration
+		});
+		for (const [number, slots] of Object.entries(guessed)) this.setBarChords(Number(number), slots);
+	}
+
+	/**
 	 * The chord sounding at the end of the bar before (what a bar starting
 	 * with an empty beat carries on).
 	 * @param {number} number
@@ -643,10 +721,11 @@ export class TranscriptionState {
 
 	/**
 	 * + Lane: another line of the tune to write by ear (the vocal, a mandolin
-	 * break), its bars empty, with its own channel and instrument. An
-	 * unwritten tune is started from the chart first.
+	 * break), named by you, its bars empty, with its own channel and
+	 * instrument. An unwritten tune is started from the chart first.
+	 * @param {string} name
 	 */
-	async addLane() {
+	async addLane(name) {
 		await abcjsReady();
 		const { melody } = this.arranger;
 		if (!melody.hasNotation) this.arranger.startMelodyFromChart(this.newTunePickup);
@@ -655,6 +734,7 @@ export class TranscriptionState {
 		if (!part || !lead?.score.bars.length) return;
 		const resting = rewriteAbc(melody.notation, lead.score, [], { every: true });
 		melody.notation = withExtraPart(melody.notation, resting, part);
+		this.renameLane(part.id, name);
 		this.lane = part.id;
 	}
 
@@ -694,12 +774,14 @@ export class TranscriptionState {
 	}
 
 	/**
-	 * Give a lane a name of your own ('' gives it back its own).
+	 * Give a lane a name of your own ('' gives the melody, a harmony part or
+	 * the bass back its own; an added lane always keeps one of yours).
 	 * @param {string} id
 	 * @param {string} name
 	 */
 	renameLane(id, name) {
 		const { song } = this.arranger;
+		if (!name.trim() && isExtraPart(id)) return;
 		song.partNames = withPartName(song.partNames, id, name);
 	}
 
@@ -764,7 +846,13 @@ export class TranscriptionState {
 	}
 
 	/** A marker at the bar line nearest the playhead (pressed a moment late or early), the playhead moved onto it: its menu opens to name it. */
-	markHere() {
+	/** The bar whose start is nearest the playhead: the one the bar button opens. */
+	get barHere() {
+		return this.#barLineNearPlayhead()?.number ?? null;
+	}
+
+	/** Open the menu of the bar the playhead is at (its marker, beats, cycle), ready to name it. */
+	openBarHere() {
 		const bar = this.#barLineNearPlayhead();
 		if (!bar) return;
 		// Pause to type the name, the playhead on the marker's bar line (named, it plays on from there: finishMarker)
@@ -792,9 +880,16 @@ export class TranscriptionState {
 		if (off !== null && off !== undefined) this.setTuning(clampCents(-off));
 	}
 
-	/** Back to the very start of the recording. */
+	/** Back to where the song starts. */
 	startOver() {
-		this.player.seek(0);
+		this.player.seek(this.startSeconds);
+	}
+
+	/** Play on (from the cycle, if it's on); from before the song's start, from its start. */
+	play() {
+		this.cycle.startFromCycle();
+		if (this.player.time < this.startSeconds) this.player.seek(this.startSeconds);
+		this.player.play();
 	}
 
 	/** @param {1 | -1} step to the next bar, or back to this bar's start (the one before if it's only just started) */
@@ -991,7 +1086,8 @@ export class TranscriptionState {
 			time: this.time,
 			cents: this.player.cents,
 			downbeat: this.downbeat,
-			pickups: this.pickups
+			pickups: this.pickups,
+			pickup: this.newTunePickup
 		});
 	}
 }

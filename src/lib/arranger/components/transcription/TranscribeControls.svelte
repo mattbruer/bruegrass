@@ -3,7 +3,7 @@
 	 * Transcribe's control bar, centred: where you are (play, start over, a
 	 * bar back or forward, the clock) and how it sounds (speed with the pitch
 	 * kept, Count along as the metronome: a click on every beat, higher
-	 * on ONE, and the tuner) and how much of the grid you see (Zoom, across and
+	 * on ONE, the recording's fine tuning, and the tuner) and how much of the grid you see (Zoom, across and
 	 * down; the piano roll has its own in its toolbar). + Marker is beside the grid's ruler, and the
 	 * recording's own settings in its lane's menu (ReferenceMenu). It stays
 	 * in view under the top bar, so Play is at hand while you write in the
@@ -14,6 +14,7 @@
 	import TransportGlyph from '../icons/TransportGlyph.svelte';
 	import SpeedControl from './SpeedControl.svelte';
 	import CountAlongButton from './CountAlongButton.svelte';
+	import TuningControl from './TuningControl.svelte';
 	import { soundById } from '$lib/slowDowner/sounds.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -36,8 +37,7 @@
 			player.pause();
 			transcription.cycle.backToStart();
 		} else {
-			transcription.cycle.startFromCycle();
-			player.play();
+			transcription.play();
 		}
 	}
 
@@ -115,6 +115,7 @@
 
 		<div class="cluster listening">
 			<SpeedControl {player} />
+			<TuningControl {transcription} />
 			<CountAlongButton {transcription} class="h-10 w-12" />
 			<TunerButton class="h-10 w-12" onopen={() => player.pause()} />
 		</div>

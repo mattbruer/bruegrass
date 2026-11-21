@@ -9,6 +9,36 @@
 	],
 	"suggestions": [
 		{
+			"id": "tracks-phone",
+			"text": "Tracks on a phone: narrower lane headers so the lanes have room",
+			"done": false,
+			"addedAt": "2026-11-21"
+		},
+		{
+			"id": "tracks-cycle",
+			"text": "Tracks: cycle a stretch and step a bar back or on, like Transcribe",
+			"done": false,
+			"addedAt": "2026-11-21"
+		},
+		{
+			"id": "track-grid-shell",
+			"text": "One track-grid look for Transcribe and Tracks (header, ruler, control bar shared)",
+			"done": false,
+			"addedAt": "2026-11-21"
+		},
+		{
+			"id": "guess-scored",
+			"text": "Guess the chords: score it against your own finished transcriptions, and tune it on them",
+			"done": false,
+			"addedAt": "2026-11-21"
+		},
+		{
+			"id": "guess-learned",
+			"text": "Chords learned from everyone's transcriptions (needs the backend, consent, many songs)",
+			"done": false,
+			"addedAt": "2026-11-21"
+		},
+		{
 			"id": "midi-tempo-track",
 			"text": "MIDI file: the tempo lane as a tempo track, so a ritard reaches Logic",
 			"done": false,

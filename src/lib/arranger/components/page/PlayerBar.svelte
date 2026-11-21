@@ -173,28 +173,41 @@
 		white-space: nowrap;
 	}
 
-	/* Phones upright: narrower keys that share the width, never smaller than a finger (seven fit across a 375px phone) */
+	/* A wide tile (the tempo: controls, not a picture) takes the room it needs; the picture keys share what's left */
+	.bar-content :global(.bar-tile.wide) {
+		flex: 0 0 auto;
+		min-width: 0;
+		gap: 0.1rem;
+		padding-inline: 0.2rem;
+	}
+
+	/* Phones upright: narrower keys that share the width, never narrower than a fingertip (five keys and the tempo fit across a 375px phone) */
 	@media (max-width: 639px) {
 		.bar-content {
 			--tile-height: 4.25rem;
 			--tile-width: 3.9rem;
 			--tile-art: 3.2rem;
-			gap: 0.4rem;
+			gap: 0.3rem;
 		}
 
-		.bar-content :global(.bar-tile) {
+		.bar-content :global(.bar-tile:not(.wide)) {
 			flex: 0 1 var(--tile-width);
-			min-width: 2.75rem;
+			min-width: 2.5rem;
 		}
 
 		.bar-content :global(.bar-tile svg) {
 			max-width: 100%;
 		}
 
+		.bar-content :global(.bar-tile.wide) {
+			gap: 0;
+			padding-inline: 0.1rem;
+		}
+
 		.end {
 			flex: 0 1 auto;
 			min-width: 0;
-			gap: 0.4rem;
+			gap: 0.3rem;
 		}
 	}
 

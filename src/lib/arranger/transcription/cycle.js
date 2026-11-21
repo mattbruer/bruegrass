@@ -1,3 +1,5 @@
+import { SECTION_END } from './readChartOnBars.js';
+
 /**
  * The cycle, Logic's way: a stretch of the song that plays over and over,
  * from bar line to bar line. Times are quarters from bar 1.
@@ -6,14 +8,18 @@
  */
 
 /**
- * Where bars start, plus where the last one ends.
+ * Where bars start, plus where the last one ends. A tune's pickup (quarters
+ * before bar 1) is a line too, so a cycle can start in it.
  * @param {import('../tracks/ruler.js').RulerBar[]} ruler
+ * @param {number} pickup quarters the tune starts before bar 1 (0: none)
  * @returns {number[]}
  */
-export function barLines(ruler) {
+export function barLines(ruler, pickup = 0) {
 	const bars = ruler.filter((bar) => bar.number > 0);
 	const last = bars.at(-1);
-	return last ? [...bars.map((bar) => bar.start), last.start + last.beats] : [];
+	if (!last) return [];
+	const pickupStart = pickup > 0 ? [-pickup] : [];
+	return [...pickupStart, ...bars.map((bar) => bar.start), last.start + last.beats];
 }
 
 /** The grid the cycle's ends snap to when Snap is on: a sixteenth note (a quarter is one beat). */
@@ -88,4 +94,29 @@ export function grabbedPart(x, edges, grip) {
 	if (Math.abs(x - edges.left) <= reach) return 'from';
 	if (Math.abs(x - edges.right) <= reach) return 'to';
 	return x > edges.left && x < edges.right ? 'body' : null;
+}
+
+/**
+ * The named sections as cycles: each runs from its marker's bar to the next
+ * marker (an End marker, or another name), or to the song's end. End
+ * markers themselves aren't sections.
+ * @param {Record<number, string>} markers bar number → name (SECTION_END ends one)
+ * @param {{ number: number, firstBeat: number, beats: number }[]} bars
+ * @param {number} origin the beat that is quarter 0 (the grid's first bar)
+ * @returns {{ number: number, name: string, region: Cycle }[]}
+ */
+export function sectionCycles(markers, bars, origin) {
+	const last = bars.at(-1);
+	if (!last) return [];
+	const starts = bars.filter((bar) => markers[bar.number]);
+	return starts
+		.map((bar, i) => {
+			const stop = starts[i + 1]?.firstBeat ?? last.firstBeat + last.beats;
+			return {
+				number: bar.number,
+				name: markers[bar.number],
+				region: { from: bar.firstBeat - origin, to: stop - origin }
+			};
+		})
+		.filter((section) => section.name !== SECTION_END);
 }

@@ -89,7 +89,7 @@ export const TIPS = Object.freeze({
 	},
 
 	song: {
-		new: 'Start a new song from the starter tune. The song open now is already saved.',
+		new: 'Start an empty song. The song open now is already saved.',
 		examples:
 			'Start a new song from an example, or from a recording you write down in Transcribe. The song open now is already saved.',
 		open: 'Open one of your saved songs.',
@@ -100,20 +100,16 @@ export const TIPS = Object.freeze({
 	},
 
 	recording: {
-		tile: 'Record yourself along with the band: a voice, or a real instrument in place of one of the band’s.',
-		track: 'The track to record on. Each track has its own strip in the mixer.',
-		record:
-			'Start recording: the count-in clicks, then the band plays the song once. Press again (or Stop) to finish early.',
 		countIn:
 			'How many bars of clicks before the song starts. A pickup comes in over the last of them.',
-		use: 'Play this take on its track. The other takes on the track are kept, but not played.',
+		use: 'Play this take on its lane. The other takes on the lane are kept, but not played.',
 		earlier: 'Move the take a little earlier, if it sounds behind the band.',
 		later: 'Move the take a little later, if it sounds ahead of the band.',
 		download:
 			'Save this take as a WAV file to send to someone. It starts one bar before bar 1, so it lines up when they add it to the same song.',
 		delete: 'Delete this take for good.',
 		addFile:
-			'Add a take from a WAV file someone sent you (one made with Download here), onto the chosen track.'
+			'Add a take from a WAV file someone sent you (one made with Download here), onto this lane.'
 	},
 	metronome: {
 		startStop: 'Start or stop the click. Space does the same.'
@@ -128,7 +124,7 @@ export const TIPS = Object.freeze({
 		metronomeLevel: 'How loud the click is.',
 		swing:
 			'How long-short the eighth notes are: straight at the left, a triplet feel at 66%, dotted at 75%. Tap the number for straight again.',
-		tempoBadge: 'The speed. Tap to change it, the swing, and the click’s sound and level.',
+		tempoMore: 'Swing, and the click’s sound and level.',
 		slower: 'Slower. Hold it down to keep going.',
 		faster: 'Faster. Hold it down to keep going.',
 		tempoNumber: 'The speed, in beats per minute. Tap to type a number.',
@@ -155,8 +151,13 @@ export const TIPS = Object.freeze({
 				'Show what each chord does, the way a jazz school analyses it: V7/V for a chord leading to the V, subV7 for a tritone sub.',
 			nashville: 'Show chords as Nashville numbers (1, 4, 5), the same in any key.'
 		},
-		chordTutor:
-			'Learn about this chord: what to play over it, the note to lean on, and what it does.'
+		editChord: 'Change this chord. Learn about it from inside the box.'
+	},
+
+	chordEdit: {
+		name: 'The chord as the chart writes it. Change it, then tap Change.',
+		save: 'Write the new chord into the chart. Its own reading is cleared.',
+		learn: 'Open the chord tutor on this chord: what to play over it, and what it does.'
 	},
 
 	chordTutor: {
@@ -213,21 +214,22 @@ export const TIPS = Object.freeze({
 		startOver: 'Back to the start of the recording (Home).',
 		barBack: 'Back to the start of this bar, or the one before if it’s only just started (comma).',
 		barForward: 'On to the start of the next bar (full stop).',
-		addMarker:
-			'Mark where a section starts, like “Verse” or “Banjo solo”, at the bar the playhead is in. Each marker is a section of the chart.',
+		barHere:
+			'The bar the playhead is at: name a section starting here (a marker, like “Verse”), end one, change how many beats it has, or cycle it. Clicking a bar’s number above does the same for that bar.',
 		marker:
 			'The name of the section starting at this bar. It becomes a section of the chart. Clear it to take the marker away.',
 		speed: 'How fast the recording plays: lower is slower. The pitch stays the same.',
 		resetSpeed: 'Back to the recording’s own speed.',
 		tuneDown:
-			'Lower the recording a cent, for a band that tuned sharp: its notes sit on the piano roll’s instead of between them.',
+			'Lower the recording a cent, for a band that tuned sharp. Play it with a chord in the band and nudge until they sound in tune.',
 		tuneUp: 'Raise the recording a cent, for a band that tuned flat.',
 		tuneReset: 'How far the recording’s pitch is moved, in cents. Tap for as recorded.',
 		findTuning:
 			'Measure how far the band is from A = 440 and tune the recording back by that much. Then nudge by ear if it needs it.',
 		countAlong:
 			'Click on every beat as the recording plays, higher on each ONE, so you can hear if the bars fit.',
-		key: 'The recording’s key, if you know it: the tune’s notes are spelled in it, and Send to the arranger needs it. Not known yet: choose it later from Move beat 1….',
+		key: 'The recording’s key: the tune’s notes are spelled in it, and the band plays in it. Needed before you start writing.',
+		songName: 'What to call the song made from this recording. Needed before you start writing.',
 		more: 'The recording’s menu: fixes for the whole song’s beats (beat 1, counting faster or slower), tuning the recording, and how the slowed-down sound is made.',
 		doubleBeats: 'For when the count is half the song’s speed: a beat between every two.',
 		halveBeats: 'For when the count is twice the song’s speed: every other beat.',
@@ -245,7 +247,7 @@ export const TIPS = Object.freeze({
 		findAgain:
 			'Find the beats and bars again from the recording. Your fixes to them are forgotten.',
 		ruler:
-			'Click anywhere to play from there. Click a bar’s number for its menu: its beats, and Loop.',
+			'Click anywhere to play from there. Click a bar’s number for its menu: a marker, its beats (a short or long bar), and Cycle.',
 		beatDot:
 			'A beat. If its hit sits off the line below, drag the dot onto the hit; it snaps. Tap it for more.',
 		undoBeats: 'Put the beats back as they were before your last change to them (⌘Z).',
@@ -258,15 +260,17 @@ export const TIPS = Object.freeze({
 		partLane: 'Edit this part in the piano roll below. A click anywhere on its lane picks it too.',
 		bandLane:
 			'The band (guitar, mandolin, bass) plays these chords along with the recording. Tap a bar to type its chords. Each instrument’s own level is in the mixer.',
+		guessChords:
+			'Fill every bar that has no chord yet with a guess from the recording. Then play it with the band and fix what sounds wrong. Chords you wrote stay as they are.',
 		addLane:
-			'Add another line of the tune to write by ear: the vocal, a mandolin break, a fiddle part. It has its own instrument and level, and goes to the arranger with the rest.',
+			'Add another line of the tune to write by ear: the vocal, a mandolin break, a fiddle part. You name it first. It has its own instrument and level, and goes to the arranger with the rest.',
 		laneMenu: 'Name this part, and more.',
-		laneName: 'Call this part what it is (Vocal, Mando break). Leave it empty for its own name.',
+		laneName: 'Call this part what it is (Lead vocal, Mandolin break).',
 		laneBass:
 			'Make this lane the song’s bass line. The lane goes; the bass is written from its notes.',
 		laneRemove: 'Take this lane away, with its notes.',
 		pickup:
-			'Notes before beat 1 (a pickup): how many beats of room to draw them in, before bar 1. Every voice gets the same.',
+			'Notes before beat 1 (a pickup): how many beats of room to draw them in, before bar 1. With one, the recording plays from a bar before beat 1; without, from beat 1.',
 		bottomViews: {
 			roll: 'Write and edit the picked part as notes on a grid.',
 			sheet: 'See what you’ve written as a score.',
@@ -279,6 +283,9 @@ export const TIPS = Object.freeze({
 		moreBeats: 'This bar has a beat more. The bars after it move along.',
 		loop: 'Play just this bar over and over (L). Drag across the strip at the top for more bars.',
 		cycle: 'Turn the cycle on or off (C): play the stretch marked in the strip over and over.',
+		cycleSections:
+			'Play one of your named sections over and over: from its marker to the next marker or End.',
+		cycleSection: 'Cycle this section, and turn the cycle on.',
 		cycleStrip:
 			'Drag across to play that stretch over and over (the cycle). Click to turn it on or off.',
 		snapCycle: 'On: the cycle’s ends snap to sixteenth notes. Off: drag anywhere for a free cycle.',
@@ -303,11 +310,21 @@ export const TIPS = Object.freeze({
 	},
 
 	tracks: {
-		open: 'The song as tracks, like a recording studio: each part of the band and each recorded take on its own lane.',
-		back: 'Back to the arranger. The song and the band come with you.',
+		open: 'The song as tracks, like a recording studio: each part of the band on its own lane, and audio lanes to record on.',
+		back: 'Back to the arranger. The song comes with you.',
+		play: 'Play the band from the playhead, with your takes (Space). Press again to stop.',
+		record:
+			'Record on the lane whose record button is lit: the count-in clicks, then the band plays the song once. Press again (or Play) to finish early.',
+		ruler: 'Click to move the playhead there: Play carries on from that spot.',
+		arm: 'Record on this lane: Record puts the next take here.',
+		addLane:
+			'Add a lane to record on: a voice, or a real instrument along with the band. You name it first. Up to four.',
+		laneMenu: 'This lane’s name and takes, and a take from a file.',
+		laneName: 'Call this lane what’s on it (Lead vocal, Mandolin break).',
+		laneRemove: 'Take this empty lane away.',
 		clip: 'Drag the take sideways to line it up with the band.',
 		clipTakes:
-			'Drag the take sideways to line it up with the band. Tap it to play the track’s next take instead.'
+			'Drag the take sideways to line it up with the band. Tap it to play the lane’s next take instead.'
 	},
 
 	fullScreen: {

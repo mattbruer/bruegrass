@@ -1,11 +1,14 @@
 /**
  * Which of the arranger's pages show the band's controls (the player bar,
  * with the editor and mixer drawers above it). Every page shares the song,
- * but a page with its own player, like Transcribe, has no use for the
- * band's. A new page without them is one entry.
+ * but a page with its own controls, like Transcribe or Tracks, has no use
+ * for the bar. A new page without them is one entry.
  */
 
-const PAGES_WITHOUT_THE_BAND = Object.freeze(['/arranger/(band)/transcribe']);
+const PAGES_WITHOUT_THE_BAND = Object.freeze([
+	'/arranger/(band)/transcribe',
+	'/arranger/(band)/tracks'
+]);
 
 /** @param {string | null | undefined} routeId */
 export function showsTheBand(routeId) {

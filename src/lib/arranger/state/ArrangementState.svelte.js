@@ -13,6 +13,7 @@ import { tempoClock } from '../chart/tempoCurve.js';
 import { rhythm } from '../chart/timeline.js';
 import { chartAnalysis, functionOnItsOwn, placeId } from '../chart/chartAnalysis.js';
 import { setMark } from '../chart/analysisMarks.js';
+import { setChord } from '../chart/chordEdit.js';
 import { unknownChordProblem } from '../chart/knownChords.js';
 import { myChords } from '../voicings/myChords.svelte.js';
 import { settings } from '$lib/settings/settings.svelte.js';
@@ -98,5 +99,14 @@ export class ArrangementState {
 	 */
 	markChord(place, mark) {
 		this.text = setMark(this.text, place, mark);
+	}
+
+	/**
+	 * Rename one chord in the chart (its own reading goes with it).
+	 * @param {import('../chart/chartAnalysis.js').ChordPlace} place
+	 * @param {string} name
+	 */
+	changeChord(place, name) {
+		this.text = setChord(this.text, place, name);
 	}
 }

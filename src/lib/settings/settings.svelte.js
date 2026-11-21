@@ -64,6 +64,12 @@ export const settings = $state({
 		zoom: { across: 1, down: 1 }
 	},
 
+	// The Tracks page: set from its control bar
+	tracks: {
+		/** The track grid's size multipliers (components/zoom/). */
+		zoom: { across: 1, down: 1 }
+	},
+
 	// Piano rolls: set from the roll's toolbar
 
 	pianoRoll: {

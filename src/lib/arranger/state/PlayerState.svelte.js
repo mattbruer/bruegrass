@@ -173,9 +173,18 @@ export class PlayerState {
 
 	/** Back to the start: the next Play begins there (and a playing band starts over). */
 	toStart() {
-		this.resumeAt = 0;
+		this.goTo(0);
+	}
+
+	/**
+	 * The next Play begins here, and a playing band carries on from here
+	 * (with the loop off; with it on, Play always starts at the top).
+	 * @param {number} quarters from bar 1
+	 */
+	goTo(quarters) {
+		this.resumeAt = Math.max(0, quarters);
 		if (this.isPlaying) {
-			this.#resumable = false; // so stopping to start over doesn't remember where it was
+			this.#resumable = false; // so stopping to move doesn't remember where it was
 			this.play();
 		}
 	}

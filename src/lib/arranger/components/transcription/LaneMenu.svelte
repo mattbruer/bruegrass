@@ -37,7 +37,10 @@
 			value={transcription.laneName(lane.id)}
 			placeholder={ownName(lane.id)}
 			maxlength={PART_NAME_LENGTH}
-			onchange={(event) => transcription.renameLane(lane.id, event.currentTarget.value)}
+			onchange={(event) => {
+				transcription.renameLane(lane.id, event.currentTarget.value);
+				event.currentTarget.value = transcription.laneName(lane.id); // a refused blank shows the name kept
+			}}
 			onkeydown={(event) => {
 				if (event.key === 'Enter') event.currentTarget.blur();
 			}}

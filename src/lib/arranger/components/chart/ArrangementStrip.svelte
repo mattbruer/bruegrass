@@ -18,7 +18,7 @@
 	 *   onChordTap?: (place: ChordPlace) => void
 	 * }}
 	 *   restAt: while stopped, rest here (quarters in) rather than on the last
-	 *   edit: where Play carries on; onChordTap: given, chords are buttons (the chord tutor)
+	 *   edit: where Play carries on; onChordTap: given, chords are buttons (tap to change one)
 	 */
 	let { sections, playback, restAt = 0, label = (chord) => chord, onChordTap } = $props();
 
@@ -118,7 +118,7 @@
 											class:long={text.length > 4}
 											class:longer={text.length > 7}
 											onclick={() => onChordTap(place)}
-											use:tooltip={TIPS.player.chordTutor}>{text}</button
+											use:tooltip={TIPS.player.editChord}>{text}</button
 										>
 									{:else}
 										<span class="chord" class:long={text.length > 4} class:longer={text.length > 7}

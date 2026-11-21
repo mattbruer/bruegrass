@@ -4,8 +4,7 @@
  * shares, and the band ignores it. The Roman display shows it instead of
  * the worked-out one (chart/chartAnalysis.js).
  */
-import { sectionLineIndex } from './sectionBlocks.js';
-import { chartTokens, isBar } from './chartTokens.js';
+import { rewriteChordAt } from './chordAt.js';
 
 const MARKED = /^(.*?)\s*\{([^}]*)\}\s*$/;
 /* Characters that would break the chart's own syntax */
@@ -31,54 +30,11 @@ export function withMark(chord, mark) {
 }
 
 /**
- * The chart with one chord's mark set (or removed, with null). A chord in
- * a repeat (`"Break" as Chorus`) is marked where it's written, in Chorus.
+ * The chart with one chord's mark set (or removed, with null).
  * @param {string} source the chart
  * @param {{ section: number, measure: number, chord: number }} place as the parser counts them
  * @param {string | null} mark
  */
 export function setMark(source, place, mark) {
-	const lineIndex = sectionLineIndex(source, place.section);
-	if (lineIndex < 0) return source;
-	const lines = source.split('\n');
-	const match = lines[lineIndex].match(/^(\s*"[^"]+"\s*)(.*)$/);
-	if (!match) return source;
-	const [, name, content] = match;
-	lines[lineIndex] = name + markInContent(content, place, mark);
-	return lines.join('\n');
-}
-
-/**
- * The section line's bars with one chord's mark changed. Bars and chords
- * are counted as the parser counts them (`isBar`).
- * @param {string} content
- * @param {{ measure: number, chord: number }} place
- * @param {string | null} mark
- */
-function markInContent(content, place, mark) {
-	let measure = 0;
-	let chord = 0;
-	let afterBarline = false;
-	return chartTokens(content)
-		.map((token) => {
-			if (token === '|') {
-				if (isBar(chord > 0, afterBarline)) measure++;
-				chord = 0;
-				afterBarline = true;
-				return token;
-			}
-			if (token.startsWith('[')) return token;
-			return token
-				.split(/(,)/)
-				.map((piece) => {
-					if (piece === ',' || !piece.trim()) return piece;
-					const here = measure === place.measure && chord === place.chord;
-					chord++;
-					if (!here) return piece;
-					const core = piece.trim();
-					return piece.replace(core, withMark(splitMark(core).chord, mark));
-				})
-				.join('');
-		})
-		.join('');
+	return rewriteChordAt(source, place, (written) => withMark(splitMark(written).chord, mark));
 }

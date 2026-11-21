@@ -28,12 +28,15 @@
 	import BeatDots from './BeatDots.svelte';
 	import GridMenu from './GridMenu.svelte';
 	import CycleStrip from './CycleStrip.svelte';
+	import CycleSectionMenu from './CycleSectionMenu.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
 	import LaneVolume from './LaneVolume.svelte';
 	import InstrumentButton from '../mixer/instruments/InstrumentButton.svelte';
 	import { isTuneChannel } from '../../melody/harmony/partChannels.js';
 	import LaneColour from './LaneColour.svelte';
 	import LaneMenu from './LaneMenu.svelte';
+	import NameDialog from '$lib/components/NameDialog.svelte';
+	import { LANE_NAMES } from '../../transcription/laneNames.js';
 	import { voiceChannels } from '../../melody/harmony/partChannels.js';
 	import { mixer } from '../../mixer/mixer.svelte.js';
 	import ReferenceLane from './ReferenceLane.svelte';
@@ -42,6 +45,7 @@
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
 	import ReferenceMenu from './ReferenceMenu.svelte';
+	import GuessChordsButton from './GuessChordsButton.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -90,6 +94,9 @@
 	$effect(() => {
 		transcription.parts = parts;
 	});
+
+	/** + Lane asks for the new lane's name first. */
+	let namingLane = $state(false);
 
 	/** @type {HTMLDivElement | undefined} */
 	let scroller = $state();
@@ -167,6 +174,7 @@
 					onclick={() => transcription.cycle.turn(!transcription.cycle.on)}
 					use:tooltip={TIPS.transcription.cycle}>Cycle</button
 				>
+				<CycleSectionMenu {transcription} />
 				<span class="flex items-center gap-1 text-xs text-ink-soft">
 					<ToggleSwitch
 						bind:on={settings.transcribe.snapCycle}
@@ -181,9 +189,9 @@
 			<div class="corner ruler-corner ui-side-column">
 				<button
 					type="button"
-					class="ui-button px-1.5 py-0.5 text-xs"
-					onclick={() => transcription.markHere()}
-					use:tooltip={TIPS.transcription.addMarker}>+ Marker</button
+					class="ui-button px-1.5 py-0.5 text-xs font-semibold tabular-nums"
+					onclick={() => transcription.openBarHere()}
+					use:tooltip={TIPS.transcription.barHere}>Bar {transcription.barHere ?? ''} ▾</button
 				>
 			</div>
 			<!-- svelte-ignore a11y_click_events_have_key_events (← → pick beats on a computer) -->
@@ -229,6 +237,7 @@
 
 			<div class="header ui-side-column">
 				<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
+				<GuessChordsButton {transcription} />
 				<MuteSoloButtons settings={transcription.band.lane} name="Band" />
 				<LaneVolume level={transcription.band.lane} name="Band" />
 			</div>
@@ -276,7 +285,7 @@
 						type="button"
 						class="ui-button px-2 py-1 text-xs"
 						disabled={!transcription.canAddLane}
-						onclick={() => transcription.addLane()}
+						onclick={() => (namingLane = true)}
 						use:tooltip={TIPS.transcription.addLane}>+ Lane</button
 					>
 				</div>
@@ -295,6 +304,15 @@
 		</div>
 	</div>
 </div>
+
+<NameDialog
+	bind:open={namingLane}
+	title="New lane"
+	suggestions={LANE_NAMES}
+	hint="What will you write in it? The vocal, a mandolin break, a fiddle part…"
+	saveLabel="Add lane"
+	onsave={(name) => transcription.addLane(name)}
+/>
 
 <style>
 	.scroller {
@@ -446,6 +464,7 @@
 	.cycle-header {
 		height: var(--cycle-row-height);
 		flex-wrap: nowrap;
+		column-gap: 0.15rem;
 		padding: var(--sunk-rim) var(--header-padding) 0;
 	}
 

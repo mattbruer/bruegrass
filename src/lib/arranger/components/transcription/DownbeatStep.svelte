@@ -3,7 +3,8 @@
 	 * Before the workspace: the time signature and beat 1, both needed before
 	 * the bars can be found (the time is chosen here, with a ? that explains
 	 * the counts; a crooked bar is fixed later in its own menu), and the
-	 * recording's key, which is chosen only here (Move beat 1… comes back). The recording on a lane with its
+	 * recording's key, which is chosen only here (Move beat 1… comes back), and
+	 * the song's name: both needed before the workspace. The recording on a lane with its
 	 * playhead: play it (slowed down if you like), click the lane to move the
 	 * playhead, and press Beat 1 is here: paused, exactly on the playhead;
 	 * playing, as a tap (moved back onto the hit just
@@ -15,6 +16,7 @@
 	import PlayClock from './PlayClock.svelte';
 	import SpeedControl from './SpeedControl.svelte';
 	import TranscriptionKeySelect from './TranscriptionKeySelect.svelte';
+	import PickupSelect from './PickupSelect.svelte';
 	import { TIME_SIGNATURES } from '../../transcription/timeSignatures.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -26,6 +28,12 @@
 	const checking = $derived(transcription.checkingDownbeat);
 	let explaining = $state(false);
 	let askedForTime = $state(false);
+	let askedForNameAndKey = $state(false);
+
+	function soundsRight() {
+		askedForNameAndKey = !transcription.readyForWorkspace;
+		transcription.downbeatSoundsRight();
+	}
 
 	function markBeat1() {
 		askedForTime = !transcription.timeChosen;
@@ -61,8 +69,9 @@
 				right on one.
 			</p>
 			<p class="text-ink-soft">
-				If a few notes come before the first full bar (a pickup), skip them and mark the “one” after
-				them. A pickup can be added later.
+				If a few notes come before the first full bar (a pickup), skip them, mark the “one” after
+				them, and say how many beats they take under Pickup. Anything earlier, like a false start or
+				an intro, is skipped when you play the song.
 			</p>
 		</div>
 	{/if}
@@ -128,14 +137,39 @@
 		<p class="text-danger" role="alert">Choose the time signature first.</p>
 	{/if}
 
-	<TranscriptionKeySelect {transcription} large />
+	<PickupSelect {transcription} />
+
+	<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+		<label class="flex items-center gap-2">
+			<span class="mr-1">Song name</span>
+			<input
+				class="w-64 max-w-full ui-field px-3 py-2 text-lg"
+				list="song-name-ideas"
+				value={transcription.songName}
+				oninput={(event) => {
+					if (!transcription.linked) transcription.setName(event.currentTarget.value);
+				}}
+				onchange={(event) => {
+					if (transcription.linked) transcription.setName(event.currentTarget.value);
+				}}
+				use:tooltip={TIPS.transcription.songName}
+			/>
+			<datalist id="song-name-ideas">
+				{#if transcription.reference}<option value={transcription.reference.name}></option>{/if}
+			</datalist>
+		</label>
+		<TranscriptionKeySelect {transcription} large />
+	</div>
+	{#if askedForNameAndKey && !transcription.readyForWorkspace}
+		<p class="text-danger" role="alert">
+			{transcription.songName.trim() ? 'Choose the key first.' : 'Give the song a name first.'}
+		</p>
+	{/if}
 
 	<div class="flex flex-wrap gap-3">
 		{#if checking}
-			<button
-				type="button"
-				class="big ui-button ui-button-primary"
-				onclick={() => transcription.downbeatSoundsRight()}>Sounds right</button
+			<button type="button" class="big ui-button ui-button-primary" onclick={soundsRight}
+				>Sounds right</button
 			>
 			<button type="button" class="big ui-button" onclick={() => transcription.tryDownbeatAgain()}
 				>Try again</button

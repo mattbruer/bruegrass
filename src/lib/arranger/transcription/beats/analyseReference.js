@@ -143,8 +143,11 @@ export function secondsAt(analysis, frame) {
 	return analysis.offsetSeconds + frame / analysis.framesPerSecond;
 }
 
-/** @param {Float32Array[]} channels */
-function mixDown(channels) {
+/**
+ * The channels averaged into one.
+ * @param {Float32Array[]} channels
+ */
+export function mixDown(channels) {
 	if (channels.length === 1) return channels[0];
 	const mono = new Float32Array(channels[0].length);
 	for (const channel of channels) {
