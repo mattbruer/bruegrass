@@ -1,29 +1,95 @@
 /**
- * A recording on a grid: its beats (seconds into the recording, found by
- * beats/detectBeats.js or fixed by hand) and where the bars fall on them
- * (barPlan.js). Beats needn't be evenly spaced, so the grid follows a
- * song that speeds up or drags. Plain data, so it can be kept as a draft,
- * saved or sent.
+ * A recording on a grid, like an audio region on Logic's ruler: its beats
+ * (seconds into the recording, found by beats/detectBeats.js or fixed by
+ * hand), where the bars fall on them (barPlan.js), and the stretch of the
+ * recording that's used (its trim). Beats needn't be evenly spaced, so the
+ * grid follows a song that speeds up or drags. Plain data, so it can be
+ * kept as a draft, saved or sent.
+ *
+ * Sliding the recording along the ruler is moving bar 1 to another beat
+ * (withSlide): the beats belong to the recording and go with it. Bar 1 may
+ * start before the first beat found (a pickup at the very start), so a
+ * beat's time is always read through beatSeconds, which carries the beats on.
  *
  * Every edit returns a new grid.
  */
-import { evenBarPlan, withBarStartingAt, withBeatCountChanged } from './barPlan.js';
+import { evenBarPlan, layOutBars, withBarStartingAt, withBeatCountChanged } from './barPlan.js';
+import { secondsAtBeat } from './tempoMap.js';
 
 /**
- * @typedef {{ beats: number[], bars: import('./barPlan.js').BarPlan }} BeatGrid
+ * @typedef {{ from: number, to: number }} Trim the stretch of the recording used, in seconds
+ * @typedef {{ beats: number[], bars: import('./barPlan.js').BarPlan, trim: Trim }} BeatGrid
  */
 
 /** Beats closer than this are one beat. */
 const MIN_BEAT_GAP_SECONDS = 0.08;
+/** The shortest a trimmed recording can be. */
+const MIN_TRIMMED_SECONDS = 1;
+/** Bar 1 can start at most this many bars before the first beat found. */
+const MOST_BARS_BEFORE = 4;
 
 /**
  * @param {number[]} beats seconds, in order
  * @param {number} beatsPerBar
- * @param {number} [firstBeat] the beat bar 1 starts on
+ * @param {number} firstBeat the beat bar 1 starts on
+ * @param {Trim} trim
  * @returns {BeatGrid}
  */
-export function newBeatGrid(beats, beatsPerBar, firstBeat = 0) {
-	return { beats, bars: evenBarPlan(beatsPerBar, firstBeat) };
+export function newBeatGrid(beats, beatsPerBar, firstBeat, trim) {
+	return { beats, bars: evenBarPlan(beatsPerBar, firstBeat), trim };
+}
+
+/**
+ * A beat's time, also for beats before the first one found or after the
+ * last (the gap beside them carries on).
+ * @param {BeatGrid} grid
+ * @param {number} index
+ */
+export function beatSeconds(grid, index) {
+	return secondsAtBeat(grid.beats, index);
+}
+
+/**
+ * The bars, up to the end of the trimmed recording.
+ * @param {BeatGrid} grid
+ */
+export function gridBars(grid) {
+	const end = grid.beats.findIndex((beat) => beat >= grid.trim.to);
+	return layOutBars(end === -1 ? grid.beats.length : end, grid.bars);
+}
+
+/**
+ * The recording slid along the ruler by whole beats (later when positive):
+ * bar 1 moves onto another of its beats, and every bar with it.
+ * @param {BeatGrid} grid
+ * @param {number} beats
+ * @returns {BeatGrid}
+ */
+export function withSlide(grid, beats) {
+	const earliest = -MOST_BARS_BEFORE * grid.bars.beatsPerBar;
+	const firstBeat = Math.max(
+		earliest,
+		Math.min(grid.beats.length - 1, grid.bars.firstBeat - Math.round(beats))
+	);
+	return { ...grid, bars: { ...grid.bars, firstBeat } };
+}
+
+/**
+ * The recording trimmed to a stretch, kept within it and at least a second long.
+ * @param {BeatGrid} grid
+ * @param {Trim} trim
+ * @param {number} duration the whole recording's length
+ * @returns {BeatGrid}
+ */
+export function withTrim(grid, { from, to }, duration) {
+	const start = Math.max(0, Math.min(from, duration - MIN_TRIMMED_SECONDS));
+	const end = Math.min(duration, Math.max(to, start + MIN_TRIMMED_SECONDS));
+	return { ...grid, trim: { from: roundToMs(start), to: roundToMs(end) } };
+}
+
+/** @param {number} seconds */
+function roundToMs(seconds) {
+	return Math.round(seconds * 1000) / 1000;
 }
 
 /**
@@ -74,7 +140,7 @@ export function withBeatAdded(grid, seconds) {
 	const index = grid.beats.findIndex((beat) => beat > seconds);
 	const at = index === -1 ? grid.beats.length : index;
 	const beats = grid.beats.toSpliced(at, 0, seconds);
-	return { beats, bars: withBeatCountChanged(grid.bars, at, 1) };
+	return { ...grid, beats, bars: withBeatCountChanged(grid.bars, at, 1) };
 }
 
 /**
@@ -85,6 +151,7 @@ export function withBeatAdded(grid, seconds) {
  */
 export function withBeatRemoved(grid, index) {
 	return {
+		...grid,
 		beats: grid.beats.toSpliced(index, 1),
 		bars: withBeatCountChanged(grid.bars, index, -1)
 	};
@@ -101,7 +168,11 @@ export function withBeatsDoubled(grid) {
 		const next = grid.beats[i + 1];
 		return next === undefined ? [beat] : [beat, (beat + next) / 2];
 	});
-	return { beats, bars: { ...grid.bars, firstBeat: grid.bars.firstBeat * 2, lengths: {} } };
+	return {
+		...grid,
+		beats,
+		bars: { ...grid.bars, firstBeat: grid.bars.firstBeat * 2, lengths: {} }
+	};
 }
 
 /**
@@ -111,9 +182,10 @@ export function withBeatsDoubled(grid) {
  * @returns {BeatGrid}
  */
 export function withBeatsHalved(grid) {
-	const keep = grid.bars.firstBeat % 2;
+	const keep = ((grid.bars.firstBeat % 2) + 2) % 2;
 	const beats = grid.beats.filter((_, i) => i % 2 === keep);
 	return {
+		...grid,
 		beats,
 		bars: { ...grid.bars, firstBeat: Math.floor(grid.bars.firstBeat / 2), lengths: {} }
 	};

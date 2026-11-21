@@ -3,9 +3,9 @@
  * bluegrass: every strum is a beat (boom on one, chuck on the next), so a
  * 4/4 bar is boom-chuck-boom-chuck.
  *
- * ONE is placed by hand first: the beats are tracked through it, forward
- * and back, so it is a beat exactly. The beats before it are the lead-in
- * (a pickup, or an intro): up to a bar of them are kept.
+ * Only beats, not bars: which beat is ONE is yours to say, by sliding the
+ * recording along the ruler. The beats are tracked forward and back from
+ * the recording's strongest hit, which is surely on a beat.
  *
  * The usual gap comes from how the hits repeat (estimateTempo.js), then the
  * beats are tracked (trackBeats.js). Then tracked again, held to the tempo
@@ -24,7 +24,7 @@
 import { estimateBeatFrames } from './estimateTempo.js';
 import { evenGaps, trackBeatsThrough } from './trackBeats.js';
 import { localGaps } from './localTempo.js';
-import { frameAt, secondsAt } from './analyseReference.js';
+import { secondsAt } from './analyseReference.js';
 
 /** Hits halfway between beats this strong (against the hits on them) mean a beat was missed in between. */
 const HALFWAY_HITS_MEAN_DOUBLE = 0.4;
@@ -35,15 +35,13 @@ const STEADY = 400;
 
 /**
  * @param {import('./analyseReference.js').Analysis} analysis
- * @param {number} downbeat seconds into the recording: beat 1 of bar 1
- * @param {number} leadInBeats how many beats before it to keep
- * @returns {{ beats: number[], firstBeat: number }} beats in seconds, and the index of the downbeat
+ * @returns {number[]} every beat, in seconds
  */
-export function detectBeats(analysis, downbeat, leadInBeats) {
+export function detectBeats(analysis) {
 	const { framesPerSecond } = analysis;
 	const strength = hitsAndBass(analysis);
-	const anchor = Math.max(0, Math.min(strength.length - 1, frameAt(analysis, downbeat)));
-	if (strength.length === 0) return { beats: [downbeat], firstBeat: 0 };
+	if (strength.length === 0) return [0];
+	const anchor = strongestFrame(strength);
 	const beatFrames = estimateBeatFrames(strength, framesPerSecond);
 	const length = strength.length;
 	let found = trackBeatsThrough(strength, evenGaps(length, beatFrames), anchor);
@@ -54,11 +52,14 @@ export function detectBeats(analysis, downbeat, leadInBeats) {
 
 	found = trackBeatsThrough(strength, localGaps(found.frames, length), anchor, STEADY);
 
-	const dropped = Math.max(0, found.anchorIndex - leadInBeats);
-	const beats = found.frames
-		.slice(dropped)
-		.map((frame) => Math.round(secondsAt(analysis, frame) * 1000) / 1000);
-	return { beats, firstBeat: found.anchorIndex - dropped };
+	return found.frames.map((frame) => Math.round(secondsAt(analysis, frame) * 1000) / 1000);
+}
+
+/** @param {Float32Array} strength */
+function strongestFrame(strength) {
+	let best = 0;
+	for (let i = 1; i < strength.length; i++) if (strength[i] > strength[best]) best = i;
+	return best;
 }
 
 /**

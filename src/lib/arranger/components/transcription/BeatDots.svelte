@@ -26,9 +26,24 @@
 	/** @type {{ index: number, startX: number, offset: number, moved: boolean } | null} */
 	let drag = $state(null);
 
-	const firstBeat = $derived(transcription.grid?.bars.firstBeat ?? 0);
+	/** Bar 1's beat as shown: the beats slide with the recording. */
+	const firstBeat = $derived(
+		(transcription.grid?.bars.firstBeat ?? 0) - transcription.slidePreview
+	);
 	const beats = $derived(transcription.grid?.beats ?? []);
-	const ones = $derived(new Set(transcription.bars.map((bar) => bar.firstBeat)));
+	const trim = $derived(transcription.grid?.trim ?? { from: 0, to: 0 });
+	/** The ONEs, once the time lays the bars out. */
+	const ones = $derived(
+		new Set(
+			transcription.timeChosen
+				? transcription.bars.map((bar) => bar.firstBeat - transcription.slidePreview)
+				: []
+		)
+	);
+	/** Only the beats of the trimmed recording are shown. */
+	const kept = $derived(
+		beats.flatMap((time, index) => (time >= trim.from && time <= trim.to ? [index] : []))
+	);
 	const quarterWidth = $derived(scale.toX(1) - scale.toX(0));
 
 	/** @param {number} index */
@@ -68,11 +83,11 @@
 
 <div class="row">
 	{#if !transcription.fixingBeats}
-		{#each beats, index (index)}
+		{#each kept as index (index)}
 			<span class="dot still" class:one={ones.has(index)} style:left="{xOf(index)}px"></span>
 		{/each}
 	{:else}
-		{#each beats, index (index)}
+		{#each kept as index (index)}
 			{@const dragging = drag?.index === index && drag.moved}
 			<button
 				type="button"

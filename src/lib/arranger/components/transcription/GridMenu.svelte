@@ -88,7 +88,7 @@
 					{/each}
 				</datalist>
 			</label>
-			{#if transcription.markers[bar.number] && transcription.markers[bar.number] !== SECTION_END}
+			{#if bar.number !== transcription.bars[0]?.number && transcription.markers[bar.number] && transcription.markers[bar.number] !== SECTION_END}
 				<label class="flex items-center gap-2">
 					<span>Tune starts</span>
 					<select

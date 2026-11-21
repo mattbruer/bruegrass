@@ -1,33 +1,18 @@
 /**
  * The track grid's bar ruler for a transcription, in the tracks view's own
- * shape (tracks/ruler.js): the recording's bars in quarters from bar 1,
- * after its lead-in (the beats before bar 1). An odd bar shows its time
- * signature, like Logic's ruler, and a marker its section's name.
+ * shape (tracks/ruler.js): the recording's bars in quarters from bar 1.
+ * An odd bar shows its time signature, like Logic's ruler, and a marker
+ * its section's name.
  */
 
 /**
  * @param {import('./barPlan.js').Bar[]} bars
- * @param {number} beatsPerBar
- * @param {number} leadInBeats beats before bar 1
  * @param {Record<number, string>} [markers] bar number → the section starting there
  * @returns {import('../tracks/ruler.js').RulerBar[]}
  */
-export function rulerFromBars(bars, beatsPerBar, leadInBeats, markers = {}) {
+export function rulerFromBars(bars, markers = {}) {
 	const first = bars[0]?.firstBeat ?? 0;
-	const lead =
-		leadInBeats > 0
-			? [
-					{
-						number: 0,
-						start: -leadInBeats,
-						beats: leadInBeats,
-						sectionName: null,
-						label: 'Lead-in'
-					}
-				]
-			: [];
 	return [
-		...lead,
 		...bars.map((bar) => ({
 			number: bar.number,
 			start: bar.firstBeat - first,
@@ -42,15 +27,18 @@ export function rulerFromBars(bars, beatsPerBar, leadInBeats, markers = {}) {
 const ROOM_BEFORE = 1;
 
 /**
- * The whole ruler's span, in quarters.
+ * The whole grid's span, in quarters: the ruler and the recording on it
+ * (which may reach before bar 1, or past the last bar while it's slid).
  * @param {import('../tracks/ruler.js').RulerBar[]} ruler
- * @param {number} beatsPerBar room after the last bar
+ * @param {{ from: number, to: number }} clip the trimmed recording, in quarters from bar 1
+ * @param {number} beatsPerBar room after the end
  */
-export function rulerSpanWithRoom(ruler, beatsPerBar) {
+export function gridSpan(ruler, clip, beatsPerBar) {
 	const last = ruler.at(-1);
+	const rulerEnd = last ? last.start + last.beats : 0;
 	return {
-		start: (ruler[0]?.start ?? 0) - ROOM_BEFORE,
-		end: last ? last.start + last.beats + beatsPerBar : beatsPerBar
+		start: Math.min(ruler[0]?.start ?? 0, clip.from) - ROOM_BEFORE,
+		end: Math.max(rulerEnd, clip.to) + beatsPerBar
 	};
 }
 

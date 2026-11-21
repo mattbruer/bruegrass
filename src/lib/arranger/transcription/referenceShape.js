@@ -22,7 +22,7 @@ const COLUMNS_PER_BEAT = 15;
  * @returns {Float32Array} COLUMNS_PER_BEAT a beat
  */
 export function bentWaveform(peaks, peaksPerSecond, beats, from, to, offset = 0) {
-	const columns = new Float32Array(Math.max(0, (to - from) * COLUMNS_PER_BEAT));
+	const columns = new Float32Array(Math.max(0, Math.round((to - from) * COLUMNS_PER_BEAT)));
 	for (let column = 0; column < columns.length; column++) {
 		const start = secondsAtBeat(beats, from + column / COLUMNS_PER_BEAT);
 		const end = secondsAtBeat(beats, from + (column + 1) / COLUMNS_PER_BEAT);

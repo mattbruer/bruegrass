@@ -8,20 +8,16 @@ import { SECTION_END } from './readChartOnBars.js';
  */
 
 /**
- * Where bars start, plus where the last one ends. A tune's pickup (quarters
- * before bar 1) is a line too, so a cycle can start in it.
+ * The bar lines the cycle snaps to and is kept within (quarters from bar 1).
  * @param {import('../tracks/ruler.js').RulerBar[]} ruler
- * @param {number} pickup quarters the tune starts before bar 1 (0: none)
  * @returns {number[]}
  */
-export function barLines(ruler, pickup = 0) {
+export function barLines(ruler) {
 	const bars = ruler.filter((bar) => bar.number > 0);
 	const last = bars.at(-1);
 	if (!last) return [];
-	const pickupStart = pickup > 0 ? [-pickup] : [];
-	return [...pickupStart, ...bars.map((bar) => bar.start), last.start + last.beats];
+	return [...bars.map((bar) => bar.start), last.start + last.beats];
 }
-
 /** The grid the cycle's ends snap to when Snap is on: a sixteenth note (a quarter is one beat). */
 export const CYCLE_SNAP_QUARTERS = 0.25;
 

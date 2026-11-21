@@ -1,7 +1,7 @@
 <script>
 	/**
-	 * The recording's menu, on its lane: the whole song's beats (Move beat
-	 * 1, counting twice or half as fast, finding them again) and how the slowed-down sound is made.
+	 * The recording's menu, on its lane: the whole song's beats (counting
+	 * twice or half as fast, finding them again) and how the slowed-down sound is made.
 	 */
 	import Popover from '$lib/components/Popover.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
@@ -19,12 +19,6 @@
 			>The recording's menu</span
 		>{/snippet}
 	<span class="heading">Beats</span>
-	<button
-		type="button"
-		class="ui-button px-3 py-1.5 text-left text-sm"
-		onclick={() => transcription.setDownbeatAgain()}
-		use:tooltip={TIPS.transcription.moveDownbeat}>Move beat 1…</button
-	>
 	<button
 		type="button"
 		class="ui-button px-3 py-1.5 text-left text-sm"

@@ -1,5 +1,5 @@
 <!--
-	Shown while the recording is analysed (its hits, for placing beat 1): four dots that light up in turn,
+	Shown while the recording is analysed (finding its beats): four dots that light up in turn,
 	counting along. Only transform and opacity animate, so the browser keeps
 	them moving even while the page is busy with the analysis.
 -->

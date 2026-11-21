@@ -58,7 +58,6 @@
 				voice={transcription.lane}
 				{clock}
 				bassStartsEmpty
-				pickupQuarters={transcription.newTunePickup}
 				keyMenu={false}
 				view={settings.transcribe.bottomView === 'tab' ? 'tab' : 'roll'}
 			/>

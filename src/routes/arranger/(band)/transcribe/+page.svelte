@@ -1,9 +1,9 @@
 <script>
 	/**
 	 * Transcribe a song from a recording, Logic's way: open a recording and
-	 * it becomes the open song's recording: you place beat 1 of bar 1 (a
-	 * pickup stays before it), then its beats and bars are found through it
-	 * and the ruler follows them. Write the song on those bars in the track
+	 * its beats are found; say its time signature to lay out the bars, and
+	 * slide it along the ruler so its ONE is on a bar line (a pickup in bar 1).
+	 * The ruler follows the recording. Write the song on those bars in the track
 	 * grid (chords by beat in their lane), the tune in the piano roll below.
 	 * No band plays here: this page is for writing the song down; the band
 	 * is for practising. Desktop first; the phone gets its own layout later.
@@ -29,6 +29,9 @@
 	import SendToArranger from '$lib/arranger/components/transcription/SendToArranger.svelte';
 	import TranscribeSetup from '$lib/arranger/components/transcription/TranscribeSetup.svelte';
 	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
+	import TimeSignatureSelect from '$lib/arranger/components/transcription/TimeSignatureSelect.svelte';
+	import TranscriptionKeySelect from '$lib/arranger/components/transcription/TranscriptionKeySelect.svelte';
+	import ChooseTime from '$lib/arranger/components/transcription/ChooseTime.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -86,6 +89,12 @@
 		transcription.hearLevels();
 	});
 
+	// Playing stops where the trimmed recording ends
+	$effect(() => {
+		void transcription.player.time;
+		untrack(() => transcription.stopAtTheEnd());
+	});
+
 	/** @param {KeyboardEvent} event @returns {(() => void) | undefined} */
 	function keyAction(event) {
 		const beat = transcription.selectedBeat;
@@ -130,8 +139,7 @@
 		const inControl =
 			target instanceof Element &&
 			target.closest('input, select, textarea, button, summary, [role="application"]');
-		if (event.defaultPrevented || !transcription.grid || transcription.settingDownbeat || inControl)
-			return;
+		if (event.defaultPrevented || !transcription.grid || inControl) return;
 		const action = keyAction(event);
 		if (!action) return;
 		event.preventDefault();
@@ -174,7 +182,7 @@
 		<TranscribeSetup {transcription} />
 	{:else if transcription.reference && transcription.grid}
 		<div class="flex flex-wrap items-center gap-3">
-			<SongBar />
+			{#if transcription.linked}<SongBar />{/if}
 			<span class="text-sm text-ink-soft"
 				>Reference: <strong>{transcription.reference.name}</strong></span
 			>
@@ -184,9 +192,15 @@
 				onclick={() => transcription.chooseReferenceAgain()}
 				use:tooltip={TIPS.transcription.changeReference}>Change…</button
 			>
+			{#if transcription.timeChosen}
+				<TimeSignatureSelect {transcription} />
+				<TranscriptionKeySelect {transcription} />
+			{/if}
 		</div>
 		<TranscribeControls {transcription} />
-		{#if !transcription.linked}
+		{#if !transcription.timeChosen}
+			<ChooseTime {transcription} />
+		{:else if !transcription.linked}
 			<p class="text-sm text-ink-soft">
 				The song open now isn’t this recording’s.
 				<button

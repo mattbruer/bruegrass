@@ -1,11 +1,14 @@
 /**
  * Transcribing a song from a recording, the way Logic does it: the
- * recording's beats and bars are found for you (its tempo map: the ruler
- * follows the recording), then the song is written on those bars in a
- * track grid, chords in their lane and the tune in the piano roll below.
+ * recording's beats are found for you as it opens (its tempo map: the
+ * ruler follows the recording). You say the time signature, which lays
+ * the bars out, and slide the recording along the ruler until its ONE sits
+ * on a bar line (a pickup goes in bar 1, the song's first ONE on bar 2),
+ * trimming off what you don't want. Then the song is written on those bars
+ * in a track grid, chords in their lane and the tune in the piano roll below.
  *
  * Opening a recording opens the song written from it (the song names its
- * recording), else makes a new song on its bars. The song's chart is the
+ * recording); with none, a new song is made on its bars once the time is chosen. The song's chart is the
  * one place its chords, sections and key live, wherever they were typed:
  * Transcribe reads them from the chart on the recording's bars
  * (readChartOnBars.js), a chord typed here is written into its bar of the
@@ -24,11 +27,15 @@
  */
 import { StretchPlayer } from '$lib/slowDowner/StretchPlayer.svelte.js';
 import { waveformPeaks } from '../takes/waveformPeaks.js';
-import { layOutBars, withBarLength } from './barPlan.js';
+import { evenBarPlan, withBarLength } from './barPlan.js';
 import {
+	beatSeconds,
+	gridBars,
 	newBeatGrid,
 	nearestBeat,
 	withOneAt,
+	withSlide,
+	withTrim,
 	withBeatAdded,
 	withBeatMoved,
 	withBeatRemoved,
@@ -39,12 +46,8 @@ import {
 import { ANALYSIS_VERSION, analyseReference } from './beats/analyseReference.js';
 import { readReferenceAnalysis, writeReferenceAnalysis } from '$lib/storage/referenceAnalyses.js';
 import { detectBeats } from './beats/detectBeats.js';
-import { snapToHit, tapToHit } from './beats/snapToHit.js';
-import {
-	clearTranscriptionDraft,
-	readTranscriptionDraft,
-	writeTranscriptionDraft
-} from './transcriptionDraft.js';
+import { snapToHit } from './beats/snapToHit.js';
+import { readTranscriptionDraft, writeTranscriptionDraft } from './transcriptionDraft.js';
 import { chartFromBars } from './chartFromBars.js';
 import { readChartOnBars } from './readChartOnBars.js';
 import { namedSections, withUniqueSectionNames } from './arrangementFromTranscription.js';
@@ -81,7 +84,6 @@ import { heardNotes, laneLevels } from './heardParts.js';
 import { TranscribeParts } from './TranscribeParts.svelte.js';
 import { TranscribeBand } from './TranscribeBand.svelte.js';
 import { CycleState, leadInBefore } from './CycleState.svelte.js';
-import { pickupLength, withPickupLength } from '../melody/roll/pickupBar.js';
 
 /**
  * @typedef {{ key: string, name: string, source: string | Blob }} Reference
@@ -94,8 +96,6 @@ import { pickupLength, withPickupLength } from '../melody/roll/pickupBar.js';
 export const PEAKS_PER_SECOND = 200;
 /** Onset strength (in its own spread) drawn full height. */
 const HIT_SCALE = 6;
-/** Hearing beat 1 starts this long before it, so the count leads into it. */
-const LISTEN_BEFORE_SECONDS = 2.5;
 /** The recording's and the band's lane ids among the lanes that can be muted and soloed. */
 const REFERENCE_LANE = 'reference';
 const BAND_LANE = 'band';
@@ -111,6 +111,10 @@ export class TranscriptionState {
 	grid = $state.raw(null);
 	/** The time signature's id (timeSignatures.js). */
 	time = $state(DEFAULT_TIME);
+	/** Whether you've said the time signature: until then there are beats but no bars. */
+	timeChosen = $state(false);
+	/** Beats the recording is being dragged along the ruler by, before it's let go (0: not sliding). */
+	slidePreview = $state(0);
 	/**
 	 * How early each section's tune starts, in beats before its marker's bar (its
 	 * pickup: "I was…" sung before the verse's first bar). Only the tune: the
@@ -145,38 +149,23 @@ export class TranscriptionState {
 	fixingBeats = $state(false);
 	/** The grid before each change to the beats, newest last, for Undo. */
 	#beatHistory = /** @type {BeatGrid[]} */ ($state.raw([]));
-	finding = $state(false);
-	/** Beat 1 of bar 1, in seconds into the recording, as you placed it (null: not yet). */
-	downbeat = $state(/** @type {number | null} */ (null));
-	/** Placing beat 1 comes before finding the beats. */
-	settingDownbeat = $state(false);
-	/** Placing it again from the workspace (Move beat 1…), so the beats it had can be kept. */
-	movingDownbeat = $state(false);
-	/** Whether the time signature was chosen (a new recording's must be, with beat 1, before its bars are found). */
-	timeChosen = $state(false);
-	/** Beat 1 was just tapped: hearing it with the count, to say whether it's right. */
-	checkingDownbeat = $state(false);
 	/** The song you came from (sent from this transcription), to go back to in the arranger; null: none. */
 	returnTo = /** @type {{ id: string, name: string } | null} */ ($state.raw(null));
 	/** Choosing another recording, with one open. */
 	pickingReference = $state(false);
 	/**
 	 * What has to happen before the workspace (null: nothing, it shows):
-	 * choosing a recording, then placing its beat 1.
-	 * @type {'reference' | 'downbeat' | null}
+	 * choosing a recording, then loading it and finding its beats.
+	 * @type {'reference' | 'loading' | null}
 	 */
 	setupStep = $derived(
-		!this.reference || this.pickingReference
-			? 'reference'
-			: this.settingDownbeat || !this.grid
-				? 'downbeat'
-				: null
+		!this.reference || this.pickingReference ? 'reference' : !this.grid ? 'loading' : null
 	);
 	clicksOn = $state(true);
 	/** Logic's cycle: the region the player loops while it's on. */
 	cycle = new CycleState(this);
 
-	bars = $derived(this.grid ? layOutBars(this.grid.beats.length, this.grid.bars) : []);
+	bars = $derived(this.grid ? gridBars(this.grid) : []);
 	bar = $derived(this.bars.find((bar) => bar.number === this.openBar) ?? null);
 	/** The song open now is the one written from this recording. */
 	linked = $derived(!!this.reference && this.arranger.song.reference?.key === this.reference.key);
@@ -200,54 +189,22 @@ export class TranscriptionState {
 			this.arranger.arrangement.sections.map((section) => section.measures.length)
 		).map((section) => ({ ...section, pickup: this.sectionPickup(section.from) }))
 	);
-	/** The key the chart names ("G", "Em"; null: none, guessed from the first chord). */
-	/** @type {string | null} the key chosen while placing beat 1, before the song is made */
-	#keyBeforeSong = $state(null);
-	key = $derived(this.linked ? keyFieldName(this.arranger.arrangement.text) : this.#keyBeforeSong);
-	/** The song's name, typed while placing beat 1, before the song is made. */
-	nameBeforeSong = $state('');
-	/** The song's name: the open song's, or the one typed for the song about to be made. */
-	songName = $derived(this.linked ? this.arranger.song.name : this.nameBeforeSong);
-	/** A song from a recording needs a name and a key before the workspace (the user's call). */
-	readyForWorkspace = $derived(!!this.songName.trim() && !!this.key);
+	/** The key the chart names ("G", "Em"; null: none yet). */
+	key = $derived(this.linked ? keyFieldName(this.arranger.arrangement.text) : null);
 	/** Where the recording is now, in the song's quarters from bar 1. */
 	quartersNow = $derived(this.grid ? quartersAt(this.grid, this.player.time) : 0);
 	/**
-	 * The pickup an unwritten tune starts with (quarters), chosen by you: the
-	 * recording can't tell a pickup from an intro or a kick-off.
-	 */
-	newTunePickup = $state(0);
-	/** @type {{ abc: string, message: string } | null} a pickup change refused, and the tune it was refused on */
-	#pickupRefused = $state(null);
-	/** Why the last pickup change wasn't made, until the tune changes ('' when it was made). */
-	pickupProblem = $derived(
-		this.#pickupRefused?.abc === this.arranger.melody.notation ? this.#pickupRefused.message : ''
-	);
-	/** The written tune's voices, when the open song is this recording's (null: none written yet). */
-	#writtenVoices = $derived(
-		this.linked && this.arranger.melody.hasNotation ? this.arranger.melody.voices : null
-	);
-	/** The tune's pickup now (quarters): the written tune's, or the one an unwritten tune will start with. */
-	pickup = $derived(
-		this.#writtenVoices
-			? pickupLength(this.#writtenVoices.map((voice) => voice.score))
-			: this.newTunePickup
-	);
-	/** The pickups to choose from (quarters): none, up to a beat short of a bar. */
-	pickupChoices = $derived(
-		Array.from(
-			{ length: this.grid?.bars.beatsPerBar ?? timeSignature(this.time).beatsPerBar },
-			(_, beats) => beats
-		)
-	);
-	/**
-	 * Where the song starts in the recording (seconds): beat 1, or a bar
-	 * before it when the tune has a pickup. Anything earlier (a false start,
-	 * an intro) is skipped when playing from the start.
+	 * Where the song starts in the recording (seconds): bar 1, or where the
+	 * trimmed recording starts if that's later. Anything before (a false
+	 * start, an intro you trimmed off) is never played.
 	 */
 	startSeconds = $derived(
-		this.grid ? (this.grid.beats[this.pickup > 0 ? 0 : this.grid.bars.firstBeat] ?? 0) : 0
+		this.grid
+			? Math.max(0, this.grid.trim.from, beatSeconds(this.grid, this.grid.bars.firstBeat))
+			: 0
 	);
+	/** Where the trimmed recording ends (seconds): playing stops there. */
+	endSeconds = $derived(this.grid?.trim.to ?? this.player.duration);
 	/** The written parts' notes, on the recording's time (a written bass plays on the band's upright instead). */
 	heardNotes = $derived(
 		this.grid
@@ -329,18 +286,12 @@ export class TranscriptionState {
 		this.grid = null;
 		this.#beatHistory = [];
 		this.time = DEFAULT_TIME;
+		this.timeChosen = false;
+		this.slidePreview = 0;
 		this.pickups = {};
-		this.newTunePickup = 0;
 		this.peaks = null;
 		this.hits = null;
-		this.downbeat = null;
-		this.settingDownbeat = false;
-		this.movingDownbeat = false;
-		this.checkingDownbeat = false;
-		this.timeChosen = readTranscriptionDraft(reference.key) !== null;
 		this.pickingReference = false;
-		this.#keyBeforeSong = null;
-		this.nameBeforeSong = '';
 		this.cycle.clear();
 		this.player.setCents(0);
 		this.closeMenus();
@@ -356,32 +307,30 @@ export class TranscriptionState {
 		this.#analysis = analysis;
 		this.hits = hitsOf(analysis);
 
-		await this.#carryOn(readTranscriptionDraft(reference.key));
+		this.#carryOn(readTranscriptionDraft(reference.key), analysis, audio.duration);
+		if (!this.linked) await this.#openWrittenSong();
+		if (this.player.time < this.startSeconds) this.player.seek(this.startSeconds);
 	}
 
 	/**
-	 * Go on from the draft (null: none), or place beat 1 first.
+	 * Go on from the draft, or start fresh: the beats found, bar 1 on the
+	 * first of them, the whole recording used, no time signature yet.
 	 * @param {import('./transcriptionDraft.js').Transcription | null} draft
+	 * @param {import('./beats/analyseReference.js').Analysis} analysis
+	 * @param {number} duration
 	 */
-	async #carryOn(draft) {
+	#carryOn(draft, analysis, duration) {
 		if (draft) {
 			this.grid = draft.grid;
 			this.time = draft.time;
+			this.timeChosen = draft.timeChosen;
 			this.pickups = draft.pickups;
-			this.newTunePickup = draft.pickup ?? 0;
 			this.player.setCents(draft.cents);
-			this.downbeat = draft.downbeat;
+			return;
 		}
-		if (!this.grid) this.settingDownbeat = true;
-		else if (!this.linked) await this.#openSongOrAsk();
-		if (this.grid && this.player.time < this.startSeconds) this.player.seek(this.startSeconds);
-	}
-
-	/** Open the song last written from this recording; with none, ask for its name and key first. */
-	async #openSongOrAsk() {
-		if (await this.#openWrittenSong()) return;
-		this.settingDownbeat = true;
-		this.checkingDownbeat = this.downbeat !== null;
+		const beatsPerBar = timeSignature(this.time).beatsPerBar;
+		this.grid = newBeatGrid(detectBeats(analysis), beatsPerBar, 0, { from: 0, to: duration });
+		this.#keepDraft();
 	}
 
 	/** Open the song last written from this recording, if there is one. */
@@ -410,12 +359,10 @@ export class TranscriptionState {
 		const kept = await readReferenceAnalysis(reference.key, stamp).catch(() => null);
 		if (kept || this.#audio !== audio) return kept;
 
-		this.finding = true;
 		// Let "Listening to the recording…" show: the analysis takes a second or two
 		await new Promise((done) => setTimeout(done, 30));
 		const analysis =
 			this.#audio === audio ? analyseReference(channelsOf(audio), audio.sampleRate) : null;
-		this.finding = false;
 		if (!analysis) return null;
 		writeReferenceAnalysis(reference.key, stamp, analysis).catch(console.error);
 		return analysis;
@@ -433,7 +380,7 @@ export class TranscriptionState {
 		if (this.reference?.key !== from.key) {
 			const reference = bundledReference(from.key);
 			if (reference) await this.open(reference);
-		} else if (this.grid && !this.linked) await this.#openSongOrAsk();
+		} else if (this.grid && !this.linked) await this.#openWrittenSong();
 	}
 
 	/** Open the recording the open song was written from, if it's one of the app's own and isn't open. */
@@ -449,72 +396,6 @@ export class TranscriptionState {
 		return this.reference ? { key: this.reference.key, name: this.reference.name } : null;
 	}
 
-	/**
-	 * Beat 1 is here: exactly at the playhead (paused: you put it there, often
-	 * zoomed in, so it isn't moved), or on the hit just before it (tapped
-	 * while it plays: a tap comes a little late). The beats and bars are
-	 * found through it at once, to check by ear (listenToDownbeat).
-	 */
-	markDownbeatHere() {
-		if (!this.#analysis || !this.timeChosen) return;
-		const tapped = this.player.playing;
-		this.player.pause();
-		const at = this.player.time;
-		this.downbeat = tapped ? tapToHit(at, this.#analysis) : Math.round(at * 1000) / 1000;
-		this.#findBeatsFromDownbeat();
-		this.checkingDownbeat = true;
-	}
-
-	/** Hear beat 1 with the count: from a little before it, a click on every beat, higher on ONE. */
-	listenToDownbeat() {
-		if (this.downbeat === null) return;
-		this.clicksOn = true;
-		this.player.seek(Math.max(0, this.downbeat - LISTEN_BEFORE_SECONDS));
-		this.player.play();
-	}
-
-	/** Not right: back to marking it, the playhead on the one marked. */
-	tryDownbeatAgain() {
-		this.player.pause();
-		this.checkingDownbeat = false;
-		if (this.downbeat !== null) this.player.seek(this.downbeat);
-	}
-
-	/** Beat 1 sounds right: on to the workspace, once the song has a name and a key. */
-	async downbeatSoundsRight() {
-		if (!this.readyForWorkspace) return;
-		this.player.pause();
-		this.player.seek(this.startSeconds);
-		this.closeMenus();
-		this.checkingDownbeat = false;
-		this.settingDownbeat = false;
-		this.movingDownbeat = false;
-		if (this.linked) return;
-		const name = this.nameBeforeSong;
-		const key = this.#keyBeforeSong;
-		if (!(await this.#openWrittenSong())) return this.startSong();
-		await this.arranger.song.rename(name);
-		await this.arranger.nameSongKey(key);
-	}
-
-	/**
-	 * Name the song. The open song is renamed at once; before it's made, the name is held.
-	 * @param {string} name
-	 */
-	setName(name) {
-		if (this.linked) this.arranger.song.rename(name).catch(console.error);
-		else this.nameBeforeSong = name;
-	}
-
-	/** The beats and bars found through the placed beat 1, and the chart written on them. */
-	#findBeatsFromDownbeat() {
-		if (this.downbeat === null) return;
-		this.#findBeats();
-		if (this.reference) clearTranscriptionDraft(this.reference.key);
-		this.#writeChart();
-		this.#keepDraft();
-	}
-
 	/** Back to choosing the recording (the open one stays until another is chosen). */
 	chooseReferenceAgain() {
 		this.player.pause();
@@ -523,15 +404,24 @@ export class TranscriptionState {
 	}
 
 	/**
-	 * The time signature, chosen on the beat 1 step: beats in a usual bar,
-	 * the same all through (a bar with more or fewer is fixed later, in its
-	 * own menu). With beat 1 marked, the bars are found again in it.
+	 * The time signature: beats in a usual bar, the same all through (a bar
+	 * with more or fewer is fixed in its own menu). It lays the bars out from
+	 * bar 1, where it is; the first time, the song is made on them.
 	 * @param {string} id
 	 */
 	chooseTime(id) {
+		const grid = this.grid;
+		if (!grid) return;
 		this.time = id;
 		this.timeChosen = true;
-		if (this.checkingDownbeat) this.#findBeatsFromDownbeat();
+		this.grid = {
+			...grid,
+			bars: evenBarPlan(timeSignature(id).beatsPerBar, grid.bars.firstBeat)
+		};
+		this.#beatHistory = [];
+		if (this.linked) this.#writeChart();
+		else this.startSong();
+		this.#keepDraft();
 	}
 
 	/** Keep the open recording: back from choosing another. */
@@ -553,28 +443,13 @@ export class TranscriptionState {
 		);
 	}
 
-	/** Go back to placing beat 1 (the beats stay until they're found again). */
-	setDownbeatAgain() {
-		this.player.pause();
-		this.closeMenus();
-		this.settingDownbeat = true;
-		this.movingDownbeat = true;
-	}
-
-	/** Leave placing beat 1 without finding the beats again. */
-	cancelSettingDownbeat() {
-		this.player.pause();
-		this.checkingDownbeat = false;
-		this.settingDownbeat = false;
-		this.movingDownbeat = false;
-	}
-
 	/**
 	 * A new song on the recording's bars, at its tempo, with no tune yet,
-	 * with the name and key you gave it, saved at once (the open song is saved first).
+	 * named for the recording (rename it in the song bar), saved at once
+	 * (the open song is saved first). Its key is named in the workspace.
 	 */
 	startSong() {
-		if (!this.grid) return;
+		if (!this.grid || !this.timeChosen) return;
 		const chart = chartFromBars(this.bars, timeSignature(this.time), {}, {});
 		const { song } = this.arranger;
 		song.startNew(
@@ -588,55 +463,49 @@ export class TranscriptionState {
 			},
 			this.reference?.name ?? ''
 		);
-		song.name = this.nameBeforeSong.trim();
+		song.name = this.reference?.name ?? '';
 		song.keepAsYourOwn().catch(console.error);
-		if (this.#keyBeforeSong) this.arranger.nameSongKey(this.#keyBeforeSong).catch(console.error);
-		this.#keyBeforeSong = null;
-		this.nameBeforeSong = '';
-		this.#keepDraft();
-	}
-
-	/** Find the beats and bars again from the recording (forgets any fixes to them). */
-	findBeatsAgain() {
-		if (this.downbeat === null) return this.setDownbeatAgain();
-		this.#findBeats();
-		if (this.reference) clearTranscriptionDraft(this.reference.key);
-		this.#writeChart();
 		this.#keepDraft();
 	}
 
 	/**
-	 * Make the tune's pickup this long (quarters; 0: none), in every voice.
-	 * Its notes keep their place before bar 1; a change that would cut some off isn't made.
-	 * @param {number} quarters
+	 * Find the beats again from the recording (forgets any fixes to them). Bar
+	 * 1 stays where it was, on the beat found nearest it; ⌘Z brings the old beats back.
 	 */
-	setPickup(quarters) {
-		const { melody } = this.arranger;
-		this.#pickupRefused = null;
-		if (!this.#writtenVoices) {
-			this.newTunePickup = quarters;
-			this.#keepDraft();
-			return;
-		}
-		const scores = this.#writtenVoices.map((voice) => voice.score);
-		const result = withPickupLength(melody.notation, scores, quarters);
-		if (result.blocked)
-			this.#pickupRefused = {
-				abc: melody.notation,
-				message: 'Notes are in the way. Move or delete them first, then shorten the pickup.'
-			};
-		else melody.notation = result.abc;
+	findBeatsAgain() {
+		const analysis = this.#analysis;
+		if (!analysis) return;
+		this.#edit((grid) => {
+			const beats = detectBeats(analysis);
+			const barOne = nearestBeat(beats, beatSeconds(grid, grid.bars.firstBeat));
+			return { ...newBeatGrid(beats, grid.bars.beatsPerBar, barOne, grid.trim) };
+		});
+	}
+
+	/**
+	 * Slide the recording along the ruler by whole beats (later when
+	 * positive), so another of its beats is on bar 1's line.
+	 * @param {number} beats
+	 */
+	slideBy(beats) {
+		if (Math.round(beats) !== 0) this.#edit((grid) => withSlide(grid, beats));
+	}
+
+	/**
+	 * Use only this stretch of the recording (seconds): what's outside it isn't played or written on.
+	 * @param {{ from: number, to: number }} trim
+	 */
+	setTrim(trim) {
+		this.#edit((grid) => withTrim(grid, trim, this.player.duration));
 	}
 
 	/**
 	 * Name the song's key (null: none, guess it from the first chord). The
-	 * song's chart says it, and its tune and bass are spelled in it. Chosen
-	 * before the song is made (with beat 1), it's written when the song starts.
+	 * song's chart says it, and its tune and bass are spelled in it.
 	 * @param {string | null} name
 	 */
 	async setKey(name) {
 		if (this.linked) await this.arranger.nameSongKey(name);
-		else this.#keyBeforeSong = name;
 	}
 
 	/**
@@ -728,7 +597,7 @@ export class TranscriptionState {
 	async addLane(name) {
 		await abcjsReady();
 		const { melody } = this.arranger;
-		if (!melody.hasNotation) this.arranger.startMelodyFromChart(this.newTunePickup);
+		if (!melody.hasNotation) this.arranger.startMelodyFromChart();
 		const part = nextExtraPart(melody.notation);
 		const lead = melody.voices?.[0];
 		if (!part || !lead?.score.bars.length) return;
@@ -815,12 +684,13 @@ export class TranscriptionState {
 
 	/**
 	 * How many beats before a marker's bar its section's tune starts (0: on
-	 * the bar). On the first bar that's the tune's own pickup, before bar 1.
+	 * the bar), taken from the end of the bar before. Not for bar 1: a
+	 * pickup goes in bar 1 itself, with the song's first ONE on bar 2.
 	 * @param {number} number the marker's bar
 	 * @param {number} beats
 	 */
 	setSectionPickup(number, beats) {
-		if (number === this.bars[0]?.number) return this.setPickup(beats);
+		if (number === this.bars[0]?.number) return;
 		const pickups = { ...this.pickups };
 		if (beats > 0) pickups[number] = beats;
 		else delete pickups[number];
@@ -833,7 +703,7 @@ export class TranscriptionState {
 	 * @param {number} number
 	 */
 	sectionPickup(number) {
-		return number === this.bars[0]?.number ? this.pickup : (this.pickups[number] ?? 0);
+		return this.pickups[number] ?? 0;
 	}
 
 	#playAfterNaming = false;
@@ -885,18 +755,26 @@ export class TranscriptionState {
 		this.player.seek(this.startSeconds);
 	}
 
-	/** Play on (from the cycle, if it's on); from before the song's start, from its start. */
+	/** Play on (from the cycle, if it's on); from outside the trimmed recording, from the song's start. */
 	play() {
 		this.cycle.startFromCycle();
-		if (this.player.time < this.startSeconds) this.player.seek(this.startSeconds);
+		const time = this.player.time;
+		if (time < this.startSeconds || time >= this.endSeconds) this.player.seek(this.startSeconds);
 		this.player.play();
+	}
+
+	/** The trimmed recording has ended: stop there (the cycle loops before it gets here). */
+	stopAtTheEnd() {
+		if (!this.player.playing || this.player.time < this.endSeconds) return;
+		this.player.pause();
+		this.player.seek(this.endSeconds);
 	}
 
 	/** @param {1 | -1} step to the next bar, or back to this bar's start (the one before if it's only just started) */
 	stepBar(step) {
-		const beats = this.grid?.beats;
-		if (!beats) return;
-		const starts = this.bars.map((bar) => beats[bar.firstBeat]);
+		const grid = this.grid;
+		if (!grid) return;
+		const starts = this.bars.map((bar) => Math.max(0, beatSeconds(grid, bar.firstBeat)));
 		const target = barStepTarget(starts, this.player.time, step);
 		if (target !== null) this.player.seek(target);
 	}
@@ -1032,15 +910,6 @@ export class TranscriptionState {
 		this.player.dispose();
 	}
 
-	#findBeats() {
-		if (!this.#analysis || this.downbeat === null) return;
-		const beatsPerBar = timeSignature(this.time).beatsPerBar;
-		const { beats, firstBeat } = detectBeats(this.#analysis, this.downbeat, beatsPerBar);
-		this.grid = newBeatGrid(beats, beatsPerBar, firstBeat);
-		this.#beatHistory = [];
-		this.closeMenus();
-	}
-
 	/** @param {(grid: BeatGrid) => BeatGrid} change */
 	#edit(change) {
 		if (!this.grid || !this.reference) return;
@@ -1075,7 +944,7 @@ export class TranscriptionState {
 	 */
 	#changeChart(chart) {
 		const { arrangement } = this.arranger;
-		if (!this.linked || arrangement.readError) return;
+		if (!this.linked || !this.timeChosen || arrangement.readError) return;
 		arrangement.text = chart;
 	}
 
@@ -1084,10 +953,9 @@ export class TranscriptionState {
 		writeTranscriptionDraft(this.reference.key, {
 			grid: this.grid,
 			time: this.time,
+			timeChosen: this.timeChosen,
 			cents: this.player.cents,
-			downbeat: this.downbeat,
-			pickups: this.pickups,
-			pickup: this.newTunePickup
+			pickups: this.pickups
 		});
 	}
 }

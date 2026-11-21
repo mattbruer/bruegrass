@@ -1,7 +1,7 @@
 <script>
 	/**
 	 * The song's key, as the transcription names it (written into the chart as
-	 * `[K:]`, and the tune and bass respelled). Chosen with beat 1, and needed before the workspace.
+	 * `[K:]`, and the tune and bass respelled). Needed before Send to the arranger.
 	 */
 	import { songKeyChoices } from '../../chart/keyChoices.js';
 	import SongKeyOptions from '../chart/SongKeyOptions.svelte';

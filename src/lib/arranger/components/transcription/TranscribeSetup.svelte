@@ -1,12 +1,11 @@
 <script>
 	/**
-	 * What comes before the workspace: pick a recording, then place its beat 1
-	 * and time signature (the bars are found from them). Anything else about
-	 * the bars and beats is fixed in the workspace.
+	 * What comes before the workspace: pick a recording, and wait while its
+	 * beats are found. Everything else (the time, where bar 1 is, the key,
+	 * the song's name) is set in the workspace.
 	 */
 	import ReferenceChoice from './ReferenceChoice.svelte';
 	import AnalysingReference from './AnalysingReference.svelte';
-	import DownbeatStep from './DownbeatStep.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -34,7 +33,7 @@
 		{/if}
 	{:else}
 		<div class="flex flex-wrap items-baseline justify-between gap-3">
-			<h2 id="setup-title" class="text-2xl font-bold">Beat 1 and time</h2>
+			<h2 id="setup-title" class="text-2xl font-bold">{transcription.reference?.name}</h2>
 			<button
 				type="button"
 				class="ui-button px-3 py-1.5 text-sm"
@@ -44,10 +43,8 @@
 		</div>
 		{#if transcription.player.loading}
 			<p class="text-ink-soft">Loading the recording…</p>
-		{:else if transcription.finding}
-			<AnalysingReference />
 		{:else}
-			<DownbeatStep {transcription} />
+			<AnalysingReference />
 		{/if}
 	{/if}
 </section>

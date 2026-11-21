@@ -17,6 +17,7 @@
 import { beatGroups } from '../../chart/timeline.js';
 import { createNoteMeter } from './notesSounding.js';
 import { mixDown } from '../beats/analyseReference.js';
+import { secondsAtBeat } from '../tempoMap.js';
 
 /**
  * The chords a guess can be, as plain data: add a quality here (a 7th, say)
@@ -64,7 +65,8 @@ export function guessChords({ channels, sampleRate, cents, beats, bars, duration
 	const boomBetween = createNoteMeter(mono, sampleRate, cents, BOOM_HEARING);
 	const chopBetween = createNoteMeter(mono, sampleRate, cents, CHOP_HEARING);
 	const heardBars = bars.map((bar) => {
-		const timeOf = (/** @type {number} */ beat) => beats[bar.firstBeat + beat] ?? duration;
+		const timeOf = (/** @type {number} */ beat) =>
+			Math.max(0, Math.min(duration, secondsAtBeat(beats, bar.firstBeat + beat)));
 		const groups = groupsOf(bar.beats);
 		return {
 			bar,

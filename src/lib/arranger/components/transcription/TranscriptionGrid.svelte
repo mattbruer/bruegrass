@@ -16,11 +16,8 @@
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { trackScale } from '../../tracks/trackScale.js';
-	import {
-		markersShown,
-		rulerFromBars,
-		rulerSpanWithRoom
-	} from '../../transcription/rulerFromBars.js';
+	import { gridSpan, markersShown, rulerFromBars } from '../../transcription/rulerFromBars.js';
+	import { quartersAt } from '../../transcription/tempoMap.js';
 	import { partLanes } from '../../transcription/partLanes.js';
 	import { timeSignature } from '../../transcription/timeSignatures.js';
 	import TrackRuler from '../tracks/TrackRuler.svelte';
@@ -67,17 +64,24 @@
 	const writtenBass = $derived(bass.written);
 
 	const beatsPerBar = $derived(timeSignature(transcription.time).beatsPerBar);
+	/** Bars only once the time is chosen: before, the recording shows just its beats. */
 	const ruler = $derived(
-		rulerFromBars(
-			transcription.bars,
-			beatsPerBar,
-			transcription.grid?.bars.firstBeat ?? 0,
-			markersShown(transcription.markers, transcription.pickups)
-		)
+		transcription.timeChosen
+			? rulerFromBars(
+					transcription.bars,
+					markersShown(transcription.markers, transcription.pickups)
+				)
+			: []
 	);
+	/** The trimmed recording, in quarters from bar 1. */
+	const clip = $derived.by(() => {
+		const grid = transcription.grid;
+		if (!grid) return { from: 0, to: 0 };
+		return { from: quartersAt(grid, grid.trim.from), to: quartersAt(grid, grid.trim.to) };
+	});
 	const zoom = $derived(settings.transcribe.zoom);
 	const pixelsPerQuarter = $derived(PIXELS_PER_QUARTER * zoom.across);
-	const scale = $derived(trackScale(rulerSpanWithRoom(ruler, beatsPerBar), pixelsPerQuarter));
+	const scale = $derived(trackScale(gridSpan(ruler, clip, beatsPerBar), pixelsPerQuarter));
 	const parts = $derived(
 		transcription.linked
 			? partLanes({
@@ -164,35 +168,39 @@
 			style:--zoom-down={zoom.down}
 			style:--grid-offset="{scale.toX(0)}px"
 		>
-			<div class="header cycle-header ui-side-column">
-				<button
-					type="button"
-					class="ui-button px-2 py-0.5 text-xs"
-					class:ui-button-on={transcription.cycle.on}
-					disabled={!transcription.cycle.region}
-					aria-pressed={transcription.cycle.on}
-					onclick={() => transcription.cycle.turn(!transcription.cycle.on)}
-					use:tooltip={TIPS.transcription.cycle}>Cycle</button
-				>
-				<CycleSectionMenu {transcription} />
-				<span class="flex items-center gap-1 text-xs text-ink-soft">
-					<ToggleSwitch
-						bind:on={settings.transcribe.snapCycle}
-						labelledBy="snap-cycle"
-						tip={TIPS.transcription.snapCycle}
-					/>
-					<span id="snap-cycle">Snap</span>
-				</span>
-			</div>
-			<CycleStrip {transcription} {ruler} {scale} />
+			{#if transcription.timeChosen}
+				<div class="header cycle-header ui-side-column">
+					<button
+						type="button"
+						class="ui-button px-2 py-0.5 text-xs"
+						class:ui-button-on={transcription.cycle.on}
+						disabled={!transcription.cycle.region}
+						aria-pressed={transcription.cycle.on}
+						onclick={() => transcription.cycle.turn(!transcription.cycle.on)}
+						use:tooltip={TIPS.transcription.cycle}>Cycle</button
+					>
+					<CycleSectionMenu {transcription} />
+					<span class="flex items-center gap-1 text-xs text-ink-soft">
+						<ToggleSwitch
+							bind:on={settings.transcribe.snapCycle}
+							labelledBy="snap-cycle"
+							tip={TIPS.transcription.snapCycle}
+						/>
+						<span id="snap-cycle">Snap</span>
+					</span>
+				</div>
+				<CycleStrip {transcription} {ruler} {scale} />
+			{/if}
 
 			<div class="corner ruler-corner ui-side-column">
-				<button
-					type="button"
-					class="ui-button px-1.5 py-0.5 text-xs font-semibold tabular-nums"
-					onclick={() => transcription.openBarHere()}
-					use:tooltip={TIPS.transcription.barHere}>Bar {transcription.barHere ?? ''} ▾</button
-				>
+				{#if transcription.timeChosen}
+					<button
+						type="button"
+						class="ui-button px-1.5 py-0.5 text-xs font-semibold tabular-nums"
+						onclick={() => transcription.openBarHere()}
+						use:tooltip={TIPS.transcription.barHere}>Bar {transcription.barHere ?? ''} ▾</button
+					>
+				{/if}
 			</div>
 			<!-- svelte-ignore a11y_click_events_have_key_events (← → pick beats on a computer) -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -235,51 +243,53 @@
 			</div>
 			<ReferenceLane {transcription} {scale} view={lanesView} />
 
-			<div class="header ui-side-column">
-				<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
-				<GuessChordsButton {transcription} />
-				<MuteSoloButtons settings={transcription.band.lane} name="Band" />
-				<LaneVolume level={transcription.band.lane} name="Band" />
-			</div>
-			<ChordLane {transcription} {scale} />
+			{#if transcription.timeChosen}
+				<div class="header ui-side-column">
+					<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
+					<GuessChordsButton {transcription} />
+					<MuteSoloButtons settings={transcription.band.lane} name="Band" />
+					<LaneVolume level={transcription.band.lane} name="Band" />
+				</div>
+				<ChordLane {transcription} {scale} />
 
-			{#each parts as lane (lane.id)}
-				{@const channel = mixer.channels.find((each) => each.id === lane.id)}
-				<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
-				<div
-					class="header part-header ui-side-column"
-					class:picked-lane={transcription.lane === lane.id}
-					onclick={(event) => pickFromHeader(event, lane.id)}
-				>
-					<button
-						type="button"
-						class="name pick"
-						onclick={() => (transcription.lane = lane.id)}
-						aria-pressed={transcription.lane === lane.id}
-						use:tooltip={TIPS.transcription.partLane}>{lane.name}</button
+				{#each parts as lane (lane.id)}
+					{@const channel = mixer.channels.find((each) => each.id === lane.id)}
+					<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<div
+						class="header part-header ui-side-column"
+						class:picked-lane={transcription.lane === lane.id}
+						onclick={(event) => pickFromHeader(event, lane.id)}
 					>
-					{#if channel}
-						<MuteSoloButtons settings={channel} name={lane.name} />
-						<LaneVolume level={channel} name={lane.name} />
-					{/if}
-					<div class="instrument-row">
-						{#if channel && isTuneChannel(lane.id)}<InstrumentButton {channel} />{/if}
-						<LaneMenu {transcription} {lane} />
+						<button
+							type="button"
+							class="name pick"
+							onclick={() => (transcription.lane = lane.id)}
+							aria-pressed={transcription.lane === lane.id}
+							use:tooltip={TIPS.transcription.partLane}>{lane.name}</button
+						>
+						{#if channel}
+							<MuteSoloButtons settings={channel} name={lane.name} />
+							<LaneVolume level={channel} name={lane.name} />
+						{/if}
+						<div class="instrument-row">
+							{#if channel && isTuneChannel(lane.id)}<InstrumentButton {channel} />{/if}
+							<LaneMenu {transcription} {lane} />
+						</div>
 					</div>
-				</div>
-				<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
-				<div
-					class="part"
-					class:picked-lane={transcription.lane === lane.id}
-					onclick={() => (transcription.lane = lane.id)}
-				>
-					<BlockLane {lane} {scale} />
-				</div>
-			{/each}
+					<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<div
+						class="part"
+						class:picked-lane={transcription.lane === lane.id}
+						onclick={() => (transcription.lane = lane.id)}
+					>
+						<BlockLane {lane} {scale} />
+					</div>
+				{/each}
+			{/if}
 
-			{#if transcription.linked}
+			{#if transcription.linked && transcription.timeChosen}
 				<div class="header add ui-side-column">
 					<button
 						type="button"

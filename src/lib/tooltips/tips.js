@@ -211,7 +211,7 @@ export const TIPS = Object.freeze({
 		startSong:
 			'A new song on this recording’s bars, at its tempo, to write the chords and tune on.',
 		play: 'Play or pause the recording (Space).',
-		startOver: 'Back to the start of the recording (Home).',
+		startOver: 'Back to the start of the song (Home).',
 		barBack: 'Back to the start of this bar, or the one before if it’s only just started (comma).',
 		barForward: 'On to the start of the next bar (full stop).',
 		barHere:
@@ -228,31 +228,26 @@ export const TIPS = Object.freeze({
 			'Measure how far the band is from A = 440 and tune the recording back by that much. Then nudge by ear if it needs it.',
 		countAlong:
 			'Click on every beat as the recording plays, higher on each ONE, so you can hear if the bars fit.',
-		key: 'The recording’s key: the tune’s notes are spelled in it, and the band plays in it. Needed before you start writing.',
-		songName: 'What to call the song made from this recording. Needed before you start writing.',
-		more: 'The recording’s menu: fixes for the whole song’s beats (beat 1, counting faster or slower), tuning the recording, and how the slowed-down sound is made.',
+		key: 'The song’s key: the tune’s notes are spelled in it. Needed before you send it to the arranger.',
+		time: 'How the song is counted. It lays the bars out on the ruler; a bar here and there with more or fewer beats is fixed in its own menu.',
+		slideReference:
+			'Drag the recording along the ruler, a beat at a time, until its ONE sits on a bar line. A pickup goes in bar 1, with the first ONE on bar 2. ⌘Z undoes.',
+		trimStart:
+			'Drag to trim the start: an intro, a false start or talking you don’t want is never played.',
+		trimEnd: 'Drag to trim the end: the song stops there, and no bars are written past it.',
+		more: 'The recording’s menu: fixes for the whole song’s beats (counting faster or slower, finding them again) and how the slowed-down sound is made.',
 		doubleBeats: 'For when the count is half the song’s speed: a beat between every two.',
 		halveBeats: 'For when the count is twice the song’s speed: every other beat.',
-		listenDownbeat: 'Play from just before beat 1 with a click on every beat, higher on “one”.',
-		fromTheStart: 'Back to the start of the recording.',
-		timeHelp: 'What the time signatures mean, and how each is counted.',
-		markDownbeat:
-			'Beat 1 is exactly where the playhead is. While it plays, press it on the beat like a tap.',
-		laneZoomIn: 'Zoom in on the recording, to put the playhead exactly on a beat.',
-		laneZoomOut: 'Zoom out, to see more of the recording.',
-		downbeatStrip: 'The whole recording. Click or drag to move the playhead.',
-		keepBeats: 'Go back to the beats and bars you have, without finding them again.',
-		moveDownbeat:
-			'Place beat 1 again, then find the beats again. Your fixes to the beats are forgotten.',
 		findAgain:
-			'Find the beats and bars again from the recording. Your fixes to them are forgotten.',
+			'Find the beats again from the recording. Bar 1 stays where it is; your fixes to the beats are forgotten (⌘Z brings them back).',
 		ruler:
 			'Click anywhere to play from there. Click a bar’s number for its menu: a marker, its beats (a short or long bar), and Cycle.',
 		beatDot:
 			'A beat. If its hit sits off the line below, drag the dot onto the hit; it snaps. Tap it for more.',
 		undoBeats: 'Put the beats back as they were before your last change to them (⌘Z).',
 		doneFixingBeats: 'Hide the beats again, so they can’t move by accident.',
-		referenceLane: 'The reference recording, fitted to the bars. Tap to play from there.',
+		referenceLane:
+			'The reference recording, fitted to the bars. Tap to play from there. Drag its top strip to slide it, its ends to trim it.',
 		waveformColour:
 			"The waveform's colour. It's the same choice as Settings → Appearance → Waveform.",
 		chordBar:
@@ -269,8 +264,6 @@ export const TIPS = Object.freeze({
 		laneBass:
 			'Make this lane the song’s bass line. The lane goes; the bass is written from its notes.',
 		laneRemove: 'Take this lane away, with its notes.',
-		pickup:
-			'Notes before beat 1 (a pickup): how many beats of room to draw them in, before bar 1. With one, the recording plays from a bar before beat 1; without, from beat 1.',
 		bottomViews: {
 			roll: 'Write and edit the picked part as notes on a grid.',
 			sheet: 'See what you’ve written as a score.',

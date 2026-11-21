@@ -3,7 +3,7 @@
  * the player loops while it's on. The region is kept while it's off, so
  * turning it on again (the Cycle button, C) brings it back.
  */
-import { secondsAt } from './tempoMap.js';
+import { secondsAt, secondsAtBeat } from './tempoMap.js';
 import { sectionCycles } from './cycle.js';
 
 /** Turned on while stopped outside it, the player starts this many beats before it. */
@@ -118,5 +118,5 @@ export class CycleState {
  * @param {number} beat
  */
 export function leadInBefore(beats, beat) {
-	return beats[Math.max(0, beat - LEAD_IN_BEATS)] ?? 0;
+	return Math.max(0, secondsAtBeat(beats, beat - LEAD_IN_BEATS));
 }

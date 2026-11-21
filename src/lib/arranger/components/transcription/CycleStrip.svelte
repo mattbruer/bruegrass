@@ -31,7 +31,7 @@
 	/** px either side of the cycle's end that still grab it */
 	const END_GRIP = 7;
 
-	const lines = $derived(barLines(ruler, transcription.pickup));
+	const lines = $derived(barLines(ruler));
 	/** @type {{ x: number, quarters: number, part: 'from' | 'to' | 'body' | null, cycle: import('../../transcription/cycle.js').Cycle | null } | null} */
 	let press = null;
 	let hovering = $state(/** @type {'from' | 'to' | 'body' | null} */ (null));

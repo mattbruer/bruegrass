@@ -99,6 +99,12 @@
 			"addedAt": "2026-11-12T00:00:00.000Z"
 		},
 		{
+			"id": "transcribe-slide-phone",
+			"text": "Transcribe: slide and trim the recording on a phone (bigger grips, pinch to zoom)",
+			"done": false,
+			"addedAt": "2026-11-21"
+		},
+		{
 			"id": "beat-pins",
 			"text": "Transcribe: fixes that stick (pins the beat finder must pass through), which also handle ritards",
 			"done": false,
