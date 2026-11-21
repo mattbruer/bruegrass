@@ -1,0 +1,44 @@
+# The mixer and audio output
+
+### The mixer (`mixer/`, its engine in `$lib/audio/`, UI in `components/mixer/`)
+
+- `mixer.svelte.js` holds the settings, with snapshot, apply and reset. `faderTaper.js` holds the fader curve. `mixerGraph.svelte.js` builds the Tone graph lazily and keeps it in step.
+- Each instrument has a channel (input trim → EQ → fader/pan), a post-fader send to the reverb aux, mute and solo.
+- Instruments connect via `getChannel(id)` from `mixerGraph.svelte.js`.
+- Meters and the master visualiser read **analyser taps** (`$lib/audio/analysis/taps.js`), created in `mixerGraph.svelte.js` and published as `audioTaps.current` (null until the first Play).
+  - There's one tap after each channel's fader and pan, one on the reverb aux, the master's waveform and spectrum (taken after the output stage: what reaches the speakers), and the output stage's loudness/limiter readings.
+  - A tap always exposes its data through a function (`read()`). `audioTaps` is `$state`, and Svelte's proxy copies a plain object's values the first time they're read, so an object that audio code keeps mutating would freeze in the UI.
+  - Everything that animates subscribes to the one shared loop in `$lib/audio/analysis/frameLoop.js` (`onEveryFrame`), and writes straight to the DOM or canvas each frame, not through Svelte state.
+  - Level maths is in `analysis/levels.js`; meter movement (fall, peak hold, clip latch) is in `analysis/meterBallistics.js`.
+  - The meters use the fader's dB scale, so they line up with its marks.
+  - The master visualiser is a small fixed-size card after the master strip (size: `--scope-width` and `--scope-screen-height` in `MasterScope.svelte`). Its views are separate draw functions in `components/mixer/scope/`.
+- The automated browser pane in this app doesn't run `requestAnimationFrame`. To test meters or the visualiser there, replace it with a 16 ms timer, then navigate away and back so the frame loop restarts on it.
+- The default mix (pans, sends, reverb level) is a documented block at the top of `mixer.svelte.js`. Resetting a control (tap its readout, double-click its cap) returns it to that default.
+- **Headroom.** Every channel starts with an input trim (`INPUT_TRIM_DB` in `mixerGraph.svelte.js`, −14 dB), before its EQ. With every fader at unity the master peaks around −8 dBFS: healthy mixing headroom. Change the trim, not the samples or instrument levels, to move the whole mix up or down; it keeps the balance between instruments. Loudness is added at the very end, by the output stage, never by raising the trim.
+- **Output stage** (`$lib/audio/output/`, after the master fader; the "Loudness" strip, `components/mixer/output/`). Like a mastering chain: output gain (native `GainNode`) → true-peak lookahead limiter (worklet) → compare trim → speakers, with a loudness meter branch (K-weighting as two native `IIRFilterNode`s → worklet).
+  - The user never wants the master to clip and doesn't want loudness left on the table. Target −14 LUFS (streaming level), ceiling −1 dBTP; tuning constants in `output/outputSettings.js`. `DEFAULT_OUTPUT_GAIN_DB` (+7.7) was measured in the browser: the starter song's default mix is about −21.7 LUFS before it.
+  - `mixer.output.gain` saves with the song. Match (`mixer/outputStage.svelte.js`) sets it from the song's integrated LUFS since Play; the integrated reading resets on Play and on a gain change.
+  - Compare is a level-matched A/B (not saved): while comparing, everything is trimmed back down by the output gain, and B bypasses the limiter, so A and B differ only by the limiter.
+  - Verified in Node against references: K-weighting matches the BS.1770 48 kHz table; a −20 dBFS stereo 1 kHz sine reads −20.0 LUFS; the limiter holds plucks, clicks, +12 dB sines and inter-sample test signals to −1.0 dBTP, and passes signals under the ceiling bit-exact (5 ms delay). Its detector uses 16 taps per phase (12 let full-band noise through by ~1 dB).
+- **AudioWorklets** (`$lib/audio/worklets/`): our own DSP on the audio thread. `worklets.js` is the one place they're loaded (Tone's loader only takes one module per context); a new processor is a self-contained `*Processor.js` file (no imports) plus one line in `PROCESSORS`. ESLint gives `**/worklets/*Processor.js` the worklet globals, and `vite.config.js` keeps processor files from being inlined as data: URLs (Safari won't load those). A processor that throws logs `Audio processor "…" stopped`. In the browser pane, a worklet's messages arrive normally; for its numbers on screen, use the rAF-timer trick above.
+- **EQ** (Logic Channel EQ-style) on every channel, the reverb aux (after the plugin) and the master (the whole mix):
+  - Bands and their defaults are defined once in `$lib/audio/eq/eqBands.js`: low/high cut (12 or 24 dB/oct), low/high shelf, four bells. The settings live in each strip's `eq` in `mixer.svelte.js` and save with the song.
+  - `createEq.js` builds it from native `BiquadFilterNode`s, because `Tone.Filter` rejects the negative Q a Butterworth cut needs in dB. A 24 dB/oct cut is two 12 dB stages.
+  - `eqResponse.js` works out the curve with the same (RBJ) formulas the browser uses, for the graph and the strip thumbnails; it matches `getFrequencyResponse` exactly.
+  - The UI is `components/mixer/eq/`: `EqButton` (the curve thumbnail, under the name at the top of every strip, placed by `Strip.svelte`) opens one shared, non-modal `EqWindow` (`eqWindowState.svelte.js` says which strip). The graph shows the strip's sound after the EQ (`audioTaps.current.afterEq`).
+- **Listening setups and EQ presets.** Every speaker and pair of headphones sounds different, so the user should tune and save EQs per device and per speaker/headphones; the UI says so plainly, so keep that wording when changing it.
+  - A listening setup is every strip's EQ (`eqsSnapshot`/`applyEqs` in `mixer.svelte.js`, strips from `stripsWithEq`). `mixer/listeningSetup.svelte.js` is the one place for its rules: this device's setup goes on at page start and stays through New and Open (`applySongMix`); while it's in use the song's own EQs are put aside and saved back unchanged (`songMixSnapshot`), so it never marks the song changed; setup edits save themselves (`state/autosave.svelte.js`; switching setups saves the one in use first).
+  - The UI is `components/mixer/listening/`: a small button in the mixer's title row (kept small so the drawer fits a phone) opens the "What are you listening on?" dialog. The EQ window's note links to it.
+  - EQ presets (`mixer/eqPresets.svelte.js`, UI `eq/EqPresetPicker.svelte`) are one strip's EQ; any preset loads on any strip, the strip's own listed first.
+- **Every bus after the channels must be stereo** (`new Tone.Channel({ channelCount: 2 })`). A Tone Channel defaults to mono and would fold every pan back to centre; that was the "pan does nothing" bug.
+- Solo is done in our own code, not Tone's `Channel.solo`, which would also mute the master and aux. A soloed channel mutes the others; the reverb aux is solo-safe. Solo isn't saved with a song.
+- The reverb aux is Logic-style, a strip with an insert slot (power = bypass) that opens the plugin window, a non-modal `Dialog`.
+  - The plugin is hand-built on Web Audio (`$lib/audio/reverb/`): a generated impulse response (decay, damping, width) into a convolver, plus pre-delay, low/high cut and separate wet/dry (100/0 by default).
+  - Its controls are defined once in `reverbSettings.js`.
+- New instruments should add a channel to `mixer.channels` rather than connect to the destination directly.
+- Every mixer control is a `Slider.svelte`, the same on desktop and touch. Only the cap drags, and it moves relative to where it is, so the track never jumps. Off the cap, touches are left to the page (`touch-action: pan-x`). Tapping the readout resets; arrow keys step past detents.
+- The console is one row that scrolls sideways on narrow screens, so in the mixer up/down only ever means a fader. Keep strips short enough that the drawer fits a phone without vertical scrolling, upright and on its side.
+  - On its side (`max-height: 600px`, the one breakpoint for it), each strip lays its controls out two to a row beside the fader (the fader is always a strip's last control), name beside EQ; the drawer goes up to the top bar, the player bar slims down, and the hint line hides. Measured at 812×375: the drawer fits exactly above the player bar.
+  - Slider tracks use `touch-action: pan-x pan-y`: the console's own `pan-x` still limits the mixer to sideways swipes, while a window like the EQ can scroll up/down over its sliders.
+  - Floating windows start just under the top bar on short screens, and the EQ graph is shorter there (9rem), so the EQ window fits a phone.
+  - `:hover` styles go inside `@media (hover: hover)`: on a touch screen a tapped hover sticks.

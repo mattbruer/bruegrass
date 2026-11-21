@@ -1,0 +1,10 @@
+# Todo roadmap
+
+## The todo list (`todo.json`)
+
+- The user's roadmap: `todo.json` at the project root, shown on the dev-only `/todo` page (two columns, "My ideas" and "Claude's suggestions"). The Todo button in the top bar and the page only exist in dev on localhost (`$lib/devOnly.js`); anywhere else `/todo` is a 404 and nothing can write the file. The page writes through form actions in `src/routes/todo/+page.server.js` → `$lib/server/todoList.js`.
+- **Read it at the start of a chat** to know what the user wants next.
+- **Keep the suggestions column going:** as you work, add ideas that fit where the app is heading, and drop ones that are done, adopted or stale. No limit on how many (the user's call); each a very short, high-level line (the user asks for details when they want them). Edit `todo.json` directly; keep the shape (`id`, `text`, `done`, `addedAt`).
+- **The suggestions are a roadmap, in build order** (the page numbers them): each step should set up the next, so later work needs the least refactoring. Insert a new idea where it fits that order, not at the end. The current order's logic: (1) export, because rendering offline makes the audio graph work in any audio context, so every later node is built that way from the start; (2–3) a click channel, then count-in on top of it; (4–5) the scheduler learns to start mid-song and change tempo per pass; (6–8) mic input, then the tuner and latency calibration on it, which leads straight into recording; (9–10) ear-test the first recorded samples, then let the band play them from the sampler's manifest; (11–12) independent abcjs display work, any time.
+- Don't edit "mine" except to tick off something you've built (`done: true`), and say so.
+- **Where it's heading: recording.** The user wants to record themselves playing along with the backing track (not built yet). Make choices that keep that easy: a stable audio clock, measured latency (`outputLatency`), mic input through Web Audio with echo cancellation and auto-gain off, and the mixer able to take a new input channel.
