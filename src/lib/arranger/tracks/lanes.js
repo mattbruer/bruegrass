@@ -87,14 +87,16 @@ function bassBlocks(notes) {
 }
 
 /**
- * The melody and each harmony and extra part the tune has, in the mixer's order.
+ * The melody and each harmony and extra part the tune has, in the mixer's
+ * order: one with notes, or a voice of the tune still all rests (a part
+ * just added, a tune just started from the chart, which has no line).
  * @param {import('../melody/melody.js').Melody | null} melody
  * @param {string[]} voices the tune's voices (their channels)
  * @param {import('../melody/partNames.js').PartNames} names
  * @returns {BandLane[]}
  */
 function tuneLanes(melody, voices, names) {
-	if (!melody) return [];
+	const notes = melody?.notes ?? [];
 	const all = [MELODY_CHANNEL, ...[...HARMONY_PARTS, ...EXTRA_PARTS].map((part) => part.id)];
 	return all
 		.map((id) => ({
@@ -102,7 +104,7 @@ function tuneLanes(melody, voices, names) {
 			name: partName(id, names),
 			/** @type {'notes'} */
 			kind: 'notes',
-			blocks: melody.notes
+			blocks: notes
 				.filter((note) => note.channel === id)
 				.map((note) => ({ start: note.time, length: note.length, pitch: note.pitch }))
 		}))
