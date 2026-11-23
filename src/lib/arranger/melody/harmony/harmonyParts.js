@@ -6,14 +6,17 @@
  * down is the tenor an octave lower (low tenor). A new part is one entry.
  *
  * id: the part's ABC voice (V:tenor), so it must stay the same once songs use it.
- * name: in the buttons and mixer. label: short, written on the sheet music (a long
- * one widens the staff). It's also how a voice finds its mixer channel (partChannels.js).
+ * name: in the buttons and mixer, by where the line sits (the user's call:
+ * "the line above / below", not the singers' tenor and baritone).
+ * label: short, written on the sheet music (a long one widens the staff).
+ * It's also how a voice finds its mixer channel (partChannels.js), so
+ * changing it moves songs' existing parts onto the Melody channel.
  */
 export const HARMONY_PARTS = Object.freeze([
-	{ id: 'tenor', name: 'Tenor', label: 'Ten.', chordTones: 1 },
-	{ id: 'high-baritone', name: 'High baritone', label: 'Hi Bar.', chordTones: 2 },
-	{ id: 'baritone', name: 'Baritone', label: 'Bar.', chordTones: -1 },
-	{ id: 'low-tenor', name: 'Low tenor', label: 'Low Ten.', chordTones: -2 }
+	{ id: 'tenor', name: 'Above', label: 'Ten.', chordTones: 1 },
+	{ id: 'high-baritone', name: 'Above 2', label: 'Hi Bar.', chordTones: 2 },
+	{ id: 'baritone', name: 'Below', label: 'Bar.', chordTones: -1 },
+	{ id: 'low-tenor', name: 'Below 2', label: 'Low Ten.', chordTones: -2 }
 ]);
 
 /** @typedef {(typeof HARMONY_PARTS)[number]} HarmonyPart */

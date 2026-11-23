@@ -103,7 +103,7 @@
 {#if drawing.isHarmonyPart && options.length > 0}
 	<div class="mb-2 ui-card p-3 text-sm">
 		<p class="mb-2 text-ink-soft">
-			Other ways to sing the {partName}. Loop a few bars, press Play, and tap through them.
+			Other ways to sing this line ({partName}). Loop a few bars, press Play, and tap through them.
 		</p>
 		<div class="mb-2 flex flex-wrap gap-2" role="group" aria-label="Harmony options">
 			{#each options as option (option.id)}

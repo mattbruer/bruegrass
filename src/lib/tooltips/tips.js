@@ -480,11 +480,10 @@ export const TIPS = Object.freeze({
 		wordsIntoMelody:
 			'Write the chart’s words under the melody’s notes, bar by bar. Replaces any words the melody had.',
 		harmony: {
-			tenor: 'Add or remove a harmony line just above the melody: the next note of the chord up.',
-			'high-baritone': 'Add or remove a high harmony line, two chord notes above the melody.',
-			baritone:
-				'Add or remove a harmony line just below the melody: the next note of the chord down.',
-			'low-tenor': 'Add or remove a low harmony line, two chord notes below the melody.',
+			tenor: 'Add or remove the line just above the melody: the next note of the chord up.',
+			'high-baritone': 'Add or remove a second line above, two chord notes over the melody.',
+			baritone: 'Add or remove the line just below the melody: the next note of the chord down.',
+			'low-tenor': 'Add or remove a second line below, two chord notes under the melody.',
 			rewrite:
 				'Write the harmony lines again from the melody as it is now. Changes made to them by hand are replaced.'
 		},

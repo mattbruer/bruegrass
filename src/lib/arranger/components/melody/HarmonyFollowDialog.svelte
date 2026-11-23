@@ -31,10 +31,10 @@
 >
 	{#if parts.length > 0}
 		<div class="flex max-w-md flex-col gap-3 px-6 pt-4 pb-6">
-			<p class="text-sm">Rewrite the {names} harmony to fit the new chords?</p>
+			<p class="text-sm">Rewrite the harmony lines ({names}) to fit the new chords?</p>
 			{#if handChanged}
 				<p class="text-sm text-ink-soft">
-					You changed the {handChanged} by hand: rewriting replaces your changes. Undo on the Tracks page
+					You changed {handChanged} by hand: rewriting replaces your changes. Undo on the Tracks page
 					brings them back.
 				</p>
 			{/if}
