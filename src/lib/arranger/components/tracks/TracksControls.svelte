@@ -2,7 +2,7 @@
 	/**
 	 * The Tracks page's control bar, like Transcribe's: where you are (Play,
 	 * back to the start, the clock), Record (on the armed audio lane, after
-	 * the count-in), how it sounds (the click, the tempo, the mixer), Undo and Zoom, and the
+	 * the count-in), how it sounds (the click, the tempo), the editor and the mixer, Undo and Zoom, and the
 	 * picked clip's tools under them. It stays
 	 * in view under the top bar (`height`: how tall it is, for what scrolls
 	 * under it). Space plays and stops.
@@ -26,7 +26,9 @@
 	import TempoStepper from '../player/TempoStepper.svelte';
 	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
 	import UndoButtons from './UndoButtons.svelte';
-	import MixerButton from '../mixer/MixerButton.svelte';
+	import DrawerKey from '../page/DrawerKey.svelte';
+	import PencilIcon from '../icons/PencilIcon.svelte';
+	import SlidersIcon from '../icons/SlidersIcon.svelte';
 	import ClipTools from './ClipTools.svelte';
 
 	const { arrangement, player, recording } = useArranger();
@@ -160,7 +162,12 @@
 				<span class="sr-only">Click with the band</span>
 			</button>
 			<TempoStepper />
-			<MixerButton />
+			<DrawerKey id="edit" label="Edit" tip={TIPS.tracks.edit}>
+				{#snippet icon()}<PencilIcon />{/snippet}
+			</DrawerKey>
+			<DrawerKey id="mixer" label="Mixer" tip={TIPS.player.mixer}>
+				{#snippet icon()}<SlidersIcon />{/snippet}
+			</DrawerKey>
 		</div>
 
 		<div class="cluster">

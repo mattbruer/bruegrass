@@ -354,6 +354,7 @@ export const TIPS = Object.freeze({
 		redo: 'Redo what you undid (⇧⌘Z).',
 		tempoLane:
 			'How fast the song goes, bar by bar. Tap or click to add a point and drag it up or down to slow down or speed up there, for a ritard at the end. Double-tap a point to remove it.',
+		edit: 'Open the editor to write the chords and the melody as text. The lanes change as you type.',
 		editPart: 'Edit this part: its piano roll opens under the lanes, and the band keeps playing.'
 	},
 

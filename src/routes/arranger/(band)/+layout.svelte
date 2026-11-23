@@ -6,7 +6,7 @@
 	 * the editor and mixer drawers and the received-song dialog are here
 	 * too, the same on every page except those with their own player
 	 * (components/page/bandPages.js), where the band stops; Tracks keeps the
-	 * mixer drawer, opened by its own button.
+	 * editor and mixer drawers, opened by its own keys.
 	 *
 	 * It opens on the song this device had open last (else the starter song),
 	 * and your work saves itself as you go (state/autosave.svelte.js). If this
@@ -19,7 +19,7 @@
 	import InstrumentWindow from '$lib/arranger/components/mixer/instruments/InstrumentWindow.svelte';
 	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { showsTheBand, showsTheMixer } from '$lib/arranger/components/page/bandPages.js';
+	import { showsTheBand, showsTheDrawers } from '$lib/arranger/components/page/bandPages.js';
 	import { provideArranger } from '$lib/arranger/state/context.js';
 	import PlayerBar from '$lib/arranger/components/page/PlayerBar.svelte';
 	import EditDrawer from '$lib/arranger/components/editor/EditDrawer.svelte';
@@ -36,7 +36,7 @@
 
 	const arranger = provideArranger();
 	const showBand = $derived(showsTheBand(page.route.id));
-	const showMixer = $derived(showsTheMixer(page.route.id));
+	const showDrawers = $derived(showsTheDrawers(page.route.id));
 	// Arriving on a page without the player bar stops the band and the click; a page with its
 	// own controls (Tracks) can start them again, so only the arrival counts
 	$effect(() => {
@@ -82,8 +82,9 @@
 		<EditDrawer />
 		<MixerDrawer />
 	</div>
-{:else if showMixer}
+{:else if showDrawers}
 	<div class="print:hidden">
+		<EditDrawer />
 		<MixerDrawer />
 	</div>
 {/if}
