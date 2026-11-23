@@ -2,12 +2,13 @@
  * Every chord that fits the melody under one chord of the chart: each of
  * the twelve roots with each kind of chord (chordTypes.js) is tried in the
  * chord's place, with its scale picked by what it would do there
- * (chordScaleFor.js). It fits when every target note (melodyTargets.js) is
+ * (chordScaleFor.js). It fits when every note heard against it (noteRoles.js:
+ * all but approach notes) is
  * one of its chord tones or tensions, wherever in the song the chord plays,
  * and some note of the melody under it is one of its chord tones (or the
  * chord isn't heard in the tune at all).
- * Approach notes only have to step into a target, which they do by being
- * approach notes.
+ * A suspension fits when it steps into one of the chord's notes. Approach
+ * notes only have to step into a target, which they do by being approach notes.
  *
  * Bluegrass adds blue notes: a ♭3 or ♭7 in the melody over a major I or IV
  * (the bent ♭3 over G) counts, like the book's blues I7 (p. 21). That's our
@@ -20,7 +21,7 @@ import { chordScaleFor, numeral } from './chordScaleFor.js';
 /** Blue notes: semitones above the root, over a plain major or 7th chord on these chords of the key. */
 const BLUE_NOTES = { numerals: ['I', 'IV'], types: ['', '7'], semitones: [3, 10] };
 /** How much each kind of note counts towards a good fit (a chord tone is 1). */
-const FIT_WEIGHT = { tone: 1, tension: 0.7, blue: 0.5 };
+const FIT_WEIGHT = { tone: 1, tension: 0.7, blue: 0.5, suspension: 0.5 };
 /** A target on one of the bass's beats counts this much more. */
 const BOOM_WEIGHT = 2;
 /** Taken off the score for each chord note outside the key, and each beyond the triad. */
@@ -44,9 +45,10 @@ const TENSION_NAMES = {
  * @typedef {import('./chordScaleFor.js').PlainKey} PlainKey
  * @typedef {import('./chordScaleFor.js').PlainChord} PlainChord
  * @typedef {import('./chordTypes.js').ChordType} ChordType
- * @typedef {import('./melodyTargets.js').ReadNote} ReadNote
- * @typedef {{ notes: ReadNote[], next: PlainChord | null }} Occurrence one time the chord plays
- * @typedef {'tone' | 'tension' | 'blue'} FitRole
+ * @typedef {import('./noteRoles.js').RoledNote} RoledNote
+ * @typedef {{ notes: RoledNote[], next: PlainChord | null }} Occurrence one time the chord plays:
+ *   the melody notes that belong to it (noteRoles.js), and the chord after it
+ * @typedef {'tone' | 'tension' | 'blue' | 'suspension'} FitRole
  * @typedef {{ pitchClass: number, role: FitRole, as: string }} TargetAs a target note, as this chord hears it
  * @typedef {{ root: number, type: ChordType, does: string, scale: string, score: number, targets: TargetAs[] }} Fit
  */
@@ -57,7 +59,7 @@ const TENSION_NAMES = {
  * @returns {Fit[]} best first; empty when there's no melody under the chord
  */
 export function chordsThatFit(key, occurrences) {
-	if (!occurrences.some(({ notes }) => notes.some((note) => note.target))) return [];
+	if (!occurrences.some(({ notes }) => notes.some(mustFit))) return [];
 	/** @type {Fit[]} */
 	const fits = [];
 	for (let root = 0; root < 12; root++) {
@@ -86,8 +88,8 @@ function fitEverywhere(key, chord, occurrences) {
 		const scale = chordScaleFor(key, chord, next);
 		first ??= scale;
 		heard ||= notes.some((note) => scale.roles.get(mod12(note.pitch - chord.root)) === 'tone');
-		for (const note of notes.filter((each) => each.target)) {
-			const as = targetAs(key, chord, scale, note.pitch);
+		for (const note of notes.filter(mustFit)) {
+			const as = targetAs(key, chord, scale, note.pitch) ?? suspendedInto(chord, scale, note);
 			if (!as) return null;
 			const noteWeight = note.length * (note.onBoom ? BOOM_WEIGHT : 1);
 			total += noteWeight * FIT_WEIGHT[as.role];
@@ -103,6 +105,29 @@ function fitEverywhere(key, chord, occurrences) {
 		score: total / weight - plainness(key, chord),
 		targets: [...targets.values()]
 	};
+}
+
+/**
+ * Every note but an approach note is heard against the chord.
+ * @param {RoledNote} note
+ */
+function mustFit(note) {
+	return note.role !== 'approach';
+}
+
+/**
+ * A note held over from the chord before that steps into one of this
+ * chord's notes: it fits as a suspension (or a retardation).
+ * @param {PlainChord} chord
+ * @param {import('./chordScaleFor.js').ChordScale} scale
+ * @param {RoledNote} note
+ * @returns {TargetAs | null}
+ */
+function suspendedInto(chord, scale, note) {
+	if (note.resolvesTo === null) return null;
+	const resolution = scale.roles.get(mod12(note.resolvesTo - chord.root));
+	if (resolution !== 'tone') return null;
+	return { pitchClass: mod12(note.pitch), role: 'suspension', as: note.role };
 }
 
 /**

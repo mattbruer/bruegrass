@@ -179,9 +179,7 @@ export const TIPS = Object.freeze({
 		learn: 'Open the chord tutor on this chord: what to play over it, and what it does.',
 		fits: 'This chord fits the melody here. Tap to put it in the box and see why; Change uses it.',
 		jazzier:
-			'Chords with more colour (sixths, sevenths, sus, ninths) that also fit the melody here.',
-		passing:
-			'Put this chord on that beat of the bar, under a melody note that steps into the next chord.'
+			'Chords with more colour (sixths, sevenths, sus, ninths) that also fit the melody here.'
 	},
 
 	chordTutor: {
@@ -432,7 +430,9 @@ export const TIPS = Object.freeze({
 				holds:
 					'Like the classic sound, but holds its note while the melody passes between chord notes.',
 				fewest: 'Stays on one note as long as it still fits the chord: the easiest line to sing.',
-				parallel: 'A third or a sixth from the melody all the way, like twin fiddles.'
+				parallel: 'A third or a sixth from the melody all the way, like twin fiddles.',
+				passing:
+					'Like the classic sound, but the voices move through passing chords under the melody’s quick notes, and hold through suspensions.'
 			},
 			line: 'Options change the whole harmony line.',
 			bar: 'Options change only the bar of the picked note, so you can mix styles bar by bar.',

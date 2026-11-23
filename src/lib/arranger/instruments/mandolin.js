@@ -11,7 +11,7 @@
  */
 import { rootPitchClass } from './guitar.js';
 import { withoutBass, withoutVariant } from './chordBook.js';
-import { readChordName } from './guitarVoicing.js';
+import { readChordName } from '../theory/chordTypes.js';
 import { voiceChord } from './voicing.js';
 import { rhythm } from '../chart/timeline.js';
 import { createRng } from './seededRandom.js';

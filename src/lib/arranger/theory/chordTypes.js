@@ -99,3 +99,27 @@ export function chordTypeOf(suffix) {
 		CHORD_TYPES.find((type) => type.suffix === suffix || type.aliases.includes(suffix)) ?? null
 	);
 }
+
+const NOTE_PITCH = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
+/**
+ * A chord name's root pitch class and type, or null for a name the theory
+ * doesn't know.
+ * @param {string} name without a slash bass or variant, e.g. "F#m7"
+ * @returns {{ root: number, type: ChordType } | null}
+ */
+export function readChordName(name) {
+	const match = name.match(/^([A-G])([#b]?)(.*)$/);
+	const type = match && chordTypeOf(match[3]);
+	if (!match || !type) return null;
+	const sign = match[2] === '#' ? 1 : match[2] === 'b' ? -1 : 0;
+	return { root: (NOTE_PITCH[/** @type {keyof NOTE_PITCH} */ (match[1])] + sign + 12) % 12, type };
+}
+
+/**
+ * The pitch classes a chord sounds.
+ * @param {{ root: number, type: ChordType }} chord
+ */
+export function chordPitchClasses(chord) {
+	return toneSemitones(chord.type).map((tone) => (chord.root + tone) % 12);
+}

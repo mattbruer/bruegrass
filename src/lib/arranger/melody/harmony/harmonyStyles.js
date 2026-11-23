@@ -20,7 +20,12 @@ const RANGE = { 1: [1, 9], 2: [5, 16] };
 /**
  * @typedef {import('../../theory/musicInKey.js').Note} Note
  * @typedef {import('../../theory/musicInKey.js').Chord} Chord
- * @typedef {{ lead: Note, chord: Chord, count: number, previous: Note | null }} Moment
+ * @typedef {{
+ *   lead: Note, chord: Chord, count: number, previous: Note | null,
+ *   role?: import('../../theory/noteRoles.js').Role, roleChord?: Chord | null
+ * }} Moment
+ *   role: what the melody note is doing (harmonyRoles.js); roleChord: the chord it belongs
+ *   to by that role (a passing chord, the chord an anticipation reaches), null: the band's
  */
 
 export const HARMONY_STYLES = Object.freeze([
@@ -57,6 +62,21 @@ export const HARMONY_STYLES = Object.freeze([
 		name: 'Parallel thirds and sixths',
 		/** Twin-fiddle style: a third, or a sixth when the third isn't a chord tone. */
 		pick: (/** @type {Moment} */ moment) => parallelTone(moment)
+	},
+	{
+		id: 'passing',
+		name: 'Passing chords',
+		/**
+		 * The stack on the notes heard as the chord; an approach note gets a
+		 * passing chord of its own (the dominant of the chord it leads to,
+		 * first), an anticipation the chord it reaches early, and through a
+		 * suspension the part holds its note. The Berklee way (pp. 11–14).
+		 */
+		pick: (/** @type {Moment} */ moment) => {
+			const suspended = moment.role === 'suspension' || moment.role === 'retardation';
+			if (suspended && moment.previous) return moment.previous;
+			return stack({ ...moment, chord: moment.roleChord ?? moment.chord });
+		}
 	}
 ]);
 

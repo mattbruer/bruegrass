@@ -292,7 +292,7 @@
 		},
 		{
 			"id": "passing-chords",
-			"text": "Passing chords on approach notes (the book's dominant, chromatic and diatonic reharmonization, pp. 11–14)",
+			"text": "Passing chords in the harmony voices on approach notes, anticipations and suspensions (the Passing chords harmony style)",
 			"done": true,
 			"addedAt": "2026-11-23"
 		},
@@ -316,7 +316,7 @@
 		},
 		{
 			"id": "passing-chords-by-ear",
-			"text": "Passing chords: try them by ear (G → G7 on beat 3 → C in Amazing Grace), and on a real iPhone",
+			"text": "Passing chords harmony style: try it by ear against the stack (piano roll harmony options, a line or a bar)",
 			"done": false,
 			"addedAt": "2026-11-23"
 		},

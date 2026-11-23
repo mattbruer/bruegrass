@@ -15,6 +15,7 @@ import { abcPitch, noteInKey, tuneKey } from './abcPitch.js';
 import { chordFromName } from '../../theory/musicInKey.js';
 import { melodyFromTune } from '../melody.js';
 import { extraPartBlocks } from '../extraParts.js';
+import { harmonyRoles } from './harmonyRoles.js';
 
 const LEAD_VOICE = 'V:1';
 const PART_LINE = new RegExp(`^V:(${HARMONY_PARTS.map((part) => part.id).join('|')})\\b.*$`, 'gm');
@@ -68,8 +69,11 @@ export function withHarmonies(abc, tune, chordAt, partIds, styles = {}) {
 	}
 
 	const notes = leadNotes(tune, melodyEnd);
+	const key = tuneKey(tune.getKeySignature());
+	const roles = harmonyRoles(rolesInput(notes), chordAt, tune.getMeterFraction(), key);
 	const written = parts.map((part) => {
-		const text = partText(abc, bodyStart, melodyEnd, notes, tuneKey(tune.getKeySignature()), {
+		const text = partText(abc, bodyStart, melodyEnd, notes, key, {
+			roles,
 			chordAt,
 			count: part.chordTones,
 			style: harmonyStyle(styles[part.id] ?? 'stack')
@@ -135,6 +139,32 @@ export function firstSoundings(tune) {
 }
 
 /**
+ * The melody's notes as the note roles read them: when each first plays,
+ * how long (a tied note joined to the one before) and its pitch.
+ * @param {ReturnType<typeof leadNotes>} notes
+ * @returns {import('./harmonyRoles.js').LeadNote[]}
+ */
+function rolesInput(notes) {
+	/** @type {import('./harmonyRoles.js').LeadNote[]} */
+	const read = [];
+	for (const { element, sounding } of notes) {
+		if (element.el_type !== 'note' || !(element.pitches?.length > 0)) continue;
+		const length = (element.duration ?? 0) * 4;
+		const tied = element.pitches.some((/** @type {any} */ p) => p.endTie);
+		const last = read.at(-1);
+		if (tied && last) last.length += length;
+		else if (sounding)
+			read.push({
+				startChar: element.startChar,
+				time: sounding.time,
+				length,
+				pitch: sounding.midi
+			});
+	}
+	return read.sort((a, b) => a.time - b.time);
+}
+
+/**
  * When and what a note sounds, from abcjs's note itself (set by
  * setUpAudio): for notes the audio plays as something else, like a trill.
  * @param {any} element
@@ -157,9 +187,12 @@ function ownPitch(element, pickup) {
  * @param {number} to
  * @param {ReturnType<typeof leadNotes>} notes
  * @param {import('../../theory/musicInKey.js').Key} key
- * @param {{ chordAt: ChordAt, count: number, style: (typeof import('./harmonyStyles.js').HARMONY_STYLES)[number] }} part
+ * @param {{
+ *   roles: Map<number, import('./harmonyRoles.js').HarmonyRole>, chordAt: ChordAt, count: number,
+ *   style: (typeof import('./harmonyStyles.js').HARMONY_STYLES)[number]
+ * }} part
  */
-function partText(abc, from, to, notes, key, { chordAt, count, style }) {
+function partText(abc, from, to, notes, key, { roles, chordAt, count, style }) {
 	const tonicChord = /** @type {const} */ ({ root: { step: 0, alt: 0 }, quality: '', bass: null });
 	/** @type {Map<number, number>} */
 	let bar = new Map();
@@ -189,7 +222,11 @@ function partText(abc, from, to, notes, key, { chordAt, count, style }) {
 			const lead = noteInKey(key, top, sounding.midi);
 			const name = chordAt(sounding.time);
 			const chord = (name && chordFromName(key, name)) || tonicChord;
-			note = style.pick({ lead, chord, count, previous });
+			const { role, roleChord } = roles.get(element.startChar) ?? {
+				role: 'target',
+				roleChord: null
+			};
+			note = style.pick({ lead, chord, count, previous, role, roleChord });
 		}
 		if (!note) continue;
 		held = note;

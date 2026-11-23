@@ -10,9 +10,11 @@ import { rhythm } from './timeline.js';
 import { noteName, noteOfKey, notePc, parseChord, songKey } from './key.js';
 import { withoutVariant } from '../instruments/chordBook.js';
 import { isNoChord } from './noChord.js';
-import { chordTypeOf } from '../theory/chordTypes.js';
+import { chordPitchClasses, chordTypeOf } from '../theory/chordTypes.js';
 import { chordsThatFit } from '../theory/chordsThatFit.js';
-import { melodyTargets } from '../theory/melodyTargets.js';
+import { noteRoles } from '../theory/noteRoles.js';
+
+const EPSILON = 1e-6;
 
 /**
  * @typedef {import('./chartAnalysis.js').ChordPlace} ChordPlace
@@ -35,8 +37,9 @@ export function chordSuggestions(sections, melody, place, capo) {
 	const at = readPlace(sections, melody, place, capo);
 	if (!at) return [];
 	const { slots, plays, booms, notes, key: slotKey } = at;
+	const roled = noteRoles(notes, bandOf(slots, booms));
 	const occurrences = plays.map((index) => ({
-		notes: melodyTargets(notes, slots[index], booms),
+		notes: notesOf(roled, slots[index]),
 		next: plainChord(nextChord(slots, index))
 	}));
 	const current = withoutVariant(slots[plays[0]].name);
@@ -87,6 +90,54 @@ export function readPlace(sections, melody, place, capo) {
 }
 
 /**
+ * The band as noteRoles reads it: when the bass plays, when the chord
+ * changes, and the notes of the chord sounding at any time.
+ * @param {import('./timeline.js').SlotPosition[]} slots
+ * @param {number[]} booms
+ * @returns {import('../theory/noteRoles.js').Band}
+ */
+function bandOf(slots, booms) {
+	const changes = slots
+		.filter((slot, i) => slot.name !== slots[i - 1]?.name)
+		.map((slot) => slot.start);
+	return {
+		isBoom: (time) => booms.some((boom) => Math.abs(boom - time) < EPSILON),
+		changes,
+		tonesAt: (time) => {
+			const chord = plainChord(slotAt(slots, time)?.name ?? null);
+			return chord ? chordPitchClasses(chord) : [];
+		}
+	};
+}
+
+/**
+ * The melody notes that belong to one chord: those sounding under it, its
+ * anticipations (arriving early) and not the next chord's; a suspension
+ * from the chord before is heard against it.
+ * @param {import('../theory/noteRoles.js').RoledNote[]} notes
+ * @param {import('./timeline.js').SlotPosition} slot
+ */
+function notesOf(notes, slot) {
+	const end = slot.start + slot.length;
+	return notes.filter((note) => {
+		if (note.role === 'anticipation')
+			return note.chordTime >= slot.start - EPSILON && note.chordTime < end - EPSILON;
+		return note.time < end - EPSILON && note.time + note.length > slot.start + EPSILON;
+	});
+}
+
+/**
+ * The slot sounding at a time.
+ * @param {import('./timeline.js').SlotPosition[]} slots
+ * @param {number} time
+ */
+function slotAt(slots, time) {
+	return slots.find(
+		(slot) => time >= slot.start - EPSILON && time < slot.start + slot.length - EPSILON
+	);
+}
+
+/**
  * @param {import('./timeline.js').SlotPosition} slot
  * @param {ChordPlace} place
  */
@@ -115,7 +166,7 @@ function nextChord(slots, index) {
  * @param {string | null} name
  */
 export function plainChord(name) {
-	const chord = name && parseChord(withoutVariant(name));
+	const chord = name && !isNoChord(name) ? parseChord(withoutVariant(name)) : null;
 	const type = chord && chordTypeOf(chord.rest);
 	return chord && type ? { root: notePc(chord.root), type } : null;
 }

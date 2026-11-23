@@ -3,7 +3,6 @@
  * settings that go with it (tempo, capo, key), plus everything worked out
  * from them.
  */
-import { withPassingChord } from '../chart/withPassingChord.js';
 import { readArrangement } from '../chart/readArrangement.js';
 import { chordLabel, keyOfChord, songKey, validChordDisplay } from '../chart/key.js';
 import { keyChoicesFor } from '../chart/keyChoices.js';
@@ -109,14 +108,5 @@ export class ArrangementState {
 	 */
 	changeChord(place, name) {
 		this.text = setChord(this.text, place, name);
-	}
-
-	/**
-	 * Put a passing chord on some beats of a bar (chart/passingChordSuggestions.js).
-	 * @param {{ section: number, measure: number }} bar
-	 * @param {{ beat: number, beats: number, name: string }} passing
-	 */
-	addPassingChord(bar, passing) {
-		this.text = withPassingChord(this.text, this.sections, bar, passing);
 	}
 }

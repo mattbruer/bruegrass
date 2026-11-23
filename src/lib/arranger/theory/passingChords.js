@@ -1,6 +1,6 @@
 /**
  * Chords for an approach note: a short note stepping into a target note
- * (melodyTargets.js) can have a chord of its own, leading into the target's
+ * (noteRoles.js) can have a chord of its own, leading into the target's
  * chord. The Berklee text's ways (pp. 11–14, docs/theory/chord-scales.md):
  *
  * - dominant: the V7 of the target's chord (and its tritone substitute);
@@ -32,7 +32,8 @@ const A_FIFTH_ABOVE = 7;
  * @param {PlainKey} key
  * @param {{ approach: number, target: number }} notes the approach note and the note it leads to (MIDI)
  * @param {PlainChord} targetChord the chord under the target note
- * @returns {PassingChord[]} each chord once, with every way that reaches it
+ * @returns {PassingChord[]} each chord once, with every way that reaches it, the
+ *   plainest first: the dominant, the key's own chords, then the jazzier ways
  */
 export function passingChords(key, notes, targetChord) {
 	/** @type {Map<string, PassingChord>} */
@@ -63,13 +64,13 @@ function candidates(key, notes, target) {
 	return [
 		['dominant', chord(target.root + A_FIFTH_ABOVE, '7')],
 		['dominant', chord(target.root + A_FIFTH_ABOVE, '')],
-		['tritone sub', chord(target.root + 1, '7')],
+		['diatonic', diatonicNeighbour(key, target, Math.sign(step))],
 		[
 			Math.abs(step) === 1 ? 'chromatic' : 'parallel',
 			{ root: mod12(target.root + step), type: target.type }
 		],
-		['diatonic', diatonicNeighbour(key, target, Math.sign(step))],
-		['passing diminished', chord(target.root - 1, 'dim7')]
+		['passing diminished', chord(target.root - 1, 'dim7')],
+		['tritone sub', chord(target.root + 1, '7')]
 	];
 }
 
