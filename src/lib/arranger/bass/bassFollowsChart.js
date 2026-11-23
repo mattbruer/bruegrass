@@ -6,6 +6,7 @@
  * removing a bar anywhere leaves the others' edits where they were.
  */
 import { matchBars } from './matchBars.js';
+import { chordBySound } from '../chart/chordBySound.js';
 
 /**
  * @typedef {import('../melody/roll/readScore.js').Score} Score
@@ -55,21 +56,6 @@ function barKeys(score) {
 function chordsIn(score, bar) {
 	return score.chords
 		.filter((chord) => chord.at >= bar.start && chord.at < bar.start + bar.length)
-		.map((chord) => `${chord.at - bar.start}:${bySound(chord.name)}`)
+		.map((chord) => `${chord.at - bar.start}:${chordBySound(chord.name)}`)
 		.join(' ');
-}
-
-const LETTERS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-const SIGNS = { '#': 1, '♯': 1, b: -1, '♭': -1 };
-
-/**
- * A chord name with its notes as pitch classes, so F# and Gb (as a capo
- * move may spell them) count as the same chord.
- * @param {string} name e.g. "F#m7/C#"
- */
-function bySound(name) {
-	return name.replace(/(^|\/)([A-G])([#♯b♭]?)/g, (_, slash, letter, sign) => {
-		const pc = (LETTERS[/** @type {keyof LETTERS} */ (letter)] + (SIGNS[sign] ?? 0) + 12) % 12;
-		return `${slash}${pc}`;
-	});
 }

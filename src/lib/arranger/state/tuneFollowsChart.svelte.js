@@ -4,7 +4,9 @@
  * and bars added to or removed from a section are added to or removed from
  * its tune (melody/sections/barsFollowChart.js), and bars whose chords
  * changed get the chart's chords as the tune's chord symbols
- * (melody/chordsFollowChart.js). Cutting, copying and
+ * (melody/chordsFollowChart.js), and the harmony parts are rewritten where
+ * the melody now sounds over a new chord (melody/harmonyFollowsChords.js),
+ * with a notice saying so. Cutting, copying and
  * reordering need nothing here: the tune is made from the chart's sections
  * each time. Call once from the arranger's layout,
  * which owns the effect.
@@ -13,6 +15,9 @@ import { untrack } from 'svelte';
 import { sectionInstances } from '../melody/sections/tuneBySection.js';
 import { sectionBarKeys } from '../melody/sections/barsFollowChart.js';
 import { barChordKeys } from '../melody/chordsFollowChart.js';
+import { concertChordAt } from '../chart/concertChords.js';
+import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
+import { notice } from './notice.svelte.js';
 
 /** @param {import('./Arranger.svelte.js').Arranger} arranger */
 export function keepTuneWithChart(arranger) {
@@ -32,10 +37,16 @@ export function keepTuneWithChart(arranger) {
 				if (barsBefore && sameSong) arranger.followBars(barsBefore);
 				barsBefore = barsAfter;
 			}
-			// A capo move rewrites the tune itself (Arranger.setCapo)
-			if (sameSong && chordsBefore && chordsAfter && chordsBefore.capo === chordsAfter.capo)
-				arranger.followChords(chordsBefore.keys);
-			chordsBefore = chordsAfter;
+			if (!sameSong) chordsBefore = chordsAfter;
+			// While the chart can't be read, the last chords it could be read with stay
+			else if (chordsAfter) {
+				// A capo move rewrites the tune itself (Arranger.setCapo)
+				if (chordsBefore && chordsBefore.capo === chordsAfter.capo) {
+					arranger.followChords(chordsBefore.keys);
+					tellOfHarmony(arranger.followHarmony(chordsBefore.chordAt));
+				}
+				chordsBefore = chordsAfter;
+			}
 		});
 		before = after;
 	});
@@ -60,5 +71,20 @@ function chordKeys(arranger) {
 	const { arrangement } = arranger;
 	if (arrangement.readError) return null;
 	const capo = arrangement.capoFret;
-	return { capo, keys: barChordKeys(arrangement.sections, capo) };
+	return {
+		capo,
+		keys: barChordKeys(arrangement.sections, capo),
+		chordAt: concertChordAt(arrangement.sections, capo)
+	};
+}
+
+/**
+ * Say which harmony parts a chord edit rewrote, so it's not a surprise.
+ * @param {string[]} partIds
+ */
+function tellOfHarmony(partIds) {
+	if (partIds.length === 0) return;
+	const names = HARMONY_PARTS.filter((part) => partIds.includes(part.id)).map((part) => part.name);
+	const list = new Intl.ListFormat('en', { type: 'conjunction' }).format(names);
+	notice.show(`${list} harmony rewritten to fit the new chords.`);
 }

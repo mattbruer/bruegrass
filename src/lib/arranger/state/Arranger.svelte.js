@@ -35,6 +35,7 @@ import { EditHistory } from './EditHistory.svelte.js';
 import { abcjsIfLoaded, abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc, hasChords } from '../melody/abcChords.js';
 import { barChordKeys, changedBars, tuneFollowingChords } from '../melody/chordsFollowChart.js';
+import { harmonyFollowingChords } from '../melody/harmonyFollowsChords.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
 import { respellBass } from '../bass/respellBass.js';
 import { abcWithWords } from '../melody/words/abcWithWords.js';
@@ -317,6 +318,23 @@ export class Arranger {
 		const abc = this.melody.notation;
 		const followed = tuneFollowingChords(abc, sequence, sections, capoFret, bars);
 		if (followed !== abc) this.melody.notation = followed;
+	}
+
+	/**
+	 * The harmony parts' bars whose melody notes now sound over a different
+	 * chord are written fresh; the rest keep any hand edits.
+	 * @param {import('../melody/harmony/writeHarmonies.js').ChordAt} chordBefore the
+	 *   band's concert chord at a time, before the edit
+	 * @returns {string[]} the ids of the parts rewritten
+	 */
+	followHarmony(chordBefore) {
+		const abcjs = abcjsIfLoaded();
+		if (!abcjs || !this.arrangement.isPlayable || this.harmonyParts.length === 0) return [];
+		const chordNow = concertChordAt(this.arrangement.sections, this.arrangement.capoFret);
+		const abc = this.melody.notation;
+		const followed = harmonyFollowingChords(abc, tuneReader(abcjs), chordBefore, chordNow);
+		if (followed.parts.length > 0) this.melody.notation = followed.abc;
+		return followed.parts;
 	}
 
 	/** What the melody's words and harmony parts are written from. */

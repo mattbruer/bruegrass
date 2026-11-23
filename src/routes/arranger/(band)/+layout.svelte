@@ -24,6 +24,7 @@
 	import PlayerBar from '$lib/arranger/components/page/PlayerBar.svelte';
 	import EditDrawer from '$lib/arranger/components/editor/EditDrawer.svelte';
 	import MixerDrawer from '$lib/arranger/components/mixer/MixerDrawer.svelte';
+	import Notice from '$lib/arranger/components/page/Notice.svelte';
 	import ReceiveSongDialog from '$lib/arranger/components/share/ReceiveSongDialog.svelte';
 	import { startThisDevicesSetup } from '$lib/arranger/mixer/listeningSetup.svelte.js';
 	import { keepWorkSaved } from '$lib/arranger/state/autosave.svelte.js';
@@ -90,3 +91,4 @@
 {/if}
 <InstrumentWindow />
 <ReceiveSongDialog />
+<Notice />

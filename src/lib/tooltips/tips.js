@@ -20,7 +20,8 @@ export const TIPS = Object.freeze({
 		},
 		settings: 'Settings: tips, the music keypad, the bass line, colours and shape.',
 		storage: 'What the app keeps on this device: see it, and delete what you don’t want.',
-		tipsToggle: 'Tips are on: rest on any control to see what it does. Tap to turn them off.'
+		tipsToggle: 'Tips are on: rest on any control to see what it does. Tap to turn them off.',
+		notice: 'Something the app just did for you. Tap to close it.'
 	},
 
 	storage: {

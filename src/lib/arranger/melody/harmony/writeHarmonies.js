@@ -102,6 +102,26 @@ function findBody(abc) {
  */
 function leadNotes(tune, melodyEnd) {
 	const { pickup } = melodyFromTune(tune);
+	const sounding = firstSoundings(tune);
+	return tune.lines
+		.flatMap((line) => line.staff?.[0]?.voices?.[0] ?? [])
+		.filter((element) => element.startChar < melodyEnd)
+		.filter((element) => ['note', 'bar', 'key'].includes(element.el_type))
+		.map((element) => ({
+			element,
+			sounding: sounding.get(element.startChar) ?? ownPitch(element, pickup)
+		}));
+}
+
+/**
+ * When each of the melody's written notes first plays (quarter notes from
+ * bar 1) and its pitch, by where it's written (startChar). A part's note
+ * is worked out at that time, so a repeated bar takes its first pass's chord.
+ * @param {import('abcjs').TuneObject} tune
+ * @returns {Map<number, { time: number, midi: number }>}
+ */
+export function firstSoundings(tune) {
+	const { pickup } = melodyFromTune(tune);
 	/** @type {Map<number, { time: number, midi: number }>} */
 	const sounding = new Map();
 	for (const item of tune.setUpAudio({ chordsOff: true }).tracks[0] ?? []) {
@@ -111,15 +131,7 @@ function leadNotes(tune, melodyEnd) {
 		if (!seen || time < seen.time - 1e-9) sounding.set(item.startChar, { time, midi: item.pitch });
 		else if (Math.abs(time - seen.time) < 1e-9) seen.midi = Math.max(seen.midi, item.pitch);
 	}
-
-	return tune.lines
-		.flatMap((line) => line.staff?.[0]?.voices?.[0] ?? [])
-		.filter((element) => element.startChar < melodyEnd)
-		.filter((element) => ['note', 'bar', 'key'].includes(element.el_type))
-		.map((element) => ({
-			element,
-			sounding: sounding.get(element.startChar) ?? ownPitch(element, pickup)
-		}));
+	return sounding;
 }
 
 /**
