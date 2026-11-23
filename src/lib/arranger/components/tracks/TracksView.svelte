@@ -6,7 +6,9 @@
 	 * lane adds one). Each lane's header has mute, solo and its volume; an
 	 * audio lane's also has its record button (the lane Record records on)
 	 * and its menu (name, takes, a take from a file). Names stay put while
-	 * the lanes scroll sideways together under the playhead.
+	 * the lanes scroll sideways together under the playhead. A part's lane
+	 * (bass, melody, harmony and added parts) is picked by its name or a
+	 * click on the lane: `onEdit` opens its editor.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { bandLanes } from '../../tracks/lanes.js';
@@ -29,6 +31,9 @@
 	import ChordLane from './ChordLane.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
 	import LaneVolume from '../transcription/LaneVolume.svelte';
+
+	/** @type {{ editing: string | null, onEdit: (id: string) => void }} editing: the lane whose editor is open */
+	let { editing, onEdit } = $props();
 
 	const { arrangement, melody, recording, player, bass, song } = useArranger();
 
@@ -115,8 +120,19 @@
 
 			{#each band as lane (lane.id)}
 				{@const channel = channelOf(lane.id)}
-				<div class="header ui-side-column">
-					<span class="name">{lane.name}</span>
+				{@const picked = editing === lane.id}
+				<div class="header ui-side-column" class:picked>
+					{#if lane.kind === 'notes'}
+						<button
+							type="button"
+							class="name pick"
+							aria-pressed={picked}
+							onclick={() => onEdit(lane.id)}
+							use:tooltip={TIPS.tracks.editPart}>{lane.name}</button
+						>
+					{:else}
+						<span class="name">{lane.name}</span>
+					{/if}
 					{#if channel}
 						<MuteSoloButtons settings={channel} name={lane.name} />
 						<LaneVolume level={channel} name={lane.name} />
@@ -132,7 +148,11 @@
 							{scale}
 						/>
 					{:else}
-						<BlockLane {lane} {scale} />
+						<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
+						<!-- svelte-ignore a11y_no_static_element_interactions -->
+						<div class="part" class:picked onclick={() => onEdit(lane.id)}>
+							<BlockLane {lane} {scale} />
+						</div>
 					{/if}
 				</div>
 			{/each}
@@ -262,6 +282,50 @@
 		white-space: nowrap;
 		font-size: 0.8rem;
 		font-weight: 700;
+	}
+
+	/* A part's name is the button that opens its editor */
+	.pick {
+		text-align: left;
+		cursor: pointer;
+		border-radius: var(--corner-small);
+		padding: 0.1rem 0.25rem;
+		margin: -0.1rem -0.25rem;
+	}
+
+	@media (hover: hover) {
+		.pick:hover {
+			color: var(--color-accent);
+		}
+	}
+
+	.pick:focus-visible {
+		outline: 2px solid var(--color-accent);
+	}
+
+	.header.picked {
+		box-shadow:
+			var(--shadow-bevel),
+			inset 3px 0 0 var(--color-accent),
+			inset -1px 0 0 var(--shadow-light-edge);
+	}
+
+	.header.picked .name {
+		color: var(--color-accent);
+	}
+
+	.part {
+		display: flex;
+		flex-direction: column;
+		cursor: pointer;
+	}
+
+	.part > :global(*) {
+		flex: 1;
+	}
+
+	.part.picked {
+		background: color-mix(in oklch, var(--color-accent) 8%, transparent);
 	}
 
 	/* Record-enable, Logic's: a round button, its dot red while it's the lane Record records on */

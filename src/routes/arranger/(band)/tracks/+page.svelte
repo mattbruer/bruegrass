@@ -6,20 +6,58 @@
 	 * song's bars at its steady tempo. No player bar here: this page has its
 	 * own controls, and each lane its own mute, solo and volume. The band
 	 * plays the whole song once from the playhead; the arranger's loop is
-	 * kept for when you go back.
+	 * kept for when you go back. Picking a part's lane opens its editor
+	 * under the lanes (the part pane); which part is open is in the page's
+	 * history, so Back (a swipe on iPhone) closes it.
 	 */
-	import { onDestroy } from 'svelte';
+	import { onDestroy, tick } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { pushState, replaceState } from '$app/navigation';
 	import { useArranger } from '$lib/arranger/state/context.js';
 	import SongBar from '$lib/arranger/components/song/SongBar.svelte';
 	import TracksControls from '$lib/arranger/components/tracks/TracksControls.svelte';
 	import TracksView from '$lib/arranger/components/tracks/TracksView.svelte';
 	import RecordingNotes from '$lib/arranger/components/recording/RecordingNotes.svelte';
+	import PartPane from '$lib/arranger/components/tracks/PartPane.svelte';
+	import { partName } from '$lib/arranger/melody/partNames.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	const { recording, loop } = useArranger();
+	const { recording, loop, player, song } = useArranger();
 	onDestroy(loop.playThroughWhile());
+
+	/** The part whose editor is open (a lane id; null: none). */
+	const editing = $derived(/** @type {{ editing?: string }} */ (page.state).editing ?? null);
+
+	/** @type {HTMLElement | undefined} */
+	let pane = $state();
+	/** The sticky control bar's height: the editor scrolls into view below it. */
+	let controlsHeight = $state(0);
+
+	/** @param {string} id */
+	async function edit(id) {
+		if (id === editing) return;
+		if (editing) replaceState('', { editing: id });
+		else {
+			// After a reload this entry can still hold an editor that isn't open, which Back would bring back
+			replaceState('', {});
+			pushState('', { editing: id });
+		}
+		await tick();
+		pane?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+	}
+
+	/** What the editor follows: the band, from the playhead. */
+	const bandClock = {
+		get playing() {
+			return player.isPlaying;
+		},
+		quarters: () => player.melodyTimeNow(),
+		/** @param {number} quarters */
+		seek: (quarters) => player.goTo(quarters)
+	};
 </script>
 
 <svelte:head>
@@ -38,9 +76,23 @@
 		</a>
 	</div>
 	<SongBar />
-	<TracksControls />
+	<TracksControls bind:height={controlsHeight} />
 	<RecordingNotes />
-	<TracksView />
+	<TracksView {editing} onEdit={edit} />
+	{#if editing}
+		<div
+			bind:this={pane}
+			style:scroll-margin-top="calc(var(--top-bar-height, 3.5rem) + {controlsHeight}px + 1rem)"
+		>
+			<PartPane
+				voice={editing}
+				name={partName(editing, song.partNames)}
+				clock={bandClock}
+				bind:view={settings.tracks.partView}
+				onClose={() => history.back()}
+			/>
+		</div>
+	{/if}
 	{#if recording.lanes.length === 0}
 		<p class="text-sm text-ink-soft">
 			Add an audio lane to record on: a voice, or a real instrument along with the band.

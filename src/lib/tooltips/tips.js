@@ -154,6 +154,15 @@ export const TIPS = Object.freeze({
 		editChord: 'Change this chord. Learn about it from inside the box.'
 	},
 
+	partPane: {
+		views: {
+			roll: 'Write and edit the picked part as notes on a grid.',
+			sheet: 'See what you’ve written as a score.',
+			tab: 'The picked part as TAB, for guitar, mandolin or banjo: pick a number to change its fret or string.'
+		},
+		close: 'Close the editor (or go Back).'
+	},
+
 	chordLane: {
 		bar: 'Tap to type this bar’s chords: a box on each beat a chord can change on (1 and 3 in 4/4), the chord where it changes.'
 	},
@@ -270,11 +279,6 @@ export const TIPS = Object.freeze({
 		laneBass:
 			'Make this lane the song’s bass line. The lane goes; the bass is written from its notes.',
 		laneRemove: 'Take this lane away, with its notes.',
-		bottomViews: {
-			roll: 'Write and edit the picked part as notes on a grid.',
-			sheet: 'See what you’ve written as a score.',
-			tab: 'The picked part as TAB, for guitar, mandolin or banjo: pick a number to change its fret or string.'
-		},
 		clock: 'Where the playhead is: bar, beat and sixteenth, or the time. Click to switch.',
 		laneVolume:
 			'How loud this lane plays. Turn the recording down or a part up to hear the part over it. Double-click to put it back.',
@@ -322,6 +326,7 @@ export const TIPS = Object.freeze({
 		laneName: 'Call this lane what’s on it (Lead vocal, Mandolin break).',
 		laneRemove: 'Take this empty lane away.',
 		clip: 'Drag the take sideways to line it up with the band.',
+		editPart: 'Edit this part: its piano roll opens under the lanes, and the band keeps playing.',
 		clipTakes:
 			'Drag the take sideways to line it up with the band. Tap it to play the lane’s next take instead.'
 	},

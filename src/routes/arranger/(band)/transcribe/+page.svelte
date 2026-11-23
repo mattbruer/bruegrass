@@ -28,7 +28,8 @@
 	import TranscriptionGrid from '$lib/arranger/components/transcription/TranscriptionGrid.svelte';
 	import SendToArranger from '$lib/arranger/components/transcription/SendToArranger.svelte';
 	import TranscribeSetup from '$lib/arranger/components/transcription/TranscribeSetup.svelte';
-	import BottomPane from '$lib/arranger/components/transcription/BottomPane.svelte';
+	import PartPane from '$lib/arranger/components/tracks/PartPane.svelte';
+	import { settings } from '$lib/settings/settings.svelte.js';
 	import TimeSignatureSelect from '$lib/arranger/components/transcription/TimeSignatureSelect.svelte';
 	import TranscriptionKeySelect from '$lib/arranger/components/transcription/TranscriptionKeySelect.svelte';
 	import ChooseTime from '$lib/arranger/components/transcription/ChooseTime.svelte';
@@ -145,6 +146,16 @@
 		event.preventDefault();
 		action();
 	}
+
+	/** What the part pane's roll and score follow: the recording's place in the song. */
+	const transcriptionClock = {
+		get playing() {
+			return transcription.player.playing;
+		},
+		quarters: () => transcription.quartersNow,
+		/** @param {number} quarters */
+		seek: (quarters) => transcription.seekToQuarters(quarters)
+	};
 </script>
 
 <svelte:head>
@@ -212,6 +223,15 @@
 			</p>
 		{/if}
 		<TranscriptionGrid {transcription} />
-		<BottomPane {transcription} />
+		{#if transcription.linked}
+			<PartPane
+				voice={transcription.lane}
+				name={transcription.laneName(transcription.lane)}
+				clock={transcriptionClock}
+				bind:view={settings.transcribe.bottomView}
+				bassStartsEmpty
+				keyMenu={false}
+			/>
+		{/if}
 	{/if}
 </main>

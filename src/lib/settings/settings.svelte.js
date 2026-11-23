@@ -54,7 +54,7 @@ export const settings = $state({
 	transcribe: {
 		/** How the slowed-down song is stretched: an id in transcribe/sounds.js. */
 		sound: 'balanced',
-		/** The bottom pane shows the picked part as a piano roll, sheet music or TAB: an id in transcription/bottomViews.js. */
+		/** The bottom pane shows the picked part as a piano roll, sheet music or TAB: an id in tracks/partViews.js. */
 		bottomView: 'roll',
 		/** Cycle ends snap to sixteenth notes (off: drag and tap to any spot). */
 		snapCycle: true,
@@ -67,7 +67,9 @@ export const settings = $state({
 	// The Tracks page: set from its control bar
 	tracks: {
 		/** The track grid's size multipliers (components/zoom/). */
-		zoom: { across: 1, down: 1 }
+		zoom: { across: 1, down: 1 },
+		/** The part pane shows the part being edited as a piano roll, sheet music or TAB: an id in tracks/partViews.js. */
+		partView: 'roll'
 	},
 
 	// Piano rolls: set from the roll's toolbar

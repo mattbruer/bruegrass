@@ -3,8 +3,12 @@
 	 * The Tracks page's control bar, like Transcribe's: where you are (Play,
 	 * back to the start, the clock), Record (on the armed audio lane, after
 	 * the count-in), how it sounds (the click, the tempo) and Zoom. It stays
-	 * in view under the top bar. Space plays and stops.
+	 * in view under the top bar (`height`: how tall it is, for what scrolls
+	 * under it). Space plays and stops.
 	 */
+	/** @type {{ height?: number }} */
+	let { height = $bindable(0) } = $props();
+
 	import { useArranger } from '../../state/context.js';
 	import { rulerBars } from '../../tracks/ruler.js';
 	import { COUNT_IN_BARS } from '../../playback/metronome/countIn.js';
@@ -81,7 +85,7 @@
 
 <svelte:window onkeydown={onKeydown} onkeyup={onKeyup} />
 
-<div class="controls ui-card">
+<div class="controls ui-card" bind:offsetHeight={height}>
 	<div class="row">
 		<div class="cluster" role="group" aria-label="Where in the song">
 			<button

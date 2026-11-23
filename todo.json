@@ -27,6 +27,12 @@
 			"addedAt": "2026-11-23"
 		},
 		{
+			"id": "tracks-editor-sheet",
+			"text": "Tracks on a phone: the part editor as a full-screen sheet with Done (the control bar takes a third of the screen)",
+			"done": false,
+			"addedAt": "2026-11-23"
+		},
+		{
 			"id": "tracks-phone",
 			"text": "Tracks on a phone: narrower lane headers so the lanes have room",
 			"done": false,
