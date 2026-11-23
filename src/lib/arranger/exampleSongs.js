@@ -75,8 +75,49 @@ const THE_LONESOME_RIVER = Object.freeze({
 	mix: null
 });
 
+/**
+ * Oh! Susanna: Stephen Foster's 1848 song, public domain. The first verse
+ * and the chorus in G, in 4/4, with a pickup ("I come"). The melody was
+ * written for this app from the traditional tune; every bar's chord fits it
+ * by the app's own rules (docs/theory/applying-the-theory.md); the chorus
+ * holds C under "Oh, Su-san-na", as many arrangements do. The words under
+ * the melody come from the chart's (melody/words/abcWithWords.js).
+ */
+const OH_SUSANNA = Object.freeze({
+	arrangement: `
+"Verse"|G|G|G|D|G|G|G,D|G|
+I come |from Al-a-bam-|a with my ban-|jo on my knee, |I'm go-
+|ing to Lou-i-|si-an-a, my |true love for to |see.
+
+"Chorus"|C|C|G|D|G|G|G,D|G|
+|Oh, Su-|san-na, |oh don't you cry |for me, for I
+|come from Al-a-|bam-a with my |ban-jo on my |knee.
+`,
+	abc: `X:1
+T:Oh! Susanna
+C:Stephen Foster (1848)
+M:4/4
+L:1/4
+K:G
+G/2A/2|"G"B d d3/2 e/2|d B G3/2 A/2|B B A G|"D"A3 G/2A/2|
+w: I come from Al-a-bam-a with my ban-jo on my knee, I'm go-_
+"G"B d d3/2 e/2|d B G3/2 A/2|B B "D"A A|"G"G4|
+w: ing to Lou-i-si-an-a, my true love for to see.
+"C"c2 c2|e2 e2|"G"d d B G|"D"A2 A G/2A/2|
+w: Oh, Su-san-na, oh don't you cry for me, for I
+"G"B d d3/2 e/2|d B G3/2 A/2|B B "D"A A|"G"G3 z|]
+w: come from Al-a-bam-a with my ban-jo on my knee.
+`,
+	bass: '',
+	tempo: TEMPO_DEFAULT,
+	capo: 0,
+	transpose: 0,
+	mix: null
+});
+
 export const EXAMPLE_SONGS = [
 	{ id: 'amazingGrace', name: 'Amazing Grace', title: 'Amazing Grace (3/4)', song: STARTER_SONG },
+	{ id: 'ohSusanna', name: 'Oh! Susanna', title: 'Oh! Susanna (4/4)', song: OH_SUSANNA },
 	{
 		id: 'sunnySide',
 		name: 'Keep on the Sunny Side',
