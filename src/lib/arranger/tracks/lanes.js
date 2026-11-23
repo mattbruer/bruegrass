@@ -9,6 +9,7 @@
  * reads and writes the blocks.
  */
 import { barsInPlayOrder } from '../chart/chartBars.js';
+import { placeInSong } from '../chart/loop.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { EXTRA_PARTS } from '../melody/extraParts.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
@@ -19,7 +20,9 @@ import { secondsPerQuarter } from '../chart/tempo.js';
 
 /**
  * @typedef {import('$lib/storage/songTakes.js').TakeDocument} TakeDocument
- * @typedef {{ start: number, length: number, label?: string, pitch?: number }} Block
+ * @typedef {import('../chart/chartAnalysis.js').ChordPlace} ChordPlace
+ * @typedef {{ start: number, length: number, label?: string, pitch?: number, place?: ChordPlace }} Block
+ *   place: where a chord is written in the chart, so it can be changed there
  * @typedef {{ id: string, name: string, kind: 'chords' | 'notes', blocks: Block[] }} BandLane
  * @typedef {{ take: TakeDocument, start: number, length: number }} Clip
  * @typedef {{ id: string, name: string, kind: 'take', takes: TakeDocument[], clip: Clip | null }} TakeLane
@@ -81,7 +84,7 @@ export function freeTrack(lanes) {
 
 /** @param {import('../chart/timeline.js').Section[]} sections */
 export function chordBlocks(sections) {
-	/** @type {{ start: number, length: number, label: string }[]} */
+	/** @type {{ start: number, length: number, label: string, place: ChordPlace }[]} */
 	const blocks = [];
 	for (const bar of barsInPlayOrder(sections)) {
 		const before = blocks.at(-1);
@@ -91,7 +94,8 @@ export function chordBlocks(sections) {
 		}
 		let start = bar.start;
 		for (const chord of bar.chords) {
-			blocks.push({ start, length: chord.length, label: chord.name });
+			const place = { ...placeInSong(sections, bar), chord: chord.chord };
+			blocks.push({ start, length: chord.length, label: chord.name, place });
 			start += chord.length;
 		}
 	}

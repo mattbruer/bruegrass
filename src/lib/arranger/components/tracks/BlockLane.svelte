@@ -1,16 +1,20 @@
 <script>
 	/**
-	 * A band lane, read-only: chords as named blocks, or notes as short bars
-	 * placed by pitch (high at the top), like a piano roll squeezed small.
+	 * A band lane: chords as named blocks, or notes as short bars placed by
+	 * pitch (high at the top), like a piano roll squeezed small. Given
+	 * onChordTap, a chord block is a button (tap it to change the chord).
 	 */
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
 	 * @type {{
 	 *   lane: import('../../tracks/lanes.js').BandLane,
-	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>
+	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>,
+	 *   onChordTap?: (place: import('../../chart/chartAnalysis.js').ChordPlace) => void
 	 * }}
 	 */
-	let { lane, scale } = $props();
+	let { lane, scale, onChordTap } = $props();
 
 	const pitches = $derived(lane.blocks.map((block) => block.pitch ?? 0));
 	const lowest = $derived(Math.min(...pitches));
@@ -24,7 +28,19 @@
 
 <div class="lane">
 	{#each lane.blocks as block, index (index)}
-		{#if lane.kind === 'chords'}
+		{#if lane.kind === 'chords' && onChordTap && block.place}
+			{@const place = block.place}
+			<button
+				type="button"
+				class="chord tappable"
+				style:left="{scale.toX(block.start)}px"
+				style:width="{scale.toX(block.start + block.length) - scale.toX(block.start)}px"
+				onclick={() => onChordTap(place)}
+				use:tooltip={TIPS.tracks.chord}
+			>
+				{block.label}
+			</button>
+		{:else if lane.kind === 'chords'}
 			<div
 				class="chord"
 				style:left="{scale.toX(block.start)}px"
@@ -71,6 +87,27 @@
 		white-space: nowrap;
 		font-size: 0.75rem;
 		font-weight: 600;
+		color: var(--color-ink);
+	}
+
+	.tappable {
+		cursor: pointer;
+		text-align: left;
+	}
+
+	@media (hover: hover) {
+		.tappable:hover {
+			border-color: var(--color-accent);
+		}
+	}
+
+	.tappable:active {
+		box-shadow: inset 0 1px 3px rgb(0 0 0 / calc(0.5 * var(--drop)));
+	}
+
+	.tappable:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 1px;
 	}
 
 	.note {

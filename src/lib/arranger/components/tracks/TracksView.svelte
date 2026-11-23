@@ -24,6 +24,7 @@
 	import BlockLane from './BlockLane.svelte';
 	import TakeClip from './TakeClip.svelte';
 	import AudioLaneMenu from './AudioLaneMenu.svelte';
+	import ChordDialogs from '../chordEdit/ChordDialogs.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
 	import LaneVolume from '../transcription/LaneVolume.svelte';
 
@@ -53,6 +54,10 @@
 
 	/** + Audio lane asks for the new lane's name first. */
 	let namingLane = $state(false);
+
+	/** The chord tapped in a chord lane (null: none). */
+	/** @type {import('../../chart/chartAnalysis.js').ChordPlace | null} */
+	let editingChord = $state(null);
 
 	/** @type {HTMLDivElement | undefined} */
 	let scroller = $state();
@@ -101,7 +106,9 @@
 						<LaneVolume level={channel} name={lane.name} />
 					{/if}
 				</div>
-				<div class="lane"><BlockLane {lane} {scale} /></div>
+				<div class="lane">
+					<BlockLane {lane} {scale} onChordTap={(place) => (editingChord = place)} />
+				</div>
 			{/each}
 
 			{#each audioLanes as lane (lane.id)}
@@ -158,6 +165,8 @@
 		</div>
 	</div>
 </div>
+
+<ChordDialogs bind:place={editingChord} />
 
 <NameDialog
 	bind:open={namingLane}

@@ -319,6 +319,7 @@ export const TIPS = Object.freeze({
 		laneMenu: 'This lane’s name and takes, and a take from a file.',
 		laneName: 'Call this lane what’s on it (Lead vocal, Mandolin break).',
 		laneRemove: 'Take this empty lane away.',
+		chord: 'Change this chord: the chart changes too, everywhere this bar is played.',
 		clip: 'Drag the take sideways to line it up with the band.',
 		clipTakes:
 			'Drag the take sideways to line it up with the band. Tap it to play the lane’s next take instead.'
