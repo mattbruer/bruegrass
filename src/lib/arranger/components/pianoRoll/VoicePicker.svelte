@@ -6,6 +6,7 @@
 	 */
 	import { voiceColour } from '../../melody/roll/MelodyDrawing.svelte.js';
 	import { partName } from '../../melody/partNames.js';
+	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -32,7 +33,9 @@
 				use:tooltip={TIPS.melody.voices}
 			>
 				<span class="swatch voice-colour" style:--voice={voiceColour(voice.id)}></span>
-				{partName(voice.id, drawing.arranger.song.partNames)}
+				{partName(voice.id, drawing.arranger.song.partNames)}{voice.id === MELODY_CHANNEL
+					? ' (given)'
+					: ''}
 			</button>
 		{/each}
 	</div>

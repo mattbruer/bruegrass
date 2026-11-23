@@ -68,7 +68,7 @@
 	 *   readOnly: boolean,
 	 *   selected: number,
 	 *   colour: number,
-	 *   others: { colour: number, notes: import('../../melody/roll/editNotes.js').DrawnNote[] }[],
+	 *   others: { colour: number, notes: import('../../melody/roll/editNotes.js').DrawnNote[], given?: boolean }[],
 	 *   options: number[],
 	 *   playing: boolean,
 	 *   playhead: () => number | null,
@@ -479,6 +479,7 @@
 						{#each voice.notes as note (`${note.start}-${note.midi}`)}
 							<div
 								class="note other voice-colour"
+								class:given={voice.given}
 								style:--voice={voice.colour}
 								style:left="{note.start * tickWidth}px"
 								style:top="{(range.highest - note.midi) * rowHeight}px"
@@ -685,6 +686,12 @@
 		pointer-events: none;
 		background-image: none;
 		box-shadow: none;
+	}
+	/* The given melody, which the line being edited is worked out from: kept in sight */
+	.note.other.given {
+		opacity: 0.75;
+		outline: 2px solid var(--color-ink);
+		outline-offset: -2px;
 	}
 	.option {
 		position: absolute;

@@ -41,14 +41,16 @@ To see the rules at work, tap a chord (or any beat) on the strip: under the chor
 
 ## 6. The harmony parts
 
-**Bluegrass texture** (the user): at most three parts. The melody (the lead) sits in the middle: with two parts, the lead and a harmony above it (the tenor); with three, a line above (tenor) and a line below (baritone). Almost never more; sometimes a bass singer for vocals, who mostly sings roots (not built yet).
+**The given melody comes first** (the user): every line is worked out from one melody, so the app never lets you lose sight of it: it's called **Melody (given)** where the lines are listed, the controls read **Lines from the melody**, and while you edit a line in the piano roll the given melody stays in view behind it (outlined, stronger than the other lines).
+
+**Bluegrass texture** (the user): at most three parts. The melody (the lead) sits in the middle: with two parts, the lead and a harmony above it (the tenor); with three, a line above (tenor) and a line below (baritone). Almost never more; sometimes a bass singer for vocals, who mostly sings roots: the **Roots below** line, the band's chord root in a bass singer's octave (about D3 to C#4 in G, G2 to F#3 in C), one place per root so it never drifts. One tap each: **2 parts** (melody + Above), **3 parts** (Above + Below), **Melody on top** (Below + Below 2: the lines under the melody fill out the chord, the jazz soli way).
 
 - **Strong beats get chord tones in the voices** (the user): when the lead sings a colour note on a strong beat, the tenor and baritone still sing chord tones (the next ones up and down). Built into the Passing chords style; the stack stays as it was.
 
 - Target notes: the stack, the next chord tone up or down from the lead, in the band's chord. (as before)
 - The **Passing chords** style only: an approach note gets a passing chord of its own in the voices, plainest first (the dominant of the chord it leads to, then the key's chord a step away, then the same chord moved by the melody's step, then a passing diminished, then the tritone sub) (book pp. 11–14, 23); an anticipation takes the chord it reaches; through a suspension the voices hold their notes. (the order is ours)
 - Every other style ignores all this: their lines are exactly as before.
-- **Later (the user):** a layout with the **melody on top** and the voices below filling out the chord, the way jazz soli are written; it may sound good in bluegrass too. The parts are data (`harmonyParts.js`: each counts chord tones from the lead), and the baritone (−1) with the low tenor (−2) already give a version of it; a real option would be one more entry, voicing close under the lead.
+- **Melody on top** (the user): built as a layout, Below and Below 2 under the melody (each the next chord tone down), so the voices fill out the chord underneath.
 
 ## A worked example: Amazing Grace, bar 14 (chord D, key G, 3/4)
 

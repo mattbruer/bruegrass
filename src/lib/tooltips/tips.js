@@ -484,6 +484,12 @@ export const TIPS = Object.freeze({
 			'high-baritone': 'Add or remove a second line above, two chord notes over the melody.',
 			baritone: 'Add or remove the line just below the melody: the next note of the chord down.',
 			'low-tenor': 'Add or remove a second line below, two chord notes under the melody.',
+			roots: 'Add or remove a bass singer’s line: the chord’s root, under the melody.',
+			layouts: {
+				two: 'Two parts: the melody and a line above it, the usual bluegrass duet.',
+				three: 'Three parts: a line above the melody and one below, the bluegrass trio.',
+				top: 'The melody on top, with two lines below filling out the chord, the way jazz sections are written.'
+			},
 			rewrite:
 				'Write the harmony lines again from the melody as it is now. Changes made to them by hand are replaced.'
 		},

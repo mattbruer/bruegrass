@@ -87,6 +87,32 @@ export const HARMONY_STYLES = Object.freeze([
 
 /** @typedef {(typeof HARMONY_STYLES)[number]['id']} HarmonyStyleId */
 
+/**
+ * Where the roots line sings: the octave whose top is this many semitones
+ * under the key's tonic nearest middle C (in G about D3 to C#4, in C about
+ * G2 to F#3: a bass singer's range). One octave, so each chord's root has
+ * one place and the line never drifts.
+ */
+const ROOTS_TOP = -6;
+/** It drops an octave rather than come closer than this under the melody (semitones). */
+const ROOTS_UNDER_AT_LEAST = 3;
+
+/**
+ * The bass singer's line: the band's chord root, in the bass singer's
+ * octave, always under the melody. Not one of the styles: it doesn't count from the lead.
+ */
+export const ROOTS = {
+	id: 'roots',
+	name: 'Roots',
+	/** @param {Moment} moment */
+	pick: ({ lead, chord }) => {
+		const root = chord.root;
+		let octaves = Math.ceil((semitones(root) - ROOTS_TOP) / 12);
+		if (semitones(root) - 12 * octaves > semitones(lead) - ROOTS_UNDER_AT_LEAST) octaves++;
+		return { step: root.step - 7 * octaves, alt: root.alt };
+	}
+};
+
 /** @param {string} id */
 export function harmonyStyle(id) {
 	return HARMONY_STYLES.find((style) => style.id === id) ?? HARMONY_STYLES[0];

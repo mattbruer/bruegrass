@@ -101,7 +101,8 @@ export class MelodyDrawing {
 	/** Where the pickup shows again, in the last bar's closing beats (not on the bass: written as played). */
 	echo = $derived(this.score && !this.ownBars ? echoZone(this.score.bars, isShortBar) : null);
 	/**
-	 * The tune's other voices, drawn faintly behind the one being edited.
+	 * The tune's other voices, drawn faintly behind the one being edited; the
+	 * given melody (the lines are worked out from it) less faintly, outlined.
 	 * Not behind the bass: it's written as played, the tune as written.
 	 */
 	others = $derived(
@@ -109,7 +110,11 @@ export class MelodyDrawing {
 			? []
 			: this.voices
 					.filter((each) => each !== this.current && each.id !== BASS_VOICE)
-					.map((each) => ({ colour: voiceColour(each.id), notes: each.score.notes }))
+					.map((each) => ({
+						colour: voiceColour(each.id),
+						notes: each.score.notes,
+						given: each.id === MELODY_CHANNEL
+					}))
 	);
 
 	/** The tune's own bars, as played (null: written as played already). */

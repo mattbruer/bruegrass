@@ -329,19 +329,19 @@
 		{
 			"id": "bass-voice",
 			"text": "Harmony: a bass singer part that sings mostly roots (the rare fourth voice in bluegrass vocals)",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-23"
 		},
 		{
 			"id": "two-part-default",
 			"text": "Harmony: make two parts (lead and tenor) and three parts (tenor above, baritone below) the obvious choices, the bluegrass texture",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-23"
 		},
 		{
 			"id": "melody-on-top",
 			"text": "Harmony layout: melody on top, voices below filling out the chord (jazz soli style), as an option beside the bluegrass stack",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-23"
 		}
 	]

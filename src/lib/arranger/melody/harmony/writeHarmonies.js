@@ -10,7 +10,7 @@
  * again replaces them.
  */
 import { HARMONY_PARTS } from './harmonyParts.js';
-import { harmonyStyle } from './harmonyStyles.js';
+import { harmonyStyle, ROOTS } from './harmonyStyles.js';
 import { abcPitch, noteInKey, tuneKey } from './abcPitch.js';
 import { chordFromName } from '../../theory/musicInKey.js';
 import { melodyFromTune } from '../melody.js';
@@ -76,7 +76,7 @@ export function withHarmonies(abc, tune, chordAt, partIds, styles = {}) {
 			roles,
 			chordAt,
 			count: part.chordTones,
-			style: harmonyStyle(styles[part.id] ?? 'stack')
+			style: 'singsRoots' in part ? ROOTS : harmonyStyle(styles[part.id] ?? 'stack')
 		});
 		return `V:${part.id} name="${part.label}"\n${text}`;
 	});

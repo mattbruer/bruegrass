@@ -149,7 +149,8 @@ export const TUNE_INSTRUMENT_DEFAULTS = {
 	tenor: 'violin',
 	'high-baritone': 'flute',
 	baritone: 'clarinet',
-	'low-tenor': 'cello'
+	'low-tenor': 'cello',
+	roots: 'bassoon'
 };
 const FALLBACK = TUNE_INSTRUMENT_DEFAULTS.melody;
 
