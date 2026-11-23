@@ -32,7 +32,7 @@ const TICK = 0.1;
  *   bass?: import('../instruments/bassline.js').BassNote[] | null, offset?: number,
  *   swing?: number,
  *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[],
- *   takes?: import('../takes/playTakes.js').PlayableTake[],
+ *   takes?: import('../takes/playTakes.js').PlayableClip[],
  *   regionStart?: number, countIn?: number, passes?: number, from?: number
  * }} options
  *   transpose: semitones on top of the capo, for every instrument;

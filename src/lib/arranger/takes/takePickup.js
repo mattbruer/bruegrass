@@ -7,8 +7,6 @@
  * a sung pickup adds no wait. A pickup is sung in the bar before bar 1, so
  * sound earlier than that (click bleed, a breath) never makes the band wait longer.
  */
-import { takeStart } from './takeTiming.js';
-
 /** Sound this far below the take's loudest moment is taken as silence (dB). */
 const SILENCE_BELOW_PEAK_DB = 36;
 /** Start this much before the first sound, for a breath or a soft consonant (seconds). */
@@ -30,15 +28,15 @@ export function firstSound(samples, sampleRate) {
 
 /**
  * How long before bar 1 the band should start, for the earliest sung pickup
- * among these takes (0: none starts before bar 1), at most one bar.
- * @param {(import('./takeTiming.js').Placed & { soundFrom: number })[]} takes
- *   soundFrom: from firstSound()
+ * among these clips (0: none starts before bar 1), at most one bar.
+ * @param {{ start: number, soundFrom: number }[]} clips start: seconds from bar 1;
+ *   soundFrom: how far into the clip its sound begins (from firstSound())
  * @param {number} barSeconds the length of bar 1
  */
-export function sungPickup(takes, barSeconds) {
+export function sungPickup(clips, barSeconds) {
 	let lead = 0;
-	for (const take of takes) {
-		const soundStarts = takeStart(take) + take.soundFrom - BEFORE_FIRST_SOUND;
+	for (const clip of clips) {
+		const soundStarts = clip.start + clip.soundFrom - BEFORE_FIRST_SOUND;
 		lead = Math.max(lead, -soundStarts);
 	}
 	return Math.min(lead, barSeconds);

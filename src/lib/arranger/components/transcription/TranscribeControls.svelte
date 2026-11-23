@@ -19,6 +19,7 @@
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import { isTyping } from '$lib/utils/isTyping.js';
 	import PlayClock from './PlayClock.svelte';
 	import TunerButton from '$lib/tuner/TunerButton.svelte';
 	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
@@ -42,13 +43,10 @@
 	}
 
 	/** Space plays and pauses wherever focus is, except while typing in a text box. */
-	const TYPING =
-		'textarea, input:not([type="range"]):not([type="checkbox"]):not([type="button"]), [contenteditable="true"]';
 
 	/** @param {KeyboardEvent} event */
 	function isSpace(event) {
-		const typing = event.target instanceof Element && event.target.closest(TYPING);
-		return event.code === 'Space' && !typing && !event.defaultPrevented;
+		return event.code === 'Space' && !isTyping(event) && !event.defaultPrevented;
 	}
 
 	/** @param {KeyboardEvent} event */

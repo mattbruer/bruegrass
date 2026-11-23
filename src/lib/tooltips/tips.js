@@ -334,10 +334,27 @@ export const TIPS = Object.freeze({
 		laneMenu: 'This lane’s name, moving it, and more.',
 		laneName: 'Call this lane what’s on it (Lead vocal, Mandolin break).',
 		laneRemove: 'Take this empty lane away.',
-		clip: 'Drag the take sideways to line it up with the band.',
-		editPart: 'Edit this part: its piano roll opens under the lanes, and the band keeps playing.',
-		clipTakes:
-			'Drag the take sideways to line it up with the band. Tap it to play the lane’s next take instead.'
+		clip: 'Tap to pick this clip and edit it. With a mouse, drag it sideways to line it up with the band.',
+		clipPicked:
+			'Drag sideways to line it up with the band. Drag an edge to trim it, a top corner’s square to fade in or out.',
+		trimStart: 'Drag to trim the start: the sound stays where it is, only less of it plays.',
+		trimEnd: 'Drag to trim the end.',
+		fadeIn: 'Drag right to fade in slowly, left for no fade.',
+		fadeOut: 'Drag left to fade out slowly, right for no fade.',
+		takeBefore: 'Play this stretch from the take before: comp the best of each take.',
+		takeNext: 'Play this stretch from the next take: comp the best of each take.',
+		split: 'Cut the clip in two at the playhead (S). Tap the ruler to move the playhead.',
+		splitAtSections:
+			'Cut the clip where each section starts, to pick the best take section by section.',
+		clipLevel: 'How loud this clip plays.',
+		evenOut: 'Turn the clip up (or down) so its loudest moment is just under the top.',
+		deleteClip: 'Take this clip away (Delete): the lane is silent there. Undo brings it back.',
+		clipDone: 'Done editing this clip (Esc).',
+		undo: 'Undo the last edit to the clips or the tempo (⌘Z).',
+		redo: 'Redo what you undid (⇧⌘Z).',
+		tempoLane:
+			'How fast the song goes, bar by bar. Tap or click to add a point and drag it up or down to slow down or speed up there, for a ritard at the end. Double-tap a point to remove it.',
+		editPart: 'Edit this part: its piano roll opens under the lanes, and the band keeps playing.'
 	},
 
 	fullScreen: {

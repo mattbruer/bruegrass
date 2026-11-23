@@ -27,6 +27,7 @@ import { firstBar } from '../takes/takeTiming.js';
 import { openRecordAlong } from '../takes/recordAlong.js';
 import { readAudioFile, takeAsWav } from '../takes/takeFiles.js';
 import { firstSound } from '../takes/takePickup.js';
+import { clipLength, clipStart, clipsOfTrack } from '../takes/clips.js';
 
 /** Shorter takes are stopped too soon to be worth keeping (seconds). */
 const SHORTEST_TAKE = 1;
@@ -62,17 +63,17 @@ export class RecordingState {
 	isRecording = $derived(this.status === 'recording' || this.status === 'starting');
 	/** The audio lanes on the Tracks page: record tracks with takes, or added and named. */
 	lanes = $derived(
-		takeLanes(this.takes, this.#arranger.arrangement.bpm, this.#arranger.song.partNames)
+		takeLanes(this.takes, this.#arranger.song.partNames, this.#arranger.song.audioClips)
 	);
 	/** The lane Record records on: the one armed, else the first (null: no lanes yet). */
 	armedTrack = $derived(
 		this.lanes.some((lane) => lane.id === this.trackId) ? this.trackId : (this.lanes[0]?.id ?? null)
 	);
 	canAddLane = $derived(freeTrack(this.lanes) !== null);
-	/** Tracks with a take in use: their mixer strips show. (Made afresh on each change, never changed.) */
+	/** Tracks with something to play: their mixer strips show. (Made afresh on each change, never changed.) */
 	tracksInUse = $derived(
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
-		new Set(this.takes.filter((take) => take.inUse).map((take) => take.trackId))
+		new Set(this.lanes.filter((lane) => lane.clips.length > 0).map((lane) => lane.id))
 	);
 
 	#songId = /** @type {string | null} */ (null);
@@ -229,7 +230,10 @@ export class RecordingState {
 				},
 				take.channels
 			);
-			if (songId === this.#songId) await this.#reload();
+			if (songId === this.#songId) {
+				await this.#reload();
+				this.#playWhole(trackId);
+			}
 		} catch (problem) {
 			this.problem = `The take couldn’t be saved: ${problem instanceof Error ? problem.message : problem}`;
 		} finally {
@@ -268,6 +272,7 @@ export class RecordingState {
 				channels
 			);
 			await this.#reload();
+			this.#playWhole(trackId);
 			this.#arranger.player.restartIfPlaying();
 		} catch (problem) {
 			this.problem = `That file couldn’t be read as audio: ${problem instanceof Error ? problem.message : problem}`;
@@ -296,11 +301,26 @@ export class RecordingState {
 		this.#arranger.player.restartIfPlaying();
 	}
 
-	/** @param {TakeDocument} take make it the one its track plays */
+	/** @param {TakeDocument} take make it the one its track plays, whole (Undo brings back the lane's edit) */
 	async use(take) {
 		await useTake(take);
 		await this.#reload();
+		this.#playWhole(take.trackId);
 		this.#arranger.player.restartIfPlaying();
+	}
+
+	/**
+	 * The lane plays its take in use, whole: its clips are forgotten (Undo brings them back).
+	 * @param {string} trackId
+	 */
+	#playWhole(trackId) {
+		const { song, history } = this.#arranger;
+		if (!song.audioClips[trackId]) return;
+		history.edit(() => {
+			song.audioClips = Object.fromEntries(
+				Object.entries(song.audioClips).filter(([id]) => id !== trackId)
+			);
+		});
 	}
 
 	/** @param {TakeDocument} take */
@@ -318,28 +338,50 @@ export class RecordingState {
 	}
 
 	/**
-	 * The takes in use, as audio ready to play.
+	 * Every audio lane's clips, as audio ready to play.
 	 * @param {string | null} leaveOut a track to leave out (the one being recorded on)
-	 * @returns {Promise<import('../takes/playTakes.js').PlayableTake[]>}
+	 * @returns {Promise<import('../takes/playTakes.js').PlayableClip[]>}
 	 */
 	async #playable(leaveOut) {
-		const inUse = this.takes.filter((take) => take.inUse && take.trackId !== leaveOut);
-		if (inUse.length === 0) return [];
+		const { audioClips } = this.#arranger.song;
+		const clips = RECORD_TRACKS.filter((track) => track.id !== leaveOut).flatMap((track) =>
+			clipsOfTrack(track.id, audioClips, this.takes)
+		);
+		const ready = [];
+		for (const { clip, take } of clips) {
+			const audio = await this.audioOf(take);
+			if (!audio) continue;
+			ready.push({
+				trackId: take.trackId,
+				buffer: audio.buffer,
+				start: clipStart(clip, take),
+				from: clip.from,
+				seconds: clipLength(clip),
+				gain: clip.gain,
+				fadeIn: clip.fadeIn,
+				fadeOut: clip.fadeOut,
+				soundFrom: Math.max(0, audio.soundFrom - clip.from)
+			});
+		}
+		return ready;
+	}
+
+	/**
+	 * A take's audio, ready to play, and where its sound begins (null: it's gone).
+	 * @param {TakeDocument} take
+	 * @returns {Promise<{ buffer: AudioBuffer, soundFrom: number } | null>}
+	 */
+	async audioOf(take) {
+		const kept = this.#buffers.get(take.id);
+		if (kept) return kept;
+		const channels = await readTakeAudio(take.id);
+		if (!channels) return null;
 		const Tone = await import('tone');
 		const audio = Tone.getContext().rawContext;
-		const ready = [];
-		for (const take of inUse) {
-			let audioReady = this.#buffers.get(take.id);
-			if (!audioReady) {
-				const channels = await readTakeAudio(take.id);
-				if (!channels) continue;
-				const buffer = audio.createBuffer(channels.length, channels[0].length, take.sampleRate);
-				channels.forEach((channel, index) => buffer.copyToChannel(channel, index));
-				audioReady = { buffer, soundFrom: firstSound(channels[0], take.sampleRate) };
-				this.#buffers.set(take.id, audioReady);
-			}
-			ready.push({ ...take, ...audioReady });
-		}
+		const buffer = audio.createBuffer(channels.length, channels[0].length, take.sampleRate);
+		channels.forEach((channel, index) => buffer.copyToChannel(channel, index));
+		const ready = { buffer, soundFrom: firstSound(channels[0], take.sampleRate) };
+		this.#buffers.set(take.id, ready);
 		return ready;
 	}
 }

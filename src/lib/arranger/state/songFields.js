@@ -10,7 +10,7 @@ import { songTab, tabSnapshot } from '../tab/songTab.svelte.js';
 
 /**
  * @typedef {Pick<import('$lib/storage/arrangements.js').Arrangement,
- *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'tab' | 'partNames' | 'laneOrder' | 'recording' | 'madeFrom' | 'tempo' | 'tempoCurve' | 'swing' | 'capo' | 'transpose' | 'mix'>} SongFields
+ *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'tab' | 'partNames' | 'laneOrder' | 'audioClips' | 'recording' | 'madeFrom' | 'tempo' | 'tempoCurve' | 'swing' | 'capo' | 'transpose' | 'mix'>} SongFields
  *   what a song is made of (its name is kept separately)
  */
 
@@ -29,6 +29,7 @@ export function readSongFields(arranger) {
 		tab: tabSnapshot(),
 		partNames: arranger.song.partNames,
 		laneOrder: arranger.song.laneOrder,
+		audioClips: arranger.song.audioClips,
 		reference: arranger.song.reference,
 		madeFrom: arranger.song.madeFrom,
 		tempo: arranger.arrangement.bpm,
@@ -64,6 +65,8 @@ export function loadSongIntoPage(arranger, song) {
 	songTab.parts = song.tab ?? {};
 	arranger.song.partNames = song.partNames ?? {};
 	arranger.song.laneOrder = song.laneOrder ?? [];
+	arranger.song.audioClips = song.audioClips ?? {};
+	arranger.history.clear(); // another song: nothing to undo
 	arranger.song.reference = song.reference ?? null;
 	arranger.song.madeFrom = song.madeFrom ?? null;
 

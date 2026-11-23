@@ -27,7 +27,8 @@
 	import { auditionBassNote, auditionNote } from '../../playback/auditionNote.js';
 	import PianoRoll from './PianoRoll.svelte';
 	import RollToolbar from './RollToolbar.svelte';
-	import TempoLane from './TempoLane.svelte';
+	import TempoLane from '../tempo/TempoLane.svelte';
+	import { snapDown, TICKS_PER_QUARTER } from '../../melody/roll/ticks.js';
 	import VoicePicker from './VoicePicker.svelte';
 	import HarmonyOptions from './HarmonyOptions.svelte';
 	import { voiceColour } from '../../melody/roll/MelodyDrawing.svelte.js';
@@ -298,10 +299,12 @@
 					bpm={arrangement.bpm}
 					{width}
 					{height}
-					{tickWidth}
-					gridStep={drawing.gridStep}
-					tickAt={drawing.tickAt}
-					timeAt={drawing.timeAt}
+					step={drawing.gridStep / TICKS_PER_QUARTER}
+					xAt={(quarters) => {
+						const ticks = drawing.tickAt(quarters);
+						return ticks === null ? null : ticks * tickWidth;
+					}}
+					quartersAt={(x) => drawing.timeAt(snapDown(x / tickWidth, drawing.gridStep))}
 					onChange={changeTempoCurve}
 				/>
 			{/snippet}

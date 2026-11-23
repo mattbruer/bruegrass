@@ -2,12 +2,13 @@
 	/**
 	 * The song as tracks, like a DAW, drawn like Transcribe's grid: the cycle
 	 * strip (drag across it to play those bars round and round), a bar ruler
-	 * at the song's steady tempo (click it to play from there), then the
+	 * (click it to play from there), the tempo lane (draw a ritard), then the
 	 * lanes: instrument lanes (the band, the tune's parts; + Inst adds a part
 	 * to write) above audio lanes (what the mic recorded; + Audio adds one),
 	 * until you move them: drag a lane by its grip, or Move up / down in its
 	 * menu. Each lane's header has its menu (name, move, and more), mute,
-	 * solo and volume; an audio lane's also has its record button. Names stay
+	 * solo and volume; an audio lane's also has its record button, and its
+	 * clips (tap one to edit it). Names stay
 	 * put while the lanes scroll sideways together under the playhead. A
 	 * part's lane is picked by its name or a click on the lane: `onEdit`
 	 * opens its editor.
@@ -23,6 +24,7 @@
 	import { rulerBars, rulerSpan } from '../../tracks/ruler.js';
 	import { PIXELS_PER_QUARTER, trackScale } from '../../tracks/trackScale.js';
 	import { followPlayhead } from '../../tracks/followPlayhead.js';
+	import { audioScale } from '../../tracks/audioScale.js';
 	import { mixer } from '../../mixer/mixer.svelte.js';
 	import { LANE_NAMES } from '../../transcription/laneNames.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
@@ -37,6 +39,7 @@
 	import ChordLane from './ChordLane.svelte';
 	import CycleStrip from './CycleStrip.svelte';
 	import CycleSectionMenu from './CycleSectionMenu.svelte';
+	import TempoLane from '../tempo/TempoLane.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
 	import LaneVolume from '../transcription/LaneVolume.svelte';
 
@@ -50,10 +53,13 @@
 	 */
 	let { editing, onEdit, cycle } = $props();
 
-	const { arrangement, melody, recording, player, bass, song, parts } = useArranger();
+	const { arrangement, melody, recording, player, bass, song, parts, audioEdits, history } =
+		useArranger();
 
 	/** The names column (px); the lanes scroll under it. */
 	const HEADER_WIDTH = 186;
+	/** The tempo lane's height (px): a finger's worth. */
+	const TEMPO_LANE_HEIGHT = 44;
 
 	const bars = $derived(rulerBars(arrangement.sections));
 	const band = $derived(
@@ -75,6 +81,22 @@
 	const scale = $derived(
 		trackScale(spanWithClips(rulerSpan(bars), audioLanes), PIXELS_PER_QUARTER * zoom.across)
 	);
+	/** Where audio sits across the lanes (seconds, bent by the tempo lane). */
+	const place = $derived(audioScale(scale, arrangement.clock));
+
+	// Leaving the page lets go of the picked clip
+	$effect(() => () => audioEdits.letGo());
+
+	/** @param {import('../../chart/tempoCurve.js').TempoPoint[]} points */
+	function changeTempo(points) {
+		history.edit(() => (arrangement.tempoCurve = points));
+	}
+
+	/** @param {number} x pixels into the lanes: the beat there, none before bar 1 */
+	function beatAt(x) {
+		const quarters = Math.round(scale.start + scale.toQuarters(x));
+		return quarters < 0 ? null : quarters;
+	}
 
 	/** Which + button is asking for the new lane's name (null: neither). */
 	let naming = $state(/** @type {'inst' | 'audio' | null} */ (null));
@@ -120,7 +142,9 @@
 	 * @param {import('../../tracks/lanes.js').TakeLane[]} lanes
 	 */
 	function spanWithClips(span, lanes) {
-		const clipEnds = lanes.map((lane) => (lane.clip ? lane.clip.start + lane.clip.length : 0));
+		const clipEnds = lanes.flatMap((lane) =>
+			lane.clips.map((clip) => arrangement.clock.quartersAt(clip.end))
+		);
 		return { start: span.start, end: Math.max(span.end, ...clipEnds) };
 	}
 
@@ -207,6 +231,23 @@
 				<TrackRuler {bars} {scale} />
 			</div>
 
+			<div class="header tempo-header ui-side-column" style:height="{TEMPO_LANE_HEIGHT}px">
+				<span class="name">Tempo</span>
+			</div>
+			<div class="tempo-lane">
+				<TempoLane
+					points={arrangement.tempoCurve}
+					bpm={arrangement.bpm}
+					width={scale.width}
+					height={TEMPO_LANE_HEIGHT}
+					step={1}
+					xAt={scale.toX}
+					quartersAt={beatAt}
+					onChange={changeTempo}
+					tip={TIPS.tracks.tempoLane}
+				/>
+			</div>
+
 			{#each lanes as lane (lane.id)}
 				{@const channel = channelOf(lane.id)}
 				{@const picked = editing === lane.id}
@@ -264,12 +305,23 @@
 					{/if}
 				</div>
 				{#if lane.kind === 'take'}
-					<div class="lane audio-lane" class:armed class:lifted>
-						{#if lane.clip}
-							<TakeClip clip={lane.clip} takes={lane.takes} {scale} />
+					<!-- svelte-ignore a11y_click_events_have_key_events (Esc and Done let go by keyboard) -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<div
+						class="lane audio-lane"
+						class:armed
+						class:lifted
+						onclick={(event) => event.target === event.currentTarget && audioEdits.letGo()}
+					>
+						{#each lane.clips as laneClip (laneClip.index)}
+							<TakeClip {laneClip} takes={lane.takes} {place} />
 						{:else}
-							<span class="empty">Press Record to record on this lane</span>
-						{/if}
+							<span class="empty"
+								>{lane.takes.length > 0
+									? 'No clips: Undo, or pick a take in the lane’s ⋯ menu'
+									: 'Press Record to record on this lane'}</span
+							>
+						{/each}
 					</div>
 				{:else if lane.kind === 'chords'}
 					<div class="lane" class:lifted>
@@ -514,6 +566,14 @@
 		justify-content: flex-start;
 		column-gap: 0.15rem;
 		padding: 0 var(--header-padding);
+	}
+
+	.tempo-header {
+		padding-block: 0;
+	}
+
+	.tempo-lane {
+		border-bottom: var(--lane-divider);
 	}
 
 	.cycle-shade {

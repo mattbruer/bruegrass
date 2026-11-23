@@ -1,7 +1,9 @@
 <script>
 	/**
-	 * The tempo lane above the piano roll, like Logic's automation: the
-	 * song's tempo as a line, bent by points (a ritard at the end, say).
+	 * The tempo lane, like Logic's automation: the song's tempo as a line,
+	 * bent by points (a ritard at the end, say). Above the piano roll and on
+	 * the Tracks page: the host says where a place in the song is across
+	 * (`xAt`) and the place under a pointer, snapped to its grid (`quartersAt`).
 	 *
 	 * Bar 1 is always at the song's tempo. A new point is put on the line
 	 * where you click, so it changes nothing until it's dragged.
@@ -16,7 +18,6 @@
 	 */
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
-	import { snapDown, TICKS_PER_QUARTER } from '../../melody/roll/ticks.js';
 	import { shareAt } from '../../chart/tempoCurve.js';
 	import {
 		laneRange,
@@ -37,14 +38,26 @@
 	 *   bpm: number,
 	 *   width: number,
 	 *   height: number,
-	 *   tickWidth: number,
-	 *   gridStep: number,
-	 *   tickAt: (quarters: number) => number | null,
-	 *   timeAt: (ticks: number) => number | null,
-	 *   onChange: (points: import('../../chart/tempoCurve.js').TempoPoint[]) => void
+	 *   step: number,
+	 *   xAt: (quarters: number) => number | null,
+	 *   quartersAt: (x: number) => number | null,
+	 *   onChange: (points: import('../../chart/tempoCurve.js').TempoPoint[]) => void,
+	 *   tip?: string
 	 * }}
+	 *   step: the smallest move across (quarters); xAt: null where the lane doesn't show it;
+	 *   quartersAt: the place under x, snapped, null where no point can go
 	 */
-	let { points, bpm, width, height, tickWidth, gridStep, tickAt, timeAt, onChange } = $props();
+	let {
+		points,
+		bpm,
+		width,
+		height,
+		step,
+		xAt,
+		quartersAt,
+		onChange,
+		tip = TIPS.melody.roll.tempoLane
+	} = $props();
 
 	/** The points while a drag is under way. */
 	let preview = $state.raw(/** @type {typeof points | null} */ (null));
@@ -59,11 +72,7 @@
 		PAD + ((range.high - share) / (range.high - range.low)) * (height - 2 * PAD);
 	/** @param {number} y */
 	const shareOf = (y) => range.high - ((y - PAD) / (height - 2 * PAD)) * (range.high - range.low);
-	/** @param {number} quarters */
-	const xOf = (quarters) => {
-		const ticks = tickAt(quarters);
-		return ticks === null ? null : ticks * tickWidth;
-	};
+	const xOf = (/** @type {number} */ quarters) => xAt(quarters);
 
 	let placed = $derived(
 		shown.flatMap((point, index) => {
@@ -93,7 +102,7 @@
 		const box = /** @type {SVGSVGElement} */ (lane).getBoundingClientRect();
 		const x = event.clientX - box.left;
 		const y = event.clientY - box.top;
-		const at = timeAt(snapDown(x / tickWidth, gridStep));
+		const at = quartersAt(x);
 		const share = Math.abs(shareOf(y) - 1) < STEADY_PULL ? 1 : wholeBpmShare(shareOf(y), bpm);
 		return { x, y, point: at === null ? null : { at, share } };
 	}
@@ -144,7 +153,6 @@
 		const at = locate(event);
 		if (Math.hypot(at.x - gesture.x, at.y - gesture.y) > MOVE_THRESHOLD) gesture.moved = true;
 		if (gesture.kind !== 'move' || !at.point) return;
-		const step = gridStep / TICKS_PER_QUARTER;
 		preview = movedPoint(gesture.start, gesture.index, at.point, step);
 	}
 
@@ -215,7 +223,7 @@
 	onpointerup={release}
 	onpointercancel={cancel}
 	onkeydown={keys}
-	use:tooltip={TIPS.melody.roll.tempoLane}
+	use:tooltip={tip}
 >
 	<line class="steady" x1="0" x2={width} y1={yOf(1)} y2={yOf(1)} />
 	<polyline class="curve" points={line} />

@@ -9,6 +9,24 @@
 	],
 	"suggestions": [
 		{
+			"id": "tracks-audio-editing",
+			"text": "Tracks: audio editing (trim, split, delete, move, level, fades, comping takes, Undo) and the tempo lane",
+			"done": true,
+			"addedAt": "2026-11-23"
+		},
+		{
+			"id": "tracks-audio-editing-iphone",
+			"text": "Tracks: try clip editing on a real iPhone (picking, grips, fade squares, the clip tools in the control bar) and by ear",
+			"done": false,
+			"addedAt": "2026-11-23"
+		},
+		{
+			"id": "tracks-crossfades",
+			"text": "Tracks: crossfade where two clips meet, and copy / paste a clip",
+			"done": false,
+			"addedAt": "2026-11-23"
+		},
+		{
 			"id": "tracks-chord-beats",
 			"text": "Tracks: change where a chord starts in the bar (a box per beat, like Transcribe's Band lane), and add or remove one",
 			"done": true,
@@ -184,7 +202,7 @@
 		},
 		{
 			"id": "takes-in-export",
-			"text": "Recorded takes in the exported mix and stems",
+			"text": "Recorded takes in the exported mix and stems (render the lanes' clips offline, with their level and fades)",
 			"done": false,
 			"addedAt": "2026-11-08T00:00:00.000Z"
 		},

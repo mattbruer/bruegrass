@@ -2,7 +2,8 @@
 	/**
 	 * The Tracks page's control bar, like Transcribe's: where you are (Play,
 	 * back to the start, the clock), Record (on the armed audio lane, after
-	 * the count-in), how it sounds (the click, the tempo) and Zoom. It stays
+	 * the count-in), how it sounds (the click, the tempo), Undo and Zoom, and the
+	 * picked clip's tools under them. It stays
 	 * in view under the top bar (`height`: how tall it is, for what scrolls
 	 * under it). Space plays and stops.
 	 */
@@ -16,6 +17,7 @@
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import { isTyping } from '$lib/utils/isTyping.js';
 	import PlayPauseGlyph from '../icons/PlayPauseGlyph.svelte';
 	import TransportGlyph from '../icons/TransportGlyph.svelte';
 	import RecordIcon from '../icons/RecordIcon.svelte';
@@ -23,6 +25,8 @@
 	import PlayClock from '../transcription/PlayClock.svelte';
 	import TempoStepper from '../player/TempoStepper.svelte';
 	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
+	import UndoButtons from './UndoButtons.svelte';
+	import ClipTools from './ClipTools.svelte';
 
 	const { arrangement, player, recording } = useArranger();
 	const { metronome } = player;
@@ -61,13 +65,10 @@
 	}
 
 	/** Space plays and stops wherever focus is, except while typing in a text box. */
-	const TYPING =
-		'textarea, input:not([type="range"]):not([type="checkbox"]):not([type="button"]), [contenteditable="true"]';
 
 	/** @param {KeyboardEvent} event */
 	function isSpace(event) {
-		const typing = event.target instanceof Element && event.target.closest(TYPING);
-		return event.code === 'Space' && !typing && !event.defaultPrevented;
+		return event.code === 'Space' && !isTyping(event) && !event.defaultPrevented;
 	}
 
 	/** @param {KeyboardEvent} event */
@@ -161,9 +162,11 @@
 		</div>
 
 		<div class="cluster">
+			<UndoButtons />
 			<ZoomControl zoom={settings.tracks.zoom} />
 		</div>
 	</div>
+	<ClipTools />
 </div>
 
 <style>

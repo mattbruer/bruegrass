@@ -15,7 +15,7 @@ import { DEFAULT_METER, barQuarters, slotPositions } from '../chart/timeline.js'
  *   seconds: how long the take is
  * @typedef {{ at: number, offset: number, duration: number }} Slice
  *   at: when it starts, in seconds from the pass's bar 1 (negative: in the
- *   lead-in, like a pickup); offset: how far into the take; duration: how much
+ *   lead-in, like a pickup); offset: how far into the clip; duration: how much
  */
 
 /** @param {Placed} take seconds from bar 1 */
@@ -24,18 +24,17 @@ export function takeStart(take) {
 }
 
 /**
- * The part of a take one pass of playback plays: the pass runs from
+ * The part of a clip one pass of playback plays: the pass runs from
  * `regionStart` (song seconds) for `passLength`. A pass from the top also
  * plays what's before bar 1 (the count-in bar: a sung pickup), and does
  * again at the end of every later pass, as the melody's pickup does.
- * @param {Placed} take
+ * @param {{ start: number, seconds: number }} clip start: seconds from bar 1; seconds: how long
  * @param {{ regionStart: number, passLength: number }} pass
- * @returns {Slice | null} null when none of it falls in the pass
+ * @returns {Slice | null} null when none of it falls in the pass; offset: how far into the clip
  */
-export function sliceForPass(take, { regionStart, passLength }) {
-	const start = takeStart(take);
+export function sliceForPass({ start, seconds }, { regionStart, passLength }) {
 	const from = regionStart === 0 ? start : Math.max(start, regionStart);
-	const until = Math.min(start + take.seconds, regionStart + passLength);
+	const until = Math.min(start + seconds, regionStart + passLength);
 	if (until <= from) return null;
 	return { at: from - regionStart, offset: from - start, duration: until - from };
 }

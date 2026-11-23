@@ -1,36 +1,47 @@
 /**
- * Recorded takes playing with the band: one more stream for the lookahead
- * scheduler (like an instrument's), with one "note" per take per pass: the
- * part of the take that falls in the pass (takeTiming.js), on its track's
- * mixer channel.
+ * The audio lanes' clips playing with the band: one more stream for the
+ * lookahead scheduler (like an instrument's), with one "note" per clip per
+ * pass: the part of the clip that falls in the pass (takeTiming.js), on its
+ * track's mixer channel. Each plays through a native buffer source and a
+ * gain that carries its level and fades.
  */
 import { sliceForPass } from './takeTiming.js';
+import { EDGE_FADE } from './clips.js';
+import { dbToGain } from './clipLevel.js';
 
 /**
- * @typedef {import('./takeTiming.js').Placed & { trackId: string, buffer: AudioBuffer, soundFrom: number }} PlayableTake
- *   soundFrom: how far into the take its sound begins (takePickup.js)
+ * @typedef {{
+ *   trackId: string, buffer: AudioBuffer, start: number, from: number, seconds: number,
+ *   gain: number, fadeIn: number, fadeOut: number, soundFrom: number
+ * }} PlayableClip
+ *   start: seconds from bar 1; from: where in its take's audio it starts; seconds: how long;
+ *   gain: dB; soundFrom: how far into the clip its sound begins (takePickup.js)
+ * @typedef {{ time: number, value: number }} GainPoint seconds from the slice's start
  */
 
 /**
  * @param {typeof import('tone')} Tone
- * @param {PlayableTake[]} takes
+ * @param {PlayableClip[]} clips
  * @param {{ regionStart: number, passLength: number, lead: number }} pass seconds;
  *   lead: how long before bar 1 playback starts (anything earlier is left out:
  *   the scheduler would drop a slice that starts before playback does)
  * @param {(id: string) => Promise<import('tone').ToneAudioNode>} channelInput
  */
-export async function createTakePlayback(Tone, takes, pass, channelInput) {
+export async function createTakePlayback(Tone, clips, pass, channelInput) {
 	const slices = [];
-	for (const take of takes) {
-		const slice = trimmedToLead(sliceForPass(take, pass), pass.lead);
+	for (const clip of clips) {
+		const slice = trimmedToLead(sliceForPass(clip, pass), pass.lead);
 		if (!slice) continue;
-		const buffer = new Tone.ToneAudioBuffer(take.buffer);
-		slices.push({ ...slice, time: slice.at, buffer, output: await channelInput(take.trackId) });
+		const output = await channelInput(clip.trackId);
+		slices.push({ ...slice, time: slice.at, clip, envelope: gainEnvelope(clip, slice), output });
 	}
 	slices.sort((a, b) => a.time - b.time);
 
-	/** @type {Set<import('tone').Player>} */
-	const players = new Set();
+	const audio = /** @type {BaseAudioContext} */ (
+		/** @type {unknown} */ (Tone.getContext().rawContext)
+	);
+	/** @type {Set<AudioBufferSourceNode>} */
+	const sources = new Set();
 
 	return {
 		stream: {
@@ -38,29 +49,58 @@ export async function createTakePlayback(Tone, takes, pass, channelInput) {
 			period: pass.passLength,
 			/** @param {(typeof slices)[number]} slice @param {number} _i @param {number} at */
 			play(slice, _i, at) {
-				const player = new Tone.Player({ url: slice.buffer, fadeIn: 0.005, fadeOut: 0.01 });
-				player.connect(slice.output);
-				player.onstop = () => {
-					players.delete(player);
-					player.dispose();
+				const source = audio.createBufferSource();
+				source.buffer = slice.clip.buffer;
+				const level = audio.createGain();
+				level.gain.setValueAtTime(0, at);
+				for (const point of slice.envelope) {
+					level.gain.linearRampToValueAtTime(point.value, at + point.time);
+				}
+				source.connect(level);
+				Tone.connect(level, slice.output);
+				source.onended = () => {
+					sources.delete(source);
+					level.disconnect();
 				};
-				players.add(player);
-				player.start(at, slice.offset, slice.duration);
+				sources.add(source);
+				source.start(at, slice.clip.from + slice.offset, slice.duration);
 			}
 		},
 
 		stop() {
-			for (const player of players) {
+			for (const source of sources) {
 				try {
-					player.stop();
+					source.stop();
 				} catch {
 					// already stopped
 				}
-				player.dispose();
 			}
-			players.clear();
+			sources.clear();
 		}
 	};
+}
+
+/**
+ * How loud a slice of a clip is over time: up from silence and down again,
+ * by the clip's fades where the slice holds the clip's own ends, and by a
+ * short edge fade where the pass cuts it, at the clip's level between.
+ * @param {{ seconds: number, gain: number, fadeIn: number, fadeOut: number }} clip
+ * @param {import('./takeTiming.js').Slice} slice
+ * @returns {GainPoint[]}
+ */
+export function gainEnvelope(clip, { offset, duration }) {
+	const level = dbToGain(clip.gain);
+	const holdsStart = offset <= 0;
+	const holdsEnd = offset + duration >= clip.seconds - 1e-6;
+	const fadeIn = Math.max(EDGE_FADE, holdsStart ? clip.fadeIn : 0);
+	const fadeOut = Math.max(EDGE_FADE, holdsEnd ? clip.fadeOut : 0);
+	const upBy = Math.min(fadeIn, duration);
+	const downFrom = Math.max(upBy, duration - fadeOut);
+	return [
+		{ time: upBy, value: level },
+		{ time: downFrom, value: level },
+		{ time: duration, value: 0 }
+	];
 }
 
 /**

@@ -37,6 +37,8 @@ export class SongState {
 	partNames = /** @type {import('../melody/partNames.js').PartNames} */ ($state.raw({}));
 	/** The lanes' order on the Tracks page, top to bottom, by id ([]: the usual order; tracks/laneOrder.js). */
 	laneOrder = /** @type {string[]} */ ($state.raw([]));
+	/** The audio lanes you've edited: their clips, by record track (takes/clips.js). */
+	audioClips = /** @type {import('../takes/clips.js').EditedLanes} */ ($state.raw({}));
 	/** The example this song started from, until it has a name of its own: it titles a new tune. */
 	exampleName = $state('');
 	/** The last song is open and its tune can be read (it names the song), so changes get saved from now on. */

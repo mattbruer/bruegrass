@@ -12,6 +12,8 @@
  *   arranger.layout        mixer drawer and phone keypad (what covers the screen)
  *   arranger.song          which song is open; New, Open, Rename; it saves itself
  *   arranger.recording     recording along with the band, and the song's takes
+ *   arranger.audioEdits    editing the audio lanes' clips (trim, split, comp, level, fades)
+ *   arranger.history       Undo and Redo for the Tracks page's edits
  *   arranger.receive       a song someone sent (a share link or song file), waiting to be opened
  *   arranger.transcription the Transcribe page's work on a recording (kept while you visit the other pages)
  *   arranger.conversionReport  what the last conversion between chart and melody (chords, words) wants you to know
@@ -28,6 +30,8 @@ import { RecordingState } from './RecordingState.svelte.js';
 import { ReceiveState } from './ReceiveState.svelte.js';
 import { PartsState } from './PartsState.svelte.js';
 import { TranscriptionState } from '../transcription/TranscriptionState.svelte.js';
+import { AudioEditsState } from './AudioEditsState.svelte.js';
+import { EditHistory } from './EditHistory.svelte.js';
 import { abcjsIfLoaded, abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc, hasChords } from '../melody/abcChords.js';
 import { barChordKeys, changedBars, tuneFollowingChords } from '../melody/chordsFollowChart.js';
@@ -71,11 +75,27 @@ export class Arranger {
 	/** How many songs have been put on the page: a new one's chart isn't an edit of the last. */
 	songsLoaded = $state(0);
 	layout = new PageLayoutState();
+	/** Undo and Redo for the audio lanes' clips and the tempo lane. */
+	history = new EditHistory(
+		{
+			audioClips: {
+				read: () => this.song.audioClips,
+				write: (clips) => (this.song.audioClips = /** @type {any} */ (clips))
+			},
+			tempoCurve: {
+				read: () => this.arrangement.tempoCurve,
+				write: (points) => (this.arrangement.tempoCurve = /** @type {any} */ (points))
+			}
+		},
+		() => this.player.restartIfPlaying()
+	);
 	/** Which song is open, and saving it (created last: it reads all of the above). */
 	song = new SongState(this);
 	/** Recording along with the band, and the song's takes. */
 	recording = new RecordingState(this);
 	parts = new PartsState(this);
+	/** Editing the audio lanes' clips. */
+	audioEdits = new AudioEditsState(this);
 	/** A song someone sent, waiting to be opened. */
 	receive = new ReceiveState(this);
 	/** Transcribing a recording: kept while you visit the other pages, so coming back carries on. */

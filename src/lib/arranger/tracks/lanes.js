@@ -6,15 +6,14 @@
  * A chords lane (guitar, mandolin) is the chart's chords bar by bar,
  * drawn and edited by ChordLane from the chart itself. A notes lane is
  * blocks (bass, melody, harmony parts). A take lane is a record track:
- * the take in use as a clip.
+ * its clips (takes/clips.js), where they sit on the song in seconds.
  */
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { EXTRA_PARTS } from '../melody/extraParts.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { partName } from '../melody/partNames.js';
 import { RECORD_TRACKS } from '../takes/recordTracks.js';
-import { takeStart } from '../takes/takeTiming.js';
-import { secondsPerQuarter } from '../chart/tempo.js';
+import { clipLength, clipStart, clipsOfTrack } from '../takes/clips.js';
 
 /**
  * @typedef {import('$lib/storage/songTakes.js').TakeDocument} TakeDocument
@@ -22,8 +21,9 @@ import { secondsPerQuarter } from '../chart/tempo.js';
  * @typedef {{ id: string, name: string, kind: 'chords' }} ChordsLane
  * @typedef {{ id: string, name: string, kind: 'notes', blocks: Block[] }} NotesLane
  * @typedef {ChordsLane | NotesLane} BandLane
- * @typedef {{ take: TakeDocument, start: number, length: number }} Clip
- * @typedef {{ id: string, name: string, kind: 'take', takes: TakeDocument[], clip: Clip | null }} TakeLane
+ * @typedef {{ index: number, clip: import('../takes/clips.js').AudioClip, take: TakeDocument, start: number, end: number }} LaneClip
+ *   index: its place on the lane; start, end: seconds from bar 1
+ * @typedef {{ id: string, name: string, kind: 'take', takes: TakeDocument[], clips: LaneClip[] }} TakeLane
  * @typedef {BandLane | TakeLane} Lane
  */
 
@@ -51,26 +51,22 @@ export function bandLanes({ bass, melody, voices = [], names = {} }) {
  * One audio lane per record track in use: one with takes, or one added on
  * the Tracks page (added lanes are named, in the song's part names).
  * @param {TakeDocument[]} takes
- * @param {number} bpm the song's tempo now
  * @param {import('../melody/partNames.js').PartNames} [names]
+ * @param {import('../takes/clips.js').EditedLanes} [edited] the lanes whose clips you've edited
  * @returns {TakeLane[]}
  */
-export function takeLanes(takes, bpm, names = {}) {
-	const quarters = 1 / secondsPerQuarter(bpm);
-	return RECORD_TRACKS.map((track) => {
-		const onTrack = takes.filter((take) => take.trackId === track.id);
-		const inUse = onTrack.find((take) => take.inUse);
-		return {
-			id: track.id,
-			name: partName(track.id, names, track.name),
-			/** @type {'take'} */
-			kind: 'take',
-			takes: onTrack,
-			clip: inUse
-				? { take: inUse, start: takeStart(inUse) * quarters, length: inUse.seconds * quarters }
-				: null
-		};
-	}).filter((lane) => lane.takes.length > 0 || names[lane.id]);
+export function takeLanes(takes, names = {}, edited = {}) {
+	return RECORD_TRACKS.map((track) => ({
+		id: track.id,
+		name: partName(track.id, names, track.name),
+		/** @type {'take'} */
+		kind: 'take',
+		takes: takes.filter((take) => take.trackId === track.id),
+		clips: clipsOfTrack(track.id, edited, takes).map(({ clip, take }, index) => {
+			const start = clipStart(clip, take);
+			return { index, clip, take, start, end: start + clipLength(clip) };
+		})
+	})).filter((lane) => lane.takes.length > 0 || names[lane.id]);
 }
 
 /**
