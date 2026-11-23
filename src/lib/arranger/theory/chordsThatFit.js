@@ -51,6 +51,8 @@ const TENSION_NAMES = {
  * @typedef {'tone' | 'tension' | 'blue' | 'suspension'} FitRole
  * @typedef {{ pitchClass: number, role: FitRole, as: string }} TargetAs a target note, as this chord hears it
  * @typedef {{ root: number, type: ChordType, does: string, scale: string, score: number, targets: TargetAs[] }} Fit
+ * @typedef {RoledNote & { counted: boolean, as: string }} HeardNote one melody note, as a chord
+ *   hears it: counted (it has to fit), and what it is in the chord ("3rd", "9", "clashes")
  */
 
 /**
@@ -60,14 +62,7 @@ const TENSION_NAMES = {
  */
 export function chordsThatFit(key, occurrences) {
 	if (!occurrences.some(({ notes }) => notes.length > 0)) return [];
-	// A chord put under nothing but approach notes is heard against them
-	const onlyApproach = !occurrences.some(({ notes }) => notes.some(mustFit));
-	const heard = onlyApproach
-		? occurrences.map((occurrence) => ({
-				...occurrence,
-				notes: occurrence.notes.map((note) => ({ ...note, role: /** @type {const} */ ('target') }))
-			}))
-		: occurrences;
+	const heard = heardOccurrences(occurrences);
 	/** @type {Fit[]} */
 	const fits = [];
 	for (let root = 0; root < 12; root++) {
@@ -113,6 +108,46 @@ function fitEverywhere(key, chord, occurrences) {
 		score: total / weight - plainness(key, chord),
 		targets: [...targets.values()]
 	};
+}
+
+/**
+ * A chord put under nothing but approach notes is heard against them.
+ * @param {Occurrence[]} occurrences
+ * @returns {Occurrence[]}
+ */
+function heardOccurrences(occurrences) {
+	if (occurrences.some(({ notes }) => notes.some(mustFit))) return occurrences;
+	return occurrences.map((occurrence) => ({
+		...occurrence,
+		notes: occurrence.notes.map((note) => ({
+			...note,
+			role: /** @type {const} */ ('target'),
+			because: /** @type {const} */ ('nothing else plays here')
+		}))
+	}));
+}
+
+/**
+ * Every melody note of one time the chord plays, as this chord hears it,
+ * and whether the chord fits (the same rules as chordsThatFit): to show why.
+ * @param {PlainKey} key
+ * @param {PlainChord} chord
+ * @param {Occurrence} occurrence
+ * @returns {{ fits: boolean, does: string, scale: string, notes: HeardNote[] }}
+ */
+export function hearChord(key, chord, occurrence) {
+	const [heard] = heardOccurrences([occurrence]);
+	const scale = chordScaleFor(key, chord, heard.next);
+	const notes = heard.notes.map((note) => {
+		const counted = mustFit(note);
+		const as = counted
+			? (targetAs(key, chord, scale, note.pitch) ?? suspendedInto(chord, scale, note))
+			: targetAs(key, chord, scale, note.pitch);
+		return { ...note, counted, as: as?.as ?? (counted ? 'clashes' : 'not in it') };
+	});
+	const isHeard = notes.some((note) => scale.roles.get(mod12(note.pitch - chord.root)) === 'tone');
+	const fits = isHeard && !notes.some((note) => note.counted && note.as === 'clashes');
+	return { fits, does: scale.does, scale: scale.scale, notes };
 }
 
 /**

@@ -26,10 +26,16 @@ const EPSILON = 1e-6;
 /**
  * @typedef {{ time: number, length: number, pitch: number }} Note time and length in quarter notes, pitch MIDI
  * @typedef {'target' | 'approach' | 'anticipation' | 'suspension' | 'retardation'} Role
- * @typedef {Note & { role: Role, onBoom: boolean, chordTime: number, resolvesTo: number | null }} RoledNote
+ * @typedef {'the chord starts' | 'a strong beat' | 'a long note' | 'a rest follows' | 'a leap follows'
+ *   | 'the next note repeats it' | 'nothing else plays here'} TargetReason
+ * @typedef {Note & {
+ *   role: Role, onBoom: boolean, chordTime: number, resolvesTo: number | null,
+ *   because: TargetReason | null
+ * }} RoledNote
  *   chordTime: when the chord it belongs to is sounding (the next chord's for
  *   an anticipation, the previous chord's for a suspension, its own otherwise);
- *   resolvesTo: the note a suspension or retardation steps to
+ *   resolvesTo: the note a suspension or retardation steps to; because: why a
+ *   target is one (shown to the user, so in words)
  * @typedef {{
  *   isBoom: (time: number) => boolean,
  *   changes: number[],
@@ -57,7 +63,7 @@ export function noteRoles(notes, band) {
  * @param {Note | null} next
  * @param {boolean} onBoom
  * @param {Band} band
- * @returns {{ role: Role, chordTime: number, resolvesTo: number | null }}
+ * @returns {{ role: Role, chordTime: number, resolvesTo: number | null, because: TargetReason | null }}
  */
 function roleOf(note, next, onBoom, band) {
 	const pc = mod12(note.pitch);
@@ -68,7 +74,7 @@ function roleOf(note, next, onBoom, band) {
 			change <= note.time + note.length + EPSILON
 	);
 	if (changeAhead !== undefined && !onBoom && isAnticipation(note, next, changeAhead, band)) {
-		return { role: 'anticipation', chordTime: changeAhead, resolvesTo: null };
+		return { role: 'anticipation', chordTime: changeAhead, resolvesTo: null, because: null };
 	}
 
 	const changeHere = band.changes.find(
@@ -81,13 +87,13 @@ function roleOf(note, next, onBoom, band) {
 		if (resolves && before.includes(pc) && !after.includes(pc)) {
 			if (after.includes(mod12(next.pitch))) {
 				const role = next.pitch < note.pitch ? 'suspension' : 'retardation';
-				return { role, chordTime: changeHere - EPSILON, resolvesTo: next.pitch };
+				return { role, chordTime: changeHere - EPSILON, resolvesTo: next.pitch, because: null };
 			}
 		}
 	}
 
-	const target = changeHere !== undefined || isTarget(note, next, onBoom);
-	return { role: target ? 'target' : 'approach', chordTime: note.time, resolvesTo: null };
+	const because = changeHere !== undefined ? 'the chord starts' : targetReason(note, next, onBoom);
+	return { role: because ? 'target' : 'approach', chordTime: note.time, resolvesTo: null, because };
 }
 
 /**
@@ -108,14 +114,19 @@ function isAnticipation(note, next, change, band) {
 }
 
 /**
+ * Why a note is heard as the chord, or null for an approach note.
  * @param {Note} note
  * @param {Note | null} next
  * @param {boolean} onBoom
+ * @returns {TargetReason | null}
  */
-function isTarget(note, next, onBoom) {
-	if (onBoom || note.length > LONG_NOTE + EPSILON) return true;
-	if (!next || next.time > note.time + note.length + EPSILON) return true; // a rest follows
-	return Math.abs(next.pitch - note.pitch) > STEP || next.pitch === note.pitch;
+function targetReason(note, next, onBoom) {
+	if (onBoom) return 'a strong beat';
+	if (note.length > LONG_NOTE + EPSILON) return 'a long note';
+	if (!next || next.time > note.time + note.length + EPSILON) return 'a rest follows';
+	if (Math.abs(next.pitch - note.pitch) > STEP) return 'a leap follows';
+	if (next.pitch === note.pitch) return 'the next note repeats it';
+	return null;
 }
 
 /** @param {number} n */

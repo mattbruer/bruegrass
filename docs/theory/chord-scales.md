@@ -162,6 +162,8 @@ These are our working assumptions, to try by ear. They aren't from the book.
 
 ## Where this lives in the code
 
+How these rules are applied to a melody (which notes count, strong and weak beats, when a chord fits, the open decisions) is the one-page spec, [applying-the-theory.md](applying-the-theory.md).
+
 - `theory/chordScaleBook.js`: the tables above, row for row, as the book writes them (`1 T9 3 S4 5 T13 T7`); `theory/degreeLabels.js` reads that notation.
 - `theory/chordTypes.js`: every kind of chord, its notes in the same notation, and whether it's everyday bluegrass (major, minor, 7th) or a jazzier colour.
 - `theory/chordScaleFor.js`: which row a chord gets from what it does (the key and the chord it goes to): a dominant falling a fifth (V7/x: Mixolydian, or a ♭13 scale before a minor chord), falling a half step (subV7: Lydian ♭7), the key's own chord, a borrowed one, a dominant that doesn't resolve, a passing, chromatic or auxiliary diminished. A row written for a seventh chord serves the triad on the same root, its 7th becoming a tension; a sus chord's 3rd becomes an approach note. A chord no row fits gets the key's notes, a note a half step above a chord tone being an approach note.

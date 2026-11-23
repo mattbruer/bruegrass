@@ -2,11 +2,13 @@
 	/**
 	 * Every chord that fits the melody on a spot of the chart (chart/chordSuggestions.js):
 	 * the bluegrass ones first, the jazzier ones behind a button. Tapping one
-	 * hands it to the host (to put in the chord box) and says why it fits.
+	 * hands it to the host (to put in the chord box); under them, why the
+	 * chord in the box fits or doesn't, note by note (ChordBreakdown).
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { chordSuggestions } from '../../chart/chordSuggestions.js';
 	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
+	import ChordBreakdown from './ChordBreakdown.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -33,14 +35,11 @@
 	);
 	const bluegrass = $derived(suggestions.filter((each) => each.bluegrass));
 	const jazzier = $derived(suggestions.filter((each) => !each.bluegrass));
-	const chosen = $derived(suggestions.find((each) => each.name === picked.trim()));
+	/** The chord to explain: the one in the box, else the one there now. */
+	const explained = $derived(
+		picked.trim() || (suggestions.find((each) => each.current)?.name ?? '')
+	);
 	let showJazzier = $state(false);
-
-	/** @param {import('../../chart/chordSuggestions.js').Suggestion} suggestion */
-	function why(suggestion) {
-		const notes = suggestion.targets.map((target) => `${target.note} is its ${target.as}`);
-		return `${notes.join(', ')}. ${suggestion.does}, ${suggestion.scale}.`;
-	}
 </script>
 
 {#snippet chips(/** @type {typeof suggestions} */ list)}
@@ -81,9 +80,7 @@
 					{@render chips(jazzier)}
 				{/if}
 			{/if}
-			{#if chosen}
-				<p class="text-sm text-ink-soft">{why(chosen)}</p>
-			{/if}
 		{/if}
+		<ChordBreakdown {spot} name={explained} />
 	</section>
 {/if}

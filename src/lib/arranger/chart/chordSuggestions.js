@@ -12,7 +12,7 @@ import { noteName, noteOfKey, notePc, parseChord, songKey } from './key.js';
 import { withoutVariant } from '../instruments/chordBook.js';
 import { isNoChord } from './noChord.js';
 import { chordPitchClasses, chordTypeOf } from '../theory/chordTypes.js';
-import { chordsThatFit } from '../theory/chordsThatFit.js';
+import { chordsThatFit, hearChord } from '../theory/chordsThatFit.js';
 import { noteRoles } from '../theory/noteRoles.js';
 import { spansOf } from './chordSpot.js';
 
@@ -36,23 +36,9 @@ const EPSILON = 1e-6;
  *   empty when no melody sounds there
  */
 export function chordSuggestions(sections, melody, spot, capo) {
-	const songsKey = songKey(sections);
-	if (!songsKey) return [];
-	const { slots, beats } = rhythm(sections);
-	const spans = spansOf(slots, spot);
-	if (spans.length === 0) return [];
-	const booms = beats.filter((beat) => beat.role === 'boom').map((beat) => beat.time);
-	const notes = melody
-		.map((note) => ({ ...note, pitch: note.pitch - capo }))
-		.sort((a, b) => a.time - b.time);
-	const roled = noteRoles(notes, bandOf(slots, booms));
-	const occurrences = spans.map((span) => ({
-		notes: notesOf(roled, span),
-		next: plainChord(nextChord(slots, span))
-	}));
-	const key = slots[spans[0].slot].key ?? songsKey;
-	const current = withoutVariant(slots[spans[0].slot].name);
-
+	const read = readSpot(sections, melody, spot, capo);
+	if (!read) return [];
+	const { key, current, occurrences } = read;
 	return chordsThatFit(plainKey(key), occurrences)
 		.map((fit) => {
 			const name = chordNameIn(key, fit);
@@ -69,6 +55,122 @@ export function chordSuggestions(sections, melody, spot, capo) {
 			};
 		})
 		.sort((a, b) => Number(b.current) - Number(a.current));
+}
+
+/**
+ * @typedef {{
+ *   beat: string, note: string, length: string, strong: boolean, role: string,
+ *   counted: boolean, as: string
+ * }} BreakdownRow one melody note in words: where it falls ("2½"), how long ("quarter"),
+ *   what it's doing ("heard as the chord: a strong beat"), and what it is in the chord
+ * @typedef {{ fits: boolean, does: string, scale: string, rows: BreakdownRow[] }} Breakdown
+ */
+
+/**
+ * Why a chord fits a spot or not, note by note, the first time the spot
+ * plays: the same rules as the suggestions (theory/chordsThatFit.js hearChord).
+ * @param {import('./timeline.js').Section[]} sections
+ * @param {{ time: number, length: number, pitch: number }[]} melody at concert pitch
+ * @param {ChordSpot} spot
+ * @param {number} capo
+ * @param {string} name any chord name, as the chart writes it
+ * @returns {Breakdown | null} null: no melody there, or a chord the theory doesn't know
+ */
+export function chordBreakdown(sections, melody, spot, capo, name) {
+	const read = readSpot(sections, melody, spot, capo);
+	const chord = plainChord(name);
+	if (!read || !chord || read.occurrences[0].notes.length === 0) return null;
+	const { key, barStart, occurrences } = read;
+	const heard = hearChord(plainKey(key), chord, occurrences[0]);
+	return {
+		fits: heard.fits,
+		does: heard.does,
+		scale: heard.scale,
+		rows: heard.notes.map((note) => ({
+			beat: beatName(note.time - barStart),
+			note: noteName(noteOfKey(key.tonic, note.pitch)),
+			length: lengthName(note.length),
+			strong: note.onBoom,
+			role: roleWords(note),
+			counted: note.counted,
+			as: note.as
+		}))
+	};
+}
+
+/**
+ * The melody and band at a spot, read once for the suggestions and the breakdown.
+ * @param {import('./timeline.js').Section[]} sections
+ * @param {{ time: number, length: number, pitch: number }[]} melody
+ * @param {ChordSpot} spot
+ * @param {number} capo
+ */
+function readSpot(sections, melody, spot, capo) {
+	const songsKey = songKey(sections);
+	if (!songsKey) return null;
+	const { slots, beats } = rhythm(sections);
+	const spans = spansOf(slots, spot);
+	if (spans.length === 0) return null;
+	const booms = beats.filter((beat) => beat.role === 'boom').map((beat) => beat.time);
+	const notes = melody
+		.map((note) => ({ ...note, pitch: note.pitch - capo }))
+		.sort((a, b) => a.time - b.time);
+	const roled = noteRoles(notes, bandOf(slots, booms));
+	const first = slots[spans[0].slot];
+	return {
+		key: first.key ?? songsKey,
+		current: withoutVariant(first.name),
+		barStart: first.barStart,
+		occurrences: spans.map((span) => ({
+			notes: notesOf(roled, span),
+			next: plainChord(nextChord(slots, span))
+		}))
+	};
+}
+
+/** @param {number} quarters from the bar's start */
+function beatName(quarters) {
+	const beat = Math.floor(quarters + EPSILON);
+	const part = quarters - beat;
+	const fraction = FRACTIONS.find(([value]) => Math.abs(value - part) < EPSILON)?.[1];
+	return fraction === undefined ? (quarters + 1).toFixed(2) : `${beat + 1}${fraction}`;
+}
+
+const FRACTIONS = /** @type {[number, string][]} */ ([
+	[0, ''],
+	[0.25, '¼'],
+	[0.5, '½'],
+	[0.75, '¾'],
+	[1 / 3, '⅓'],
+	[2 / 3, '⅔']
+]);
+
+const LENGTHS = /** @type {[number, string][]} */ ([
+	[4, 'whole'],
+	[3, 'dotted half'],
+	[2, 'half'],
+	[1.5, 'dotted quarter'],
+	[1, 'quarter'],
+	[0.75, 'dotted eighth'],
+	[0.5, 'eighth'],
+	[1 / 3, 'triplet eighth'],
+	[0.25, 'sixteenth']
+]);
+
+/** @param {number} quarters */
+function lengthName(quarters) {
+	return (
+		LENGTHS.find(([value]) => Math.abs(value - quarters) < EPSILON)?.[1] ??
+		`${Number(quarters.toFixed(2))} beats`
+	);
+}
+
+/** @param {import('../theory/noteRoles.js').RoledNote} note */
+function roleWords(note) {
+	if (note.role === 'target') return `heard as the chord: ${note.because}`;
+	if (note.role === 'approach') return 'passing: steps into the next note, not counted';
+	if (note.role === 'anticipation') return 'anticipation: arrives early for this chord';
+	return `${note.role}: held over from the chord before, then steps ${note.role === 'suspension' ? 'down' : 'up'}`;
 }
 
 /**
