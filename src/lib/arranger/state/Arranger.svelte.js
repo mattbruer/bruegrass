@@ -32,16 +32,20 @@ import { PartsState } from './PartsState.svelte.js';
 import { TranscriptionState } from '../transcription/TranscriptionState.svelte.js';
 import { AudioEditsState } from './AudioEditsState.svelte.js';
 import { EditHistory } from './EditHistory.svelte.js';
+import { HarmonyFollowState } from './HarmonyFollowState.svelte.js';
 import { abcjsIfLoaded, abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc, hasChords } from '../melody/abcChords.js';
 import { barChordKeys, changedBars, tuneFollowingChords } from '../melody/chordsFollowChart.js';
-import { harmonyFollowingChords } from '../melody/harmonyFollowsChords.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
 import { respellBass } from '../bass/respellBass.js';
 import { abcWithWords } from '../melody/words/abcWithWords.js';
 import { readLyrics } from '../chart/sectionLyrics.js';
 import { harmonyPartsIn, withHarmonies } from '../melody/harmony/writeHarmonies.js';
-import { withPartsKept } from '../melody/harmony/keepParts.js';
+import {
+	withPartsKept,
+	harmonyPartsText,
+	withHarmonyPartsText
+} from '../melody/harmony/keepParts.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { concertChordAt } from '../chart/concertChords.js';
 import { mixer } from '../mixer/mixer.svelte.js';
@@ -76,7 +80,7 @@ export class Arranger {
 	/** How many songs have been put on the page: a new one's chart isn't an edit of the last. */
 	songsLoaded = $state(0);
 	layout = new PageLayoutState();
-	/** Undo and Redo for the audio lanes' clips and the tempo lane. */
+	/** Undo and Redo for the audio lanes' clips, the tempo lane and harmony rewrites. */
 	history = new EditHistory(
 		{
 			audioClips: {
@@ -86,10 +90,18 @@ export class Arranger {
 			tempoCurve: {
 				read: () => this.arrangement.tempoCurve,
 				write: (points) => (this.arrangement.tempoCurve = /** @type {any} */ (points))
+			},
+			// Only the parts, so undoing a rewrite never undoes a melody edit made since
+			harmony: {
+				read: () => harmonyPartsText(this.melody.notation),
+				write: (text) =>
+					(this.melody.notation = withHarmonyPartsText(this.melody.notation, String(text)))
 			}
 		},
 		() => this.player.restartIfPlaying()
 	);
+	/** Asking whether the harmony parts should follow a chord edit. */
+	harmonyFollow = new HarmonyFollowState(this);
 	/** Which song is open, and saving it (created last: it reads all of the above). */
 	song = new SongState(this);
 	/** Recording along with the band, and the song's takes. */
@@ -320,23 +332,6 @@ export class Arranger {
 		if (followed !== abc) this.melody.notation = followed;
 	}
 
-	/**
-	 * The harmony parts' bars whose melody notes now sound over a different
-	 * chord are written fresh; the rest keep any hand edits.
-	 * @param {import('../melody/harmony/writeHarmonies.js').ChordAt} chordBefore the
-	 *   band's concert chord at a time, before the edit
-	 * @returns {string[]} the ids of the parts rewritten
-	 */
-	followHarmony(chordBefore) {
-		const abcjs = abcjsIfLoaded();
-		if (!abcjs || !this.arrangement.isPlayable || this.harmonyParts.length === 0) return [];
-		const chordNow = concertChordAt(this.arrangement.sections, this.arrangement.capoFret);
-		const abc = this.melody.notation;
-		const followed = harmonyFollowingChords(abc, tuneReader(abcjs), chordBefore, chordNow);
-		if (followed.parts.length > 0) this.melody.notation = followed.abc;
-		return followed.parts;
-	}
-
 	/** What the melody's words and harmony parts are written from. */
 	songForMelody() {
 		return {
@@ -444,6 +439,7 @@ export class Arranger {
 		const unchanged = fresh ? [] : harmonyPartsIn(before).filter((id) => partIds.includes(id));
 		this.melody.notation = withPartsKept(result.abc, before, unchanged);
 		this.harmonyProblem = result.problem;
+		this.harmonyFollow.written();
 		// A removed part's strip is hidden, so it mustn't stay soloed and silence the rest
 		const kept = harmonyPartsIn(result.abc);
 		for (const channel of mixer.channels) {

@@ -20,8 +20,7 @@ export const TIPS = Object.freeze({
 		},
 		settings: 'Settings: tips, the music keypad, the bass line, colours and shape.',
 		storage: 'What the app keeps on this device: see it, and delete what you don’t want.',
-		tipsToggle: 'Tips are on: rest on any control to see what it does. Tap to turn them off.',
-		notice: 'Something the app just did for you. Tap to close it.'
+		tipsToggle: 'Tips are on: rest on any control to see what it does. Tap to turn them off.'
 	},
 
 	storage: {
@@ -479,6 +478,11 @@ export const TIPS = Object.freeze({
 			concert: 'The sheet music as the song sounds, for anyone without a capo.',
 			shapes: 'The sheet music in the key of the guitar’s chord shapes, to read with the capo on.'
 		}
+	},
+
+	harmonyFollow: {
+		rewrite: 'Write these harmony parts again from the melody and the new chords.',
+		keep: 'Leave the harmony parts as they are; they may clash with the new chords.'
 	},
 
 	capoChoice: {

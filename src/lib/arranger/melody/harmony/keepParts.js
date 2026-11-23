@@ -63,3 +63,23 @@ export function partBlockText(abc, id) {
 	const block = partBlocks(abc).find((each) => each.id === id);
 	return block ? abc.slice(block.from, block.to).trim() : '';
 }
+
+/**
+ * All the harmony parts' text (their V: lines and music), to put back later.
+ * @param {string} abc
+ */
+export function harmonyPartsText(abc) {
+	return partBlocks(abc)
+		.map((block) => abc.slice(block.from, block.to))
+		.join('');
+}
+
+/**
+ * The ABC with its harmony parts as they were in `text` (harmonyPartsText);
+ * a part the ABC no longer has stays out.
+ * @param {string} abc
+ * @param {string} text
+ */
+export function withHarmonyPartsText(abc, text) {
+	return partBlocks(text).reduce((result, block) => withPartFrom(result, text, block.id), abc);
+}

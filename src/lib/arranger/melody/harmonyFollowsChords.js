@@ -1,67 +1,74 @@
 /**
- * After the chart's chords change, the harmony parts follow them only where
- * they must: a bar whose melody notes now sound over a different chord is
- * written fresh in every part (harmony/writeHarmonies.js); every other bar
- * keeps the part as it is, hand edits included. Comparing the chord under
- * each note, not the chart's bars, means a bar added to the chart before
- * the tune (which moves later notes onto other chords) is followed too.
+ * What a chord edit means for the harmony parts. A part is "as written"
+ * when it's exactly what one of the harmony styles writes for the melody
+ * over the chords it was written for; otherwise it was changed by hand.
+ * Rewriting writes each whole part fresh for the chords now, in its own
+ * style (a hand-changed part in the stack), so the lines flow again.
  */
-import { firstSoundings, harmonyPartsIn, withHarmonies } from './harmony/writeHarmonies.js';
-import { partBlockText } from './harmony/keepParts.js';
-import { withPartBars } from './roll/freshHarmonyBars.js';
-import { readScore } from './roll/readScore.js';
-import { chordBySound } from '../chart/chordBySound.js';
+import { harmonyPartsIn, withHarmonies } from './harmony/writeHarmonies.js';
+import { HARMONY_STYLES } from './harmony/harmonyStyles.js';
+import { partBlockText, withPartsKept } from './harmony/keepParts.js';
 
 /**
  * @typedef {import('./harmony/writeHarmonies.js').ChordAt} ChordAt
+ * @typedef {{ id: string, style: string | null }} PartNow style: the style it's
+ *   written in, null when it was changed by hand
  */
+
+const DEFAULT_STYLE = 'stack';
 
 /**
- * @param {string} abc the tune, its harmony parts written for the old chords
- * @param {(abc: string) => any} parse abcjs parseOnly, first tune
- * @param {ChordAt} chordBefore the band's concert chord at a time, before the edit
- * @param {ChordAt} chordNow the same, now
- * @returns {{ abc: string, parts: string[] }} parts: the ids of the parts that changed
+ * The parts the chords now would change.
+ * @param {string} abc
+ * @param {any} tune abcjs's parse of this ABC
+ * @param {ChordAt[]} writtenFor the chords the parts may have been written for
+ * @param {ChordAt} chordNow
+ * @returns {PartNow[]}
  */
-export function harmonyFollowingChords(abc, parse, chordBefore, chordNow) {
-	const unchanged = { abc, parts: [] };
-	const partIds = harmonyPartsIn(abc);
-	if (partIds.length === 0) return unchanged;
-	const tune = parse(abc);
-	if (!tune) return unchanged;
-
-	const bars = barsOnNewChords(abc, tune, chordBefore, chordNow);
-	if (bars.size === 0) return unchanged;
-	const fresh = withHarmonies(abc, tune, chordNow, partIds).abc;
-	const followed = withPartBars(abc, fresh, parse, partIds, bars);
-	const parts = partIds.filter((id) => partBlockText(followed, id) !== partBlockText(abc, id));
-	return { abc: followed, parts };
+export function partsOffTheChords(abc, tune, writtenFor, chordNow) {
+	return harmonyPartsIn(abc)
+		.map((id) => ({ id, style: styleOf(abc, tune, id, writtenFor) }))
+		.filter(({ id, style }) => written(abc, tune, chordNow, id, style) !== partBlockText(abc, id));
 }
 
 /**
- * The melody's bars (as written, readScore's numbering) with a note that
- * first sounds over a different chord than it did.
+ * The ABC with these parts written fresh for the chords now.
  * @param {string} abc
  * @param {any} tune
- * @param {ChordAt} chordBefore
+ * @param {PartNow[]} parts
  * @param {ChordAt} chordNow
- * @returns {Set<number>}
  */
-function barsOnNewChords(abc, tune, chordBefore, chordNow) {
-	const sameChord = (/** @type {number} */ time) =>
-		soundOf(chordBefore(time)) === soundOf(chordNow(time));
-	const notes = [...firstSoundings(tune)];
-	const bars = readScore(abc, tune, 0).score.bars;
-	const changed = new Set();
-	bars.forEach(({ from, to }, index) => {
-		if (from === null || to === null) return;
-		const inBar = notes.filter(([char]) => char >= from && char < to);
-		if (inBar.some(([, { time }]) => !sameChord(time))) changed.add(index);
-	});
-	return changed;
+export function withPartsRewritten(abc, tune, parts, chordNow) {
+	const styles = Object.fromEntries(parts.map(({ id, style }) => [id, style ?? DEFAULT_STYLE]));
+	const keep = harmonyPartsIn(abc).filter((id) => !(id in styles));
+	const fresh = withHarmonies(abc, tune, chordNow, harmonyPartsIn(abc), styles).abc;
+	return withPartsKept(fresh, abc, keep);
 }
 
-/** @param {string | null} name */
-function soundOf(name) {
-	return name === null ? '' : chordBySound(name);
+/**
+ * The style a part is written in over any of these chords, or null.
+ * @param {string} abc
+ * @param {any} tune
+ * @param {string} id
+ * @param {ChordAt[]} writtenFor
+ */
+function styleOf(abc, tune, id, writtenFor) {
+	const now = partBlockText(abc, id);
+	const match = HARMONY_STYLES.find((style) =>
+		writtenFor.some((chordAt) => written(abc, tune, chordAt, id, style.id) === now)
+	);
+	return match?.id ?? null;
+}
+
+/**
+ * One part as a style writes it.
+ * @param {string} abc
+ * @param {any} tune
+ * @param {ChordAt} chordAt
+ * @param {string} id
+ * @param {string | null} style
+ */
+function written(abc, tune, chordAt, id, style) {
+	const fresh = withHarmonies(abc, tune, chordAt, [id], { [id]: style ?? DEFAULT_STYLE }).abc;
+	return partBlockText(fresh, id);
 }
