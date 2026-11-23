@@ -13,7 +13,7 @@ import { withoutVariant } from '../instruments/chordBook.js';
 import { isNoChord } from './noChord.js';
 import { chordPitchClasses, chordTypeOf } from '../theory/chordTypes.js';
 import { chordsThatFit, hearChord } from '../theory/chordsThatFit.js';
-import { noteRoles } from '../theory/noteRoles.js';
+import { beatStrength, noteRoles } from '../theory/noteRoles.js';
 import { spansOf } from './chordSpot.js';
 
 const EPSILON = 1e-6;
@@ -115,11 +115,10 @@ function readSpot(sections, melody, spot, capo) {
 	const { slots, beats } = rhythm(sections);
 	const spans = spansOf(slots, spot);
 	if (spans.length === 0) return null;
-	const booms = beats.filter((beat) => beat.role === 'boom').map((beat) => beat.time);
 	const notes = melody
 		.map((note) => ({ ...note, pitch: note.pitch - capo }))
 		.sort((a, b) => a.time - b.time);
-	const roled = noteRoles(notes, bandOf(slots, booms));
+	const roled = noteRoles(notes, bandOf(slots, beats));
 	const first = slots[spans[0].slot];
 	return {
 		key: first.key ?? songsKey,
@@ -169,27 +168,40 @@ function lengthName(quarters) {
 	);
 }
 
+const APPROACH_WORDS = {
+	passing: 'passing: steps on to the next note',
+	neighbour: 'neighbour: steps away and back',
+	escape: 'escape tone: stepped to, then leaps away'
+};
+
 /** @param {import('../theory/noteRoles.js').RoledNote} note */
 function roleWords(note) {
 	if (note.role === 'target') return `heard as the chord: ${note.because}`;
-	if (note.role === 'approach') return 'passing: steps into the next note, not counted';
+	if (note.role === 'approach') return `${APPROACH_WORDS[note.kind ?? 'passing']}, not counted`;
 	if (note.role === 'anticipation') return 'anticipation: arrives early for this chord';
 	return `${note.role}: held over from the chord before, then steps ${note.role === 'suspension' ? 'down' : 'up'}`;
 }
 
 /**
- * The band as noteRoles reads it: when the bass plays, when the chord
- * changes, and the notes of the chord sounding at any time.
+ * The band as noteRoles reads it: how strong each beat is (from where the
+ * bass plays), when the chord changes, and the notes of the chord sounding at any time.
  * @param {import('./timeline.js').SlotPosition[]} slots
- * @param {number[]} booms
+ * @param {import('./timeline.js').Beat[]} beats
  * @returns {import('../theory/noteRoles.js').Band}
  */
-function bandOf(slots, booms) {
+function bandOf(slots, beats) {
 	const changes = slots
 		.filter((slot, i) => slot.name !== slots[i - 1]?.name)
 		.map((slot) => slot.start);
 	return {
-		isBoom: (time) => booms.some((boom) => Math.abs(boom - time) < EPSILON),
+		strengthAt: (time) => {
+			const slot = slotAt(slots, time);
+			if (!slot) return 0;
+			const booms = beats
+				.filter((beat) => beat.bar === slot.bar && beat.role === 'boom')
+				.map((beat) => beat.time - slot.barStart);
+			return beatStrength(time - slot.barStart, booms);
+		},
 		changes,
 		tonesAt: (time) => {
 			const chord = plainChord(slotAt(slots, time)?.name ?? null);

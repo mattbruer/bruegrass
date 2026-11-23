@@ -22,8 +22,6 @@ import { chordScaleFor, numeral } from './chordScaleFor.js';
 const BLUE_NOTES = { numerals: ['I', 'IV'], types: ['', '7'], semitones: [3, 10] };
 /** How much each kind of note counts towards a good fit (a chord tone is 1). */
 const FIT_WEIGHT = { tone: 1, tension: 0.7, blue: 0.5, suspension: 0.5 };
-/** A target on one of the bass's beats counts this much more. */
-const BOOM_WEIGHT = 2;
 /**
  * Which colour notes (tensions) a melody note on a strong beat may be: the
  * user's choice (docs/theory/applying-the-theory.md, call B). Bluegrass
@@ -35,9 +33,14 @@ export const STRONG_BEAT_COLOURS = Object.freeze({
 	sweet: { major: [2, 9], minor: [2, 5, 10] },
 	any: null
 });
-/** Taken off the score for each chord note outside the key, and each beyond the triad. */
-const OUTSIDE_KEY_PENALTY = 0.15;
-const EXTENSION_PENALTY = 0.1;
+/** The order colour allowances loosen in: a weaker beat allows the next one along (call A). */
+const LOOSER = /** @type {const} */ (['chordNotes', 'sweet', 'any']);
+/** A beat this strong or stronger follows the user's choice exactly. */
+const STRONG = 2;
+/** A strong-beat share this close counts as the same, so the next rule decides. */
+const SHARE_STEP = 0.05;
+/** A dominant or its tritone sub resolving to the next chord: it leads into it. */
+const LEADS_ON = /^(sub)?V7?(\/|$)/;
 
 /** What a tension is called, by semitones above the root. */
 const TENSION_NAMES = {
@@ -61,7 +64,13 @@ const TENSION_NAMES = {
  *   the melody notes that belong to it (noteRoles.js), and the chord after it
  * @typedef {'tone' | 'tension' | 'blue' | 'suspension'} FitRole
  * @typedef {{ pitchClass: number, role: FitRole, as: string }} TargetAs a target note, as this chord hears it
- * @typedef {{ root: number, type: ChordType, does: string, scale: string, score: number, targets: TargetAs[] }} Fit
+ * @typedef {{
+ *   root: number, type: ChordType, does: string, scale: string, targets: TargetAs[],
+ *   strongShare: number, extensions: number, outside: number, leadsOn: boolean, score: number
+ * }} Fit
+ *   how it ranks (call D), in order: strongShare, how much of the strong-beat melody is its
+ *   chord notes; extensions, its notes beyond the triad; outside, its notes outside the key;
+ *   leadsOn, it leads into the next chord; score, how well everything fits (the last tie-break)
  * @typedef {keyof typeof STRONG_BEAT_COLOURS} StrongBeats
  * @typedef {RoledNote & { counted: boolean, ruledOut?: boolean, as: string }} HeardNote one melody
  *   note, as a chord hears it: counted (it has to fit), ruledOut (it rules the chord out), and
@@ -85,7 +94,7 @@ export function chordsThatFit(key, occurrences, strongBeats) {
 			if (fit) fits.push(fit);
 		}
 	}
-	return fits.sort((a, b) => b.score - a.score);
+	return fits.sort(byRank);
 }
 
 /**
@@ -98,6 +107,8 @@ export function chordsThatFit(key, occurrences, strongBeats) {
 function fitEverywhere(key, chord, occurrences, strongBeats) {
 	let total = 0;
 	let weight = 0;
+	let strong = 0;
+	let strongTones = 0;
 	let heard = false;
 	/** @type {Map<number, TargetAs>} */
 	const targets = new Map();
@@ -109,19 +120,28 @@ function fitEverywhere(key, chord, occurrences, strongBeats) {
 		for (const note of notes.filter(mustFit)) {
 			const as = countedAs(key, chord, scale, note, strongBeats);
 			if (typeof as === 'string') return null;
-			const noteWeight = note.length * (note.onBoom ? BOOM_WEIGHT : 1);
+			const noteWeight = note.length * (1 + note.strength);
 			total += noteWeight * FIT_WEIGHT[as.role];
 			weight += noteWeight;
+			if (note.onBoom) {
+				strong += noteWeight;
+				if (as.role === 'tone') strongTones += noteWeight;
+			}
 			targets.set(as.pitchClass, as);
 		}
 	}
 	if (!first || weight === 0 || !heard) return null;
+	const tones = toneSemitones(chord.type);
 	return {
 		...chord,
 		does: first.does,
 		scale: first.scale,
-		score: total / weight - plainness(key, chord),
-		targets: [...targets.values()]
+		targets: [...targets.values()],
+		strongShare: strong > 0 ? strongTones / strong : 1,
+		extensions: Math.max(0, tones.length - 3),
+		outside: outsideTheKey(key, chord, tones),
+		leadsOn: LEADS_ON.test(first.does),
+		score: total / weight
 	};
 }
 
@@ -174,7 +194,7 @@ export function hearChord(key, chord, occurrence, strongBeats) {
 /**
  * A counted note as this chord hears it, or why it rules the chord out:
  * it clashes, or it's a colour note on a strong beat the user's choice
- * doesn't allow. A blue note or a suspension is allowed anywhere.
+ * doesn't allow on its beat. A blue note or a suspension is allowed anywhere.
  * @param {PlainKey} key
  * @param {PlainChord} chord
  * @param {import('./chordScaleFor.js').ChordScale} scale
@@ -185,14 +205,45 @@ export function hearChord(key, chord, occurrence, strongBeats) {
 function countedAs(key, chord, scale, note, strongBeats) {
 	const as = targetAs(key, chord, scale, note.pitch) ?? suspendedInto(chord, scale, note);
 	if (!as) return 'clashes';
-	if (as.role !== 'tension' || !note.onBoom) return as;
-	const allowed = STRONG_BEAT_COLOURS[strongBeats];
+	if (as.role !== 'tension') return as;
+	const allowed = STRONG_BEAT_COLOURS[colourAllowedOn(note.strength, strongBeats)];
 	if (allowed === null) return as;
 	const minor = toneSemitones(chord.type).includes(3);
 	const above = mod12(note.pitch - chord.root);
 	return allowed[minor ? 'minor' : 'major'].includes(above)
 		? as
-		: `${as.as}: colour on a strong beat`;
+		: `${as.as}: colour on ${note.onBoom ? 'a strong beat' : 'this beat'}`;
+}
+
+/**
+ * How much colour a beat allows: the user's choice on the downbeat and the
+ * bass's other beats, one step more on the other beats, any between beats.
+ * @param {import('./noteRoles.js').Strength} strength
+ * @param {StrongBeats} strongBeats
+ * @returns {StrongBeats}
+ */
+function colourAllowedOn(strength, strongBeats) {
+	if (strength >= STRONG) return strongBeats;
+	if (strength === 0) return 'any';
+	return LOOSER[Math.min(LOOSER.indexOf(strongBeats) + 1, LOOSER.length - 1)];
+}
+
+/**
+ * The order suggestions come in (call D): most of the strong-beat melody as
+ * chord notes, then plainer chords, then in the key, then leading into the
+ * next chord, then how well everything fits.
+ * @param {Fit} a
+ * @param {Fit} b
+ */
+function byRank(a, b) {
+	const share = Math.round(b.strongShare / SHARE_STEP) - Math.round(a.strongShare / SHARE_STEP);
+	return (
+		share ||
+		a.extensions - b.extensions ||
+		a.outside - b.outside ||
+		Number(b.leadsOn) - Number(a.leadsOn) ||
+		b.score - a.score
+	);
 }
 
 /**
@@ -219,16 +270,14 @@ function suspendedInto(chord, scale, note) {
 }
 
 /**
- * How far the chord is from a plain chord of the key: each note outside
- * the key and each note beyond the triad.
+ * How many of the chord's notes are outside the key.
  * @param {PlainKey} key
  * @param {PlainChord} chord
+ * @param {number[]} tones
  */
-function plainness(key, chord) {
-	const tones = toneSemitones(chord.type);
+function outsideTheKey(key, chord, tones) {
 	const scale = key.minor ? MINOR_SCALE : MAJOR_SCALE;
-	const outside = tones.filter((tone) => !scale.includes(mod12(chord.root + tone - key.tonic)));
-	return outside.length * OUTSIDE_KEY_PENALTY + Math.max(0, tones.length - 3) * EXTENSION_PENALTY;
+	return tones.filter((tone) => !scale.includes(mod12(chord.root + tone - key.tonic))).length;
 }
 
 const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11];

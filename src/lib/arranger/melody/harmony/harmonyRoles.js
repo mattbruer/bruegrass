@@ -5,7 +5,7 @@
  * an anticipation with the chord it reaches early, and hold its note
  * through a suspension. The band's chords stay as the chart writes them.
  */
-import { noteRoles } from '../../theory/noteRoles.js';
+import { beatStrength, noteRoles } from '../../theory/noteRoles.js';
 import { passingChords } from '../../theory/passingChords.js';
 import { chordPitchClasses, readChordName, toneSemitones } from '../../theory/chordTypes.js';
 import { beatGroups, barQuarters } from '../../chart/timeline.js';
@@ -73,7 +73,7 @@ function band(notes, chordAt, meter) {
 		if (chordAt(time) !== chordAt(time - 1)) changes.push(time);
 	}
 	return {
-		isBoom: (time) => booms.includes(((time % bar) + bar) % bar),
+		strengthAt: (time) => beatStrength(((time % bar) + bar) % bar, booms),
 		changes,
 		tonesAt: (time) => {
 			const chord = readChord(chordAt(time));
