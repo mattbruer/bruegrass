@@ -8,6 +8,7 @@
 	import { useArranger } from '../../state/context.js';
 	import { chordBreakdown } from '../../chart/chordSuggestions.js';
 	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
+	import { settings } from '$lib/settings/settings.svelte.js';
 
 	/** @type {{ spot: import('../../chart/chordSpot.js').ChordSpot, name: string }} */
 	let { spot, name } = $props();
@@ -21,7 +22,8 @@
 					melody.line.notes.filter((note) => note.channel === MELODY_CHANNEL),
 					spot,
 					arrangement.capoFret,
-					name
+					name,
+					settings.chords.strongBeats
 				)
 			: null
 	);
@@ -52,8 +54,7 @@
 						<td class="pr-2 whitespace-nowrap"
 							>{row.note} <span class="text-ink-soft">{row.length}</span></td
 						>
-						<td class="pr-2 whitespace-nowrap" class:text-danger={row.as === 'clashes'}>{row.as}</td
-						>
+						<td class="pr-2" class:text-danger={row.ruledOut}>{row.as}</td>
 						<td>{row.role}</td>
 					</tr>
 				{/each}

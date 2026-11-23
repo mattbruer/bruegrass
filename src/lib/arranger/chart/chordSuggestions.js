@@ -32,14 +32,16 @@ const EPSILON = 1e-6;
  * @param {{ time: number, length: number, pitch: number }[]} melody the tune's lead notes at concert pitch
  * @param {ChordSpot} spot
  * @param {number} capo
+ * @param {import('../theory/chordsThatFit.js').StrongBeats} strongBeats which colour notes a
+ *   strong-beat note may be (the user's setting)
  * @returns {Suggestion[]} the chord sounding there now first (when it fits), then best first;
  *   empty when no melody sounds there
  */
-export function chordSuggestions(sections, melody, spot, capo) {
+export function chordSuggestions(sections, melody, spot, capo, strongBeats) {
 	const read = readSpot(sections, melody, spot, capo);
 	if (!read) return [];
 	const { key, current, occurrences } = read;
-	return chordsThatFit(plainKey(key), occurrences)
+	return chordsThatFit(plainKey(key), occurrences, strongBeats)
 		.map((fit) => {
 			const name = chordNameIn(key, fit);
 			return {
@@ -60,7 +62,7 @@ export function chordSuggestions(sections, melody, spot, capo) {
 /**
  * @typedef {{
  *   beat: string, note: string, length: string, strong: boolean, role: string,
- *   counted: boolean, as: string
+ *   counted: boolean, ruledOut: boolean, as: string
  * }} BreakdownRow one melody note in words: where it falls ("2½"), how long ("quarter"),
  *   what it's doing ("heard as the chord: a strong beat"), and what it is in the chord
  * @typedef {{ fits: boolean, does: string, scale: string, rows: BreakdownRow[] }} Breakdown
@@ -74,14 +76,15 @@ export function chordSuggestions(sections, melody, spot, capo) {
  * @param {ChordSpot} spot
  * @param {number} capo
  * @param {string} name any chord name, as the chart writes it
+ * @param {import('../theory/chordsThatFit.js').StrongBeats} strongBeats
  * @returns {Breakdown | null} null: no melody there, or a chord the theory doesn't know
  */
-export function chordBreakdown(sections, melody, spot, capo, name) {
+export function chordBreakdown(sections, melody, spot, capo, name, strongBeats) {
 	const read = readSpot(sections, melody, spot, capo);
 	const chord = plainChord(name);
 	if (!read || !chord || read.occurrences[0].notes.length === 0) return null;
 	const { key, barStart, occurrences } = read;
-	const heard = hearChord(plainKey(key), chord, occurrences[0]);
+	const heard = hearChord(plainKey(key), chord, occurrences[0], strongBeats);
 	return {
 		fits: heard.fits,
 		does: heard.does,
@@ -93,6 +96,7 @@ export function chordBreakdown(sections, melody, spot, capo, name) {
 			strong: note.onBoom,
 			role: roleWords(note),
 			counted: note.counted,
+			ruledOut: Boolean(note.ruledOut),
 			as: note.as
 		}))
 	};

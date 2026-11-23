@@ -32,7 +32,7 @@ To see the rules at work, tap a chord (or any beat) on the strip: under the chor
 - Never a scale **approach (avoid) note**, like the 4th over a major chord, unless it's a suspension resolving into the chord. (book p. 15)
 - Blue notes: a ♭3 or ♭7 over a plain major or 7th chord on I or IV counts. (ours, after the book's blues I7, p. 21)
 - Some melody note under it is one of its chord tones, or the chord isn't heard in the tune at all. (ours)
-- **Your call B:** on a strong beat, chord tones only, or tensions too? Today tensions pass anywhere, so F fits bar 14 of Amazing Grace because the held B on beat 1 is F's ♯11. Jazz says yes; bluegrass maybe not.
+- **Strong beats (decided, B):** bluegrass harmonises strong beats with **chord notes**. That's the default; a choice above the list (remembered on the device) also allows the **sweet colours** (the 6th or 9th over a major chord; the 9th, 11th or ♭7 over a minor one: the chord's pentatonic, where bluegrass melodies sit) or **any colour** (every tension, as jazz does). A blue note or a suspension is allowed on a strong beat whatever the choice. With chord notes only, D isn't suggested for bar 14 of Amazing Grace (its held B is D's 6th), though the song plays D there: switch to sweet colours to get it back. (the user's call; the sweet set is ours)
 
 ## 5. Which alternatives come first
 
@@ -41,9 +41,14 @@ To see the rules at work, tap a chord (or any beat) on the strip: under the chor
 
 ## 6. The harmony parts
 
+**Bluegrass texture** (the user): at most three parts. The melody (the lead) sits in the middle: with two parts, the lead and a harmony above it (the tenor); with three, a line above (tenor) and a line below (baritone). Almost never more; sometimes a bass singer for vocals, who mostly sings roots (not built yet).
+
+- **Strong beats get chord tones in the voices** (the user): when the lead sings a colour note on a strong beat, the tenor and baritone still sing chord tones (the next ones up and down). Built into the Passing chords style; the stack stays as it was.
+
 - Target notes: the stack, the next chord tone up or down from the lead, in the band's chord. (as before)
 - The **Passing chords** style only: an approach note gets a passing chord of its own in the voices, plainest first (the dominant of the chord it leads to, then the key's chord a step away, then the same chord moved by the melody's step, then a passing diminished, then the tritone sub) (book pp. 11–14, 23); an anticipation takes the chord it reaches; through a suspension the voices hold their notes. (the order is ours)
 - Every other style ignores all this: their lines are exactly as before.
+- **Later (the user):** a layout with the **melody on top** and the voices below filling out the chord, the way jazz soli are written; it may sound good in bluegrass too. The parts are data (`harmonyParts.js`: each counts chord tones from the lead), and the baritone (−1) with the low tenor (−2) already give a version of it; a real option would be one more entry, voicing close under the lead.
 
 ## A worked example: Amazing Grace, bar 14 (chord D, key G, 3/4)
 
@@ -52,4 +57,4 @@ To see the rules at work, tap a chord (or any beat) on the strip: under the chor
 | 1    | B, half    | yes     | target: the chord starts | 13 (tension) | 5th         | ♯11 (tension) |
 | 3    | A, quarter | no      | approach: steps to G     | not counted  | not counted | not counted   |
 
-All three fit today. If strong beats must be chord tones (call B), only Em (and other chords with B in them) would.
+With **chord notes** (the default) only Em fits: B is its 5th. With **sweet colours**, D fits too (B is its 6th). With **any colour**, F fits as well (B is its ♯11).

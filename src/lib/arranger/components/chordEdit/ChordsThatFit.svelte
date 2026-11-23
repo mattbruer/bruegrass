@@ -9,6 +9,8 @@
 	import { chordSuggestions } from '../../chart/chordSuggestions.js';
 	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
 	import ChordBreakdown from './ChordBreakdown.svelte';
+	import StrongBeatsChoice from './StrongBeatsChoice.svelte';
+	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -29,7 +31,8 @@
 					arrangement.sections,
 					melody.line.notes.filter((note) => note.channel === MELODY_CHANNEL),
 					spot,
-					arrangement.capoFret
+					arrangement.capoFret,
+					settings.chords.strongBeats
 				)
 			: []
 	);
@@ -62,6 +65,7 @@
 {#if melody.line}
 	<section class="flex flex-col gap-2">
 		<h3 class="font-semibold">Chords that fit the melody here</h3>
+		<StrongBeatsChoice />
 		{#if suggestions.length === 0}
 			<p class="text-sm text-ink-soft">No melody plays under this chord.</p>
 		{:else}

@@ -222,11 +222,12 @@ function partText(abc, from, to, notes, key, { roles, chordAt, count, style }) {
 			const lead = noteInKey(key, top, sounding.midi);
 			const name = chordAt(sounding.time);
 			const chord = (name && chordFromName(key, name)) || tonicChord;
-			const { role, roleChord } = roles.get(element.startChar) ?? {
+			const { role, roleChord, strong } = roles.get(element.startChar) ?? {
 				role: 'target',
-				roleChord: null
+				roleChord: null,
+				strong: false
 			};
-			note = style.pick({ lead, chord, count, previous, role, roleChord });
+			note = style.pick({ lead, chord, count, previous, role, roleChord, strong });
 		}
 		if (!note) continue;
 		held = note;

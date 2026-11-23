@@ -72,6 +72,15 @@ export const settings = $state({
 		partView: 'roll'
 	},
 
+	// Chord suggestions: set from the chord dialog
+
+	chords: {
+		/** Which colour notes a melody note on a strong beat may be: an id in theory/chordsThatFit.js STRONG_BEAT_COLOURS. */
+		strongBeats: /** @type {import('$lib/arranger/theory/chordsThatFit.js').StrongBeats} */ (
+			'chordNotes'
+		)
+	},
+
 	// Piano rolls: set from the roll's toolbar
 
 	pianoRoll: {

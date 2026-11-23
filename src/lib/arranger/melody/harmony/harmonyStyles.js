@@ -22,10 +22,11 @@ const RANGE = { 1: [1, 9], 2: [5, 16] };
  * @typedef {import('../../theory/musicInKey.js').Chord} Chord
  * @typedef {{
  *   lead: Note, chord: Chord, count: number, previous: Note | null,
- *   role?: import('../../theory/noteRoles.js').Role, roleChord?: Chord | null
+ *   role?: import('../../theory/noteRoles.js').Role, roleChord?: Chord | null, strong?: boolean
  * }} Moment
  *   role: what the melody note is doing (harmonyRoles.js); roleChord: the chord it belongs
- *   to by that role (a passing chord, the chord an anticipation reaches), null: the band's
+ *   to by that role (a passing chord, the chord an anticipation reaches), null: the band's;
+ *   strong: the note is on a strong beat (where the bass plays)
  */
 
 export const HARMONY_STYLES = Object.freeze([
@@ -67,7 +68,8 @@ export const HARMONY_STYLES = Object.freeze([
 		id: 'passing',
 		name: 'Passing chords',
 		/**
-		 * The stack on the notes heard as the chord; an approach note gets a
+		 * The stack on the notes heard as the chord, and chord tones on a strong
+		 * beat even when the lead sings a colour note (bluegrass); an approach note gets a
 		 * passing chord of its own (the dominant of the chord it leads to,
 		 * first), an anticipation the chord it reaches early, and through a
 		 * suspension the part holds its note. The Berklee way (pp. 11–14).
@@ -75,7 +77,10 @@ export const HARMONY_STYLES = Object.freeze([
 		pick: (/** @type {Moment} */ moment) => {
 			const suspended = moment.role === 'suspension' || moment.role === 'retardation';
 			if (suspended && moment.previous) return moment.previous;
-			return stack({ ...moment, chord: moment.roleChord ?? moment.chord });
+			const chord = moment.roleChord ?? moment.chord;
+			const colourOnAStrongBeat = moment.strong && !isChordTone(moment.lead, chord);
+			if (colourOnAStrongBeat) return chordToneAround({ ...moment, chord }) ?? stack(moment);
+			return stack({ ...moment, chord });
 		}
 	}
 ]);
@@ -103,6 +108,20 @@ function parallelTone({ lead, chord, count }) {
 	}));
 	if (!isChordTone(lead, chord)) return candidates[0];
 	return candidates.find((note) => isChordTone(note, chord)) ?? candidates[0];
+}
+
+/**
+ * The chord tone the part would count to from the lead (the next one up
+ * for the tenor, the next down for the baritone, one further for the outer
+ * parts), when the lead itself isn't a chord tone.
+ * @param {Moment} moment
+ */
+function chordToneAround({ lead, chord, count }) {
+	const leadPitch = semitones(lead);
+	const side = tonesInRange(lead, chord, count)
+		.filter((note) => Math.sign(semitones(note) - leadPitch) === Math.sign(count))
+		.sort((a, b) => Math.abs(semitones(a) - leadPitch) - Math.abs(semitones(b) - leadPitch));
+	return side[Math.abs(count) - 1] ?? null;
 }
 
 /** @param {Moment} moment */

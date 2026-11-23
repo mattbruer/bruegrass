@@ -178,6 +178,12 @@ export const TIPS = Object.freeze({
 		name: 'The chord as the chart writes it. Change it, then tap Change.',
 		save: 'Write the new chord into the chart. Its own reading is cleared.',
 		learn: 'Open the chord tutor on this chord: what to play over it, and what it does.',
+		strongBeats: {
+			chordNotes: 'Bluegrass: a melody note on a strong beat must be one of the chord’s own notes.',
+			sweet:
+				'Also allow the sweet colour notes on strong beats: the 6th or 9th over a major chord, the 9th, 11th or ♭7 over a minor one.',
+			any: 'Allow any colour note (tension) on strong beats, as jazz does.'
+		},
 		spotName: 'The chord to put here. Type one, or pick one that fits the melody below.',
 		put: 'Write this chord into the chart from this beat to the bar’s next chord.',
 		fits: 'This chord fits the melody here. Tap to put it in the box and see why; Change uses it.',

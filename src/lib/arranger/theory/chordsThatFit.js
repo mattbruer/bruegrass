@@ -24,6 +24,17 @@ const BLUE_NOTES = { numerals: ['I', 'IV'], types: ['', '7'], semitones: [3, 10]
 const FIT_WEIGHT = { tone: 1, tension: 0.7, blue: 0.5, suspension: 0.5 };
 /** A target on one of the bass's beats counts this much more. */
 const BOOM_WEIGHT = 2;
+/**
+ * Which colour notes (tensions) a melody note on a strong beat may be: the
+ * user's choice (docs/theory/applying-the-theory.md, call B). Bluegrass
+ * harmonises strong beats with chord notes; "sweet" adds the pentatonic
+ * colours bluegrass melodies sit on. Semitones above the root; null: any.
+ */
+export const STRONG_BEAT_COLOURS = Object.freeze({
+	chordNotes: { major: [], minor: [] },
+	sweet: { major: [2, 9], minor: [2, 5, 10] },
+	any: null
+});
 /** Taken off the score for each chord note outside the key, and each beyond the triad. */
 const OUTSIDE_KEY_PENALTY = 0.15;
 const EXTENSION_PENALTY = 0.1;
@@ -51,23 +62,26 @@ const TENSION_NAMES = {
  * @typedef {'tone' | 'tension' | 'blue' | 'suspension'} FitRole
  * @typedef {{ pitchClass: number, role: FitRole, as: string }} TargetAs a target note, as this chord hears it
  * @typedef {{ root: number, type: ChordType, does: string, scale: string, score: number, targets: TargetAs[] }} Fit
- * @typedef {RoledNote & { counted: boolean, as: string }} HeardNote one melody note, as a chord
- *   hears it: counted (it has to fit), and what it is in the chord ("3rd", "9", "clashes")
+ * @typedef {keyof typeof STRONG_BEAT_COLOURS} StrongBeats
+ * @typedef {RoledNote & { counted: boolean, ruledOut?: boolean, as: string }} HeardNote one melody
+ *   note, as a chord hears it: counted (it has to fit), ruledOut (it rules the chord out), and
+ *   what it is in the chord ("3rd", "9", "clashes", "13: colour on a strong beat")
  */
 
 /**
  * @param {PlainKey} key
  * @param {Occurrence[]} occurrences every time the chord plays (a section played twice: twice)
+ * @param {StrongBeats} strongBeats which colour notes a strong-beat note may be
  * @returns {Fit[]} best first; empty when there's no melody under the chord
  */
-export function chordsThatFit(key, occurrences) {
+export function chordsThatFit(key, occurrences, strongBeats) {
 	if (!occurrences.some(({ notes }) => notes.length > 0)) return [];
 	const heard = heardOccurrences(occurrences);
 	/** @type {Fit[]} */
 	const fits = [];
 	for (let root = 0; root < 12; root++) {
 		for (const type of CHORD_TYPES) {
-			const fit = fitEverywhere(key, { root, type }, heard);
+			const fit = fitEverywhere(key, { root, type }, heard, strongBeats);
 			if (fit) fits.push(fit);
 		}
 	}
@@ -78,9 +92,10 @@ export function chordsThatFit(key, occurrences) {
  * @param {PlainKey} key
  * @param {PlainChord} chord
  * @param {Occurrence[]} occurrences
+ * @param {StrongBeats} strongBeats
  * @returns {Fit | null}
  */
-function fitEverywhere(key, chord, occurrences) {
+function fitEverywhere(key, chord, occurrences, strongBeats) {
 	let total = 0;
 	let weight = 0;
 	let heard = false;
@@ -92,8 +107,8 @@ function fitEverywhere(key, chord, occurrences) {
 		first ??= scale;
 		heard ||= notes.some((note) => scale.roles.get(mod12(note.pitch - chord.root)) === 'tone');
 		for (const note of notes.filter(mustFit)) {
-			const as = targetAs(key, chord, scale, note.pitch) ?? suspendedInto(chord, scale, note);
-			if (!as) return null;
+			const as = countedAs(key, chord, scale, note, strongBeats);
+			if (typeof as === 'string') return null;
 			const noteWeight = note.length * (note.onBoom ? BOOM_WEIGHT : 1);
 			total += noteWeight * FIT_WEIGHT[as.role];
 			weight += noteWeight;
@@ -133,21 +148,51 @@ function heardOccurrences(occurrences) {
  * @param {PlainKey} key
  * @param {PlainChord} chord
  * @param {Occurrence} occurrence
+ * @param {StrongBeats} strongBeats
  * @returns {{ fits: boolean, does: string, scale: string, notes: HeardNote[] }}
  */
-export function hearChord(key, chord, occurrence) {
+export function hearChord(key, chord, occurrence, strongBeats) {
 	const [heard] = heardOccurrences([occurrence]);
 	const scale = chordScaleFor(key, chord, heard.next);
 	const notes = heard.notes.map((note) => {
 		const counted = mustFit(note);
-		const as = counted
-			? (targetAs(key, chord, scale, note.pitch) ?? suspendedInto(chord, scale, note))
-			: targetAs(key, chord, scale, note.pitch);
-		return { ...note, counted, as: as?.as ?? (counted ? 'clashes' : 'not in it') };
+		if (!counted)
+			return { ...note, counted, as: targetAs(key, chord, scale, note.pitch)?.as ?? 'not in it' };
+		const as = countedAs(key, chord, scale, note, strongBeats);
+		return {
+			...note,
+			counted,
+			ruledOut: typeof as === 'string',
+			as: typeof as === 'string' ? as : as.as
+		};
 	});
 	const isHeard = notes.some((note) => scale.roles.get(mod12(note.pitch - chord.root)) === 'tone');
-	const fits = isHeard && !notes.some((note) => note.counted && note.as === 'clashes');
+	const fits = isHeard && !notes.some((note) => note.ruledOut);
 	return { fits, does: scale.does, scale: scale.scale, notes };
+}
+
+/**
+ * A counted note as this chord hears it, or why it rules the chord out:
+ * it clashes, or it's a colour note on a strong beat the user's choice
+ * doesn't allow. A blue note or a suspension is allowed anywhere.
+ * @param {PlainKey} key
+ * @param {PlainChord} chord
+ * @param {import('./chordScaleFor.js').ChordScale} scale
+ * @param {RoledNote} note
+ * @param {StrongBeats} strongBeats
+ * @returns {TargetAs | string}
+ */
+function countedAs(key, chord, scale, note, strongBeats) {
+	const as = targetAs(key, chord, scale, note.pitch) ?? suspendedInto(chord, scale, note);
+	if (!as) return 'clashes';
+	if (as.role !== 'tension' || !note.onBoom) return as;
+	const allowed = STRONG_BEAT_COLOURS[strongBeats];
+	if (allowed === null) return as;
+	const minor = toneSemitones(chord.type).includes(3);
+	const above = mod12(note.pitch - chord.root);
+	return allowed[minor ? 'minor' : 'major'].includes(above)
+		? as
+		: `${as.as}: colour on a strong beat`;
 }
 
 /**

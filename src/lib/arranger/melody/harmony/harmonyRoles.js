@@ -17,9 +17,10 @@ const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11];
 /**
  * @typedef {import('../../theory/musicInKey.js').Chord} Chord
  * @typedef {import('../../theory/noteRoles.js').Role} Role
- * @typedef {{ role: Role, roleChord: Chord | null }} HarmonyRole
+ * @typedef {{ role: Role, roleChord: Chord | null, strong: boolean }} HarmonyRole
  *   roleChord: the chord the note belongs to by its role (a passing chord for
- *   an approach note, the next chord for an anticipation); null: the band's
+ *   an approach note, the next chord for an anticipation); null: the band's;
+ *   strong: on a strong beat (where the bass plays)
  * @typedef {{ startChar: number, time: number, length: number, pitch: number }} LeadNote
  */
 
@@ -45,7 +46,7 @@ export function harmonyRoles(notes, chordAt, meter, key) {
 				target && passingChords(plainKey, { approach: note.pitch, target: next.pitch }, target)[0];
 			roleChord = passing ? chordIn(key, passing.chord) : null;
 		}
-		roles.set(notes[i].startChar, { role: note.role, roleChord });
+		roles.set(notes[i].startChar, { role: note.role, roleChord, strong: note.onBoom });
 	});
 	return roles;
 }
