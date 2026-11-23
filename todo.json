@@ -277,6 +277,42 @@
 			"text": "Read an ABC tune's own words (w: lines) into the chart",
 			"done": false,
 			"addedAt": "2026-11-08T00:00:00.000Z"
+		},
+		{
+			"id": "chords-that-fit-by-ear",
+			"text": "Chords that fit: try the suggestions by ear on real songs (On and On), and tune the ranking and blue notes",
+			"done": false,
+			"addedAt": "2026-11-23"
+		},
+		{
+			"id": "harmony-follow-browser",
+			"text": "Harmony after a chord edit: try the Rewrite question in the browser and on iPhone",
+			"done": false,
+			"addedAt": "2026-11-23"
+		},
+		{
+			"id": "passing-chords",
+			"text": "Passing chords on approach notes (the book's dominant, chromatic and diatonic reharmonization, pp. 11–14)",
+			"done": false,
+			"addedAt": "2026-11-23"
+		},
+		{
+			"id": "mandolin-chord-types",
+			"text": "Mandolin chops for every chord type (now only major and minor), at the bottom of the neck",
+			"done": false,
+			"addedAt": "2026-11-23"
+		},
+		{
+			"id": "tutor-reads-book",
+			"text": "Chord tutor and harmony parts read the Berklee tables (chordScaleFor) so there's one place for chord scales",
+			"done": false,
+			"addedAt": "2026-11-23"
+		},
+		{
+			"id": "mixolydian-keys",
+			"text": "Mixolydian tunes as a key (Old Joe Clark): ♭VII in the key, no avoid notes",
+			"done": false,
+			"addedAt": "2026-11-23"
 		}
 	]
 }
