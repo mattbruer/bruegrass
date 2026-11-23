@@ -9,6 +9,7 @@
 	import { placeId } from '../../chart/chartAnalysis.js';
 	import { chordBoxProblem } from '../../chart/knownChords.js';
 	import ChordsThatFit from './ChordsThatFit.svelte';
+	import { spotOfPlace } from '../../chart/chordSpot.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -27,6 +28,7 @@
 	let typed = $derived(place && found ? found.name : '');
 	let problem = $derived(chordBoxProblem(typed));
 	let unchanged = $derived(!found || typed.trim() === found.name);
+	let spot = $derived(place && spotOfPlace(arrangement.sections, place));
 
 	/** @param {SubmitEvent} event */
 	function save(event) {
@@ -61,7 +63,9 @@
 				<p class="text-sm text-danger">{problem}</p>
 			{/if}
 
-			<ChordsThatFit {place} picked={typed} onPick={(name) => (typed = name)} />
+			{#if spot}
+				<ChordsThatFit {spot} picked={typed} onPick={(name) => (typed = name)} />
+			{/if}
 
 			<div class="flex flex-wrap gap-2">
 				<button

@@ -59,12 +59,20 @@ const TENSION_NAMES = {
  * @returns {Fit[]} best first; empty when there's no melody under the chord
  */
 export function chordsThatFit(key, occurrences) {
-	if (!occurrences.some(({ notes }) => notes.some(mustFit))) return [];
+	if (!occurrences.some(({ notes }) => notes.length > 0)) return [];
+	// A chord put under nothing but approach notes is heard against them
+	const onlyApproach = !occurrences.some(({ notes }) => notes.some(mustFit));
+	const heard = onlyApproach
+		? occurrences.map((occurrence) => ({
+				...occurrence,
+				notes: occurrence.notes.map((note) => ({ ...note, role: /** @type {const} */ ('target') }))
+			}))
+		: occurrences;
 	/** @type {Fit[]} */
 	const fits = [];
 	for (let root = 0; root < 12; root++) {
 		for (const type of CHORD_TYPES) {
-			const fit = fitEverywhere(key, { root, type }, occurrences);
+			const fit = fitEverywhere(key, { root, type }, heard);
 			if (fit) fits.push(fit);
 		}
 	}

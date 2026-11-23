@@ -151,7 +151,8 @@ export const TIPS = Object.freeze({
 				'Show what each chord does, the way a jazz school analyses it: V7/V for a chord leading to the V, subV7 for a tritone sub.',
 			nashville: 'Show chords as Nashville numbers (1, 4, 5), the same in any key.'
 		},
-		editChord: 'Change this chord. Learn about it from inside the box.'
+		editChord: 'Change this chord. Learn about it from inside the box.',
+		editSpot: 'Put a chord here: tap to see the chords that fit the melody.'
 	},
 
 	cycle: {
@@ -177,6 +178,8 @@ export const TIPS = Object.freeze({
 		name: 'The chord as the chart writes it. Change it, then tap Change.',
 		save: 'Write the new chord into the chart. Its own reading is cleared.',
 		learn: 'Open the chord tutor on this chord: what to play over it, and what it does.',
+		spotName: 'The chord to put here. Type one, or pick one that fits the melody below.',
+		put: 'Write this chord into the chart from this beat to the bar’s next chord.',
 		fits: 'This chord fits the melody here. Tap to put it in the box and see why; Change uses it.',
 		jazzier:
 			'Chords with more colour (sixths, sevenths, sus, ninths) that also fit the melody here.'

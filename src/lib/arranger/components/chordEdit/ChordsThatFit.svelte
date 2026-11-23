@@ -1,6 +1,6 @@
 <script>
 	/**
-	 * Every chord that fits the melody under this one (chart/chordSuggestions.js):
+	 * Every chord that fits the melody on a spot of the chart (chart/chordSuggestions.js):
 	 * the bluegrass ones first, the jazzier ones behind a button. Tapping one
 	 * hands it to the host (to put in the chord box) and says why it fits.
 	 */
@@ -12,12 +12,12 @@
 
 	/**
 	 * @type {{
-	 *   place: import('../../chart/chartAnalysis.js').ChordPlace,
+	 *   spot: import('../../chart/chordSpot.js').ChordSpot,
 	 *   picked: string,
 	 *   onPick: (name: string) => void
 	 * }}
 	 */
-	let { place, picked, onPick } = $props();
+	let { spot, picked, onPick } = $props();
 
 	const { arrangement, melody } = useArranger();
 
@@ -26,7 +26,7 @@
 			? chordSuggestions(
 					arrangement.sections,
 					melody.line.notes.filter((note) => note.channel === MELODY_CHANNEL),
-					place,
+					spot,
 					arrangement.capoFret
 				)
 			: []

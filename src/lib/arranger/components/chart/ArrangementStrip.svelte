@@ -15,17 +15,28 @@
 	 *   playback: Playback | null,
 	 *   restAt?: number,
 	 *   label?: (chord: string, place: ChordPlace) => string,
-	 *   onChordTap?: (place: ChordPlace) => void
+	 *   onChordTap?: (place: ChordPlace) => void,
+	 *   onSpotTap?: (spot: import('../../chart/chordSpot.js').ChordSpot) => void
 	 * }}
 	 *   restAt: while stopped, rest here (quarters in) rather than on the last
-	 *   edit: where Play carries on; onChordTap: given, chords are buttons (tap to change one)
+	 *   edit: where Play carries on; onChordTap: given, chords are buttons (tap to change one);
+	 *   onSpotTap: given, every place in a bar a chord can go is a button too (a bar holding
+	 *   the chord before, the second half of a bar); a written chord there opens as itself
 	 */
-	let { sections, playback, restAt = 0, label = (chord) => chord, onChordTap } = $props();
+	let {
+		sections,
+		playback,
+		restAt = 0,
+		label = (chord) => chord,
+		onChordTap,
+		onSpotTap
+	} = $props();
 
 	import { namesChord } from '../../chart/chordChanges.js';
 	import { barsInPlayOrder } from '../../chart/chartBars.js';
 	import { placeInSong } from '../../chart/loop.js';
 	import GlassPlayhead from './GlassPlayhead.svelte';
+	import { chordPlaces } from '../../transcription/barChords.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -66,6 +77,31 @@
 		if (changed >= 0 && !firstTime) restingBar = changed;
 	});
 
+	/**
+	 * A tap on a place in a bar: the chord written there, if one starts
+	 * there, else the spot.
+	 * @param {import('../../chart/chartBars.js').ChartBar} bar
+	 * @param {number} beat
+	 */
+	function tapSpot(bar, beat) {
+		let at = 0;
+		for (const chord of bar.chords) {
+			if (at === beat && !bar.held)
+				return onChordTap?.({ ...placeInSong(sections, bar), chord: chord.chord });
+			at += chord.length;
+		}
+		onSpotTap?.({ ...placeInSong(sections, bar), beat });
+	}
+
+	/**
+	 * Where a bar's tap areas go: one per place a chord can change, each up to the next.
+	 * @param {number} beats
+	 */
+	function spotsIn(beats) {
+		const places = chordPlaces(beats);
+		return places.map((beat, i) => ({ beat, length: (places[i + 1] ?? beats) - beat }));
+	}
+
 	/** @param {number} bar */
 	function progressAtBar(bar) {
 		const beats = measures.slice(0, bar).reduce((sum, each) => sum + each.beats, 0);
@@ -104,6 +140,18 @@
 									{#if bar.sectionStart}<span class="section-name">{bar.sectionName}</span>{/if}
 									{#if bar.meter}<span class="meter">{bar.meter}</span>{/if}
 								</span>
+							{/if}
+							{#if onSpotTap}
+								{#each spotsIn(bar.beats) as spot (spot.beat)}
+									<button
+										type="button"
+										class="spot"
+										style="left: {spot.beat * BEAT_PX}px; width: {spot.length * BEAT_PX}px"
+										aria-label="Bar {bar.index + 1}, beat {spot.beat + 1}: put a chord here"
+										onclick={() => tapSpot(bar, spot.beat)}
+										use:tooltip={TIPS.player.editSpot}
+									></button>
+								{/each}
 							{/if}
 							{#each bar.chords as chord, slot (chord.chord)}
 								{@const place = { ...placeInSong(sections, bar), chord: chord.chord }}
@@ -233,7 +281,27 @@
 		color: var(--strip-paper);
 	}
 
+	/* A place in the bar a chord can go: under the chord names, the whole height of the bar */
+	.spot {
+		position: absolute;
+		inset-block: 0;
+		border-radius: var(--corner-small);
+	}
+
+	@media (hover: hover) {
+		.spot:hover {
+			background: rgb(0 0 0 / 0.06);
+		}
+	}
+
+	.spot:focus-visible {
+		outline: 2px solid var(--strip-ink);
+		outline-offset: -2px;
+	}
+
 	.slot {
+		position: relative;
+		pointer-events: none;
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
@@ -259,6 +327,8 @@
 	}
 
 	.tappable {
+		position: relative;
+		pointer-events: auto;
 		align-self: flex-start;
 		border-radius: var(--corner-small);
 		text-align: left;

@@ -1,7 +1,8 @@
 /**
- * Every chord that could take the place of one chord of the chart, from
- * the melody under it (theory/chordsThatFit.js), named the way the chart
- * writes chords: guitar shapes, spelled in the key.
+ * Every chord that could go on a spot of the chart (chordSpot.js: a bar and
+ * a beat, written chord or not), from the melody under it until the bar's
+ * next chord (theory/chordsThatFit.js), named the way the chart writes
+ * chords: guitar shapes, spelled in the key.
  *
  * Works in the shapes' pitch (the melody moved down by the capo), so a
  * suggestion is a chord to type straight into the chart.
@@ -13,11 +14,12 @@ import { isNoChord } from './noChord.js';
 import { chordPitchClasses, chordTypeOf } from '../theory/chordTypes.js';
 import { chordsThatFit } from '../theory/chordsThatFit.js';
 import { noteRoles } from '../theory/noteRoles.js';
+import { spansOf } from './chordSpot.js';
 
 const EPSILON = 1e-6;
 
 /**
- * @typedef {import('./chartAnalysis.js').ChordPlace} ChordPlace
+ * @typedef {import('./chordSpot.js').ChordSpot} ChordSpot
  * @typedef {{
  *   name: string, does: string, scale: string, bluegrass: boolean, current: boolean,
  *   targets: { note: string, as: string }[]
@@ -28,26 +30,32 @@ const EPSILON = 1e-6;
 /**
  * @param {import('./timeline.js').Section[]} sections
  * @param {{ time: number, length: number, pitch: number }[]} melody the tune's lead notes at concert pitch
- * @param {ChordPlace} place
+ * @param {ChordSpot} spot
  * @param {number} capo
- * @returns {Suggestion[]} the chart's own chord first (when it fits), then best first;
- *   empty when no melody sounds under the chord
+ * @returns {Suggestion[]} the chord sounding there now first (when it fits), then best first;
+ *   empty when no melody sounds there
  */
-export function chordSuggestions(sections, melody, place, capo) {
-	const at = readPlace(sections, melody, place, capo);
-	if (!at) return [];
-	const { slots, plays, booms, notes, key: slotKey } = at;
+export function chordSuggestions(sections, melody, spot, capo) {
+	const songsKey = songKey(sections);
+	if (!songsKey) return [];
+	const { slots, beats } = rhythm(sections);
+	const spans = spansOf(slots, spot);
+	if (spans.length === 0) return [];
+	const booms = beats.filter((beat) => beat.role === 'boom').map((beat) => beat.time);
+	const notes = melody
+		.map((note) => ({ ...note, pitch: note.pitch - capo }))
+		.sort((a, b) => a.time - b.time);
 	const roled = noteRoles(notes, bandOf(slots, booms));
-	const occurrences = plays.map((index) => ({
-		notes: notesOf(roled, slots[index]),
-		next: plainChord(nextChord(slots, index))
+	const occurrences = spans.map((span) => ({
+		notes: notesOf(roled, span),
+		next: plainChord(nextChord(slots, span))
 	}));
-	const current = withoutVariant(slots[plays[0]].name);
+	const key = slots[spans[0].slot].key ?? songsKey;
+	const current = withoutVariant(slots[spans[0].slot].name);
 
-	const fits = chordsThatFit(plainKey(slotKey), occurrences);
-	return fits
+	return chordsThatFit(plainKey(key), occurrences)
 		.map((fit) => {
-			const name = chordNameIn(slotKey, fit);
+			const name = chordNameIn(key, fit);
 			return {
 				name,
 				does: fit.does,
@@ -55,38 +63,12 @@ export function chordSuggestions(sections, melody, place, capo) {
 				bluegrass: fit.type.bluegrass,
 				current: name === current,
 				targets: fit.targets.map((target) => ({
-					note: noteName(noteOfKey(slotKey.tonic, target.pitchClass)),
+					note: noteName(noteOfKey(key.tonic, target.pitchClass)),
 					as: target.as
 				}))
 			};
 		})
 		.sort((a, b) => Number(b.current) - Number(a.current));
-}
-
-/**
- * What the suggestions read from the song for one place in the chart: the
- * band's chords and booms, the melody in the shapes' pitch, every time the
- * place plays, and its key (null when the chart has no key yet).
- * @param {import('./timeline.js').Section[]} sections
- * @param {{ time: number, length: number, pitch: number }[]} melody at concert pitch
- * @param {ChordPlace} place
- * @param {number} capo
- */
-export function readPlace(sections, melody, place, capo) {
-	const songsKey = songKey(sections);
-	if (!songsKey) return null;
-	const { slots, beats } = rhythm(sections);
-	const plays = slots.flatMap((slot, index) => (isAt(slot, place) ? [index] : []));
-	if (plays.length === 0) return null;
-	return {
-		slots,
-		plays,
-		booms: beats.filter((beat) => beat.role === 'boom').map((beat) => beat.time),
-		notes: melody
-			.map((note) => ({ ...note, pitch: note.pitch - capo }))
-			.sort((a, b) => a.time - b.time),
-		key: slots[plays[0]].key ?? songsKey
-	};
 }
 
 /**
@@ -115,14 +97,14 @@ function bandOf(slots, booms) {
  * anticipations (arriving early) and not the next chord's; a suspension
  * from the chord before is heard against it.
  * @param {import('../theory/noteRoles.js').RoledNote[]} notes
- * @param {import('./timeline.js').SlotPosition} slot
+ * @param {{ start: number, length: number }} span
  */
-function notesOf(notes, slot) {
-	const end = slot.start + slot.length;
+function notesOf(notes, span) {
+	const end = span.start + span.length;
 	return notes.filter((note) => {
 		if (note.role === 'anticipation')
-			return note.chordTime >= slot.start - EPSILON && note.chordTime < end - EPSILON;
-		return note.time < end - EPSILON && note.time + note.length > slot.start + EPSILON;
+			return note.chordTime >= span.start - EPSILON && note.chordTime < end - EPSILON;
+		return note.time < end - EPSILON && note.time + note.length > span.start + EPSILON;
 	});
 }
 
@@ -138,24 +120,18 @@ function slotAt(slots, time) {
 }
 
 /**
- * @param {import('./timeline.js').SlotPosition} slot
- * @param {ChordPlace} place
- */
-function isAt(slot, place) {
-	return (
-		slot.section === place.section && slot.measure === place.measure && slot.chord === place.chord
-	);
-}
-
-/**
- * The next chord the band plays (the song goes round: the last leads to the first).
+ * The chord the band plays after a span: the bar's next chord, or the
+ * next different one after it (the song goes round: the last leads to the first).
  * @param {import('./timeline.js').SlotPosition[]} slots
- * @param {number} index
+ * @param {import('./chordSpot.js').SpotSpan} span
  */
-function nextChord(slots, index) {
-	for (let step = 1; step < slots.length; step++) {
-		const name = slots[(index + step) % slots.length].name;
-		if (!isNoChord(name) && name !== slots[index].name) return name;
+function nextChord(slots, span) {
+	const end = span.start + span.length;
+	const after = slots.findIndex((slot) => slot.start >= end - EPSILON);
+	const from = after === -1 ? 0 : after;
+	for (let step = 0; step < slots.length; step++) {
+		const name = slots[(from + step) % slots.length].name;
+		if (!isNoChord(name) && name !== slots[span.slot].name) return name;
 	}
 	return null;
 }

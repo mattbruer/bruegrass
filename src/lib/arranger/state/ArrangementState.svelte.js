@@ -3,6 +3,7 @@
  * settings that go with it (tempo, capo, key), plus everything worked out
  * from them.
  */
+import { withChordFrom } from '../chart/withChordFrom.js';
 import { readArrangement } from '../chart/readArrangement.js';
 import { chordLabel, keyOfChord, songKey, validChordDisplay } from '../chart/key.js';
 import { keyChoicesFor } from '../chart/keyChoices.js';
@@ -108,5 +109,15 @@ export class ArrangementState {
 	 */
 	changeChord(place, name) {
 		this.text = setChord(this.text, place, name);
+	}
+
+	/**
+	 * Put a chord on a spot of a bar, from its beat to the bar's next chord
+	 * (a held bar, the second half of a bar).
+	 * @param {import('../chart/chordSpot.js').ChordSpot} spot
+	 * @param {string} name
+	 */
+	setChordFrom(spot, name) {
+		this.text = withChordFrom(this.text, this.sections, spot, name);
 	}
 }

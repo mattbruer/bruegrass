@@ -22,6 +22,9 @@
 
 	const { arrangement, layout, loop, melody, player } = useArranger();
 
+	/** A bar and beat tapped on the strip where no chord is written (null: none). */
+	/** @type {import('../../chart/chordSpot.js').ChordSpot | null} */
+	let spotOn = $state(null);
 	/** The chord tapped on the strip (null: none). */
 	/** @type {import('../../chart/chartAnalysis.js').ChordPlace | null} */
 	let editOn = $state(null);
@@ -55,8 +58,9 @@
 			restAt={player.resumeInPass()}
 			label={arrangement.chordName}
 			onChordTap={(place) => (editOn = place)}
+			onSpotTap={(spot) => (spotOn = spot)}
 		/>
-		<ChordDialogs bind:place={editOn} />
+		<ChordDialogs bind:place={editOn} bind:spot={spotOn} />
 	{:else if showChords}
 		<p class="ui-well p-6 text-center text-ink-soft">
 			Press Edit to write an arrangement, and it will show up here.
