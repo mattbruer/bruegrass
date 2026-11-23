@@ -293,13 +293,13 @@
 		{
 			"id": "passing-chords",
 			"text": "Passing chords on approach notes (the book's dominant, chromatic and diatonic reharmonization, pp. 11–14)",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-23"
 		},
 		{
 			"id": "mandolin-chord-types",
 			"text": "Mandolin chops for every chord type (now only major and minor), at the bottom of the neck",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-23"
 		},
 		{
@@ -311,6 +311,18 @@
 		{
 			"id": "mixolydian-keys",
 			"text": "Mixolydian tunes as a key (Old Joe Clark): ♭VII in the key, no avoid notes",
+			"done": false,
+			"addedAt": "2026-11-23"
+		},
+		{
+			"id": "passing-chords-by-ear",
+			"text": "Passing chords: try them by ear (G → G7 on beat 3 → C in Amazing Grace), and on a real iPhone",
+			"done": false,
+			"addedAt": "2026-11-23"
+		},
+		{
+			"id": "melody-aware-voicings",
+			"text": "Voicings that know the melody: a top-note voicing, or which notes to keep from the melody note (one more input to voiceChord)",
 			"done": false,
 			"addedAt": "2026-11-23"
 		}

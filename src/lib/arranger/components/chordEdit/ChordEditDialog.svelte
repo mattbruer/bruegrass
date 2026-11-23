@@ -9,6 +9,7 @@
 	import { placeId } from '../../chart/chartAnalysis.js';
 	import { chordBoxProblem } from '../../chart/knownChords.js';
 	import ChordsThatFit from './ChordsThatFit.svelte';
+	import PassingChords from './PassingChords.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -62,6 +63,8 @@
 			{/if}
 
 			<ChordsThatFit {place} picked={typed} onPick={(name) => (typed = name)} />
+
+			<PassingChords {place} onAdded={() => (place = null)} />
 
 			<div class="flex flex-wrap gap-2">
 				<button

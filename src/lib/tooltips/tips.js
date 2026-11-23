@@ -179,7 +179,9 @@ export const TIPS = Object.freeze({
 		learn: 'Open the chord tutor on this chord: what to play over it, and what it does.',
 		fits: 'This chord fits the melody here. Tap to put it in the box and see why; Change uses it.',
 		jazzier:
-			'Chords with more colour (sixths, sevenths, sus, ninths) that also fit the melody here.'
+			'Chords with more colour (sixths, sevenths, sus, ninths) that also fit the melody here.',
+		passing:
+			'Put this chord on that beat of the bar, under a melody note that steps into the next chord.'
 	},
 
 	chordTutor: {

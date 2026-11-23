@@ -32,27 +32,19 @@ import { melodyTargets } from '../theory/melodyTargets.js';
  *   empty when no melody sounds under the chord
  */
 export function chordSuggestions(sections, melody, place, capo) {
-	const key = songKey(sections);
-	if (!key) return [];
-	const { slots, beats } = rhythm(sections);
-	const booms = beats.filter((beat) => beat.role === 'boom').map((beat) => beat.time);
-	const notes = melody
-		.map((note) => ({ ...note, pitch: note.pitch - capo }))
-		.sort((a, b) => a.time - b.time);
-
-	const plays = slots.flatMap((slot, index) => (isAt(slot, place) ? [index] : []));
-	if (plays.length === 0) return [];
-	const slotKey = slots[plays[0]].key ?? key;
+	const at = readPlace(sections, melody, place, capo);
+	if (!at) return [];
+	const { slots, plays, booms, notes, key: slotKey } = at;
 	const occurrences = plays.map((index) => ({
 		notes: melodyTargets(notes, slots[index], booms),
 		next: plainChord(nextChord(slots, index))
 	}));
 	const current = withoutVariant(slots[plays[0]].name);
 
-	const fits = chordsThatFit({ tonic: notePc(slotKey.tonic), minor: slotKey.minor }, occurrences);
+	const fits = chordsThatFit(plainKey(slotKey), occurrences);
 	return fits
 		.map((fit) => {
-			const name = noteName(noteOfKey(slotKey.tonic, fit.root)) + fit.type.suffix;
+			const name = chordNameIn(slotKey, fit);
 			return {
 				name,
 				does: fit.does,
@@ -66,6 +58,32 @@ export function chordSuggestions(sections, melody, place, capo) {
 			};
 		})
 		.sort((a, b) => Number(b.current) - Number(a.current));
+}
+
+/**
+ * What the suggestions read from the song for one place in the chart: the
+ * band's chords and booms, the melody in the shapes' pitch, every time the
+ * place plays, and its key (null when the chart has no key yet).
+ * @param {import('./timeline.js').Section[]} sections
+ * @param {{ time: number, length: number, pitch: number }[]} melody at concert pitch
+ * @param {ChordPlace} place
+ * @param {number} capo
+ */
+export function readPlace(sections, melody, place, capo) {
+	const songsKey = songKey(sections);
+	if (!songsKey) return null;
+	const { slots, beats } = rhythm(sections);
+	const plays = slots.flatMap((slot, index) => (isAt(slot, place) ? [index] : []));
+	if (plays.length === 0) return null;
+	return {
+		slots,
+		plays,
+		booms: beats.filter((beat) => beat.role === 'boom').map((beat) => beat.time),
+		notes: melody
+			.map((note) => ({ ...note, pitch: note.pitch - capo }))
+			.sort((a, b) => a.time - b.time),
+		key: slots[plays[0]].key ?? songsKey
+	};
 }
 
 /**
@@ -96,8 +114,25 @@ function nextChord(slots, index) {
  * (null for a chord the theory doesn't know, or none).
  * @param {string | null} name
  */
-function plainChord(name) {
+export function plainChord(name) {
 	const chord = name && parseChord(withoutVariant(name));
 	const type = chord && chordTypeOf(chord.rest);
 	return chord && type ? { root: notePc(chord.root), type } : null;
+}
+
+/**
+ * The key as the theory reads it.
+ * @param {import('./key.js').Key} key
+ */
+export function plainKey(key) {
+	return { tonic: notePc(key.tonic), minor: key.minor };
+}
+
+/**
+ * A chord the theory found, named as the chart writes it in this key.
+ * @param {import('./key.js').Key} key
+ * @param {{ root: number, type: { suffix: string } }} chord
+ */
+export function chordNameIn(key, chord) {
+	return noteName(noteOfKey(key.tonic, chord.root)) + chord.type.suffix;
 }
