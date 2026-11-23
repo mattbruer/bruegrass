@@ -25,7 +25,7 @@ sections
 timeline
    │  instruments/performance.js  every instrument's notes (guitar.js, mandolin.js, bassline.js)
    │  instruments/band.js         those notes as sound: samples and the upright's synth
-   │  instruments/tuneInstruments.js  what the tune's voices play on (recorded samples, played by tuneVoice.js), picked per strip in components/mixer/instruments/
+   │  instruments/tuneInstruments.js  what the tune's voices play on (recorded samples, played by tuneVoice.js, level-matched by sampleLoudness.js), picked per strip in components/mixer/instruments/
    │  instruments/strumPatterns.js  the guitar's strum patterns, as data
    │  instruments/articulation.js  pluck and graze (how the pick meets a string), as data; soundStart.js finds where a sample's sound begins
    │  instruments/sampleTuning.js  puts each guitar sample in tune as it plays (fixes in guitarSampleFixes.js, written by scripts/measureSampleTuning.js)

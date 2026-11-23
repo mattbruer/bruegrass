@@ -6,12 +6,16 @@
  */
 import { loadBuffer } from './band.js';
 import { SAMPLE_SETS } from './tuneInstruments.js';
+import { levelMatchDb } from './sampleLoudness.js';
 
 /** Seconds a note fades out when it ends, or when the same pitch is struck again. */
 const RELEASE = 0.15;
 const DAMP = 0.02;
 
-/** @type {Map<string, { midi: number, buffer: import('tone').ToneAudioBuffer }[]>} loaded, by instrument id */
+/**
+ * Loaded, by instrument id; `gainDb` brings the set to one loudness (sampleLoudness.js).
+ * @type {Map<string, { samples: { midi: number, buffer: import('tone').ToneAudioBuffer }[], gainDb: number }>}
+ */
 const loaded = new Map();
 
 /**
@@ -28,7 +32,8 @@ export async function loadTuneSamples(Tone, instrument) {
 			buffer: await loadBuffer(Tone, url(instrument.folder, midi))
 		}))
 	);
-	loaded.set(instrument.id, samples);
+	const gainDb = levelMatchDb(samples.map((each) => each.buffer));
+	loaded.set(instrument.id, { samples, gainDb });
 }
 
 /**
@@ -56,8 +61,9 @@ export function createTuneVoice(Tone, instrument, destination, { live = true } =
 		 * @param {number} levelDb the note's level as the guitar would play it
 		 */
 		play(pitch, duration, time, levelDb) {
-			const samples = loaded.get(instrument.id);
-			if (!samples) return;
+			const instrumentSamples = loaded.get(instrument.id);
+			if (!instrumentSamples) return;
+			const { samples, gainDb } = instrumentSamples;
 			const midi = pitch + instrument.octave;
 			const nearest = samples.reduce((best, each) =>
 				Math.abs(each.midi - midi) < Math.abs(best.midi - midi) ? each : best
@@ -66,7 +72,7 @@ export function createTuneVoice(Tone, instrument, destination, { live = true } =
 
 			const player = new Tone.Player({
 				url: nearest.buffer,
-				volume: instrument.volumeDb + levelDb,
+				volume: gainDb + instrument.volumeDb + levelDb,
 				fadeOut: RELEASE,
 				playbackRate: 2 ** ((midi - nearest.midi) / 12)
 			}).connect(/** @type {any} */ (destination));
