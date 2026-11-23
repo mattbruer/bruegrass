@@ -157,6 +157,24 @@ function transposeNote(note, from, to, shift) {
 	return { letter, accidental };
 }
 
+/** How each number of semitones above the tonic is spelled: scale steps up, then the accidental. */
+const STEPS_ABOVE_TONIC = [0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 6];
+
+/**
+ * A pitch class spelled as a degree of the key: flats for ♭II, ♭III, ♭VI and
+ * ♭VII, a sharp for ♯IV (Bb in G, never A#; C# in G).
+ * @param {Note} tonic
+ * @param {number} pitchClass
+ * @returns {Note}
+ */
+export function noteOfKey(tonic, pitchClass) {
+	const above = mod12(pitchClass - notePc(tonic));
+	const letter = (tonic.letter + STEPS_ABOVE_TONIC[above]) % 7;
+	const accidental = mod12(pitchClass - NATURAL[letter] + 6) - 6;
+	if (Math.abs(accidental) > 1) return parseNote(MAJOR_KEYS[mod12(pitchClass)]);
+	return { letter, accidental };
+}
+
 /**
  * A note as a scale degree of the key: degree index (0 = tonic), semitones
  * off the major scale's note, and that as an accidental prefix.

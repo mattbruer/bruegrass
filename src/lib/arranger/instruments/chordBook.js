@@ -1,7 +1,8 @@
 /**
  * The guitar's chord book: the one place a chord name becomes a shape.
  * Your own shapes (My chords) come first, then the built-in ones in
- * guitar-chords.json. Voicings built from theory can plug in here later.
+ * guitar-chords.json, then a shape built from the chord's notes
+ * (guitarVoicing.js), so any chord the theory knows can be played.
  *
  * Your shapes are set for the whole page (by voicings/myChords.svelte.js),
  * so playback, export, MIDI and the capo choice all play the same shapes.
@@ -11,6 +12,7 @@
  * chord is (root, fifth, slash bass) is read from the name before it.
  */
 import builtIn from './guitar-chords.json';
+import { generatedShape } from './guitarVoicing.js';
 
 /** @typedef {(number | null)[]} Shape six frets, low E to high e, null = muted */
 
@@ -44,7 +46,12 @@ export function hasShape(name) {
 /** @param {string} name */
 function findShape(name) {
 	const chord = withoutBass(name);
-	return yourShapes[chord] ?? /** @type {Record<string, Shape>} */ (builtIn)[chord];
+	return (
+		yourShapes[chord] ??
+		/** @type {Record<string, Shape>} */ (builtIn)[chord] ??
+		generatedShape(withoutVariant(chord)) ??
+		undefined
+	);
 }
 
 /** Every built-in chord name. */

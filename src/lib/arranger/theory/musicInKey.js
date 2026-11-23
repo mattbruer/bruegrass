@@ -100,7 +100,7 @@ function altOf(accidental) {
 
 /**
  * A chord symbol as a chord of this key: "D7" in G is V7, "Bb" in G is bIII.
- * Extensions fold into the four qualities (Am7 is minor, Gmaj7 major); a
+ * Extensions fold into the four qualities (Am7 is minor, Gmaj7 major, Bm7b5 diminished); a
  * slash chord's bass is left out.
  * @param {Key} key
  * @param {string} name
@@ -119,7 +119,7 @@ export function chordFromName(key, name) {
 
 /** @param {string} rest what follows a chord's root: "m7", "maj7", "dim", "9" */
 function qualityOf(rest) {
-	if (/^(dim|°)/.test(rest)) return 'dim';
+	if (/^(dim|°|m7b5|ø)/.test(rest)) return 'dim';
 	if (/^(m(?!aj)|min)/.test(rest)) return 'm';
 	if (/^(maj|M)/.test(rest)) return '';
 	return /^(7|9|11|13)/.test(rest) ? '7' : '';

@@ -1,4 +1,5 @@
-import { chordShape } from './chordBook.js';
+import { chordShape, withoutVariant } from './chordBook.js';
+import { chordTypeOf, toneSemitones } from '../theory/chordTypes.js';
 import { rhythm, slotPositions } from '../chart/timeline.js';
 import { pickPattern, patternStrokes } from './strumPatterns.js';
 import { createRng } from './seededRandom.js';
@@ -90,11 +91,17 @@ export function slashBassPitchClass(name) {
 }
 
 /**
- * Semitones from root to fifth: diminished chords have a flat fifth.
+ * Semitones from root to fifth: diminished and half-diminished chords
+ * have a flat fifth, augmented a sharp one.
  * @param {string} name
  */
 export function fifthInterval(name) {
-	return /^[A-G][#b]?dim/.test(name) ? 6 : 7;
+	const suffix = withoutVariant(name)
+		.split('/')[0]
+		.replace(/^[A-G][#b]?/, '');
+	const type = chordTypeOf(suffix);
+	const tones = type ? toneSemitones(type) : [];
+	return [7, 6, 8].find((fifth) => tones.includes(fifth)) ?? 7;
 }
 
 /**
