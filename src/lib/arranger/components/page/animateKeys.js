@@ -1,6 +1,7 @@
 /**
- * When a bar key's picture moves: marks the key (`data-animate`) and each
- * picture's own CSS says how it moves while marked.
+ * When a key's picture moves (the player bar's, the Tracks page's): marks
+ * the key (`data-animate`) and each picture's own CSS says how it moves
+ * while marked.
  *
  * - A mouse or pen: while it hovers the key.
  * - A finger (no hover on a phone): once, for a moment, when the key is tapped.
@@ -19,7 +20,7 @@ export function animateKeys(node) {
 
 	/** @param {Event} event */
 	const keyOf = (event) =>
-		event.target instanceof Element ? event.target.closest('.bar-tile') : null;
+		event.target instanceof Element ? event.target.closest('.bar-tile, button') : null;
 
 	/** @param {PointerEvent} event */
 	function hoverStart(event) {

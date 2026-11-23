@@ -41,7 +41,7 @@
 <style>
 	/* When the key is hovered or tapped (animateKeys.js; not for reduced motion) */
 	@media (prefers-reduced-motion: no-preference) {
-		:global(.bar-tile[data-animate]) .arrow {
+		:global([data-animate]) .arrow {
 			animation: slide-back 1.2s ease-in-out infinite;
 		}
 	}

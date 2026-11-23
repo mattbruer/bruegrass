@@ -130,11 +130,11 @@
 
 	/* When the key is hovered or tapped (animateKeys.js; not for reduced motion): the point traces the loop as it draws */
 	@media (prefers-reduced-motion: no-preference) {
-		:global(.bar-tile[data-animate]) .pencil {
+		:global([data-animate]) .pencil {
 			animation: trace 2s linear infinite;
 		}
 
-		:global(.bar-tile[data-animate]) .scribble {
+		:global([data-animate]) .scribble {
 			animation: draw 2s linear infinite;
 		}
 	}

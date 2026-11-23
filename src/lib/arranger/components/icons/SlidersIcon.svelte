@@ -100,7 +100,7 @@
 <style>
 	/* When the key is hovered or tapped (animateKeys.js; not for reduced motion): the faders ride up and down, each its own way */
 	@media (prefers-reduced-motion: no-preference) {
-		:global(.bar-tile[data-animate]) .cap {
+		:global([data-animate]) .cap {
 			animation-name: ride;
 			animation-timing-function: ease-in-out;
 			animation-iteration-count: infinite;

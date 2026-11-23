@@ -88,7 +88,7 @@
 
 	/* When the key is hovered or tapped (animateKeys.js; not for reduced motion): notes drift up and out */
 	@media (prefers-reduced-motion: no-preference) {
-		:global(.bar-tile[data-animate]) .note {
+		:global([data-animate]) .note {
 			animation: float-away 1.5s ease-out infinite;
 		}
 	}

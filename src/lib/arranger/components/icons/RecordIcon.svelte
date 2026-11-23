@@ -62,7 +62,7 @@
 	}
 
 	@media (prefers-reduced-motion: no-preference) {
-		:global(.bar-tile[data-animate]) .glow {
+		:global([data-animate]) .glow {
 			animation: glow 1.2s ease-in-out infinite;
 		}
 

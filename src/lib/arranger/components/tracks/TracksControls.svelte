@@ -3,7 +3,7 @@
 	 * The Tracks page's control bar, like Transcribe's: where you are (Play,
 	 * back to the start, the clock), Record (on the armed audio lane, after
 	 * the count-in), how it sounds (the click, the tempo), the editor and the mixer, Undo and Zoom, and the
-	 * picked clip's tools under them. It stays
+	 * picked clip's tools under them. Pictures move on hover, or once on a tap (animateKeys.js). It stays
 	 * in view under the top bar (`height`: how tall it is, for what scrolls
 	 * under it). Space plays and stops.
 	 */
@@ -27,6 +27,7 @@
 	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
 	import UndoButtons from './UndoButtons.svelte';
 	import DrawerKey from '../page/DrawerKey.svelte';
+	import { animateKeys } from '../page/animateKeys.js';
 	import PencilIcon from '../icons/PencilIcon.svelte';
 	import SlidersIcon from '../icons/SlidersIcon.svelte';
 	import ClipTools from './ClipTools.svelte';
@@ -89,7 +90,7 @@
 
 <svelte:window onkeydown={onKeydown} onkeyup={onKeyup} />
 
-<div class="controls ui-card" bind:offsetHeight={height}>
+<div class="controls ui-card" bind:offsetHeight={height} use:animateKeys>
 	<div class="row">
 		<div class="cluster" role="group" aria-label="Where in the song">
 			<button

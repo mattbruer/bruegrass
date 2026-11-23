@@ -215,7 +215,7 @@
 	 * click itself instead (tiltPendulum).
 	 */
 	@media (prefers-reduced-motion: no-preference) {
-		:global(.bar-tile[data-animate]:not(.ui-button-on)) .pendulum {
+		:global([data-animate]:not(.ui-button-on)) .pendulum {
 			transform-box: view-box;
 			transform-origin: 30px 60px;
 			animation: swing var(--beat, 0.5s) ease-in-out infinite alternate;
