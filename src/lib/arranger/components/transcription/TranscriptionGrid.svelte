@@ -81,7 +81,8 @@
 	});
 	const zoom = $derived(settings.transcribe.zoom);
 	const pixelsPerQuarter = $derived(PIXELS_PER_QUARTER * zoom.across);
-	const scale = $derived(trackScale(gridSpan(ruler, clip, beatsPerBar), pixelsPerQuarter));
+	const span = $derived(gridSpan(ruler, clip, beatsPerBar));
+	const scale = $derived(trackScale(span, pixelsPerQuarter));
 	const parts = $derived(
 		transcription.linked
 			? partLanes({
@@ -116,6 +117,14 @@
 		const lanesWidth = clientWidth - HEADER_WIDTH;
 		if (playheadX < scrollLeft || playheadX > scrollLeft + lanesWidth - 24)
 			scroller.scrollLeft = playheadX - lanesWidth * FOLLOW_AT;
+	});
+
+	// Zoom out can go as far as the whole song in view
+	$effect(() => {
+		const songWidth = (span.end - span.start) * PIXELS_PER_QUARTER;
+		const lanesWidth = scrollerWidth - HEADER_WIDTH;
+		if (songWidth > 0 && lanesWidth > 0)
+			transcription.wholeSongZoom = Math.min(1, lanesWidth / songWidth);
 	});
 
 	// Zooming keeps the middle of the view where it was

@@ -12,12 +12,14 @@
  * halfway, so a change mid-bar must win by a lot, and a new bar keeps the
  * chord before unless another one wins. The one common quick change,
  * | I V | I | (up a fifth for half a bar, then straight back), is let in
- * more easily, and its V is major.
+ * more easily, and its V is major. When you've said the key, the chords
+ * bluegrass plays in it are favoured (theory/bluegrassChords.js).
  */
 import { beatGroups } from '../../chart/timeline.js';
-import { createNoteMeter } from './notesSounding.js';
+import { BASS_HEARING, STRUM_HEARING, createNoteMeter } from './notesSounding.js';
 import { mixDown } from '../beats/analyseReference.js';
 import { secondsAtBeat } from '../tempoMap.js';
+import { unlikelyInKey } from '../../theory/bluegrassChords.js';
 
 /**
  * The chords a guess can be, as plain data: add a quality here (a 7th, say)
@@ -30,11 +32,6 @@ const QUALITIES = [
 ];
 const ROOT_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 const A_FIFTH = 7;
-
-/** The boom: the bass alone, in long frames to tell its low notes apart. */
-const BOOM_HEARING = { frameSize: 16384, lowHz: 40, highHz: 200 };
-/** The chops: the strum above the bass, in shorter frames that keep to the beat. */
-const CHOP_HEARING = { frameSize: 8192, lowHz: 200, highHz: 1500 };
 
 /** How much the bass on a chord's root counts, against the chops' notes being its notes. */
 const BASS_WEIGHT = 0.5;
@@ -56,14 +53,17 @@ const SILENCE = 0.003;
 /**
  * @param {{
  *   channels: Float32Array[], sampleRate: number, cents: number,
- *   beats: number[], bars: import('../barPlan.js').Bar[], duration: number
- * }} recording beats: each beat's time (seconds); cents: how far the band is from A = 440
+ *   beats: number[], bars: import('../barPlan.js').Bar[], duration: number,
+ *   key?: string | null
+ * }} recording beats: each beat's time (seconds); cents: how far the band is from A = 440;
+ *   key: the song's key, if you've said it
  * @returns {Record<number, import('../barChords.js').Slots>} bar number → a slot per beat
  */
-export function guessChords({ channels, sampleRate, cents, beats, bars, duration }) {
+export function guessChords({ channels, sampleRate, cents, beats, bars, duration, key = null }) {
+	const chords = chordsFor(key);
 	const mono = mixDown(channels);
-	const boomBetween = createNoteMeter(mono, sampleRate, cents, BOOM_HEARING);
-	const chopBetween = createNoteMeter(mono, sampleRate, cents, CHOP_HEARING);
+	const boomBetween = createNoteMeter(mono, sampleRate, cents, BASS_HEARING);
+	const chopBetween = createNoteMeter(mono, sampleRate, cents, STRUM_HEARING);
 	const heardBars = bars.map((bar) => {
 		const timeOf = (/** @type {number} */ beat) =>
 			Math.max(0, Math.min(duration, secondsAtBeat(beats, bar.firstBeat + beat)));
@@ -84,7 +84,8 @@ export function guessChords({ channels, sampleRate, cents, beats, bars, duration
 		const before = guessed[bar.number - 1];
 		const next = heardBars[i + 1];
 		const slots = slotsFromHearing(heard, booms, bar.beats, {
-			carried: chordNamed(before?.findLast(Boolean)),
+			chords,
+			carried: chordNamed(chords, before?.findLast(Boolean)),
 			nextStart: next?.bar.number === bar.number + 1 ? next.heard[0] : null
 		});
 		if (slots) guessed[bar.number] = slots;
@@ -112,14 +113,15 @@ function groupsOf(beats) {
  * @param {GroupHeard[]} heard
  * @param {number[]} booms the beat each group starts on
  * @param {number} beats
- * @param {{ carried: Chord | null, nextStart: GroupHeard | null }} around
- *   carried: the chord the bar before ended on; nextStart: the next bar's first beat group
+ * @param {{ chords: Chord[], carried: Chord | null, nextStart: GroupHeard | null }} around
+ *   chords: the ones it can be; carried: the chord the bar before ended on;
+ *   nextStart: the next bar's first beat group
  */
-function slotsFromHearing(heard, booms, beats, { carried, nextStart }) {
+function slotsFromHearing(heard, booms, beats, { chords, carried, nextStart }) {
 	if (heard[0].chops.loudness < SILENCE) return null;
 	/** @type {import('../barChords.js').Slots} */
 	const slots = Array(beats).fill(null);
-	let current = bestChord(heard[0], FIFTH_CREDIT);
+	let current = bestChord(chords, heard[0], FIFTH_CREDIT);
 	if (carried && current.score - chordScore(carried, heard[0], 1) < NEW_BAR_CHANGE_MARGIN) {
 		current = carried;
 	}
@@ -127,10 +129,10 @@ function slotsFromHearing(heard, booms, beats, { carried, nextStart }) {
 	for (let i = 1; i < booms.length; i++) {
 		if (heard[i].chops.loudness < SILENCE) continue;
 		const staying = chordScore(current, heard[i], 1);
-		const fifthUp = majorChordOn(current.root + A_FIFTH);
-		const arriving = bestChord(heard[i], 0);
+		const fifthUp = majorChordOn(chords, current.root + A_FIFTH);
+		const arriving = bestChord(chords, heard[i], 0);
 		if (
-			returnsHome(current, nextStart) &&
+			returnsHome(chords, current, nextStart) &&
 			chordScore(fifthUp, heard[i], 0) - staying >= QUICK_CHANGE_MARGIN
 		) {
 			current = fifthUp;
@@ -149,22 +151,24 @@ function slotsFromHearing(heard, booms, beats, { carried, nextStart }) {
 
 /**
  * Whether the next bar goes back to this chord (the end of | I V | I |).
+ * @param {Chord[]} chords
  * @param {Chord} home
  * @param {GroupHeard | null} nextStart
  */
-function returnsHome(home, nextStart) {
+function returnsHome(chords, home, nextStart) {
 	if (!nextStart) return false;
-	const nextBest = bestChord(nextStart, FIFTH_CREDIT);
+	const nextBest = bestChord(chords, nextStart, FIFTH_CREDIT);
 	return nextBest.score - chordScore(home, nextStart, 1) < NEW_BAR_CHANGE_MARGIN;
 }
 
 /**
+ * @param {Chord[]} chords
  * @param {GroupHeard} heard
  * @param {number} fifthCredit how much the bass on the fifth counts
  */
-function bestChord(heard, fifthCredit) {
-	let best = { chord: ALL_CHORDS[0], score: -Infinity };
-	for (const chord of ALL_CHORDS) {
+function bestChord(chords, heard, fifthCredit) {
+	let best = { chord: chords[0], score: -Infinity };
+	for (const chord of chords) {
 		const score = chordScore(chord, heard, fifthCredit);
 		if (score > best.score) best = { chord, score };
 	}
@@ -201,23 +205,34 @@ function share(sounding, notes) {
 
 /**
  * The major chord on this root (the V of | I V | I | is major in bluegrass).
+ * @param {Chord[]} chords
  * @param {number} root any octave (0 = C)
  */
-function majorChordOn(root) {
-	return /** @type {Chord} */ (chordNamed(ROOT_NAMES[root % 12]));
+function majorChordOn(chords, root) {
+	return /** @type {Chord} */ (chordNamed(chords, ROOT_NAMES[root % 12]));
 }
 
-/** @param {string | null | undefined} name */
-function chordNamed(name) {
-	return ALL_CHORDS.find((chord) => chord.name === name) ?? null;
+/**
+ * @param {Chord[]} chords
+ * @param {string | null | undefined} name
+ */
+function chordNamed(chords, name) {
+	return chords.find((chord) => chord.name === name) ?? null;
 }
 
-/** @type {Chord[]} */
-const ALL_CHORDS = ROOT_NAMES.flatMap((rootName, root) =>
-	QUALITIES.map((quality) => ({
-		name: rootName + quality.suffix,
-		root,
-		notes: quality.notes.map((note) => root + note),
-		penalty: quality.penalty ?? 0
-	}))
-);
+/**
+ * Every chord a guess can be, each held back by how unlikely it is in the key.
+ * @param {string | null} key
+ * @returns {Chord[]}
+ */
+function chordsFor(key) {
+	const unlikely = key ? unlikelyInKey(key) : () => 0;
+	return ROOT_NAMES.flatMap((rootName, root) =>
+		QUALITIES.map((quality) => ({
+			name: rootName + quality.suffix,
+			root,
+			notes: quality.notes.map((note) => root + note),
+			penalty: (quality.penalty ?? 0) + unlikely(root, quality.suffix === 'm')
+		}))
+	);
+}

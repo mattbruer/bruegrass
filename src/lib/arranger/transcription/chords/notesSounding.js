@@ -6,6 +6,11 @@
  */
 import { createFft } from '../../../audio/stretch/fft.js';
 
+/** The bass alone, in long frames to tell its low notes apart. */
+export const BASS_HEARING = { frameSize: 16384, lowHz: 40, highHz: 200 };
+/** The strum above the bass, in shorter frames that keep to the beat. */
+export const STRUM_HEARING = { frameSize: 8192, lowHz: 200, highHz: 1500 };
+
 /**
  * @typedef {{ frameSize: number, lowHz: number, highHz: number }} Hearing
  *   frameSize: longer tells low notes apart, shorter keeps to the beat
@@ -49,7 +54,7 @@ export function createNoteMeter(mono, sampleRate, cents, { frameSize, lowHz, hig
 			fft.forward(re, im);
 			for (let bin = 1; bin < noteOfBin.length; bin++) {
 				const note = noteOfBin[bin];
-				if (note >= 0) notes[note] += Math.hypot(re[bin], im[bin]);
+				if (note >= 0) notes[note] += Math.sqrt(Math.hypot(re[bin], im[bin]));
 			}
 		}
 		return { notes, loudness: samples ? Math.sqrt(power / samples) : 0 };

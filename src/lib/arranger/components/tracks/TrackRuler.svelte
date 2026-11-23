@@ -1,5 +1,9 @@
 <script>
-	/** Bar numbers and section names across the top of the tracks, from the count-in bar on. */
+	/**
+	 * Bar numbers and section names across the top of the tracks, from the count-in bar on.
+	 * Zoomed far out, only every 2nd, 4th… bar is numbered.
+	 */
+	import { everyNth } from '../../tracks/thinOut.js';
 
 	/**
 	 * @type {{
@@ -8,6 +12,16 @@
 	 * }}
 	 */
 	let { bars, scale } = $props();
+
+	/** px between bar numbers, at least. */
+	const MIN_NUMBER_GAP = 32;
+
+	const barWidth = $derived(scale.toX(bars[1]?.beats ?? 4) - scale.toX(0));
+	const numberEvery = $derived(everyNth(barWidth, MIN_NUMBER_GAP));
+
+	/** @param {import('../../tracks/ruler.js').RulerBar} bar */
+	const numbered = (bar) =>
+		numberEvery === 1 || bar.number <= 1 || (bar.number - 1) % numberEvery === 0;
 </script>
 
 <div class="ruler">
@@ -15,12 +29,16 @@
 		<div
 			class="bar"
 			class:count-in={bar.number === 0}
+			class:thinned={numberEvery > 1}
+			class:unnumbered={!numbered(bar)}
 			style:left="{scale.toX(bar.start)}px"
 			style:width="{scale.toX(bar.start + bar.beats) - scale.toX(bar.start)}px"
 		>
-			<span class="number" data-bar={bar.number}
-				>{bar.label ?? (bar.number === 0 ? 'Count-in' : bar.number)}</span
-			>
+			{#if numbered(bar)}
+				<span class="number" data-bar={bar.number}
+					>{bar.label ?? (bar.number === 0 ? 'Count-in' : bar.number)}</span
+				>
+			{/if}
 			{#if bar.sectionName}
 				<span class="section" data-bar={bar.number}>{bar.sectionName}</span>
 			{/if}
@@ -49,6 +67,15 @@
 		white-space: nowrap;
 		font-size: 0.7rem;
 		line-height: 1.2;
+	}
+
+	/* zoomed far out: a numbered bar's number runs on over the unnumbered ones after it */
+	.bar.thinned:not(.count-in) {
+		overflow: visible;
+	}
+
+	.bar.unnumbered {
+		border-left-color: transparent;
 	}
 
 	.number {

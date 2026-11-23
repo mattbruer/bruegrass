@@ -2,7 +2,8 @@
 	/**
 	 * Zoom a view across (time) and down (lanes, pitch rows): − and + for
 	 * each; tap the arrow between them to go back to the usual size. A view
-	 * that only zooms one way names it in `axes`.
+	 * that only zooms one way names it in `axes`; one that can show more
+	 * than the usual levels (the whole song) gives its lowest level in `lowest`.
 	 */
 	import { canZoomIn, canZoomOut, zoomStep } from './zoomLevels.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -11,10 +12,11 @@
 	/**
 	 * @type {{
 	 *   zoom: { across: number, down: number },
-	 *   axes?: ('across' | 'down')[]
+	 *   axes?: ('across' | 'down')[],
+	 *   lowest?: { across?: number, down?: number }
 	 * }} zoom is changed in place
 	 */
-	let { zoom, axes = ['across', 'down'] } = $props();
+	let { zoom, axes = ['across', 'down'], lowest = {} } = $props();
 
 	const AXES = /** @type {const} */ ([
 		{ id: 'across', turn: 0, label: 'Usual size across', tips: TIPS.zoom.across },
@@ -30,8 +32,8 @@
 			<button
 				type="button"
 				class="size-10 ui-button text-lg"
-				disabled={!canZoomOut(zoom[axis.id])}
-				onclick={() => (zoom[axis.id] = zoomStep(zoom[axis.id], -1))}
+				disabled={!canZoomOut(zoom[axis.id], lowest[axis.id])}
+				onclick={() => (zoom[axis.id] = zoomStep(zoom[axis.id], -1, lowest[axis.id]))}
 				use:tooltip={axis.tips.out}>−</button
 			>
 			<button
@@ -61,7 +63,7 @@
 				type="button"
 				class="size-10 ui-button text-lg"
 				disabled={!canZoomIn(zoom[axis.id])}
-				onclick={() => (zoom[axis.id] = zoomStep(zoom[axis.id], 1))}
+				onclick={() => (zoom[axis.id] = zoomStep(zoom[axis.id], 1, lowest[axis.id]))}
 				use:tooltip={axis.tips.in}>+</button
 			>
 		</span>

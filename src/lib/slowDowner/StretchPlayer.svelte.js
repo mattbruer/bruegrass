@@ -145,7 +145,7 @@ export class StretchPlayer {
 		this.time = time;
 	}
 
-	/** @param {number} cents up when positive, within ±50 */
+	/** @param {number} cents up when positive, within a semitone */
 	setCents(cents) {
 		this.cents = clampCents(cents);
 		this.#node?.port.postMessage({ type: 'tune', cents: this.cents });

@@ -4,6 +4,9 @@
  * nearest note, averaged round the circle (49 cents sharp is next to 49
  * flat). Instruments' partials stretch a little and voices slide, so it's a
  * starting point to nudge from by ear.
+ *
+ * Well between two notes, 39¢ flat sounds the same as 61¢ sharp: the notes
+ * themselves say which, by which way lands in a key the caller expects.
  */
 import { createFft } from '../audio/stretch/fft.js';
 
@@ -17,13 +20,43 @@ const HIGHEST_HZ = 2000;
 const PEAK_SHARE = 0.05;
 /** Frames quieter than this (RMS) are skipped. */
 const SILENCE = 0.003;
+/** Closer to a note than this, the nearest note is trusted. */
+const OTHER_WAY_FROM = 25;
+/** The other way has to fit the keys this much better (0 to 1): when both fit, the smaller move wins. */
+const CLEARLY_BETTER = 0.1;
+
+/**
+ * @typedef {{ cents: number[], weights: number[] }} Partials
+ *   each partial's pitch in cents from A = 440, and how loud it is
+ */
 
 /**
  * @param {Float32Array[]} channels
  * @param {number} sampleRate
- * @returns {number | null} cents the recording is sharp (positive) or flat; null: no notes found
+ * @param {(noteWeights: number[]) => number} keyFit how well 12 note weights (C first) fit the keys expected
+ * @returns {{ cents: number, otherWay: number | null } | null}
+ *   cents the recording is sharp (positive) or flat, within a semitone, and
+ *   the reading the other way when it's between two notes; null: no notes found
  */
-export function findTuning(channels, sampleRate) {
+export function findTuning(channels, sampleRate, keyFit) {
+	const partials = hearPartials(channels, sampleRate);
+	const nearest = offNearestNote(partials);
+	if (nearest === null) return null;
+	if (Math.abs(nearest) < OTHER_WAY_FROM) return { cents: nearest, otherWay: null };
+	const otherWay = nearest - 100 * Math.sign(nearest);
+	const fits = (/** @type {number} */ off) => keyFit(noteWeights(partials, off));
+	return fits(otherWay) > fits(nearest) + CLEARLY_BETTER
+		? { cents: otherWay, otherWay: nearest }
+		: { cents: nearest, otherWay };
+}
+
+/**
+ * The strong partials in 60 frames across the song.
+ * @param {Float32Array[]} channels
+ * @param {number} sampleRate
+ * @returns {Partials}
+ */
+function hearPartials(channels, sampleRate) {
 	const fft = createFft(FRAME_SIZE);
 	const length = channels[0].length;
 	const re = new Float64Array(FRAME_SIZE);
@@ -31,8 +64,8 @@ export function findTuning(channels, sampleRate) {
 	const magnitude = new Float64Array(FRAME_SIZE / 2);
 	const lowBin = Math.ceil((LOWEST_HZ * FRAME_SIZE) / sampleRate);
 	const highBin = Math.floor((HIGHEST_HZ * FRAME_SIZE) / sampleRate);
-	let x = 0;
-	let y = 0;
+	/** @type {Partials} */
+	const partials = { cents: [], weights: [] };
 
 	for (let f = 0; f < FRAMES; f++) {
 		const start = Math.floor(((f + 0.5) / FRAMES) * (length - FRAME_SIZE));
@@ -47,13 +80,41 @@ export function findTuning(channels, sampleRate) {
 			const m = magnitude[k];
 			if (m < loudest * PEAK_SHARE || m < magnitude[k - 1] || m <= magnitude[k + 1]) continue;
 			const hz = ((k + peakOffset(magnitude, k)) * sampleRate) / FRAME_SIZE;
-			const angle = (2 * Math.PI * offNote(hz)) / 100;
-			x += m * Math.cos(angle);
-			y += m * Math.sin(angle);
+			partials.cents.push(1200 * Math.log2(hz / 440));
+			partials.weights.push(m);
 		}
 	}
+	return partials;
+}
+
+/**
+ * The partials' distance from the nearest note (−50 to 50), averaged round the circle.
+ * @param {Partials} partials
+ */
+function offNearestNote({ cents, weights }) {
+	let x = 0;
+	let y = 0;
+	cents.forEach((pitch, i) => {
+		const angle = (2 * Math.PI * pitch) / 100;
+		x += weights[i] * Math.cos(angle);
+		y += weights[i] * Math.sin(angle);
+	});
 	if (x === 0 && y === 0) return null;
 	return (Math.atan2(y, x) * 100) / (2 * Math.PI);
+}
+
+/**
+ * How loud each of the 12 notes is (C first), heard as if tuned by `off`.
+ * @param {Partials} partials
+ * @param {number} off cents sharp
+ */
+function noteWeights({ cents, weights }, off) {
+	const notes = new Array(12).fill(0);
+	cents.forEach((pitch, i) => {
+		const fromA = Math.round((pitch - off) / 100);
+		notes[(((fromA + 9) % 12) + 12) % 12] += weights[i];
+	});
+	return notes;
 }
 
 /**
@@ -87,13 +148,4 @@ function peakOffset(magnitude, k) {
 	const c = Math.log(magnitude[k + 1] + 1e-12);
 	const bend = a - 2 * b + c;
 	return bend === 0 ? 0 : (0.5 * (a - c)) / bend;
-}
-
-/**
- * Cents from the nearest note of standard pitch (−50 to 50).
- * @param {number} hz
- */
-function offNote(hz) {
-	const cents = 1200 * Math.log2(hz / 440);
-	return ((((cents + 50) % 100) + 100) % 100) - 50;
 }

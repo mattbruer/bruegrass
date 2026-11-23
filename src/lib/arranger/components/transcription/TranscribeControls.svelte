@@ -121,7 +121,10 @@
 		</div>
 
 		<div class="cluster">
-			<ZoomControl zoom={settings.transcribe.zoom} />
+			<ZoomControl
+				zoom={settings.transcribe.zoom}
+				lowest={{ across: transcription.wholeSongZoom }}
+			/>
 		</div>
 	</div>
 </div>

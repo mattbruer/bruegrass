@@ -1,11 +1,11 @@
 /**
  * Fine tuning a recording: moving its pitch a few cents so its notes sit
  * on standard pitch (A = 440) instead of between two notes. A band tuned
- * to each other, or to another A, is off by less than half a semitone, so
- * that's the range.
+ * to each other or to another A, or a copy played fast or slow, is off by
+ * up to a semitone, so that's the range.
  */
 
-export const MAX_CENTS = 50;
+export const MAX_CENTS = 100;
 
 /**
  * Keep a tuning in range, on whole cents.

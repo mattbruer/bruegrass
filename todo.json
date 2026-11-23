@@ -29,8 +29,14 @@
 		{
 			"id": "guess-scored",
 			"text": "Guess the chords: score it against your own finished transcriptions, and tune it on them",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-21"
+		},
+		{
+			"id": "guess-bar-one",
+			"text": "Guess where bar 1 goes (chord changes land on bar lines with the bass on the root), so the slide is suggested",
+			"done": false,
+			"addedAt": "2026-11-22"
 		},
 		{
 			"id": "guess-learned",
@@ -97,6 +103,12 @@
 			"text": "Check the beat finder against Logic's tempo maps",
 			"done": false,
 			"addedAt": "2026-11-12T00:00:00.000Z"
+		},
+		{
+			"id": "transcribe-suggest-key",
+			"text": "Transcribe: suggest the song's key from the recording (Find already fits the notes to string-band keys); you accept it, it never overwrites yours",
+			"done": false,
+			"addedAt": "2026-11-21"
 		},
 		{
 			"id": "transcribe-slide-phone",

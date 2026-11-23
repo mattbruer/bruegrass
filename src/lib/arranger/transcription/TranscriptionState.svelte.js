@@ -63,6 +63,8 @@ import { quartersAt, secondsAt } from './tempoMap.js';
 import { barStepTarget } from './barStep.js';
 import { findTuning } from '$lib/slowDowner/findTuning.js';
 import { clampCents } from '$lib/slowDowner/tuning.js';
+import { bestKey } from '../theory/keyFit.js';
+import { STRING_BAND_KEYS } from '../theory/usualKeys.js';
 import { bundledReference } from './bundledReferences.js';
 import { STARTER_SONG } from '../starterSong.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
@@ -113,6 +115,12 @@ export class TranscriptionState {
 	time = $state(DEFAULT_TIME);
 	/** Whether you've said the time signature: until then there are beats but no bars. */
 	timeChosen = $state(false);
+	/**
+	 * Find's other reading, a semitone from the tuning it chose (null: Find
+	 * hasn't a second one).
+	 * @type {number | null}
+	 */
+	tuningOtherWay = $state(null);
 	/** Beats the recording is being dragged along the ruler by, before it's let go (0: not sliding). */
 	slidePreview = $state(0);
 	/**
@@ -147,6 +155,8 @@ export class TranscriptionState {
 	 * it on for now (the user's call: a stray drag moved a beat); a button calling fixBeats(true) brings it back.
 	 */
 	fixingBeats = $state(false);
+	/** The zoom across that fits the whole song in the grid's view; the grid works it out. */
+	wholeSongZoom = $state(1);
 	/** The grid before each change to the beats, newest last, for Undo. */
 	#beatHistory = /** @type {BeatGrid[]} */ ($state.raw([]));
 	/** The song you came from (sent from this transcription), to go back to in the arranger; null: none. */
@@ -177,6 +187,8 @@ export class TranscriptionState {
 	);
 	/** @type {Record<number, Slots>} bar number → its chords, a slot per beat */
 	chords = $derived(this.#chartOnBars.chords);
+	/** Whether any bar has a chord (one carrying on the chord before doesn't count). */
+	hasChords = $derived(Object.values(this.chords).some((slots) => !isEmptyBar(slots)));
 	/** @type {Record<number, string>} bar number → the section (marker) starting there */
 	markers = $derived(this.#chartOnBars.markers);
 	/**
@@ -294,6 +306,7 @@ export class TranscriptionState {
 		this.pickingReference = false;
 		this.cycle.clear();
 		this.player.setCents(0);
+		this.tuningOtherWay = null;
 		this.closeMenus();
 		this.#audio = null;
 		this.#analysis = null;
@@ -540,8 +553,9 @@ export class TranscriptionState {
 
 	/**
 	 * Fill the bars with no chord yet with a guess from the recording, to fix
-	 * by ear. Chords you wrote are left alone. It's heard at the band's own
-	 * tuning (measured), so it doesn't matter whether you've tuned it yet.
+	 * by ear. Chords you wrote are left alone. It's heard at your tuning, or
+	 * the measured one before you've tuned, so the chords are spelled the
+	 * way you tuned it.
 	 */
 	guessChords() {
 		const audio = this.#audio;
@@ -550,12 +564,29 @@ export class TranscriptionState {
 		const guessed = guessChords({
 			channels,
 			sampleRate: audio.sampleRate,
-			cents: findTuning(channels, audio.sampleRate) ?? 0,
+			cents: this.#bandsCents(audio),
 			beats: this.grid.beats,
 			bars: this.bars.filter((bar) => !(bar.number in this.chords)),
+			key: this.key,
 			duration: audio.duration
 		});
 		for (const [number, slots] of Object.entries(guessed)) this.setBarChords(Number(number), slots);
+	}
+
+	/** Empty every bar's chords, to guess again or start by ear. */
+	clearChords() {
+		for (const [number, slots] of Object.entries(this.chords)) {
+			if (!isEmptyBar(slots)) this.setBarChords(Number(number), []);
+		}
+	}
+
+	/**
+	 * How far the band is from A = 440: as you've tuned the recording, or
+	 * measured before you have.
+	 * @param {AudioBuffer} audio
+	 */
+	#bandsCents(audio) {
+		return this.player.cents ? -this.player.cents : (measureTuning(audio)?.cents ?? 0);
 	}
 
 	/**
@@ -743,11 +774,28 @@ export class TranscriptionState {
 		this.#keepDraft();
 	}
 
-	/** Measure how far the recording is from standard pitch, and tune it back by that much. */
+	/**
+	 * Measure how far the recording is from standard pitch, and tune it back
+	 * by that much. Between two notes it goes the way that lands in a usual
+	 * key, and keeps the other way for `tuneTheOtherWay`.
+	 */
 	findTuning() {
-		const audio = this.#audio;
-		const off = audio && findTuning(channelsOf(audio), audio.sampleRate);
-		if (off !== null && off !== undefined) this.setTuning(clampCents(-off));
+		const found = this.#audio && measureTuning(this.#audio);
+		if (!found) return;
+		this.setTuning(clampCents(-found.cents));
+		this.tuningOtherWay = found.otherWay === null ? null : clampCents(-found.otherWay);
+	}
+
+	/** Swap to the other of Find's two readings (a semitone apart). */
+	tuneTheOtherWay() {
+		if (this.tuningOtherWay === null) return;
+		const other = this.tuningOtherWay;
+		this.tuningOtherWay = this.player.cents;
+		this.setTuning(other);
+		if (this.hasChords) {
+			this.clearChords();
+			this.guessChords();
+		}
 	}
 
 	/** Back to where the song starts. */
@@ -970,6 +1018,19 @@ function hitsOf(analysis) {
 		perSecond: analysis.framesPerSecond,
 		offset: analysis.offsetSeconds
 	};
+}
+
+/**
+ * How far the recording is from A = 440, choosing between two notes by the
+ * keys string bands play in.
+ * @param {AudioBuffer} audio
+ */
+function measureTuning(audio) {
+	return findTuning(
+		channelsOf(audio),
+		audio.sampleRate,
+		(noteWeights) => bestKey(noteWeights, STRING_BAND_KEYS).fit
+	);
 }
 
 /** @param {AudioBuffer} audio */

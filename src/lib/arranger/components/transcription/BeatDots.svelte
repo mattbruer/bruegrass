@@ -9,6 +9,7 @@
 	 * menu (a bar starts here, add or remove a beat).
 	 */
 	import { secondsAt } from '../../transcription/tempoMap.js';
+	import { everyNth } from '../../tracks/thinOut.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -20,6 +21,8 @@
 	 */
 	let { transcription, scale } = $props();
 
+	/** px between dots, at least: zoomed far out, only some ONEs show. */
+	const MIN_DOT_GAP = 20;
 	/** A press that moves less than this (px) is a tap. */
 	const DRAG_THRESHOLD = 4;
 
@@ -45,6 +48,16 @@
 		beats.flatMap((time, index) => (time >= trim.from && time <= trim.to ? [index] : []))
 	);
 	const quarterWidth = $derived(scale.toX(1) - scale.toX(0));
+	const beatsPerBar = $derived(transcription.bars[0]?.beats ?? 4);
+	const barsPerDot = $derived(everyNth(quarterWidth * beatsPerBar, MIN_DOT_GAP));
+	/** The ONEs that still show when the beats are too close for every dot. */
+	const onesShown = $derived(
+		new Set(
+			transcription.bars
+				.filter((bar) => (bar.number - 1) % barsPerDot === 0)
+				.map((bar) => bar.firstBeat - transcription.slidePreview)
+		)
+	);
 
 	/** @param {number} index */
 	function xOf(index) {
@@ -84,7 +97,9 @@
 <div class="row">
 	{#if !transcription.fixingBeats}
 		{#each kept as index (index)}
-			<span class="dot still" class:one={ones.has(index)} style:left="{xOf(index)}px"></span>
+			{#if quarterWidth >= MIN_DOT_GAP || onesShown.has(index)}
+				<span class="dot still" class:one={ones.has(index)} style:left="{xOf(index)}px"></span>
+			{/if}
 		{/each}
 	{:else}
 		{#each kept as index (index)}

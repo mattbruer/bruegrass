@@ -225,7 +225,9 @@ export const TIPS = Object.freeze({
 		tuneUp: 'Raise the recording a cent, for a band that tuned flat.',
 		tuneReset: 'How far the recording’s pitch is moved, in cents. Tap for as recorded.',
 		findTuning:
-			'Measure how far the band is from A = 440 and tune the recording back by that much. Then nudge by ear if it needs it.',
+			'Measure how far the band is from A = 440 and tune the recording back by that much. Between two notes it goes the way that lands in a key string bands play in (G, not A♭). Then nudge by ear if it needs it.',
+		tuneOtherWay:
+			'Tune it the other way instead: to the note on the other side, a semitone away. Choose the one the band sounds in tune with. The chords are guessed again to match.',
 		countAlong:
 			'Click on every beat as the recording plays, higher on each ONE, so you can hear if the bars fit.',
 		key: 'The song’s key: the tune’s notes are spelled in it. Needed before you send it to the arranger.',
@@ -256,7 +258,9 @@ export const TIPS = Object.freeze({
 		bandLane:
 			'The band (guitar, mandolin, bass) plays these chords along with the recording. Tap a bar to type its chords. Each instrument’s own level is in the mixer.',
 		guessChords:
-			'Fill every bar that has no chord yet with a guess from the recording. Then play it with the band and fix what sounds wrong. Chords you wrote stay as they are.',
+			'Fill the bars with a guess from the recording. Then play it with the band and fix what sounds wrong.',
+		clearChords:
+			'Empty every bar’s chords, the ones you typed too, to guess again or work them out by ear.',
 		addLane:
 			'Add another line of the tune to write by ear: the vocal, a mandolin break, a fiddle part. You name it first. It has its own instrument and level, and goes to the arranger with the rest.',
 		laneMenu: 'Name this part, and more.',
