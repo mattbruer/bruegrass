@@ -8,9 +8,10 @@
 	 * plays the whole song once from the playhead; the arranger's loop is
 	 * kept for when you go back. Picking a part's lane opens its editor
 	 * under the lanes (the part pane); which part is open is in the page's
-	 * history, so Back (a swipe on iPhone) closes it.
+	 * history, so Back (a swipe on iPhone) closes it. The cycle (its strip
+	 * above the ruler, the Cycle button, C) loops bars of the band.
 	 */
-	import { onDestroy, tick } from 'svelte';
+	import { onDestroy, tick, untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { pushState, replaceState } from '$app/navigation';
@@ -21,12 +22,41 @@
 	import RecordingNotes from '$lib/arranger/components/recording/RecordingNotes.svelte';
 	import PartPane from '$lib/arranger/components/tracks/PartPane.svelte';
 	import { partName } from '$lib/arranger/melody/partNames.js';
+	import { TracksCycleState } from '$lib/arranger/state/TracksCycleState.svelte.js';
+	import { rulerBars } from '$lib/arranger/tracks/ruler.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	const { recording, loop, player, song } = useArranger();
+	const { recording, loop, player, song, arrangement } = useArranger();
 	onDestroy(loop.playThroughWhile());
+
+	const cycle = new TracksCycleState(() => rulerBars(arrangement.sections));
+
+	// The band loops the cycle's bars; a change while playing starts it again with them
+	let cycledBefore = '';
+	$effect(() => {
+		const bars = cycle.bars;
+		const key = JSON.stringify(bars);
+		if (key === cycledBefore) return;
+		cycledBefore = key;
+		untrack(() => {
+			loop.cycleBars = bars;
+			player.restartIfPlaying();
+		});
+	});
+
+	/** C turns the cycle on and off, as in Transcribe (not while typing or on a control). @param {KeyboardEvent} event */
+	function onKeydown(event) {
+		const target = event.target;
+		const inControl =
+			target instanceof Element && target.closest('input, select, textarea, [contenteditable]');
+		if (event.defaultPrevented || inControl || event.metaKey || event.ctrlKey || event.altKey)
+			return;
+		if (event.key !== 'c' && event.key !== 'C') return;
+		event.preventDefault();
+		cycle.turn(!cycle.on);
+	}
 
 	/** The part whose editor is open (a lane id; null: none). */
 	const editing = $derived(/** @type {{ editing?: string }} */ (page.state).editing ?? null);
@@ -36,9 +66,10 @@
 	/** The sticky control bar's height: the editor scrolls into view below it. */
 	let controlsHeight = $state(0);
 
-	/** @param {string} id */
+	/** @param {string | null} id the part to edit (null: close the editor, as Back does) */
 	async function edit(id) {
 		if (id === editing) return;
+		if (id === null) return history.back();
 		if (editing) replaceState('', { editing: id });
 		else {
 			// After a reload this entry can still hold an editor that isn't open, which Back would bring back
@@ -60,6 +91,8 @@
 	};
 </script>
 
+<svelte:window onkeydown={onKeydown} />
+
 <svelte:head>
 	<title>Tracks · Bluegrass Arranger</title>
 </svelte:head>
@@ -78,7 +111,7 @@
 	<SongBar />
 	<TracksControls bind:height={controlsHeight} />
 	<RecordingNotes />
-	<TracksView {editing} onEdit={edit} />
+	<TracksView {editing} onEdit={edit} {cycle} />
 	{#if editing}
 		<div
 			bind:this={pane}

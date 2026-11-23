@@ -126,6 +126,7 @@ export class RecordingState {
 	/** @param {string} trackId an empty lane: one with takes stays while it has them */
 	removeLane(trackId) {
 		this.#name(trackId, '');
+		this.#arranger.parts.forget(trackId);
 	}
 
 	/** @param {string} trackId */

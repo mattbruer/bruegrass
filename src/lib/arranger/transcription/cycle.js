@@ -77,6 +77,41 @@ export function movedCycle(cycle, delta, lines, snap) {
 }
 
 /**
+ * A cycle with its ends moved to the nearest bar lines (at least a bar
+ * long), for a player that loops whole bars (the band on Tracks).
+ * @param {Cycle | null} cycle
+ * @param {number[]} lines
+ * @returns {Cycle | null}
+ */
+export function onBarLines(cycle, lines) {
+	if (!cycle || lines.length < 2) return null;
+	const nearest = (/** @type {number} */ quarters) =>
+		lines.reduce((best, line) =>
+			Math.abs(line - quarters) < Math.abs(best - quarters) ? line : best
+		);
+	const from = nearest(cycle.from);
+	const to = nearest(cycle.to);
+	if (to > from) return { from, to };
+	const next = lines.find((line) => line > from);
+	return next === undefined ? { from: lines.at(-2) ?? 0, to: from } : { from, to: next };
+}
+
+/**
+ * The bars a cycle on bar lines covers, numbered from 1 (the loop's way).
+ * @param {Cycle} cycle
+ * @param {import('../tracks/ruler.js').RulerBar[]} ruler
+ * @returns {{ from: number, to: number } | null}
+ */
+export function cycleBarNumbers(cycle, ruler) {
+	const inside = ruler.filter(
+		(bar) => bar.number > 0 && bar.start >= cycle.from - 1e-6 && bar.start < cycle.to - 1e-6
+	);
+	const first = inside[0];
+	const last = inside.at(-1);
+	return first && last ? { from: first.number, to: last.number } : null;
+}
+
+/**
  * What a press on the strip grabs of the cycle: its start, its end, its
  * body, or nothing (a new cycle starts there).
  * @param {number} x pixels along the strip

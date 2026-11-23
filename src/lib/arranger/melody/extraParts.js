@@ -65,7 +65,7 @@ export function extraPartBlocks(abc) {
  */
 export function withoutExtraPart(abc, id) {
 	const block = extraPartBlocks(abc).find((each) => each.id === id);
-	return block ? abc.slice(0, block.from) + abc.slice(block.to) : abc;
+	return block ? withoutLoneLeadVoice(abc.slice(0, block.from) + abc.slice(block.to)) : abc;
 }
 
 /**
@@ -102,6 +102,20 @@ function bodyStart(abc) {
 	const headerEnd = keyLine ? keyLine.index + keyLine[0].length + 1 : 0;
 	const lead = /^V:1[ \t]*(\n|$)/.exec(abc.slice(headerEnd));
 	return headerEnd + (lead ? lead[0].length : 0);
+}
+
+/**
+ * The ABC without its melody's V:1 line once no other voice is left, so
+ * taking the last part away gives back the tune as it was.
+ * @param {string} abc
+ */
+function withoutLoneLeadVoice(abc) {
+	const others = [...abc.matchAll(ANY_VOICE_LINE)].filter((match) => match[1] !== '1');
+	if (others.length > 0) return abc;
+	const keyLine = /^K:.*$/m.exec(abc);
+	const headerEnd = keyLine ? keyLine.index + keyLine[0].length + 1 : 0;
+	const lead = /^V:1[ \t]*(\n|$)/.exec(abc.slice(headerEnd));
+	return lead ? abc.slice(0, headerEnd) + abc.slice(headerEnd + lead[0].length) : abc;
 }
 
 /**

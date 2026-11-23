@@ -26,6 +26,7 @@ import { PageLayoutState } from './PageLayoutState.svelte.js';
 import { SongState } from './SongState.svelte.js';
 import { RecordingState } from './RecordingState.svelte.js';
 import { ReceiveState } from './ReceiveState.svelte.js';
+import { PartsState } from './PartsState.svelte.js';
 import { TranscriptionState } from '../transcription/TranscriptionState.svelte.js';
 import { abcjsIfLoaded, abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc, hasChords } from '../melody/abcChords.js';
@@ -74,6 +75,7 @@ export class Arranger {
 	song = new SongState(this);
 	/** Recording along with the band, and the song's takes. */
 	recording = new RecordingState(this);
+	parts = new PartsState(this);
 	/** A song someone sent, waiting to be opened. */
 	receive = new ReceiveState(this);
 	/** Transcribing a recording: kept while you visit the other pages, so coming back carries on. */

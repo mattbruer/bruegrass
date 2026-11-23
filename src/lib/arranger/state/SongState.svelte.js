@@ -35,6 +35,8 @@ export class SongState {
 	madeFrom = /** @type {{ key: string, name: string } | null} */ ($state.raw(null));
 	/** The names you gave the song's parts (melody/partNames.js). */
 	partNames = /** @type {import('../melody/partNames.js').PartNames} */ ($state.raw({}));
+	/** The lanes' order on the Tracks page, top to bottom, by id ([]: the usual order; tracks/laneOrder.js). */
+	laneOrder = /** @type {string[]} */ ($state.raw([]));
 	/** The example this song started from, until it has a name of its own: it titles a new tune. */
 	exampleName = $state('');
 	/** The last song is open and its tune can be read (it names the song), so changes get saved from now on. */

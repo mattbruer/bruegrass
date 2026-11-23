@@ -4,7 +4,8 @@
 	 * cycle and it turns on (its ends snap to sixteenth notes, or go anywhere
 	 * with Snap off); drag either end of the cycle to lengthen or shorten it,
 	 * or its middle to slide it; click it to turn the cycle on or off (with no
-	 * cycle yet, a click cycles that bar).
+	 * cycle yet, a click cycles that bar). `fit` given, every cycle made is
+	 * fitted by it (Tracks: onto bar lines, as the band loops whole bars).
 	 */
 	import {
 		barAround,
@@ -14,17 +15,21 @@
 		movedCycle
 	} from '../../transcription/cycle.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
-	import { settings } from '$lib/settings/settings.svelte.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+
+	/** @typedef {import('../../transcription/cycle.js').Cycle} Cycle */
 
 	/**
 	 * @type {{
-	 *   transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState,
+	 *   cycle: { region: Cycle | null, on: boolean, set: (region: Cycle) => void, turn: (on: boolean) => void },
 	 *   ruler: import('../../tracks/ruler.js').RulerBar[],
-	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>
+	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>,
+	 *   snap?: boolean,
+	 *   fit?: (cycle: Cycle | null, lines: number[]) => Cycle | null
 	 * }}
+	 *   snap: ends on sixteenth notes (else anywhere, before `fit`)
 	 */
-	let { transcription, ruler, scale } = $props();
+	let { cycle, ruler, scale, snap = false, fit = (made) => made } = $props();
 
 	/** px before a press counts as a drag */
 	const DRAG_THRESHOLD = 4;
@@ -39,7 +44,7 @@
 	let dragged = $state.raw(
 		/** @type {import('../../transcription/cycle.js').Cycle | null} */ (null)
 	);
-	const shown = $derived(dragged ?? transcription.cycle.region);
+	const shown = $derived(dragged ?? cycle.region);
 
 	/** @param {PointerEvent & { currentTarget: HTMLElement }} event */
 	function quartersAt(event) {
@@ -49,7 +54,7 @@
 
 	/** @param {PointerEvent & { currentTarget: HTMLElement }} event */
 	function partAt(event) {
-		const region = transcription.cycle.region;
+		const region = cycle.region;
 		const box = event.currentTarget.getBoundingClientRect();
 		const edges = region ? { left: scale.toX(region.from), right: scale.toX(region.to) } : null;
 		return grabbedPart(event.clientX - box.left, edges, END_GRIP);
@@ -63,29 +68,22 @@
 			x: event.clientX,
 			quarters: quartersAt(event),
 			part: partAt(event),
-			cycle: transcription.cycle.region
+			cycle: cycle.region
 		};
 	}
 
 	/** The cycle as the drag so far makes it. */
 	function draggedCycle(/** @type {number} */ quarters) {
-		const snap = settings.transcribe.snapCycle;
-		const { part, cycle } = /** @type {NonNullable<typeof press>} */ (press);
-		if (cycle && part === 'from') return cycleFromTo(cycle.to, quarters, lines, snap);
-		if (cycle && part === 'to') return cycleFromTo(cycle.from, quarters, lines, snap);
-		if (cycle && part === 'body')
-			return movedCycle(
-				cycle,
-				quarters - /** @type {NonNullable<typeof press>} */ (press).quarters,
-				lines,
-				snap
-			);
-		return cycleFromTo(
-			/** @type {NonNullable<typeof press>} */ (press).quarters,
-			quarters,
-			lines,
-			snap
-		);
+		const {
+			part,
+			cycle: before,
+			quarters: pressedAt
+		} = /** @type {NonNullable<typeof press>} */ (press);
+		if (before && part === 'from') return fit(cycleFromTo(before.to, quarters, lines, snap), lines);
+		if (before && part === 'to') return fit(cycleFromTo(before.from, quarters, lines, snap), lines);
+		if (before && part === 'body')
+			return fit(movedCycle(before, quarters - pressedAt, lines, snap), lines);
+		return fit(cycleFromTo(pressedAt, quarters, lines, snap), lines);
 	}
 
 	/** @param {PointerEvent & { currentTarget: HTMLElement }} event */
@@ -105,10 +103,10 @@
 		const clickedAt = press.quarters;
 		press = null;
 		dragged = null;
-		if (made) return transcription.cycle.set(made);
-		if (transcription.cycle.region) return transcription.cycle.turn(!transcription.cycle.on);
+		if (made) return cycle.set(made);
+		if (cycle.region) return cycle.turn(!cycle.on);
 		const bar = barAround(clickedAt, lines);
-		if (bar) transcription.cycle.set(bar);
+		if (bar) cycle.set(bar);
 		event.preventDefault();
 	}
 
@@ -129,12 +127,12 @@
 	onpointermove={move}
 	onpointerup={up}
 	onpointercancel={cancel}
-	use:tooltip={TIPS.transcription.cycleStrip}
+	use:tooltip={TIPS.cycle.strip}
 >
 	{#if shown}
 		<div
 			class="region"
-			class:on={transcription.cycle.on || dragged}
+			class:on={cycle.on || dragged}
 			style:left="{scale.toX(shown.from)}px"
 			style:width="{scale.toX(shown.to) - scale.toX(shown.from)}px"
 		></div>

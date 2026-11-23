@@ -40,7 +40,7 @@
 		},
 		{
 			"id": "tracks-cycle",
-			"text": "Tracks: cycle a stretch and step a bar back or on, like Transcribe",
+			"text": "Tracks: step a bar back or on, like Transcribe (the cycle is there now)",
 			"done": false,
 			"addedAt": "2026-11-21"
 		},

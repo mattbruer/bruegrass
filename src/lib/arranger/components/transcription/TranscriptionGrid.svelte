@@ -24,8 +24,8 @@
 	import BlockLane from '../tracks/BlockLane.svelte';
 	import BeatDots from './BeatDots.svelte';
 	import GridMenu from './GridMenu.svelte';
-	import CycleStrip from './CycleStrip.svelte';
-	import CycleSectionMenu from './CycleSectionMenu.svelte';
+	import CycleStrip from '../tracks/CycleStrip.svelte';
+	import CycleSectionMenu from '../tracks/CycleSectionMenu.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
 	import LaneVolume from './LaneVolume.svelte';
 	import InstrumentButton from '../mixer/instruments/InstrumentButton.svelte';
@@ -193,7 +193,10 @@
 						onclick={() => transcription.cycle.turn(!transcription.cycle.on)}
 						use:tooltip={TIPS.transcription.cycle}>Cycle</button
 					>
-					<CycleSectionMenu {transcription} />
+					<CycleSectionMenu
+						cycle={transcription.cycle}
+						empty="No named sections yet. Put a marker on a bar to start one."
+					/>
 					<span class="flex items-center gap-1 text-xs text-ink-soft">
 						<ToggleSwitch
 							bind:on={settings.transcribe.snapCycle}
@@ -203,7 +206,12 @@
 						<span id="snap-cycle">Snap</span>
 					</span>
 				</div>
-				<CycleStrip {transcription} {ruler} {scale} />
+				<CycleStrip
+					cycle={transcription.cycle}
+					{ruler}
+					{scale}
+					snap={settings.transcribe.snapCycle}
+				/>
 			{/if}
 
 			<div class="corner ruler-corner ui-side-column">

@@ -1,18 +1,20 @@
 <script>
 	/**
-	 * An audio lane's menu (⋯ beside its name): its name, its takes (which
-	 * one plays, earlier or later by ear, download, delete), a take from a
-	 * file someone sent, and, while it has no takes, taking the lane away.
+	 * An audio lane's menu (⋯ beside its name): its name, moving it up or
+	 * down, its takes (which one plays, earlier or later by ear, download,
+	 * delete), a take from a file someone sent, and, while it has no takes,
+	 * taking the lane away.
 	 */
 	import Popover from '$lib/components/Popover.svelte';
 	import { useArranger } from '../../state/context.js';
 	import { PART_NAME_LENGTH } from '../../melody/partNames.js';
 	import TakeList from '../recording/TakeList.svelte';
+	import MoveLane from './MoveLane.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/** @type {{ lane: import('../../tracks/lanes.js').TakeLane }} */
-	let { lane } = $props();
+	/** @type {{ lane: import('../../tracks/lanes.js').TakeLane, lanes: { id: string }[] }} lanes: every lane, in its order now */
+	let { lane, lanes } = $props();
 
 	const { recording } = useArranger();
 
@@ -44,6 +46,8 @@
 				use:tooltip={TIPS.tracks.laneName}
 			/>
 		</label>
+
+		<MoveLane id={lane.id} {lanes} />
 
 		<TakeList trackId={lane.id} />
 

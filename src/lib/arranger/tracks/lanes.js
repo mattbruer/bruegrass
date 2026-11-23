@@ -31,16 +31,19 @@ import { secondsPerQuarter } from '../chart/tempo.js';
  * @param {{
  *   bass: import('../instruments/bassline.js').BassNote[],
  *   melody: import('../melody/melody.js').Melody | null,
+ *   voices?: string[],
  *   names?: import('../melody/partNames.js').PartNames
- * }} song bass: what the bass plays (bass/songBass.js: edited or the band's own); names: the names you gave the parts
+ * }} song bass: what the bass plays (bass/songBass.js: edited or the band's own);
+ *   voices: the tune's voices (their channels), so a part with no notes yet has its lane;
+ *   names: the names you gave the lanes
  * @returns {BandLane[]}
  */
-export function bandLanes({ bass, melody, names = {} }) {
+export function bandLanes({ bass, melody, voices = [], names = {} }) {
 	return [
-		{ id: 'guitar', name: 'Guitar', kind: 'chords' },
-		{ id: 'mandolin', name: 'Mandolin', kind: 'chords' },
+		{ id: 'guitar', name: partName('guitar', names, 'Guitar'), kind: 'chords' },
+		{ id: 'mandolin', name: partName('mandolin', names, 'Mandolin'), kind: 'chords' },
 		{ id: 'bass', name: partName('bass', names), kind: 'notes', blocks: bassBlocks(bass) },
-		...tuneLanes(melody, names)
+		...tuneLanes(melody, voices, names)
 	];
 }
 
@@ -88,15 +91,16 @@ function bassBlocks(notes) {
 }
 
 /**
- * The melody and each harmony and extra part it has, in the mixer's order.
+ * The melody and each harmony and extra part the tune has, in the mixer's order.
  * @param {import('../melody/melody.js').Melody | null} melody
+ * @param {string[]} voices the tune's voices (their channels)
  * @param {import('../melody/partNames.js').PartNames} names
  * @returns {BandLane[]}
  */
-function tuneLanes(melody, names) {
+function tuneLanes(melody, voices, names) {
 	if (!melody) return [];
-	const voices = [MELODY_CHANNEL, ...[...HARMONY_PARTS, ...EXTRA_PARTS].map((part) => part.id)];
-	return voices
+	const all = [MELODY_CHANNEL, ...[...HARMONY_PARTS, ...EXTRA_PARTS].map((part) => part.id)];
+	return all
 		.map((id) => ({
 			id,
 			name: partName(id, names),
@@ -106,5 +110,5 @@ function tuneLanes(melody, names) {
 				.filter((note) => note.channel === id)
 				.map((note) => ({ start: note.time, length: note.length, pitch: note.pitch }))
 		}))
-		.filter((lane) => lane.blocks.length > 0);
+		.filter((lane) => lane.blocks.length > 0 || voices.includes(lane.id));
 }

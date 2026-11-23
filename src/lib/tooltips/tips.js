@@ -154,6 +154,12 @@ export const TIPS = Object.freeze({
 		editChord: 'Change this chord. Learn about it from inside the box.'
 	},
 
+	cycle: {
+		sections: 'Play one of the song’s sections over and over, from its start to the next section.',
+		section: 'Cycle this section, and turn the cycle on.',
+		strip: 'Drag across to play that stretch over and over (the cycle). Click to turn it on or off.'
+	},
+
 	partPane: {
 		views: {
 			roll: 'Write and edit the picked part as notes on a grid.',
@@ -286,11 +292,6 @@ export const TIPS = Object.freeze({
 		moreBeats: 'This bar has a beat more. The bars after it move along.',
 		loop: 'Play just this bar over and over (L). Drag across the strip at the top for more bars.',
 		cycle: 'Turn the cycle on or off (C): play the stretch marked in the strip over and over.',
-		cycleSections:
-			'Play one of your named sections over and over: from its marker to the next marker or End.',
-		cycleSection: 'Cycle this section, and turn the cycle on.',
-		cycleStrip:
-			'Drag across to play that stretch over and over (the cycle). Click to turn it on or off.',
 		snapCycle: 'On: the cycle’s ends snap to sixteenth notes. Off: drag anywhere for a free cycle.',
 		closeMenu: 'Close.',
 		barStartsHere:
@@ -321,8 +322,16 @@ export const TIPS = Object.freeze({
 		ruler: 'Click to move the playhead there: Play carries on from that spot.',
 		arm: 'Record on this lane: Record puts the next take here.',
 		addLane:
-			'Add a lane to record on: a voice, or a real instrument along with the band. You name it first. Up to four.',
-		laneMenu: 'This lane’s name and takes, and a take from a file.',
+			'Add an audio lane, to record on with the mic: a voice, or a real instrument along with the band. You name it first. Up to four.',
+		addInst:
+			'Add an instrument lane: a part you write with the piano roll (a fiddle line, a break), played on an instrument you pick. You name it first.',
+		grip: 'Drag to move this lane up or down.',
+		moveUp: 'Move this lane up one.',
+		moveDown: 'Move this lane down one.',
+		instRemove: 'Take this lane away, with its notes.',
+		cycle:
+			'Turn the cycle on or off (C): the band plays the bars marked in the strip round and round.',
+		laneMenu: 'This lane’s name, moving it, and more.',
 		laneName: 'Call this lane what’s on it (Lead vocal, Mandolin break).',
 		laneRemove: 'Take this empty lane away.',
 		clip: 'Drag the take sideways to line it up with the band.',

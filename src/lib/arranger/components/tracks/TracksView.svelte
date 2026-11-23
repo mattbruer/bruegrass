@@ -1,20 +1,25 @@
 <script>
 	/**
-	 * The song as tracks, like a DAW, drawn like Transcribe's grid: a bar
-	 * ruler at the song's steady tempo (click it to play from there), a lane
-	 * for each part of the band, then the audio lanes you record on (+ Audio
-	 * lane adds one). Each lane's header has mute, solo and its volume; an
-	 * audio lane's also has its record button (the lane Record records on)
-	 * and its menu (name, takes, a take from a file). Names stay put while
-	 * the lanes scroll sideways together under the playhead. A part's lane
-	 * (bass, melody, harmony and added parts) is picked by its name or a
-	 * click on the lane: `onEdit` opens its editor.
+	 * The song as tracks, like a DAW, drawn like Transcribe's grid: the cycle
+	 * strip (drag across it to play those bars round and round), a bar ruler
+	 * at the song's steady tempo (click it to play from there), then the
+	 * lanes: instrument lanes (the band, the tune's parts; + Inst adds a part
+	 * to write) above audio lanes (what the mic recorded; + Audio adds one),
+	 * until you move them: drag a lane by its grip, or Move up / down in its
+	 * menu. Each lane's header has its menu (name, move, and more), mute,
+	 * solo and volume; an audio lane's also has its record button. Names stay
+	 * put while the lanes scroll sideways together under the playhead. A
+	 * part's lane is picked by its name or a click on the lane: `onEdit`
+	 * opens its editor.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { bandLanes } from '../../tracks/lanes.js';
+	import { orderedLanes, withLaneMoved, dropIndex } from '../../tracks/laneOrder.js';
 	import { readChartOnBars } from '../../transcription/readChartOnBars.js';
 	import { chartWithTypedBar, isHeld, slotsOf } from '../../transcription/barChords.js';
+	import { onBarLines } from '../../transcription/cycle.js';
 	import { bassPart } from '../../bass/songBass.js';
+	import { voiceChannels } from '../../melody/harmony/partChannels.js';
 	import { rulerBars, rulerSpan } from '../../tracks/ruler.js';
 	import { PIXELS_PER_QUARTER, trackScale } from '../../tracks/trackScale.js';
 	import { followPlayhead } from '../../tracks/followPlayhead.js';
@@ -28,14 +33,24 @@
 	import BlockLane from './BlockLane.svelte';
 	import TakeClip from './TakeClip.svelte';
 	import AudioLaneMenu from './AudioLaneMenu.svelte';
+	import InstLaneMenu from './InstLaneMenu.svelte';
 	import ChordLane from './ChordLane.svelte';
+	import CycleStrip from './CycleStrip.svelte';
+	import CycleSectionMenu from './CycleSectionMenu.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
 	import LaneVolume from '../transcription/LaneVolume.svelte';
 
-	/** @type {{ editing: string | null, onEdit: (id: string) => void }} editing: the lane whose editor is open */
-	let { editing, onEdit } = $props();
+	/**
+	 * @type {{
+	 *   editing: string | null,
+	 *   onEdit: (id: string | null) => void,
+	 *   cycle: import('../../state/TracksCycleState.svelte.js').TracksCycleState
+	 * }}
+	 *   editing: the lane whose editor is open; onEdit(null) closes it
+	 */
+	let { editing, onEdit, cycle } = $props();
 
-	const { arrangement, melody, recording, player, bass, song } = useArranger();
+	const { arrangement, melody, recording, player, bass, song, parts } = useArranger();
 
 	/** The names column (px); the lanes scroll under it. */
 	const HEADER_WIDTH = 186;
@@ -49,17 +64,25 @@
 				written: bass.written
 			}).notes,
 			melody: melody.line,
+			voices: melody.tune ? voiceChannels(melody.tune) : [],
 			names: song.partNames
 		})
 	);
 	const audioLanes = $derived(recording.lanes);
+	/** Every lane, top to bottom: yours, or instruments above audio. */
+	const lanes = $derived(orderedLanes([...band, ...audioLanes], song.laneOrder));
 	const zoom = $derived(settings.tracks.zoom);
 	const scale = $derived(
 		trackScale(spanWithClips(rulerSpan(bars), audioLanes), PIXELS_PER_QUARTER * zoom.across)
 	);
 
-	/** + Audio lane asks for the new lane's name first. */
-	let namingLane = $state(false);
+	/** Which + button is asking for the new lane's name (null: neither). */
+	let naming = $state(/** @type {'inst' | 'audio' | null} */ (null));
+
+	// A part taken away while its editor is open: close the editor
+	$effect(() => {
+		if (editing && !lanes.some((lane) => lane.id === editing)) onEdit(null);
+	});
 
 	/** The chart's chords bar by bar, a slot per beat, for the chord lanes. */
 	const chartOnBars = $derived(readChartOnBars(arrangement.text, arrangement.sections));
@@ -80,8 +103,16 @@
 		return '';
 	}
 
+	/** @param {string} name */
+	async function addInst(name) {
+		const id = await parts.add(name);
+		if (id) onEdit(id);
+	}
+
 	/** @type {HTMLDivElement | undefined} */
 	let scroller = $state();
+	/** @type {HTMLDivElement | undefined} */
+	let grid = $state();
 
 	/**
 	 * The ruler's span, widened for a take that runs past the end.
@@ -101,16 +132,74 @@
 		const box = event.currentTarget.getBoundingClientRect();
 		player.goTo(scale.toQuarters(event.clientX - box.left) + scale.start);
 	}
+
+	/** A lane being dragged by its grip: which, and where it would drop (an index, and its line's height). */
+	let dragging = $state(/** @type {{ id: string, to: number, top: number } | null} */ (null));
+
+	/** Each lane's row, top to bottom, on the screen and within the grid. */
+	function laneRows() {
+		const headers = /** @type {HTMLElement[]} */ ([
+			...(grid?.querySelectorAll('[data-lane]') ?? [])
+		]);
+		return headers.map((header) => {
+			const box = header.getBoundingClientRect();
+			return { top: box.top, bottom: box.bottom, offset: header.offsetTop, height: box.height };
+		});
+	}
+
+	/** @param {number} y */
+	function dropAt(y) {
+		const rows = laneRows();
+		const to = dropIndex(y, rows);
+		const row = rows[Math.min(to, rows.length - 1)];
+		const top = to < rows.length ? row.offset : row.offset + row.height;
+		return { to, top };
+	}
+
+	/**
+	 * @param {PointerEvent & { currentTarget: HTMLElement }} event
+	 * @param {string} id
+	 */
+	function grab(event, id) {
+		if (event.button !== 0) return;
+		event.currentTarget.setPointerCapture(event.pointerId);
+		dragging = { id, ...dropAt(event.clientY) };
+	}
+
+	/** @param {PointerEvent} event */
+	function drag(event) {
+		if (dragging) dragging = { id: dragging.id, ...dropAt(event.clientY) };
+	}
+
+	function drop() {
+		if (dragging) parts.setOrder(withLaneMoved(lanes, dragging.id, dragging.to));
+		dragging = null;
+	}
 </script>
 
 <div class="ui-sunk-frame rounded-[var(--corner-card)]">
 	<div class="scroller" bind:this={scroller}>
 		<div
 			class="tracks"
+			bind:this={grid}
 			style:--header-width="{HEADER_WIDTH}px"
 			style:--lanes-width="{scale.width}px"
 			style:--zoom-down={zoom.down}
 		>
+			<div class="header cycle-header ui-side-column">
+				<button
+					type="button"
+					class="ui-button px-2 py-0.5 text-xs"
+					class:ui-button-on={cycle.on}
+					disabled={!cycle.region}
+					aria-pressed={cycle.on}
+					onclick={() => cycle.turn(!cycle.on)}
+					use:tooltip={TIPS.tracks.cycle}>Cycle</button
+				>
+				<CycleSectionMenu {cycle} />
+			</div>
+			<CycleStrip {cycle} ruler={bars} {scale} fit={onBarLines} />
+
 			<div class="corner ui-side-column"></div>
 			<!-- svelte-ignore a11y_click_events_have_key_events (Home and the clock get there by keyboard) -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -118,11 +207,44 @@
 				<TrackRuler {bars} {scale} />
 			</div>
 
-			{#each band as lane (lane.id)}
+			{#each lanes as lane (lane.id)}
 				{@const channel = channelOf(lane.id)}
 				{@const picked = editing === lane.id}
-				<div class="header ui-side-column" class:picked>
-					{#if lane.kind === 'notes'}
+				{@const armed = lane.kind === 'take' && recording.armedTrack === lane.id}
+				{@const lifted = dragging?.id === lane.id}
+				<div
+					class="header ui-side-column"
+					class:picked
+					class:armed
+					class:lifted
+					data-lane={lane.id}
+				>
+					<button
+						type="button"
+						class="grip"
+						aria-label="Drag {lane.name} up or down"
+						onpointerdown={(event) => grab(event, lane.id)}
+						onpointermove={drag}
+						onpointerup={drop}
+						onpointercancel={() => (dragging = null)}
+						use:tooltip={TIPS.tracks.grip}
+					>
+						<span aria-hidden="true">⠿</span>
+					</button>
+					{#if lane.kind === 'take'}
+						<button
+							type="button"
+							class="arm"
+							class:on={armed}
+							aria-pressed={armed}
+							aria-label="Record on {lane.name}"
+							disabled={recording.isRecording}
+							onclick={() => (recording.trackId = lane.id)}
+							use:tooltip={TIPS.tracks.arm}
+						></button>
+						<span class="name">{lane.name}</span>
+						<AudioLaneMenu {lane} {lanes} />
+					{:else if lane.kind === 'notes'}
 						<button
 							type="button"
 							class="name pick"
@@ -130,16 +252,27 @@
 							onclick={() => onEdit(lane.id)}
 							use:tooltip={TIPS.tracks.editPart}>{lane.name}</button
 						>
+						<InstLaneMenu {lane} {lanes} />
 					{:else}
 						<span class="name">{lane.name}</span>
+						<InstLaneMenu {lane} {lanes} />
 					{/if}
+					<span class="row-break"></span>
 					{#if channel}
 						<MuteSoloButtons settings={channel} name={lane.name} />
 						<LaneVolume level={channel} name={lane.name} />
 					{/if}
 				</div>
-				<div class="lane">
-					{#if lane.kind === 'chords'}
+				{#if lane.kind === 'take'}
+					<div class="lane audio-lane" class:armed class:lifted>
+						{#if lane.clip}
+							<TakeClip clip={lane.clip} takes={lane.takes} {scale} />
+						{:else}
+							<span class="empty">Press Record to record on this lane</span>
+						{/if}
+					</div>
+				{:else if lane.kind === 'chords'}
+					<div class="lane" class:lifted>
 						<ChordLane
 							bars={songBars}
 							slotsOf={slotsOfBar}
@@ -147,56 +280,46 @@
 							{setChords}
 							{scale}
 						/>
-					{:else}
+					</div>
+				{:else}
+					<div class="lane" class:lifted>
 						<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
 						<!-- svelte-ignore a11y_no_static_element_interactions -->
 						<div class="part" class:picked onclick={() => onEdit(lane.id)}>
 							<BlockLane {lane} {scale} />
 						</div>
-					{/if}
-				</div>
-			{/each}
-
-			{#each audioLanes as lane (lane.id)}
-				{@const channel = channelOf(lane.id)}
-				{@const armed = recording.armedTrack === lane.id}
-				<div class="header audio ui-side-column" class:armed>
-					<button
-						type="button"
-						class="arm"
-						class:on={armed}
-						aria-pressed={armed}
-						aria-label="Record on {lane.name}"
-						disabled={recording.isRecording}
-						onclick={() => (recording.trackId = lane.id)}
-						use:tooltip={TIPS.tracks.arm}
-					></button>
-					<span class="name">{lane.name}</span>
-					<AudioLaneMenu {lane} />
-					<span class="row-break"></span>
-					{#if channel}
-						<MuteSoloButtons settings={channel} name={lane.name} />
-						<LaneVolume level={channel} name={lane.name} />
-					{/if}
-				</div>
-				<div class="lane audio-lane" class:armed>
-					{#if lane.clip}
-						<TakeClip clip={lane.clip} takes={lane.takes} {scale} />
-					{:else}
-						<span class="empty">Press Record to record on this lane</span>
-					{/if}
-				</div>
+					</div>
+				{/if}
 			{/each}
 
 			<div class="header add ui-side-column">
 				<button
 					type="button"
 					class="ui-button px-2 py-1 text-xs"
+					disabled={!parts.canAdd}
+					onclick={() => (naming = 'inst')}
+					use:tooltip={TIPS.tracks.addInst}>+ Inst</button
+				>
+				<button
+					type="button"
+					class="ui-button px-2 py-1 text-xs"
 					disabled={!recording.canAddLane || recording.isRecording}
-					onclick={() => (namingLane = true)}
-					use:tooltip={TIPS.tracks.addLane}>+ Audio lane</button
+					onclick={() => (naming = 'audio')}
+					use:tooltip={TIPS.tracks.addLane}>+ Audio</button
 				>
 			</div>
+
+			{#if cycle.on && cycle.region}
+				<div
+					class="cycle-shade"
+					style:left="calc(var(--header-width) + {scale.toX(cycle.region.from)}px)"
+					style:width="{scale.toX(cycle.region.to) - scale.toX(cycle.region.from)}px"
+				></div>
+			{/if}
+
+			{#if dragging}
+				<div class="drop-line" style:top="{dragging.top}px"></div>
+			{/if}
 
 			<div
 				class="playhead"
@@ -213,7 +336,16 @@
 </div>
 
 <NameDialog
-	bind:open={namingLane}
+	bind:open={() => naming === 'inst', (open) => !open && (naming = null)}
+	title="New instrument lane"
+	suggestions={LANE_NAMES}
+	hint="A part to write with the piano roll: a fiddle line, a mandolin break, a vocal…"
+	saveLabel="Add lane"
+	onsave={addInst}
+/>
+
+<NameDialog
+	bind:open={() => naming === 'audio', (open) => !open && (naming = null)}
 	title="New audio lane"
 	suggestions={LANE_NAMES}
 	hint="What will you record on it? The vocal, a mandolin break, a fiddle part…"
@@ -231,6 +363,7 @@
 	}
 
 	.tracks {
+		--cycle-row-height: 1.9rem;
 		--ruler-height: 2.5rem;
 		--lane-height: calc(2.75rem * var(--zoom-down));
 		--take-lane-height: calc(4.5rem * var(--zoom-down));
@@ -370,8 +503,60 @@
 	}
 
 	.header.add {
+		justify-content: flex-start;
 		border-bottom: none;
 		padding: 0.35rem var(--header-padding);
+	}
+
+	.cycle-header {
+		height: var(--cycle-row-height);
+		flex-wrap: nowrap;
+		justify-content: flex-start;
+		column-gap: 0.15rem;
+		padding: 0 var(--header-padding);
+	}
+
+	.cycle-shade {
+		position: absolute;
+		top: var(--cycle-row-height);
+		bottom: 0;
+		z-index: 1;
+		background: color-mix(in oklch, var(--color-accent) 10%, transparent);
+		border-inline: 1px solid color-mix(in oklch, var(--color-accent) 50%, transparent);
+		pointer-events: none;
+	}
+
+	/* Drag a lane by this: it takes the touch, so a phone doesn't scroll instead */
+	.grip {
+		flex-shrink: 0;
+		/* A finger-sized target around a small mark */
+		width: 1.6rem;
+		padding: 0.5rem 0;
+		margin: -0.5rem -0.25rem -0.5rem -0.7rem;
+		color: var(--color-ink);
+		font-size: 1rem;
+		line-height: 1;
+		cursor: grab;
+		touch-action: none;
+	}
+
+	.grip:active {
+		cursor: grabbing;
+	}
+
+	.lifted {
+		opacity: 0.45;
+	}
+
+	.drop-line {
+		position: absolute;
+		left: 0;
+		right: 0;
+		z-index: 3;
+		height: 3px;
+		margin-top: -1.5px;
+		background: var(--color-accent);
+		pointer-events: none;
 	}
 
 	.ruler {

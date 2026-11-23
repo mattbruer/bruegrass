@@ -67,18 +67,6 @@ import { bundledReference } from './bundledReferences.js';
 import { STARTER_SONG } from '../starterSong.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { BASS_VOICE } from '../bass/readBass.js';
-import { blankBassAbc } from '../bass/bassAbc.js';
-import { bassSongOf } from '../bass/bassSong.js';
-import { abcjsReady } from '../state/abcjsLoaded.svelte.js';
-import {
-	isExtraPart,
-	nextExtraPart,
-	withExtraPart,
-	withoutExtraPart
-} from '../melody/extraParts.js';
-import { partName, withPartName } from '../melody/partNames.js';
-import { rewriteAbc } from '../melody/roll/scoreToAbc.js';
-import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
 import { mixer } from '../mixer/mixer.svelte.js';
 import { heardNotes, laneLevels } from './heardParts.js';
 import { TranscribeParts } from './TranscribeParts.svelte.js';
@@ -599,78 +587,43 @@ export class TranscriptionState {
 		return slotsOf(this.chords[bar.number], bar.beats);
 	}
 
-	/** Room for another lane (+ Lane): the tune has a free extra part (melody/extraParts.js). */
-	canAddLane = $derived(nextExtraPart(this.arranger.melody.notation) !== null);
+	/** Room for another lane (+ Lane). */
+	get canAddLane() {
+		return this.arranger.parts.canAdd;
+	}
 
 	/**
-	 * + Lane: another line of the tune to write by ear (the vocal, a mandolin
-	 * break), named by you, its bars empty, with its own channel and
-	 * instrument. An unwritten tune is started from the chart first.
+	 * + Lane: another part to write by ear, picked once it's there.
 	 * @param {string} name
 	 */
 	async addLane(name) {
-		await abcjsReady();
-		const { melody } = this.arranger;
-		if (!melody.hasNotation) this.arranger.startMelodyFromChart();
-		const part = nextExtraPart(melody.notation);
-		const lead = melody.voices?.[0];
-		if (!part || !lead?.score.bars.length) return;
-		const resting = rewriteAbc(melody.notation, lead.score, [], { every: true });
-		melody.notation = withExtraPart(melody.notation, resting, part);
-		this.renameLane(part.id, name);
-		this.lane = part.id;
+		const id = await this.arranger.parts.add(name);
+		if (id) this.lane = id;
 	}
 
-	/**
-	 * Take an added lane out of the tune, its notes and name with it.
-	 * @param {string} id
-	 */
+	/** @param {string} id an added lane, taken away */
 	removeLane(id) {
-		const { melody, song } = this.arranger;
-		melody.notation = withoutExtraPart(melody.notation, id);
-		song.partNames = withPartName(song.partNames, id, '');
-		const channel = mixer.channels.find((each) => each.id === id);
-		if (channel) channel.solo = false; // a hidden lane mustn't keep the rest silent
+		this.arranger.parts.remove(id);
 		if (this.lane === id) this.lane = MELODY_CHANNEL;
 	}
 
-	/**
-	 * An added lane becomes the song's bass line, written by ear: its notes
-	 * from bar 1 on (the bass keeps to the bar lines) and its name go to the
-	 * bass, and the lane goes.
-	 * @param {string} id
-	 */
+	/** @param {string} id an added lane, made the song's bass line */
 	useLaneAsBass(id) {
-		const { melody, bass, song } = this.arranger;
-		const notes = (melody.line?.notes ?? [])
-			.filter((note) => note.channel === id && note.time >= 0)
-			.map((note) => ({
-				midi: note.pitch,
-				start: Math.round(note.time * TICKS_PER_QUARTER),
-				length: Math.round(note.length * TICKS_PER_QUARTER)
-			}));
-		const name = song.partNames[id];
-		bass.notation = blankBassAbc(bassSongOf(this.arranger), notes);
-		this.removeLane(id);
-		if (name) song.partNames = withPartName(song.partNames, BASS_VOICE, name);
+		this.arranger.parts.useAsBass(id);
 		this.lane = BASS_VOICE;
 	}
 
 	/**
-	 * Give a lane a name of your own ('' gives the melody, a harmony part or
-	 * the bass back its own; an added lane always keeps one of yours).
 	 * @param {string} id
 	 * @param {string} name
 	 */
 	renameLane(id, name) {
-		const { song } = this.arranger;
-		if (!name.trim() && isExtraPart(id)) return;
-		song.partNames = withPartName(song.partNames, id, name);
+		this.arranger.parts.rename(id, name);
 	}
 
 	/** @param {string} id a lane's name, as you named it */
 	laneName(id) {
-		return partName(id, this.arranger.song.partNames);
+		return this.arranger.parts.name(id);
 	}
 
 	/** @param {import('./barPlan.js').Bar} bar the playhead to its first beat */
