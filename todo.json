@@ -11,12 +11,18 @@
 		{
 			"id": "tracks-chord-beats",
 			"text": "Tracks: change where a chord starts in the bar (a box per beat, like Transcribe's Band lane), and add or remove one",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-23"
 		},
 		{
 			"id": "tracks-chord-display",
 			"text": "Tracks: chord lanes follow the chord display (shapes, concert, Roman, Nashville)",
+			"done": false,
+			"addedAt": "2026-11-23"
+		},
+		{
+			"id": "tune-chords-follow-chart",
+			"text": "The tune's chord symbols follow chord edits in the chart (now they stay as written, so the sheet music can show old chords)",
 			"done": false,
 			"addedAt": "2026-11-23"
 		},

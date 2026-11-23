@@ -7,6 +7,8 @@
  * thing (`chartCell`).
  */
 import { beatGroups } from '../chart/timeline.js';
+import { NO_CHORD } from '../chart/noChord.js';
+import { withBarChords } from '../chart/withBarChords.js';
 
 /** @typedef {(string | null)[]} Slots */
 
@@ -123,4 +125,56 @@ export function changesIn(slots) {
 		...change,
 		beats: (starts[i + 1]?.beat ?? slots.length) - change.beat
 	}));
+}
+
+/**
+ * What was typed in a bar's boxes (one per beat, blanks carry on), as its slots.
+ * @param {(string | null)[]} typed
+ * @param {number} beats
+ * @returns {Slots}
+ */
+export function typedSlots(typed, beats) {
+	return slotsOf(
+		typed.map((text) => (text ?? '').trim() || null),
+		beats
+	);
+}
+
+/**
+ * The last chord sounding before a bar (N.C. if none), past bars that hold.
+ * @param {Record<number, Slots>} chords bar number → slots
+ * @param {number} number
+ */
+export function lastChordBefore(chords, number) {
+	let before = number - 1;
+	while (isHeld(chords[before])) before--;
+	return chords[before]?.findLast(Boolean) ?? NO_CHORD;
+}
+
+/**
+ * A bar's new slots as the chart writes them: N.C. when it's emptied.
+ * @param {Record<number, Slots>} chords the bars' chords now
+ * @param {number} number the bar being written
+ * @param {Slots} slots
+ */
+export function cellFor(chords, number, slots) {
+	return isEmptyBar(slots) ? NO_CHORD : chartCell(slots, lastChordBefore(chords, number));
+}
+
+/**
+ * The chart with a bar's boxes written in where the bar is written, so
+ * the rest stays as typed. A bar emptied while it holds the chord before
+ * is left holding.
+ * @param {string} text the chart
+ * @param {import('./readChartOnBars.js').ChartOnBars} read the chart on its bars
+ * @param {number} number the bar
+ * @param {(string | null)[]} typed one per beat
+ * @returns {string | null} null: the bar isn't in the chart
+ */
+export function chartWithTypedBar(text, read, number, typed) {
+	const place = read.places[number];
+	if (!place) return null;
+	const slots = typedSlots(typed, typed.length);
+	if (isEmptyBar(slots) && isHeld(read.chords[number])) return text;
+	return withBarChords(text, place, cellFor(read.chords, number, slots));
 }

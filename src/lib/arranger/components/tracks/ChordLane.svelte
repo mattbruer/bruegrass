@@ -1,13 +1,15 @@
 <script>
 	/**
-	 * The chords, by beat. Each bar shows its chords as chips, each as wide
-	 * as it lasts (G for two beats, then C). Tap a bar and it opens into a
-	 * box on each beat a chord may change on (`chordPlaces`: beats 1 and 3
-	 * in 4/4): type the chord where it changes and leave the rest empty (the
-	 * chord before carries on). One chord to a box: a space or comma is
-	 * taken out as it's typed. Tab moves along the boxes, Enter keeps them, Escape leaves
-	 * the bar as it was. A box is checked as you leave it, and a chord the
-	 * band can't play isn't kept: the bar stays open and says why.
+	 * The chords, by beat, on Transcribe's grid and the Tracks page. Each bar
+	 * shows its chords as chips, each as wide as it lasts (G for two beats,
+	 * then C). Tap a bar and it opens into a box on each beat a chord may
+	 * change on (`chordPlaces`: beats 1 and 3 in 4/4): type the chord where
+	 * it changes and leave the rest empty (the chord before carries on). One
+	 * chord to a box: a space or comma is taken out as it's typed. Tab moves
+	 * along the boxes, Enter keeps them, Escape leaves the bar as it was. A
+	 * box is checked as you leave it, and a chord the band can't play isn't
+	 * kept: the bar stays open and says why. The host says what the bars
+	 * hold and writes what's kept.
 	 */
 	import { tick } from 'svelte';
 	import { changesIn, placesFor, slotsFromPlaces } from '../../transcription/barChords.js';
@@ -16,12 +18,22 @@
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
+	 * @typedef {{ number: number, start: number, beats: number }} LaneBar
+	 *   start: where it starts, as the scale counts (scale.toX(start))
+	 * @typedef {import('../../transcription/barChords.js').Slots} Slots
+	 */
+
+	/**
 	 * @type {{
-	 *   transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState,
+	 *   bars: LaneBar[],
+	 *   slotsOf: (bar: LaneBar) => Slots,
+	 *   isHeld: (bar: LaneBar) => boolean,
+	 *   setChords: (bar: LaneBar, typed: (string | null)[]) => string,
 	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>
 	 * }}
+	 *   setChords: writes a bar's boxes, one slot per beat; returns why it couldn't ('' : kept)
 	 */
-	let { transcription, scale } = $props();
+	let { bars, slotsOf, isHeld, setChords, scale } = $props();
 
 	/** @type {number | null} the bar open for typing */
 	let editing = $state(null);
@@ -37,14 +49,13 @@
 	/** The open bar is on the right of the screen, so its message opens leftward. */
 	let onTheRight = $state(false);
 
-	const first = $derived(transcription.bars[0]?.firstBeat ?? 0);
 	const quarter = $derived(scale.toX(1) - scale.toX(0));
 
-	/** @param {import('../../transcription/barPlan.js').Bar} bar */
+	/** @param {LaneBar} bar */
 	async function open(bar) {
 		editing = bar.number;
 		problem = '';
-		const slots = transcription.slotsOf(bar);
+		const slots = slotsOf(bar);
 		places = placesFor(slots);
 		beatsInBar = bar.beats;
 		boxes = places.map((beat) => slots[beat] ?? '');
@@ -53,8 +64,10 @@
 	}
 
 	function keep() {
-		if (editing === null) return;
-		say(transcription.setBarChords(editing, slotsFromPlaces(boxes, places, beatsInBar)));
+		const bar = bars.find((each) => each.number === editing);
+		if (!bar) return;
+		const typed = slotsFromPlaces(boxes, places, beatsInBar);
+		say(typed.map((text) => chordBoxProblem(text ?? '')).find(Boolean) || setChords(bar, typed));
 		if (!problem) editing = null;
 	}
 
@@ -96,8 +109,8 @@
 </script>
 
 <div class="lane">
-	{#each transcription.bars as bar (bar.number)}
-		{@const left = scale.toX(bar.firstBeat - first)}
+	{#each bars as bar (bar.number)}
+		{@const left = scale.toX(bar.start)}
 		{#if editing === bar.number}
 			<div
 				bind:this={openBar}
@@ -128,19 +141,19 @@
 				{/if}
 			</div>
 		{:else}
-			{@const changes = changesIn(transcription.slotsOf(bar))}
+			{@const changes = changesIn(slotsOf(bar))}
 			<button
 				type="button"
 				class="bar"
 				style:left="{left}px"
 				style:width="{bar.beats * quarter}px"
 				onclick={() => open(bar)}
-				aria-label="Bar {bar.number} chords: {transcription.isHeld(bar)
+				aria-label="Bar {bar.number} chords: {isHeld(bar)
 					? 'the chord before carries on'
 					: changes.map((change) => change.name).join(', ') || 'none yet'}"
-				use:tooltip={TIPS.transcription.chordBar}
+				use:tooltip={TIPS.chordLane.bar}
 			>
-				{#if transcription.isHeld(bar)}
+				{#if isHeld(bar)}
 					<span class="chip held" style:left="2px" style:width="{bar.beats * quarter - 4}px"></span>
 				{:else if changes.length === 0}
 					<span class="empty">·</span>

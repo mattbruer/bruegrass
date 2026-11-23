@@ -37,7 +37,7 @@
 	import { voiceChannels } from '../../melody/harmony/partChannels.js';
 	import { mixer } from '../../mixer/mixer.svelte.js';
 	import ReferenceLane from './ReferenceLane.svelte';
-	import ChordLane from './ChordLane.svelte';
+	import ChordLane from '../tracks/ChordLane.svelte';
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
@@ -83,6 +83,11 @@
 	const pixelsPerQuarter = $derived(PIXELS_PER_QUARTER * zoom.across);
 	const span = $derived(gridSpan(ruler, clip, beatsPerBar));
 	const scale = $derived(trackScale(span, pixelsPerQuarter));
+	/** The bars as the chord lane places them: from the first bar's downbeat. */
+	const chordBars = $derived.by(() => {
+		const first = transcription.bars[0]?.firstBeat ?? 0;
+		return transcription.bars.map((bar) => ({ ...bar, start: bar.firstBeat - first }));
+	});
 	const parts = $derived(
 		transcription.linked
 			? partLanes({
@@ -259,7 +264,13 @@
 					<MuteSoloButtons settings={transcription.band.lane} name="Band" />
 					<LaneVolume level={transcription.band.lane} name="Band" />
 				</div>
-				<ChordLane {transcription} {scale} />
+				<ChordLane
+					bars={chordBars}
+					slotsOf={(bar) => transcription.slotsOf(bar)}
+					isHeld={(bar) => transcription.isHeld(bar)}
+					setChords={(bar, typed) => transcription.setBarChords(bar.number, typed)}
+					{scale}
+				/>
 
 				{#each parts as lane (lane.id)}
 					{@const channel = mixer.channels.find((each) => each.id === lane.id)}

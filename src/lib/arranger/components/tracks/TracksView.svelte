@@ -10,6 +10,8 @@
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { bandLanes } from '../../tracks/lanes.js';
+	import { readChartOnBars } from '../../transcription/readChartOnBars.js';
+	import { chartWithTypedBar, isHeld, slotsOf } from '../../transcription/barChords.js';
 	import { bassPart } from '../../bass/songBass.js';
 	import { rulerBars, rulerSpan } from '../../tracks/ruler.js';
 	import { PIXELS_PER_QUARTER, trackScale } from '../../tracks/trackScale.js';
@@ -24,7 +26,7 @@
 	import BlockLane from './BlockLane.svelte';
 	import TakeClip from './TakeClip.svelte';
 	import AudioLaneMenu from './AudioLaneMenu.svelte';
-	import ChordDialogs from '../chordEdit/ChordDialogs.svelte';
+	import ChordLane from './ChordLane.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
 	import LaneVolume from '../transcription/LaneVolume.svelte';
 
@@ -36,7 +38,6 @@
 	const bars = $derived(rulerBars(arrangement.sections));
 	const band = $derived(
 		bandLanes({
-			sections: arrangement.sections,
 			bass: bassPart(arrangement.sections, {
 				capo: arrangement.capoFret,
 				transpose: arrangement.transpose,
@@ -55,9 +56,24 @@
 	/** + Audio lane asks for the new lane's name first. */
 	let namingLane = $state(false);
 
-	/** The chord tapped in a chord lane (null: none). */
-	/** @type {import('../../chart/chartAnalysis.js').ChordPlace | null} */
-	let editingChord = $state(null);
+	/** The chart's chords bar by bar, a slot per beat, for the chord lanes. */
+	const chartOnBars = $derived(readChartOnBars(arrangement.text, arrangement.sections));
+	const songBars = $derived(bars.filter((bar) => bar.number > 0));
+
+	/** @param {{ number: number, beats: number }} bar */
+	const slotsOfBar = (bar) => slotsOf(chartOnBars.chords[bar.number], bar.beats);
+	/** @param {{ number: number }} bar */
+	const isHeldBar = (bar) => isHeld(chartOnBars.chords[bar.number]);
+
+	/**
+	 * @param {{ number: number }} bar
+	 * @param {(string | null)[]} typed
+	 */
+	function setChords(bar, typed) {
+		const chart = chartWithTypedBar(arrangement.text, chartOnBars, bar.number, typed);
+		if (chart !== null) arrangement.text = chart;
+		return '';
+	}
 
 	/** @type {HTMLDivElement | undefined} */
 	let scroller = $state();
@@ -107,7 +123,17 @@
 					{/if}
 				</div>
 				<div class="lane">
-					<BlockLane {lane} {scale} onChordTap={(place) => (editingChord = place)} />
+					{#if lane.kind === 'chords'}
+						<ChordLane
+							bars={songBars}
+							slotsOf={slotsOfBar}
+							isHeld={isHeldBar}
+							{setChords}
+							{scale}
+						/>
+					{:else}
+						<BlockLane {lane} {scale} />
+					{/if}
 				</div>
 			{/each}
 
@@ -165,8 +191,6 @@
 		</div>
 	</div>
 </div>
-
-<ChordDialogs bind:place={editingChord} />
 
 <NameDialog
 	bind:open={namingLane}

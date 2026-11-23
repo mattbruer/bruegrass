@@ -154,6 +154,10 @@ export const TIPS = Object.freeze({
 		editChord: 'Change this chord. Learn about it from inside the box.'
 	},
 
+	chordLane: {
+		bar: 'Tap to type this bar’s chords: a box on each beat a chord can change on (1 and 3 in 4/4), the chord where it changes.'
+	},
+
 	chordEdit: {
 		name: 'The chord as the chart writes it. Change it, then tap Change.',
 		save: 'Write the new chord into the chart. Its own reading is cleared.',
@@ -252,8 +256,6 @@ export const TIPS = Object.freeze({
 			'The reference recording, fitted to the bars. Tap to play from there. Drag its top strip to slide it, its ends to trim it.',
 		waveformColour:
 			"The waveform's colour. It's the same choice as Settings → Appearance → Waveform.",
-		chordBar:
-			'Tap to type this bar’s chords: a box on each beat a chord can change on (1 and 3 in 4/4), the chord where it changes.',
 		partLane: 'Edit this part in the piano roll below. A click anywhere on its lane picks it too.',
 		bandLane:
 			'The band (guitar, mandolin, bass) plays these chords along with the recording. Tap a bar to type its chords. Each instrument’s own level is in the mixer.',
@@ -319,7 +321,6 @@ export const TIPS = Object.freeze({
 		laneMenu: 'This lane’s name and takes, and a take from a file.',
 		laneName: 'Call this lane what’s on it (Lead vocal, Mandolin break).',
 		laneRemove: 'Take this empty lane away.',
-		chord: 'Change this chord: the chart changes too, everywhere this bar is played.',
 		clip: 'Drag the take sideways to line it up with the band.',
 		clipTakes:
 			'Drag the take sideways to line it up with the band. Tap it to play the lane’s next take instead.'

@@ -3,13 +3,11 @@
  * on its own mixer channel (the lane's id). Times in quarter notes from
  * bar 1, so every lane lines up with the ruler.
  *
- * A band lane is blocks: chords (guitar, mandolin) or notes (bass, melody,
- * harmony parts). A take lane is a record track: the take in use as a clip.
- * A lane that can be edited later (the bass) stays this shape; its editor
- * reads and writes the blocks.
+ * A chords lane (guitar, mandolin) is the chart's chords bar by bar,
+ * drawn and edited by ChordLane from the chart itself. A notes lane is
+ * blocks (bass, melody, harmony parts). A take lane is a record track:
+ * the take in use as a clip.
  */
-import { barsInPlayOrder } from '../chart/chartBars.js';
-import { placeInSong } from '../chart/loop.js';
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { EXTRA_PARTS } from '../melody/extraParts.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
@@ -20,10 +18,10 @@ import { secondsPerQuarter } from '../chart/tempo.js';
 
 /**
  * @typedef {import('$lib/storage/songTakes.js').TakeDocument} TakeDocument
- * @typedef {import('../chart/chartAnalysis.js').ChordPlace} ChordPlace
- * @typedef {{ start: number, length: number, label?: string, pitch?: number, place?: ChordPlace }} Block
- *   place: where a chord is written in the chart, so it can be changed there
- * @typedef {{ id: string, name: string, kind: 'chords' | 'notes', blocks: Block[] }} BandLane
+ * @typedef {{ start: number, length: number, label?: string, pitch?: number }} Block
+ * @typedef {{ id: string, name: string, kind: 'chords' }} ChordsLane
+ * @typedef {{ id: string, name: string, kind: 'notes', blocks: Block[] }} NotesLane
+ * @typedef {ChordsLane | NotesLane} BandLane
  * @typedef {{ take: TakeDocument, start: number, length: number }} Clip
  * @typedef {{ id: string, name: string, kind: 'take', takes: TakeDocument[], clip: Clip | null }} TakeLane
  * @typedef {BandLane | TakeLane} Lane
@@ -31,18 +29,16 @@ import { secondsPerQuarter } from '../chart/tempo.js';
 
 /**
  * @param {{
- *   sections: import('../chart/timeline.js').Section[],
  *   bass: import('../instruments/bassline.js').BassNote[],
  *   melody: import('../melody/melody.js').Melody | null,
  *   names?: import('../melody/partNames.js').PartNames
  * }} song bass: what the bass plays (bass/songBass.js: edited or the band's own); names: the names you gave the parts
  * @returns {BandLane[]}
  */
-export function bandLanes({ sections, bass, melody, names = {} }) {
-	const chords = chordBlocks(sections);
+export function bandLanes({ bass, melody, names = {} }) {
 	return [
-		{ id: 'guitar', name: 'Guitar', kind: 'chords', blocks: chords },
-		{ id: 'mandolin', name: 'Mandolin', kind: 'chords', blocks: chords },
+		{ id: 'guitar', name: 'Guitar', kind: 'chords' },
+		{ id: 'mandolin', name: 'Mandolin', kind: 'chords' },
 		{ id: 'bass', name: partName('bass', names), kind: 'notes', blocks: bassBlocks(bass) },
 		...tuneLanes(melody, names)
 	];
@@ -80,26 +76,6 @@ export function takeLanes(takes, bpm, names = {}) {
  */
 export function freeTrack(lanes) {
 	return RECORD_TRACKS.find((track) => !lanes.some((lane) => lane.id === track.id)) ?? null;
-}
-
-/** @param {import('../chart/timeline.js').Section[]} sections */
-export function chordBlocks(sections) {
-	/** @type {{ start: number, length: number, label: string, place: ChordPlace }[]} */
-	const blocks = [];
-	for (const bar of barsInPlayOrder(sections)) {
-		const before = blocks.at(-1);
-		if (bar.held && before) {
-			before.length += bar.beats; // the chord carries on: one block
-			continue;
-		}
-		let start = bar.start;
-		for (const chord of bar.chords) {
-			const place = { ...placeInSong(sections, bar), chord: chord.chord };
-			blocks.push({ start, length: chord.length, label: chord.name, place });
-			start += chord.length;
-		}
-	}
-	return blocks;
 }
 
 /** @param {import('../instruments/bassline.js').BassNote[]} notes */

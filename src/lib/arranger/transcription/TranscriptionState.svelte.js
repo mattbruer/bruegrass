@@ -12,7 +12,7 @@
  * one place its chords, sections and key live, wherever they were typed:
  * Transcribe reads them from the chart on the recording's bars
  * (readChartOnBars.js), a chord typed here is written into its bar of the
- * chart in place (chart/withBarChords.js), and a change to the bars, time
+ * chart in place (barChords.js chartWithTypedBar), and a change to the bars, time
  * or markers writes the chart again on the new bars (chartFromBars.js).
  * Notes drawn in the roll go into the song's tune, as they do anywhere.
  *
@@ -51,12 +51,10 @@ import { readTranscriptionDraft, writeTranscriptionDraft } from './transcription
 import { chartFromBars } from './chartFromBars.js';
 import { readChartOnBars } from './readChartOnBars.js';
 import { namedSections, withUniqueSectionNames } from './arrangementFromTranscription.js';
-import { chartCell, isEmptyBar, isHeld, slotsOf } from './barChords.js';
+import { chartWithTypedBar, isEmptyBar, isHeld, slotsOf, typedSlots } from './barChords.js';
 import { guessChords } from './chords/guessChords.js';
 import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
 import { keyFieldName, withKeyField } from '../chart/keyField.js';
-import { withBarChords } from '../chart/withBarChords.js';
-import { NO_CHORD } from '../chart/noChord.js';
 import { chordBoxProblem } from '../chart/knownChords.js';
 import { listArrangements } from '$lib/storage/arrangements.js';
 import { quartersAt, secondsAt } from './tempoMap.js';
@@ -534,20 +532,16 @@ export class TranscriptionState {
 		if (!bar) return '';
 		const problem = typed.map((text) => chordBoxProblem(text ?? '')).find(Boolean);
 		if (problem) return problem;
-		const slots = slotsOf(
-			typed.map((text) => (text ?? '').trim() || null),
-			bar.beats
-		);
-		if (isEmptyBar(slots) && this.isHeld(bar)) return ''; // still holding the chord before
-		const place = this.#chartOnBars.places[number];
-		if (!place) {
-			const chords = { ...this.chords, [number]: slots };
-			if (isEmptyBar(slots)) delete chords[number]; // cleared: no chord
-			this.#writeChart({ chords });
-		} else {
-			const cell = isEmptyBar(slots) ? NO_CHORD : chartCell(slots, this.#lastChordBefore(number));
-			this.#changeChart(withBarChords(this.arranger.arrangement.text, place, cell));
+		const text = this.arranger.arrangement.text;
+		const chart = chartWithTypedBar(text, this.#chartOnBars, number, slotsOf(typed, bar.beats));
+		if (chart !== null) {
+			this.#changeChart(chart);
+			return '';
 		}
+		const slots = typedSlots(typed, bar.beats);
+		const chords = { ...this.chords, [number]: slots };
+		if (isEmptyBar(slots)) delete chords[number]; // cleared: no chord
+		this.#writeChart({ chords });
 		return '';
 	}
 
@@ -590,19 +584,8 @@ export class TranscriptionState {
 	}
 
 	/**
-	 * The chord sounding at the end of the bar before (what a bar starting
-	 * with an empty beat carries on).
-	 * @param {number} number
-	 */
-	#lastChordBefore(number) {
-		let before = number - 1;
-		while (isHeld(this.chords[before])) before--;
-		return this.chords[before]?.findLast(Boolean) ?? NO_CHORD;
-	}
-
-	/**
 	 * Left empty in the chart, so it holds the chord before.
-	 * @param {import('./barPlan.js').Bar} bar
+	 * @param {{ number: number }} bar
 	 */
 	isHeld(bar) {
 		return isHeld(this.chords[bar.number]);
@@ -610,7 +593,7 @@ export class TranscriptionState {
 
 	/**
 	 * A bar's chords, a slot per beat.
-	 * @param {import('./barPlan.js').Bar} bar
+	 * @param {{ number: number, beats: number }} bar
 	 */
 	slotsOf(bar) {
 		return slotsOf(this.chords[bar.number], bar.beats);
