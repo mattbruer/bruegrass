@@ -28,7 +28,8 @@ import { melodyTargets } from '../theory/melodyTargets.js';
  * @param {{ time: number, length: number, pitch: number }[]} melody the tune's lead notes at concert pitch
  * @param {ChordPlace} place
  * @param {number} capo
- * @returns {Suggestion[]} best first; empty when no melody sounds under the chord
+ * @returns {Suggestion[]} the chart's own chord first (when it fits), then best first;
+ *   empty when no melody sounds under the chord
  */
 export function chordSuggestions(sections, melody, place, capo) {
 	const key = songKey(sections);
@@ -48,8 +49,9 @@ export function chordSuggestions(sections, melody, place, capo) {
 	}));
 	const current = withoutVariant(slots[plays[0]].name);
 
-	return chordsThatFit({ tonic: notePc(slotKey.tonic), minor: slotKey.minor }, occurrences).map(
-		(fit) => {
+	const fits = chordsThatFit({ tonic: notePc(slotKey.tonic), minor: slotKey.minor }, occurrences);
+	return fits
+		.map((fit) => {
 			const name = noteName(noteOfKey(slotKey.tonic, fit.root)) + fit.type.suffix;
 			return {
 				name,
@@ -62,8 +64,8 @@ export function chordSuggestions(sections, melody, place, capo) {
 					as: target.as
 				}))
 			};
-		}
-	);
+		})
+		.sort((a, b) => Number(b.current) - Number(a.current));
 }
 
 /**

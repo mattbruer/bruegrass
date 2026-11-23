@@ -1,13 +1,14 @@
 <script>
 	/**
 	 * Tapping a chord on the strip opens this: change its name, and the chart
-	 * is rewritten where the chord is written. "Learn" hands the same chord
-	 * to the chord tutor.
+	 * is rewritten where the chord is written, or pick one of the chords that
+	 * fit the melody there. "Learn" hands the same chord to the chord tutor.
 	 */
 	import Dialog from '$lib/components/Dialog.svelte';
 	import { useArranger } from '../../state/context.js';
 	import { placeId } from '../../chart/chartAnalysis.js';
 	import { chordBoxProblem } from '../../chart/knownChords.js';
+	import ChordsThatFit from './ChordsThatFit.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -59,6 +60,8 @@
 			{#if problem}
 				<p class="text-sm text-danger">{problem}</p>
 			{/if}
+
+			<ChordsThatFit {place} picked={typed} onPick={(name) => (typed = name)} />
 
 			<div class="flex flex-wrap gap-2">
 				<button

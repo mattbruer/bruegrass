@@ -3,7 +3,9 @@
  * the twelve roots with each kind of chord (chordTypes.js) is tried in the
  * chord's place, with its scale picked by what it would do there
  * (chordScaleFor.js). It fits when every target note (melodyTargets.js) is
- * one of its chord tones or tensions, wherever in the song the chord plays.
+ * one of its chord tones or tensions, wherever in the song the chord plays,
+ * and some note of the melody under it is one of its chord tones (or the
+ * chord isn't heard in the tune at all).
  * Approach notes only have to step into a target, which they do by being
  * approach notes.
  *
@@ -21,8 +23,6 @@ const BLUE_NOTES = { numerals: ['I', 'IV'], types: ['', '7'], semitones: [3, 10]
 const FIT_WEIGHT = { tone: 1, tension: 0.7, blue: 0.5 };
 /** A target on one of the bass's beats counts this much more. */
 const BOOM_WEIGHT = 2;
-/** The chord's own notes must carry at least this share of the targets, or it isn't heard. */
-const MIN_CHORD_TONE_SHARE = 0.5;
 /** Taken off the score for each chord note outside the key, and each beyond the triad. */
 const OUTSIDE_KEY_PENALTY = 0.15;
 const EXTENSION_PENALTY = 0.1;
@@ -78,24 +78,24 @@ export function chordsThatFit(key, occurrences) {
 function fitEverywhere(key, chord, occurrences) {
 	let total = 0;
 	let weight = 0;
-	let toneWeight = 0;
+	let heard = false;
 	/** @type {Map<number, TargetAs>} */
 	const targets = new Map();
 	let first = null;
 	for (const { notes, next } of occurrences) {
 		const scale = chordScaleFor(key, chord, next);
 		first ??= scale;
+		heard ||= notes.some((note) => scale.roles.get(mod12(note.pitch - chord.root)) === 'tone');
 		for (const note of notes.filter((each) => each.target)) {
 			const as = targetAs(key, chord, scale, note.pitch);
 			if (!as) return null;
 			const noteWeight = note.length * (note.onBoom ? BOOM_WEIGHT : 1);
 			total += noteWeight * FIT_WEIGHT[as.role];
 			weight += noteWeight;
-			if (as.role === 'tone') toneWeight += noteWeight;
 			targets.set(as.pitchClass, as);
 		}
 	}
-	if (!first || weight === 0 || toneWeight < weight * MIN_CHORD_TONE_SHARE) return null;
+	if (!first || weight === 0 || !heard) return null;
 	return {
 		...chord,
 		does: first.does,

@@ -176,7 +176,10 @@ export const TIPS = Object.freeze({
 	chordEdit: {
 		name: 'The chord as the chart writes it. Change it, then tap Change.',
 		save: 'Write the new chord into the chart. Its own reading is cleared.',
-		learn: 'Open the chord tutor on this chord: what to play over it, and what it does.'
+		learn: 'Open the chord tutor on this chord: what to play over it, and what it does.',
+		fits: 'This chord fits the melody here. Tap to put it in the box and see why; Change uses it.',
+		jazzier:
+			'Chords with more colour (sixths, sevenths, sus, ninths) that also fit the melody here.'
 	},
 
 	chordTutor: {
