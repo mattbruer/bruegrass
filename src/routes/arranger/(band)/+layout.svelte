@@ -5,7 +5,8 @@
 	 * them keeps the song, the mix and the music playing. The player bar,
 	 * the editor and mixer drawers and the received-song dialog are here
 	 * too, the same on every page except those with their own player
-	 * (components/page/bandPages.js), where the band stops.
+	 * (components/page/bandPages.js), where the band stops; Tracks keeps the
+	 * mixer drawer, opened by its own button.
 	 *
 	 * It opens on the song this device had open last (else the starter song),
 	 * and your work saves itself as you go (state/autosave.svelte.js). If this
@@ -18,7 +19,7 @@
 	import InstrumentWindow from '$lib/arranger/components/mixer/instruments/InstrumentWindow.svelte';
 	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { showsTheBand } from '$lib/arranger/components/page/bandPages.js';
+	import { showsTheBand, showsTheMixer } from '$lib/arranger/components/page/bandPages.js';
 	import { provideArranger } from '$lib/arranger/state/context.js';
 	import PlayerBar from '$lib/arranger/components/page/PlayerBar.svelte';
 	import EditDrawer from '$lib/arranger/components/editor/EditDrawer.svelte';
@@ -35,6 +36,7 @@
 
 	const arranger = provideArranger();
 	const showBand = $derived(showsTheBand(page.route.id));
+	const showMixer = $derived(showsTheMixer(page.route.id));
 	// Arriving on a page without the player bar stops the band and the click; a page with its
 	// own controls (Tracks) can start them again, so only the arrival counts
 	$effect(() => {
@@ -42,6 +44,7 @@
 		untrack(() => {
 			arranger.player.stop();
 			arranger.layout.close();
+			arranger.layout.barHeight = 0; // no bar here: a drawer sits on the bottom of the screen
 		});
 	});
 	keepWorkSaved(arranger);
@@ -77,6 +80,10 @@
 	<div class="print:hidden">
 		<PlayerBar />
 		<EditDrawer />
+		<MixerDrawer />
+	</div>
+{:else if showMixer}
+	<div class="print:hidden">
 		<MixerDrawer />
 	</div>
 {/if}

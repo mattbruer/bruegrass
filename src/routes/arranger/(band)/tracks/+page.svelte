@@ -28,7 +28,7 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	const { recording, loop, player, song, arrangement } = useArranger();
+	const { recording, loop, player, song, arrangement, layout } = useArranger();
 	onDestroy(loop.playThroughWhile());
 
 	const cycle = new TracksCycleState(() => rulerBars(arrangement.sections));
@@ -97,7 +97,7 @@
 	<title>Tracks · Bluegrass Arranger</title>
 </svelte:head>
 
-<main class="ui-page-width flex flex-col gap-4 pt-6 pb-16">
+<main class="ui-page-width flex flex-col gap-4 pt-6" style:padding-bottom={layout.bottomSpace}>
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold">Tracks</h1>
 		<a
