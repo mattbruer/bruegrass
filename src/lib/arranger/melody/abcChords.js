@@ -418,21 +418,26 @@ export function arrangementFromAbc(voices) {
 }
 
 /**
- * The ABC with the arrangement's chords written in, at concert pitch.
- * @param {string} abc the tune, with no chord symbols of its own
- * @param {any[][]} voices abcjs.synth.sequence(tune) for that ABC
+ * Where each of the arrangement's chord changes goes in the tune: on the
+ * note (or rest) that starts with it, by its source position. Repeated
+ * bars are written once, so they can show only one chord.
+ * @param {any[][]} voices abcjs.synth.sequence(tune)
  * @param {import('../chart/timeline.js').Section[]} sections the whole arrangement
  * @param {{ capo?: number }} options
- * @returns {{ abc: string, notes: string[] }}
+ * @returns {{ symbols: Map<number, { name: string, start: number }>, played: Item[], notes: string[] }}
+ *   symbols: startChar → the chord at concert pitch and when it starts; played: the
+ *   melody's notes and rests from bar 1; notes: what couldn't be shown as played
  */
-export function abcWithChords(abc, voices, sections, { capo = 0 } = {}) {
+export function chordSymbolPlaces(voices, sections, { capo = 0 } = {}) {
 	const voice = voices[0] ?? [];
 	const { items, pickup } = walk(voice);
 	const slots = slotPositions(sections);
 	const key = songKey(sections);
 	/** @type {string[]} */
 	const notes = [];
-	if (slots.length === 0) return { abc, notes };
+	/** @type {Map<number, { name: string, start: number }>} */
+	const symbols = new Map();
+	if (slots.length === 0) return { symbols, played: [], notes };
 	const last = slots.at(-1);
 	const end = last ? last.barStart + barQuarters(last.meter) : 0;
 
@@ -449,9 +454,8 @@ export function abcWithChords(abc, voices, sections, { capo = 0 } = {}) {
 		return `bar ${slot.bar + 1}, beat ${Math.round(time - slot.barStart) + 1}`;
 	};
 
-	// Each chord change goes on the note (or rest) that starts with it
 	/** @type {Map<number, import('../chart/timeline.js').SlotPosition>} */
-	const symbols = new Map();
+	const placed = new Map();
 	slots.forEach((slot, k) => {
 		if (k > 0 && slots[k - 1].name === slot.name) return;
 		const item = played.find((i) => i.t >= slot.start - EPSILON);
@@ -467,12 +471,11 @@ export function abcWithChords(abc, voices, sections, { capo = 0 } = {}) {
 			);
 		}
 		const startChar = /** @type {number} */ (item.startChar);
-		if (!symbols.has(startChar)) symbols.set(startChar, slot);
+		if (!placed.has(startChar)) placed.set(startChar, slot);
 	});
 
-	// Repeated bars are written once, so they must have the same chords each time
 	for (const item of played) {
-		const symbol = symbols.get(/** @type {number} */ (item.startChar));
+		const symbol = placed.get(/** @type {number} */ (item.startChar));
 		const wanted = slotAt(item.t);
 		if (symbol && symbol.name !== wanted.name) {
 			notes.push(
@@ -481,9 +484,25 @@ export function abcWithChords(abc, voices, sections, { capo = 0 } = {}) {
 		}
 	}
 
-	let result = abc;
-	for (const [startChar, slot] of [...symbols].sort((a, b) => b[0] - a[0])) {
-		result = `${result.slice(0, startChar)}"${concert(slot)}"${result.slice(startChar)}`;
+	for (const [startChar, slot] of placed) {
+		symbols.set(startChar, { name: concert(slot), start: slot.start });
 	}
-	return { abc: result, notes: [...new Set(notes)] };
+	return { symbols, played, notes: [...new Set(notes)] };
+}
+
+/**
+ * The ABC with the arrangement's chords written in, at concert pitch.
+ * @param {string} abc the tune, with no chord symbols of its own
+ * @param {any[][]} voices abcjs.synth.sequence(tune) for that ABC
+ * @param {import('../chart/timeline.js').Section[]} sections the whole arrangement
+ * @param {{ capo?: number }} options
+ * @returns {{ abc: string, notes: string[] }}
+ */
+export function abcWithChords(abc, voices, sections, options = {}) {
+	const { symbols, notes } = chordSymbolPlaces(voices, sections, options);
+	let result = abc;
+	for (const [startChar, { name }] of [...symbols].sort((a, b) => b[0] - a[0])) {
+		result = `${result.slice(0, startChar)}"${name}"${result.slice(startChar)}`;
+	}
+	return { abc: result, notes };
 }

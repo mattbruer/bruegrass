@@ -23,7 +23,7 @@
 		{
 			"id": "tune-chords-follow-chart",
 			"text": "The tune's chord symbols follow chord edits in the chart (now they stay as written, so the sheet music can show old chords)",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-23"
 		},
 		{

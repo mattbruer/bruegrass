@@ -22,7 +22,8 @@
   - Chords change on the nearest beat, using the fewest even slots (`G,C,D` = 2+1+1).
   - Sections split where the score jumps back (a repeat). They're lettered A, B… by where they start in the score, and an identical repeat becomes `"A" as A`.
   - The capo is chosen so chords land on shapes in `guitar-chords.json`, preferring G/C/D/Am/Em home shapes.
-- `abcWithChords`: writes the arrangement's concert-pitch chords into ABC that has none, on the note where each change lands. It reports changes during held notes, and repeated bars the arrangement chords differently on another pass.
+- `abcWithChords` (placement in `chordSymbolPlaces`): writes the arrangement's concert-pitch chords into ABC that has none, on the note where each change lands. It reports changes during held notes, and repeated bars the arrangement chords differently on another pass.
+- **The tune's chord symbols follow the chart** (`melody/chordsFollowChart.js`, run from `state/tuneFollowsChart.svelte.js` after bars and renames are followed, `Arranger.followChords`): when bars' chords change (compared at concert pitch, bars matched like a text diff with `bass/matchBars.js`), only those bars' symbols are written fresh, by `chordSymbolPlaces`; every other symbol stays as written, so a pasted tune's Cmaj7 isn't flattened to the chart's simplified C by an edit elsewhere. Annotations (`"^n.c."`) and decorations stay. A tune with no chord symbols is left without. A capo move is skipped (`setCapo` transposes the tune itself). A chord that lands on a held note isn't shown (the same rule as `abcWithChords`, without the report). Respelling the key changes every bar's names, so every bar is rewritten.
 - Chord shapes are bluegrass voicings with a low fifth, so `bassNote` can alternate root and fifth. Keep that when adding shapes.
 
 ### Harmony parts (`melody/harmony/`)
