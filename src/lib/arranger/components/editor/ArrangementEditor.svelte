@@ -21,6 +21,9 @@
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
+	/** Buttons is set aside for now: false hides the switch and always types. */
+	const OFFER_BUTTONS = false;
+
 	const WAYS = [
 		{ id: 'text', name: 'Text' },
 		{ id: 'buttons', name: 'Buttons' }
@@ -47,7 +50,7 @@
 	let keypadMode = $state(/** @type {'music' | 'text'} */ ('music'));
 
 	let usesKeypad = $derived(isTouchScreen && settings.musicKeypad);
-	let typing = $derived(settings.chartEditor !== 'buttons');
+	let typing = $derived(!OFFER_BUTTONS || settings.chartEditor !== 'buttons');
 	let keypadVisible = $derived(usesKeypad && isEditing && typing);
 
 	/** @type {{ section: number, measure: number } | null} */
@@ -112,12 +115,14 @@
 </script>
 
 <div class="mb-2 flex items-center gap-2">
-	<TabSwitch
-		tabs={WAYS}
-		bind:value={settings.chartEditor}
-		tips={TIPS.editor.ways}
-		label="Edit by"
-	/>
+	{#if OFFER_BUTTONS}
+		<TabSwitch
+			tabs={WAYS}
+			bind:value={settings.chartEditor}
+			tips={TIPS.editor.ways}
+			label="Edit by"
+		/>
+	{/if}
 	<HelpLink />
 	<MyChordsButton />
 </div>

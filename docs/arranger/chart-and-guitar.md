@@ -26,6 +26,8 @@ Parsed by `parseArrangement.js`. Example: `"Chorus"|G,G|C,C|G,G|D,D|`, plus `"Br
 
 ### Two ways to edit the chart
 
+**Set aside for now** (the user's call: it needs work): `OFFER_BUTTONS = false` in `ArrangementEditor` hides the switch and always shows Text; set it to true to bring Buttons back. Everything below is built and committed.
+
 The chart editor (`ArrangementEditor`, so the editor drawer and Transcribe both have it) switches between **Text** (typing, with the keypad on touch) and **Buttons** (`components/builder/`), remembered on this device (`settings.chartEditor`). The text stays the one place the song lives: Buttons reads it as written (`chart/writtenChart.js`: sections, bars with their chords and fields, repeats, lyric lines; nothing worked out, so writing back keeps everything typed and only tidies spacing) through `ArrangementState.written`, and each button is a plain function on that (`builder/chartEdits.js`) written back by `editWritten`.
 
 - Parts are cards with their name in a field (typed) and a ⋯ menu: move, copy, play another part again (`as`), give a repeat its own bars, delete (its repeats get its bars written out). Renaming a part renames its repeats.
