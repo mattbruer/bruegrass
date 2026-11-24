@@ -65,11 +65,12 @@ export function bassLine(sections, { capo = 0 } = {}) {
 	for (const beat of beats) {
 		if (beat.role !== 'boom') continue;
 		const slot = slots[beat.slot];
-		// A new chord, or the same one starting a new section, starts on its root
+		// A new chord, the same one starting a new section, or a hit starts on its root
 		const sameChord =
 			previousSlot !== null &&
 			previousSlot.name === slot.name &&
-			previousSlot.section === slot.section;
+			previousSlot.section === slot.section &&
+			!slot.hit;
 		if (sameChord) boomOfChord++;
 		else {
 			chord = placeChord(slot.name, notes.at(-1)?.pitch ?? LOW, capo);

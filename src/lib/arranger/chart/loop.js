@@ -52,6 +52,7 @@ export function loopRegion(sections, { section, from, to }) {
 				measures: [],
 				meters: [],
 				held: [],
+				hits: [],
 				keys: [],
 				key: source.key ?? null,
 				barOffset: m,
@@ -63,6 +64,7 @@ export function loopRegion(sections, { section, from, to }) {
 		current.measures.push(source.measures[m]);
 		current.meters?.push(source.meters?.[m] ?? DEFAULT_METER);
 		current.held?.push(source.held?.[m] ?? false);
+		current.hits?.push(source.hits?.[m] ?? source.measures[m].map(() => null));
 		current.keys?.push(source.keys?.[m] ?? source.measures[m].map(() => null));
 	}
 	return region;

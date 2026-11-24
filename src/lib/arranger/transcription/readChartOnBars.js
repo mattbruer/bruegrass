@@ -11,6 +11,7 @@
  */
 import { barsInPlayOrder } from '../chart/chartBars.js';
 import { withMark } from '../chart/analysisMarks.js';
+import { withHit } from '../chart/hits.js';
 import { isNoChord } from '../chart/noChord.js';
 import { sectionBlocks } from '../chart/sectionBlocks.js';
 import { UNMARKED_SECTION } from '../chart/unmarkedSection.js';
@@ -52,11 +53,11 @@ export function readChartOnBars(text, sections) {
 }
 
 /**
- * A chart bar's chords on its beats, with any analysis mark kept on the
- * chord ("A7{V7/V}"). A bar that's all N.C. has none (null); a bar left
+ * A chart bar's chords on its beats, with any hit and analysis mark kept on
+ * the chord ("G~", "A7{V7/V}"). A bar that's all N.C. has none (null); a bar left
  * empty in the chart has slots with no chord in any (barChords.js `isHeld`).
  * @param {import('../chart/chartBars.js').ChartBar} bar
- * @param {import('../chart/timeline.js').Section & { marks?: (string | null)[][] }} section
+ * @param {import('../chart/timeline.js').Section & { marks?: (string | null)[][], hits?: (import('../chart/hits.js').Hit | null)[][] }} section
  */
 function slotsOfChartBar(bar, section) {
 	/** @type {import('./barChords.js').Slots} */
@@ -66,7 +67,8 @@ function slotsOfChartBar(bar, section) {
 	let beat = 0;
 	for (const chord of bar.chords) {
 		const mark = section.marks?.[bar.measure]?.[chord.chord] ?? null;
-		if (beat < slots.length) slots[Math.floor(beat)] = withMark(chord.name, mark);
+		const hit = section.hits?.[bar.measure]?.[chord.chord] ?? null;
+		if (beat < slots.length) slots[Math.floor(beat)] = withMark(withHit(chord.name, hit), mark);
 		beat += chord.length;
 	}
 	return slots;

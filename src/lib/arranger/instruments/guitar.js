@@ -2,6 +2,7 @@ import { chordShape, withoutVariant } from './chordBook.js';
 import { chordTypeOf, toneSemitones } from '../theory/chordTypes.js';
 import { rhythm, slotPositions } from '../chart/timeline.js';
 import { pickPattern, patternStrokes } from './strumPatterns.js';
+import { hitAt, hitSpans } from '../chart/hits.js';
 import { createRng } from './seededRandom.js';
 import { secondsPerQuarter } from '../chart/tempo.js';
 import { ARTICULATIONS } from './articulation.js';
@@ -19,6 +20,8 @@ export const MAX_FRET = 12;
 
 /** Strings a strum plays, low first (an upstroke plays them high to low). */
 export const STRUM_STRINGS = [3, 4, 5];
+/** Strings a full strum (a hit) plays: all six. */
+const FULL_STRINGS = [0, 1, 2, 3, 4, 5];
 /*
  * How a note ends. A string can only sound one note: striking it again
  * damps the old note as the new one starts, so the old one fades very
@@ -27,6 +30,7 @@ export const STRUM_STRINGS = [3, 4, 5];
  */
 const RESTRIKE_FADE = 0.015; // seconds
 const CHORD_CHANGE_FADE = 0.05; // seconds
+const MUTE_FADE = 0.04; // seconds: the hand comes down on the strings (a choked hit)
 
 /** An upstroke is a little lighter than a downstroke. */
 const STROKE_DB = { down: 0, up: -3 };
@@ -277,7 +281,8 @@ export function guitarTuning(sections, shift) {
  *
  * Each beat group of the rhythm grid from timeline.js (boom-chuck, or
  * boom-chuck-chuck in 3/4) gets a strum pattern (strumPatterns.js),
- * boom-chuck or bum-titty, chosen at random. Bass notes on the same chord
+ * boom-chuck or bum-titty, chosen at random; a hit (chart/hits.js) plays
+ * its own pattern once and the strumming stops until the next chord. Bass notes on the same chord
  * alternate root/fifth; a new chord (or a new pass) starts on
  * its root. A note rings until its string is played again or the chord
  * changes. When looping, the notes span LOOP_PASSES passes and that rule
@@ -313,9 +318,12 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 
 	const { levelDb } = touch(bpm);
 	const random = createRng(STRUM_SEED);
+	const hits = hitSpans(sections);
 
 	/** @type {NoteEvent[]} */
 	let events = [];
+	/** @type {number[]} seconds: where the hand mutes every ringing string */
+	const mutes = [];
 	let repeat = 0;
 
 	for (let p = 0; p < passes; p++) {
@@ -323,12 +331,19 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 		let lastBoom = null; // each pass starts on the root
 		beats.forEach((boom, b) => {
 			if (boom.role !== 'boom') return;
-			for (const stroke of patternStrokes(pickPattern(random), boom.length)) {
+			const pattern = pickPattern(random);
+			const hit = hitAt(boom.time, hits);
+			if (hit && hit.start < boom.time - 1e-6) return; // a hit rings here
+			for (const stroke of patternStrokes(hit?.hit ?? pattern, boom.length)) {
 				const k = p * slots.length + beats[b + Math.floor(stroke.at)].slot;
 				const chord = sequence[k].name;
 				const time = (boom.time + stroke.at + p * quarters) * quarter;
 				const stop = chordEnds[k];
 
+				if (stroke.hit === 'mute') {
+					mutes.push(time);
+					continue;
+				}
 				if (stroke.hit === 'bass') {
 					repeat = lastBoom === chord ? repeat + 1 : 0;
 					lastBoom = chord;
@@ -347,7 +362,8 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 				}
 
 				const shape = chordShape(chord);
-				const strings = STRUM_STRINGS.filter((string) => shape[string] !== null);
+				const played = stroke.hit === 'full' ? FULL_STRINGS : STRUM_STRINGS;
+				const strings = played.filter((string) => shape[string] !== null);
 				const offsets = strumOffsets(strings, bpm, stroke);
 				strings.forEach((string, i) => {
 					events.push({
@@ -372,6 +388,11 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 		if (next && next.time <= event.stop) {
 			event.stop = next.time;
 			event.fadeOut = RESTRIKE_FADE;
+		}
+		const mute = mutes.find((at) => at > event.time && at < event.stop);
+		if (mute !== undefined) {
+			event.stop = mute;
+			event.fadeOut = MUTE_FADE;
 		}
 	});
 

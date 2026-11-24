@@ -164,7 +164,7 @@
 	</section>
 
 	<section id="stops">
-		<h2>4. Stops: no chord</h2>
+		<h2>4. Stops and endings</h2>
 		<p>
 			Write <b>N.C.</b> (no chord) where the band stops. Nobody plays there until the next chord.
 		</p>
@@ -172,6 +172,15 @@
 		<p class="tip">
 			It works for half a bar too: <code>|G,N.C.|</code>. A song you're transcribing starts with
 			N.C. in every bar, until you write its chords.
+		</p>
+		<p>
+			To end a song (or stop on a hit), the band strums once and stops. Put <b>~</b> after the chord
+			to let it ring, or <b>!</b> to cut it short after one beat.
+		</p>
+		{@render example(`"Ending"|C|G|D7,G~|`)}
+		<p class="tip">
+			<code>|G!|</code> hits on the first beat; <code>|D7,G!|</code> hits on beat 3. The band stays quiet
+			until the next chord, so empty bars after a hit let it ring on.
 		</p>
 	</section>
 

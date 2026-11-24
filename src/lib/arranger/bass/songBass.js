@@ -7,6 +7,8 @@ import { bassLine } from '../instruments/bassline.js';
 import { rhythm } from '../chart/timeline.js';
 import { mod12 } from '../chart/key.js';
 import { sectionsToPlay, stops, withoutStops } from '../chart/noChord.js';
+import { hitAt, hitSpans } from '../chart/hits.js';
+import { mutedAfter } from '../instruments/strumPatterns.js';
 
 const EPSILON = 1e-6;
 
@@ -51,12 +53,36 @@ export function bassPart(
 /**
  * The band's own bass line for these bars (bassline.js), silent in no-chord
  * bars (N.C.): worked out as if the chord before carried on, then the notes
- * starting in them are left out.
+ * starting in them are left out. A hit (chart/hits.js) is one note, held.
  * @param {import('../chart/timeline.js').Section[]} sections
  * @param {Parameters<typeof bassLine>[1]} options
  * @returns {BassNote[]}
  */
 export function bandsBassLine(sections, options) {
 	const notes = bassLine(sectionsToPlay(sections), options);
-	return withoutStops(notes, stops(sections), (note) => note.beat, rhythm(sections).quarters);
+	const played = withoutStops(
+		notes,
+		stops(sections),
+		(note) => note.beat,
+		rhythm(sections).quarters
+	);
+	return withHits(played, hitSpans(sections));
+}
+
+/**
+ * The note on each hit held until the next chord (or choked with the
+ * guitar), and the notes after it left out.
+ * @param {BassNote[]} notes
+ * @param {ReturnType<typeof hitSpans>} spans
+ * @returns {BassNote[]}
+ */
+function withHits(notes, spans) {
+	return notes.flatMap((note) => {
+		const span = hitAt(note.beat, spans);
+		if (!span) return [note];
+		if (span.start < note.beat - EPSILON) return [];
+		const length = span.end - span.start;
+		const sounding = mutedAfter(span.hit, note.length) ?? length;
+		return [{ ...note, length, gate: Math.min(1, sounding / length) }];
+	});
 }

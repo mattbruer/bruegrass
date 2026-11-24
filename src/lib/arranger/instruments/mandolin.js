@@ -14,6 +14,7 @@ import { withoutBass, withoutVariant } from './chordBook.js';
 import { readChordName } from '../theory/chordTypes.js';
 import { voiceChord } from './voicing.js';
 import { rhythm } from '../chart/timeline.js';
+import { hitAt, hitSpans } from '../chart/hits.js';
 import { createRng } from './seededRandom.js';
 import { secondsPerQuarter } from '../chart/tempo.js';
 import { ARTICULATIONS } from './articulation.js';
@@ -130,7 +131,10 @@ function builtChop(name, chord) {
 
 /**
  * A chop on every off-beat chuck of the rhythm grid (with the guitar's strum),
- * as one note per course, struck G → E.
+ * as one note per course, struck G → E. A hit (chart/hits.js) is one chop on
+ * the hit itself, then nothing until the next chord: the samples are recorded
+ * choked, so a ringing hit sounds the same as a choked one until ringing
+ * samples are recorded.
  * @param {{ name?: string, measures: string[][] }[]} sections
  * @param {{ capo?: number, bpm?: number }} options
  * @returns {MandoNote[]}
@@ -139,8 +143,11 @@ export function chopNotes(sections, { capo = 0, bpm = 120 } = {}) {
 	const quarter = secondsPerQuarter(bpm);
 	const rng = createRng(7);
 	const { beats, slots } = rhythm(sections);
+	const hits = hitSpans(sections);
 	return beats.flatMap((beat) => {
-		if (beat.role !== 'chuck') return [];
+		const hit = hitAt(beat.time, hits);
+		const onTheHit = hit !== undefined && Math.abs(hit.start - beat.time) < 1e-6;
+		if (hit ? !onTheHit : beat.role !== 'chuck') return [];
 		const { frets } = chopVoicing(slots[beat.slot].name, capo);
 		const time = beat.time * quarter;
 		const levelDb = CHOP_ARTICULATION.levelDb + (rng() * 2 - 1) * LEVEL_JITTER_DB;

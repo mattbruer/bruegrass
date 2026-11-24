@@ -5,11 +5,12 @@
  */
 import { hasShape } from '../instruments/chordBook.js';
 import { splitMark } from './analysisMarks.js';
+import { splitHit } from './hits.js';
 import { isNoChord } from './noChord.js';
 
-/** @param {string} name as typed, maybe with a mark: "A7", "A7{V7/V}", "G/B", "N.C." */
+/** @param {string} name as typed, maybe with marks: "A7", "A7{V7/V}", "G~", "G/B", "N.C." */
 export function isKnownChord(name) {
-	const { chord } = splitMark(name.trim());
+	const { chord } = splitHit(splitMark(name.trim()).chord);
 	return isNoChord(chord) || hasShape(chord);
 }
 

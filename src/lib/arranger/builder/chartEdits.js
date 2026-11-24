@@ -10,6 +10,7 @@
  */
 import { lyricLines, lyricsFromLines } from '../chart/sectionLyrics.js';
 import { splitMark } from '../chart/analysisMarks.js';
+import { splitHit } from '../chart/hits.js';
 
 /* Characters that would break the chart's syntax in a section's name */
 const NOT_IN_NAME = /["\n]/g;
@@ -26,9 +27,9 @@ function changed(chart, change) {
 	return copy;
 }
 
-/** A chord's name, without its mark or a key named in front of it. */
+/** A chord's name, without its marks or a key named in front of it. */
 export function chordName(/** @type {string} */ written) {
-	return splitMark(written.replace(LEADING_FIELDS, '')).chord.trim();
+	return splitHit(splitMark(written.replace(LEADING_FIELDS, '')).chord).chord;
 }
 
 /**
