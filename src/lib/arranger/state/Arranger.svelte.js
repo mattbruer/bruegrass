@@ -115,7 +115,7 @@ export class Arranger {
 	transcription = new TranscriptionState(this);
 
 	/** The chart's bars in play order, with when each plays. */
-	#chartBars = $derived(barsInPlayOrder(this.arrangement.sections));
+	chartBars = $derived(barsInPlayOrder(this.arrangement.sections));
 
 	/** Whether the chart is being heard: Transcribe's recording on its page, else the band. */
 	get chartIsPlaying() {
@@ -131,7 +131,7 @@ export class Arranger {
 	 */
 	chartBarNow() {
 		if (this.transcription.onPage) return this.transcription.chartBarAtPlayhead;
-		const bar = this.#chartBars[barPlayingAt(this.#chartBars, this.#bandPlayhead())];
+		const bar = this.chartBars[barPlayingAt(this.chartBars, this.#bandPlayhead())];
 		return bar ? { section: bar.section, measure: bar.measure } : null;
 	}
 

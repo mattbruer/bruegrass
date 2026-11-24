@@ -19,30 +19,29 @@
 	import { drawSheetMusic } from '../../melody/drawSheetMusic.js';
 	import { playedQuarters, sheetEvents } from '../../melody/follow.js';
 	import { followSheetMusic } from '../../melody/followSheetMusic.js';
-	import { pickupsOnPaper } from '../../melody/roll/pickupBar.js';
+	import { pickupEditsOnPaper } from '../../melody/roll/pickupBar.js';
 	import { chordChangesOnly } from '../../melody/chordChangesOnPaper.js';
-	import { unmarkedPartsUnnamed } from '../../melody/partLabelsOnPaper.js';
+	import { chartPartLabelEdits, unmarkedPartsUnnamed } from '../../melody/partLabelsOnPaper.js';
+	import { withEdits } from '../../melody/textEdits.js';
 	import SheetViewToggle from './SheetViewToggle.svelte';
 
-	const { arrangement, melody, player } = useArranger();
+	const arranger = useArranger();
+	const { arrangement, melody, player } = arranger;
 
 	/** @type {{ notation?: string, clock?: { playing: boolean, quarters: () => number } }} */
 	let { notation: otherNotation, clock } = $props();
 	const playing = $derived(clock ? clock.playing : player.isPlaying);
 	const timeNow = $derived(clock ? clock.quarters : player.melodyTimeNow);
-	const notation = $derived(
-		unmarkedPartsUnnamed(
-			chordChangesOnly(
-				otherNotation ??
-					(melody.voices
-						? pickupsOnPaper(
-								melody.notation,
-								melody.voices.map((voice) => voice.score)
-							)
-						: melody.notation)
-			)
-		)
-	);
+	const notation = $derived(unmarkedPartsUnnamed(chordChangesOnly(otherNotation ?? tuneOnPaper())));
+
+	/** The tune with its pickups (pickupBar.js) and, kept whole, the chart's section names (partLabelsOnPaper.js). */
+	function tuneOnPaper() {
+		const { notation: abc, voices, bySection } = melody;
+		if (!voices) return abc;
+		const scores = voices.map((voice) => voice.score);
+		const labels = bySection ? [] : chartPartLabelEdits(abc, scores[0], arranger.chartBars);
+		return withEdits(abc, [...pickupEditsOnPaper(abc, scores), ...labels]);
+	}
 
 	/** Both views are the same with no capo or key change, so the tabs only show when they differ. */
 	let canTranspose = $derived(arrangement.key !== null && arrangement.pitchShift !== 0);

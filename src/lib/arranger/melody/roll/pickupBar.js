@@ -113,9 +113,10 @@ function afterBarLine(abc, at) {
  * beats, leading back to the top, where that bar only has rests there.
  * @param {string} abc
  * @param {Score[]} scores each voice's score, read from abc
+ * @returns {import('../textEdits.js').TextEdit[]} to make in abc (textEdits.js)
  */
-export function pickupsOnPaper(abc, scores) {
-	/** @type {{ from: number, to: number, put: string }[]} */
+export function pickupEditsOnPaper(abc, scores) {
+	/** @type {import('../textEdits.js').TextEdit[]} */
 	const edits = [];
 	for (const score of scores) {
 		const first = score.bars[0];
@@ -128,10 +129,7 @@ export function pickupsOnPaper(abc, scores) {
 		const end = pickupAtTheEnd(abc, score);
 		if (end) edits.push(end);
 	}
-	let text = abc;
-	for (const { from, to, put } of edits.toSorted((a, b) => b.from - a.from))
-		text = text.slice(0, from) + put + text.slice(to);
-	return text;
+	return edits;
 }
 
 /**
