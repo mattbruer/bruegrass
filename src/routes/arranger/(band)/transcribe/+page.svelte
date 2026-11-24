@@ -41,6 +41,7 @@
 
 	// The work lives on the arranger, so leaving for another page and coming back carries on
 	const { transcription, song, layout } = useArranger();
+	transcription.arrive();
 	onDestroy(() => transcription.leave());
 	// The lanes' solos decide whether the band is heard here, not the mixer's
 	onDestroy(soloSafeWhile(BAND_CHANNELS));

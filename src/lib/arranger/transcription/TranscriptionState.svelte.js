@@ -27,7 +27,7 @@
  */
 import { StretchPlayer } from '$lib/slowDowner/StretchPlayer.svelte.js';
 import { waveformPeaks } from '../takes/waveformPeaks.js';
-import { evenBarPlan, withBarLength } from './barPlan.js';
+import { barAt, evenBarPlan, withBarLength } from './barPlan.js';
 import {
 	beatSeconds,
 	gridBars,
@@ -191,6 +191,15 @@ export class TranscriptionState {
 	key = $derived(this.linked ? keyFieldName(this.arranger.arrangement.text) : null);
 	/** Where the recording is now, in the song's quarters from bar 1. */
 	quartersNow = $derived(this.grid ? quartersAt(this.grid, this.player.time) : 0);
+	/**
+	 * Where the bar at the playhead is written in the chart, playing or
+	 * paused (null: the playhead is at the start, or no chart bar is there).
+	 */
+	chartBarAtPlayhead = $derived.by(() => {
+		if (!this.grid || (!this.player.playing && this.player.time <= this.startSeconds)) return null;
+		const bar = barAt(this.bars, Math.floor(this.quartersNow + this.grid.bars.firstBeat));
+		return (bar && this.#chartOnBars.places[bar.number]) ?? null;
+	});
 	/**
 	 * Where the song starts in the recording (seconds): bar 1, or where the
 	 * trimmed recording starts if that's later. Anything before (a false
@@ -882,8 +891,16 @@ export class TranscriptionState {
 		this.closeMenus();
 	}
 
+	/** The Transcribe page is open: its recording is what the chart editor follows. */
+	onPage = $state(false);
+
+	arrive() {
+		this.onPage = true;
+	}
+
 	/** Leaving the page for another of the arranger's: the recording stops, the work stays. */
 	leave() {
+		this.onPage = false;
 		this.player.pause();
 		this.closeMenus();
 	}

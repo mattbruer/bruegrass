@@ -47,3 +47,13 @@ export function barsInPlayOrder(sections) {
 	}
 	return bars;
 }
+
+/**
+ * The index of the bar playing at a time (-1: none, or stopped).
+ * @param {{ start: number, beats: number }[]} bars in play order
+ * @param {number} time quarter notes from bar 1, NaN when stopped
+ */
+export function barPlayingAt(bars, time) {
+	if (!Number.isFinite(time)) return -1;
+	return bars.findIndex((bar) => time >= bar.start && time < bar.start + bar.beats);
+}

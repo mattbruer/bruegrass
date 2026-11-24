@@ -9,6 +9,12 @@
 	],
 	"suggestions": [
 		{
+			"id": "chart-lit-bar-band",
+			"text": "The bar playing lit in the chart's text (Transcribe, Arranger, Tracks): try it on iPhone with the keypad up",
+			"done": false,
+			"addedAt": "2026-11-24"
+		},
+		{
 			"id": "roll-touch-ipad",
 			"text": "Piano roll on a real iPad and iPhone: swipe scrolls, tap picks, drag the picked note or its length handle, the note bar's steps. Then: scroll the roll when a dragged note nears its edge?",
 			"done": false,

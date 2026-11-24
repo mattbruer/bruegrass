@@ -56,7 +56,7 @@ import { respellDrawnMelody } from '../melody/roll/drawnMelody.js';
 import { melodyKey } from '../melody/roll/melodyKey.js';
 import { blankScoreForSong } from '../melody/roll/scoreFromChart.js';
 import { newAbc } from '../melody/roll/scoreToAbc.js';
-import { barsInPlayOrder } from '../chart/chartBars.js';
+import { barPlayingAt, barsInPlayOrder } from '../chart/chartBars.js';
 import { sectionInstances } from '../melody/sections/tuneBySection.js';
 import { sectionRests } from '../melody/sections/sectionRests.js';
 import { hasRepeats, splitTune, unitOfHeader } from '../melody/sections/splitTune.js';
@@ -113,6 +113,33 @@ export class Arranger {
 	receive = new ReceiveState(this);
 	/** Transcribing a recording: kept while you visit the other pages, so coming back carries on. */
 	transcription = new TranscriptionState(this);
+
+	/** The chart's bars in play order, with when each plays. */
+	#chartBars = $derived(barsInPlayOrder(this.arrangement.sections));
+
+	/** Whether the chart is being heard: Transcribe's recording on its page, else the band. */
+	get chartIsPlaying() {
+		return this.transcription.onPage ? this.transcription.player.playing : this.player.isPlaying;
+	}
+
+	/**
+	 * The chart bar at the playhead, for the chart editor to point at: where
+	 * it's playing, or where it's paused (the band: where the next Play
+	 * carries on, so none with Loop on). While playing it follows the audio
+	 * clock, so read it every frame while chartIsPlaying.
+	 * @returns {{ section: number, measure: number } | null}
+	 */
+	chartBarNow() {
+		if (this.transcription.onPage) return this.transcription.chartBarAtPlayhead;
+		const bar = this.#chartBars[barPlayingAt(this.#chartBars, this.#bandPlayhead())];
+		return bar ? { section: bar.section, measure: bar.measure } : null;
+	}
+
+	/** Where the band is (quarters from bar 1): playing, or where the next Play carries on (NaN: from the top). */
+	#bandPlayhead() {
+		if (this.player.isPlaying) return this.player.melodyTimeNow();
+		return this.player.resumeInPass() > 0 ? this.player.resumeAt : NaN;
+	}
 
 	/** @type {{ title: string, notes: string[] } | null} */
 	conversionReport = $state(null);

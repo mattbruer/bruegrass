@@ -4,6 +4,7 @@
  * marked `data-sheet`: a page) and bring that page into view.
  */
 import { onEveryFrame } from '../../audio/analysis/frameLoop.js';
+import { barPlayingAt } from '../chart/chartBars.js';
 
 /**
  * @typedef {{ timeNow: () => number, bars: { index: number, start: number, beats: number }[] }} FollowParams
@@ -18,7 +19,7 @@ export function followPlayback(node, params) {
 	let lit = null;
 
 	const stop = onEveryFrame(() => {
-		const index = barAt(current.bars, current.timeNow());
+		const index = barPlayingAt(current.bars, current.timeNow());
 		if (index === litIndex) return;
 		litIndex = index;
 		lit?.classList.remove('playing');
@@ -40,13 +41,4 @@ export function followPlayback(node, params) {
 			lit?.classList.remove('playing');
 		}
 	};
-}
-
-/**
- * @param {FollowParams['bars']} bars
- * @param {number} time
- */
-export function barAt(bars, time) {
-	if (!Number.isFinite(time)) return -1;
-	return bars.findIndex((bar) => time >= bar.start && time < bar.start + bar.beats);
 }
