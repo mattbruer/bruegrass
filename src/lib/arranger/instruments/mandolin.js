@@ -67,6 +67,9 @@ const CHOP = {
 const STROKE_GAP = 0.004; // s between courses on the downstroke (G → E)
 const LEVEL_JITTER_DB = 1.5; // per chop, so it doesn't sound machine-gunned
 
+/** Hits the mandolin plays: a chop can't ring, so it lays out on a ringing one. */
+const CHOPPED_HITS = /** @type {import('../chart/hits.js').Hit[]} */ (['choke']);
+
 /** How the pick meets the strings on a chop. */
 export const CHOP_ARTICULATION = ARTICULATIONS.chop;
 
@@ -131,10 +134,9 @@ function builtChop(name, chord) {
 
 /**
  * A chop on every off-beat chuck of the rhythm grid (with the guitar's strum),
- * as one note per course, struck G → E. A hit (chart/hits.js) is one chop on
- * the hit itself, then nothing until the next chord: the samples are recorded
- * choked, so a ringing hit sounds the same as a choked one until ringing
- * samples are recorded.
+ * as one note per course, struck G → E. On a hit (chart/hits.js) the mandolin
+ * plays only the hits it chops (CHOPPED_HITS), one chop on the hit itself,
+ * then nothing until the next chord; it lays out on the rest.
  * @param {{ name?: string, measures: string[][] }[]} sections
  * @param {{ capo?: number, bpm?: number }} options
  * @returns {MandoNote[]}
@@ -146,7 +148,8 @@ export function chopNotes(sections, { capo = 0, bpm = 120 } = {}) {
 	const hits = hitSpans(sections);
 	return beats.flatMap((beat) => {
 		const hit = hitAt(beat.time, hits);
-		const onTheHit = hit !== undefined && Math.abs(hit.start - beat.time) < 1e-6;
+		const onTheHit =
+			hit !== undefined && CHOPPED_HITS.includes(hit.hit) && Math.abs(hit.start - beat.time) < 1e-6;
 		if (hit ? !onTheHit : beat.role !== 'chuck') return [];
 		const { frets } = chopVoicing(slots[beat.slot].name, capo);
 		const time = beat.time * quarter;
