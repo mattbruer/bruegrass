@@ -9,6 +9,8 @@
 	import OpenSongDialog from './OpenSongDialog.svelte';
 	import ExampleSongSelect from './ExampleSongSelect.svelte';
 	import ExportButton from '../export/ExportButton.svelte';
+	import PayloadButton from './PayloadButton.svelte';
+	import { dev } from '$app/environment';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -31,6 +33,7 @@
 
 	<ExampleSongSelect />
 	<ExportButton />
+	{#if dev}<PayloadButton />{/if}
 	<button
 		type="button"
 		class="ui-button px-4 py-2"

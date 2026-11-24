@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-- `npm run dev`: Vite dev server.
+- `npm run dev`: Vite dev server. The user keeps one running in VS Code on port 5173. **In the browser pane, use `preview_start {name: "shared"}`**, which attaches to it without starting a process. Start `dev-2` only if `shared` finds nothing running, and `preview_stop` it when done: each chat's server stays alive until stopped, and the app allows five per folder.
 - `npm run build`: production build. Use it as the type/compile check.
 - `npm run lint`: runs `prettier --check` and then `eslint`.
 - `npx eslint <files>`: lint only the files you touched.
