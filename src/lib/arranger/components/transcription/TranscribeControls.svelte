@@ -3,7 +3,8 @@
 	 * Transcribe's control bar, centred: where you are (play, start over, a
 	 * bar back or forward, the clock) and how it sounds (speed with the pitch
 	 * kept, Count along as the metronome: a click on every beat, higher
-	 * on ONE, the recording's fine tuning, and the tuner) and how much of the grid you see (Zoom, across and
+	 * on ONE, the recording's fine tuning, and the tuner) the song as text (the pencil: the chart and the tune's ABC, in the
+	 * editor drawer) and how much of the grid you see (Zoom, across and
 	 * down; the piano roll has its own in its toolbar). + Marker is beside the grid's ruler, and the
 	 * recording's own settings in its lane's menu (ReferenceMenu). It stays
 	 * in view under the top bar, so Play is at hand while you write in the
@@ -23,6 +24,8 @@
 	import PlayClock from './PlayClock.svelte';
 	import TunerButton from '$lib/tuner/TunerButton.svelte';
 	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
+	import DrawerKey from '../page/DrawerKey.svelte';
+	import PencilIcon from '../icons/PencilIcon.svelte';
 
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
 	let { transcription } = $props();
@@ -119,6 +122,11 @@
 		</div>
 
 		<div class="cluster">
+			{#if transcription.linked}
+				<DrawerKey id="edit" label="Edit" tip={TIPS.transcription.edit}>
+					{#snippet icon()}<PencilIcon />{/snippet}
+				</DrawerKey>
+			{/if}
 			<ZoomControl
 				zoom={settings.transcribe.zoom}
 				lowest={{ across: transcription.wholeSongZoom }}

@@ -4,9 +4,9 @@
 	 * arranger page and the chart page sit inside this, so moving between
 	 * them keeps the song, the mix and the music playing. The player bar,
 	 * the editor and mixer drawers and the received-song dialog are here
-	 * too, the same on every page except those with their own player
-	 * (components/page/bandPages.js), where the band stops; Tracks keeps the
-	 * editor and mixer drawers, opened by its own keys.
+	 * too, the same on every page except those with their own controls
+	 * (components/page/bandPages.js), where the band stops and only the
+	 * drawers that page's own keys open are here.
 	 *
 	 * It opens on the song this device had open last (else the starter song),
 	 * and your work saves itself as you go (state/autosave.svelte.js). If this
@@ -19,7 +19,7 @@
 	import InstrumentWindow from '$lib/arranger/components/mixer/instruments/InstrumentWindow.svelte';
 	import { onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { showsTheBand, showsTheDrawers } from '$lib/arranger/components/page/bandPages.js';
+	import { showsTheBand, drawersOn } from '$lib/arranger/components/page/bandPages.js';
 	import { provideArranger } from '$lib/arranger/state/context.js';
 	import PlayerBar from '$lib/arranger/components/page/PlayerBar.svelte';
 	import EditDrawer from '$lib/arranger/components/editor/EditDrawer.svelte';
@@ -38,7 +38,7 @@
 
 	const arranger = provideArranger();
 	const showBand = $derived(showsTheBand(page.route.id));
-	const showDrawers = $derived(showsTheDrawers(page.route.id));
+	const drawers = $derived(drawersOn(page.route.id));
 	// Arriving on a page without the player bar stops the band and the click; a page with its
 	// own controls (Tracks) can start them again, so only the arrival counts
 	$effect(() => {
@@ -83,18 +83,11 @@
 
 {@render children()}
 
-{#if showBand}
-	<div class="print:hidden">
-		<PlayerBar />
-		<EditDrawer />
-		<MixerDrawer />
-	</div>
-{:else if showDrawers}
-	<div class="print:hidden">
-		<EditDrawer />
-		<MixerDrawer />
-	</div>
-{/if}
+<div class="print:hidden">
+	{#if showBand}<PlayerBar />{/if}
+	{#if drawers.includes('edit')}<EditDrawer />{/if}
+	{#if drawers.includes('mixer')}<MixerDrawer />{/if}
+</div>
 <InstrumentWindow />
 <ReceiveSongDialog />
 <HarmonyFollowDialog />

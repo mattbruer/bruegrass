@@ -40,7 +40,7 @@
 	const NUDGE_SECONDS = 0.005;
 
 	// The work lives on the arranger, so leaving for another page and coming back carries on
-	const { transcription, song } = useArranger();
+	const { transcription, song, layout } = useArranger();
 	onDestroy(() => transcription.leave());
 	// The lanes' solos decide whether the band is heard here, not the mixer's
 	onDestroy(soloSafeWhile(BAND_CHANNELS));
@@ -164,7 +164,7 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<main class="ui-page-width flex flex-col gap-4 pt-6 pb-16">
+<main class="ui-page-width flex flex-col gap-4 pt-6" style:padding-bottom={layout.bottomSpace}>
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold">Transcribe</h1>
 		<div class="flex flex-wrap items-center gap-2">
