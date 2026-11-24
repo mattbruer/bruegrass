@@ -78,36 +78,43 @@
 </script>
 
 <div class="screen" class:quiet={!tuner.sounding} bind:this={parts.screen}>
-	<svg class="meter" viewBox="-118 -116 236 128" aria-hidden="true">
-		<path
-			class="scale"
-			d="M {pointAt(-50, 92).x} {pointAt(-50, 92).y} A 92 92 0 0 1 {pointAt(50, 92).x} {pointAt(
-				50,
-				92
-			).y}"
-		/>
-		<path
-			class="zone"
-			d="M {pointAt(-IN_TUNE, 97).x} {pointAt(-IN_TUNE, 97).y} A 97 97 0 0 1 {pointAt(IN_TUNE, 97)
-				.x} {pointAt(IN_TUNE, 97).y}"
-		/>
-		{#each TICKS as cents (cents)}
-			{@const long = cents % 25 === 0}
-			{@const from = pointAt(cents, long ? 80 : 85)}
-			{@const to = pointAt(cents, 90)}
-			<line class="tick" class:long x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
-			{#if long}
-				{@const label = pointAt(cents, 105)}
-				<text x={label.x} y={label.y + 4}
-					>{cents > 0 ? `+${cents}` : cents < 0 ? `−${-cents}` : '0'}</text
-				>
-			{/if}
-		{/each}
-		<g class="needle" bind:this={parts.needleArm}>
-			<line x1="0" y1="6" x2="0" y2="-94" />
-		</g>
-		<circle class="pivot" r="6" />
-	</svg>
+	<div class="dial">
+		<svg
+			class="meter"
+			viewBox="-118 -116 236 128"
+			preserveAspectRatio="xMidYMax meet"
+			aria-hidden="true"
+		>
+			<path
+				class="scale"
+				d="M {pointAt(-50, 92).x} {pointAt(-50, 92).y} A 92 92 0 0 1 {pointAt(50, 92).x} {pointAt(
+					50,
+					92
+				).y}"
+			/>
+			<path
+				class="zone"
+				d="M {pointAt(-IN_TUNE, 97).x} {pointAt(-IN_TUNE, 97).y} A 97 97 0 0 1 {pointAt(IN_TUNE, 97)
+					.x} {pointAt(IN_TUNE, 97).y}"
+			/>
+			{#each TICKS as cents (cents)}
+				{@const long = cents % 25 === 0}
+				{@const from = pointAt(cents, long ? 80 : 85)}
+				{@const to = pointAt(cents, 90)}
+				<line class="tick" class:long x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
+				{#if long}
+					{@const label = pointAt(cents, 105)}
+					<text x={label.x} y={label.y + 4}
+						>{cents > 0 ? `+${cents}` : cents < 0 ? `−${-cents}` : '0'}</text
+					>
+				{/if}
+			{/each}
+			<g class="needle" bind:this={parts.needleArm}>
+				<line x1="0" y1="6" x2="0" y2="-94" />
+			</g>
+			<circle class="pivot" r="6" />
+		</svg>
+	</div>
 
 	<div class="note-row">
 		<span class="lamp flat-lamp" aria-hidden="true">◀</span>
@@ -156,7 +163,11 @@
 		--screen: var(--tuner-screen);
 		--lit: color-mix(in oklab, var(--meter-safe), var(--color-ink) 18%);
 		--off: var(--color-accent);
-		display: grid;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		container-type: size;
+		min-height: 22rem;
 		gap: 0.25rem;
 		padding: 1rem 1rem 0.75rem;
 		border-radius: var(--corner-panel);
@@ -170,10 +181,19 @@
 		user-select: none;
 	}
 
+	/* The dial grows into what the rest leaves, up to its full width; on a tall
+	   screen the spare space goes above and below the whole screen's contents */
+	.dial {
+		position: relative;
+		flex: 1 1 0;
+		min-height: 6rem;
+		max-height: calc((100cqw - 2rem) * 128 / 236);
+	}
 	.meter {
+		position: absolute;
+		inset: 0;
 		width: 100%;
-		max-width: 22rem;
-		margin: 0 auto;
+		height: 100%;
 		overflow: visible;
 	}
 	.scale {
@@ -231,7 +251,7 @@
 		margin-top: -0.5rem;
 	}
 	.lamp {
-		font-size: 1.4rem;
+		font-size: clamp(1.4rem, 5cqmin, 3rem);
 		color: var(--color-ink-faint);
 		opacity: 0.45;
 		transition:
@@ -254,16 +274,17 @@
 	}
 
 	.note {
+		--letter: clamp(5.5rem, 20cqmin, 14rem);
 		display: flex;
 		align-items: flex-start;
-		min-width: 6rem;
+		min-width: calc(var(--letter) * 1.1);
 		justify-content: center;
 		font-weight: 700;
 		line-height: 1;
 		transition: color 0.15s;
 	}
 	.letter {
-		font-size: 5.5rem;
+		font-size: var(--letter);
 		letter-spacing: -0.03em;
 	}
 	.waiting {
@@ -273,13 +294,13 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
-		height: 4.6rem;
-		margin-top: 0.6rem;
+		height: calc(var(--letter) * 0.84);
+		margin-top: calc(var(--letter) * 0.11);
 		margin-left: 0.15rem;
-		font-size: 1.6rem;
+		font-size: calc(var(--letter) * 0.29);
 	}
 	.octave {
-		font-size: 1.2rem;
+		font-size: 0.75em;
 		color: var(--color-ink-soft);
 	}
 	.screen:global(.in-tune) .note {
@@ -294,14 +315,14 @@
 		display: flex;
 		justify-content: center;
 		gap: 1.5rem;
-		font-size: 0.85rem;
+		font-size: clamp(0.85rem, 3cqmin, 1.5rem);
 		color: var(--color-ink-soft);
 		font-variant-numeric: tabular-nums;
 	}
 
 	/* Stripes that drift left when flat and right when sharp, and stand still in tune */
 	.strobe {
-		height: 0.9rem;
+		height: clamp(0.9rem, 3cqmin, 2rem);
 		margin: 0.5rem 0 0.25rem;
 		border-radius: 999px;
 		background-image: repeating-linear-gradient(

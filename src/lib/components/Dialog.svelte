@@ -10,6 +10,8 @@
 	 * With modal={false} it's a floating window instead (like a plugin
 	 * window): the page stays usable behind it, with no backdrop.
 	 *
+	 * With full it fills the window, and its content can grow to fill it.
+	 *
 	 * Usage:
 	 *   <Dialog bind:open title="Settings">...content...</Dialog>
 	 */
@@ -19,10 +21,11 @@
 	 *   open: boolean,
 	 *   title: string,
 	 *   modal?: boolean,
+	 *   full?: boolean,
 	 *   children: import('svelte').Snippet
 	 * }}
 	 */
-	let { open = $bindable(false), title, modal = true, children } = $props();
+	let { open = $bindable(false), title, modal = true, full = false, children } = $props();
 
 	/** @type {HTMLDialogElement | undefined} */
 	let dialog = $state();
@@ -56,6 +59,7 @@
 	bind:this={dialog}
 	class="panel"
 	class:floating={!modal}
+	class:full
 	aria-labelledby={titleId}
 	onclose={() => (open = false)}
 	onclick={closeIfBackdropClicked}
@@ -97,6 +101,24 @@
 		z-index: 40;
 		/* Fit between its top and the bottom of the screen, scrolling inside if taller */
 		max-height: calc(100dvh - 6rem);
+	}
+
+	/* Fills the window, inside the iPhone's notch and home bar */
+	.panel.full {
+		width: calc(100% - 1rem - env(safe-area-inset-left) - env(safe-area-inset-right));
+		height: calc(100% - 1rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+		max-width: none;
+		max-height: none;
+		overflow: hidden;
+	}
+	.panel.full[open] {
+		display: flex;
+		flex-direction: column;
+	}
+	@media (max-width: 640px) {
+		.panel.full header {
+			padding-top: 1rem;
+		}
 	}
 
 	/* Short screens (phones): start just under the top bar, to use the height */

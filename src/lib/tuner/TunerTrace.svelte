@@ -126,13 +126,19 @@
 	{#if !shown}
 		<p class="hint">Play a note</p>
 	{/if}
-	<canvas bind:this={canvas} aria-hidden="true"></canvas>
+	<div class="plot">
+		<canvas bind:this={canvas} aria-hidden="true"></canvas>
+	</div>
 </div>
 
 <style>
+	/* Fills the space it's given; the note and readouts grow with it */
 	.screen {
 		position: relative;
 		display: grid;
+		grid-template-rows: auto 1fr;
+		container-type: size;
+		min-height: 16rem;
 		border-radius: var(--corner-panel);
 		background: var(--tuner-screen);
 		border: 1px solid var(--color-line);
@@ -156,16 +162,17 @@
 		align-items: flex-end;
 	}
 	.value {
-		font-size: 1.25rem;
+		font-size: clamp(1.25rem, 5cqmin, 2.75rem);
 		font-weight: 600;
-		min-height: 1.75rem;
+		min-height: 1.4em;
 	}
 	.unit {
-		font-size: 0.75rem;
+		font-size: clamp(0.75rem, 2.5cqmin, 1.25rem);
 		color: var(--color-ink-soft);
 	}
 
 	.note {
+		--letter: clamp(4.5rem, 20cqmin, 15rem);
 		display: flex;
 		align-items: flex-start;
 		font-weight: 700;
@@ -175,7 +182,7 @@
 			text-shadow 0.2s;
 	}
 	.letter {
-		font-size: 4.5rem;
+		font-size: var(--letter);
 		letter-spacing: -0.03em;
 	}
 	.waiting {
@@ -185,12 +192,12 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
-		height: 3.8rem;
-		margin: 0.45rem 0 0 0.15rem;
-		font-size: 1.4rem;
+		height: calc(var(--letter) * 0.84);
+		margin: calc(var(--letter) * 0.1) 0 0 0.15rem;
+		font-size: calc(var(--letter) * 0.31);
 	}
 	.octave {
-		font-size: 1.05rem;
+		font-size: 0.75em;
 		color: var(--color-ink-soft);
 	}
 	.screen:global(.in-tune) .note {
@@ -205,15 +212,23 @@
 	.hint {
 		position: absolute;
 		inset: auto 0 45% 0;
+		z-index: 1;
 		text-align: center;
-		font-size: 0.9rem;
+		font-size: clamp(0.9rem, 3cqmin, 1.5rem);
 		color: var(--color-ink-soft);
 		pointer-events: none;
 	}
 
+	/* The canvas sits over its cell, so its own pixel size never stretches the layout */
+	.plot {
+		position: relative;
+		min-height: 0;
+	}
 	canvas {
+		position: absolute;
+		inset: 0;
 		width: 100%;
-		height: clamp(14rem, 42dvh, 22rem);
+		height: 100%;
 		display: block;
 	}
 </style>

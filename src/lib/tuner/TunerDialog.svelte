@@ -3,7 +3,8 @@
 	 * The tuner in a dialog: it listens while it's open, and lets go of the
 	 * microphone when it closes. Open it with `tuner.open()` from the click
 	 * that shows it (browsers only start audio from a click). Its look
-	 * (tunerLooks.js) is chosen at the top and remembered.
+	 * (tunerLooks.js) is chosen at the top and remembered. It fills the
+	 * window, and each look grows to fill the space it's given.
 	 */
 	import Dialog from '$lib/components/Dialog.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
@@ -21,8 +22,8 @@
 	});
 </script>
 
-<Dialog bind:open title="Tuner">
-	<div class="flex flex-col gap-3 px-6 pt-3 pb-6">
+<Dialog bind:open title="Tuner" full>
+	<div class="flex min-h-0 flex-1 flex-col gap-3 px-3 pt-3 pb-3 sm:px-6 sm:pb-6">
 		{#if tuner.status === 'error'}
 			<p class="ui-well p-3 text-sm">{tuner.error}</p>
 			<div class="flex justify-end">
@@ -39,7 +40,9 @@
 					label="How the tuner looks"
 				/>
 			</div>
-			<Look {tuner} />
+			<div class="grid min-h-0 flex-1">
+				<Look {tuner} />
+			</div>
 			<p class="truncate text-center text-xs text-ink-soft">
 				{#if tuner.status === 'opening'}
 					Opening the microphone…
