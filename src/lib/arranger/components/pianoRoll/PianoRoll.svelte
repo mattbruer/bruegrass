@@ -6,10 +6,13 @@
 	 *
 	 * Mouse: drag on an empty spot to draw a note as long as you drag; drag a
 	 * note to move it, or its right end to make it longer or shorter;
-	 * double-click to delete. Touch: tap an empty spot to add a note (a
-	 * swipe scrolls), drag a note or its right end, double-tap to delete.
-	 * Keys, once a note is picked: arrows move it (Shift: an octave),
-	 * Delete removes it.
+	 * double-click to delete. Touch: a swipe always scrolls, over notes too;
+	 * only the picked note moves. Tap an empty spot to add a note, tap a note
+	 * to pick it, then drag it, or drag the handle on its right end to change
+	 * its length; the note bar under the roll steps it by the grid
+	 * (NoteEditBar); double-tap deletes. Decided per press, so an iPad with
+	 * a trackpad gets the mouse's way. Keys, once a note is picked: arrows
+	 * move it (Shift: an octave), Delete removes it.
 	 *
 	 * The tune's other voices show faintly behind the one being edited. A
 	 * picked harmony note shows dots on the chord's other notes: tap one to
@@ -30,6 +33,7 @@
 		grabbedPart,
 		resizeEdge,
 		keyEdit,
+		stepEdit,
 		movedNote,
 		resizedNote,
 		withinRange
@@ -39,6 +43,9 @@
 	import { isOutside } from '../../instruments/instrumentRanges.js';
 	import { barLabel, isShortBar, tickWidthFor } from '../../melody/roll/rollLayout.js';
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
+	import NoteEditBar from './NoteEditBar.svelte';
+	import { tooltip } from '$lib/tooltips/tooltip.js';
+	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/* Size */
 	const LABEL_WIDTH = 44;
@@ -218,7 +225,7 @@
 
 	/**
 	 * @typedef {{
-	 *   kind: 'draw' | 'move' | 'resize' | 'tap', x: number, y: number, moved: boolean,
+	 *   kind: 'draw' | 'move' | 'resize' | 'tap' | 'pick', x: number, y: number, moved: boolean,
 	 *   index: number, start: number, midi: number, length: number,
 	 *   now: { start: number, midi: number, length: number }
 	 * }} Gesture
@@ -241,39 +248,42 @@
 			return;
 		}
 		const at = locate(event);
-		const index = noteAt(notes, at.tick, at.midi);
+		const touch = event.pointerType === 'touch';
 		scroller?.focus({ preventScroll: true });
+		const onHandle = /** @type {HTMLElement} */ (event.target).dataset?.handle !== undefined;
+		if (onHandle && notes[selected]) {
+			grab(event, selected, 'resize', at);
+			return;
+		}
+		const index = noteAt(notes, at.tick, at.midi);
 
 		if (index >= 0) {
-			const now = performance.now();
-			if (lastTap.index === index && now - lastTap.time < DOUBLE_TAP_MS) {
+			if (lastTap.index === index && performance.now() - lastTap.time < DOUBLE_TAP_MS) {
 				lastTap = { index: -1, time: 0 };
 				selected = -1;
 				onCommit(deleteNote(notes, index));
 				return;
 			}
-			lastTap = { index, time: now };
-			const note = notes[index];
-			selected = index;
-			onSound(note.midi);
-			gesture = {
-				kind: grabbedPart(note, at.x, tickWidth),
-				x: at.x,
-				y: at.y,
-				moved: false,
-				index,
-				...note,
-				now: { ...note }
-			};
-			resizing = gesture.kind === 'resize';
-			surface?.setPointerCapture(event.pointerId);
-			event.preventDefault();
+			if (touch && index !== selected) {
+				// Not held: a swipe from here still scrolls; a tap picks it
+				gesture = {
+					kind: 'pick',
+					x: at.x,
+					y: at.y,
+					moved: false,
+					index,
+					...notes[index],
+					now: notes[index]
+				};
+				return;
+			}
+			grab(event, index, touch ? 'move' : grabbedPart(notes[index], at.x, tickWidth), at);
 			return;
 		}
 
 		selected = -1;
 		const start = snapDown(at.tick, gridStep);
-		if (event.pointerType === 'touch') {
+		if (touch) {
 			// Leave the swipe to the browser (it scrolls); a tap adds a note
 			const note = { start, midi: at.midi, length: drawLength };
 			gesture = { kind: 'tap', x: at.x, y: at.y, moved: false, index: -1, ...note, now: note };
@@ -287,6 +297,23 @@
 		event.preventDefault();
 	}
 
+	/**
+	 * Hold a note to move it or change its length.
+	 * @param {PointerEvent} event
+	 * @param {number} index
+	 * @param {'move' | 'resize'} kind
+	 * @param {{ x: number, y: number }} at
+	 */
+	function grab(event, index, kind, at) {
+		const note = notes[index];
+		selected = index;
+		onSound(note.midi);
+		gesture = { kind, x: at.x, y: at.y, moved: false, index, ...note, now: { ...note } };
+		resizing = kind === 'resize';
+		surface?.setPointerCapture(event.pointerId);
+		event.preventDefault();
+	}
+
 	/** @param {PointerEvent} event */
 	function drag(event) {
 		if (!gesture) return;
@@ -294,7 +321,7 @@
 		const dx = at.x - gesture.x;
 		const dy = at.y - gesture.y;
 		if (Math.hypot(dx, dy) > MOVE_THRESHOLD) gesture.moved = true;
-		if (!gesture.moved || gesture.kind === 'tap') return;
+		if (!gesture.moved || gesture.kind === 'tap' || gesture.kind === 'pick') return;
 
 		const grabbed = { start: gesture.start, midi: gesture.midi, length: gesture.length };
 		if (gesture.kind === 'draw') {
@@ -325,8 +352,15 @@
 		const edited = preview;
 		preview = null;
 		if (!done) return;
+		// Only two taps make a double-tap: a swipe or drag before a tap mustn't delete
+		const tapped = !done.moved && (done.kind === 'pick' || done.kind === 'move');
+		lastTap = tapped ? { index: done.index, time: performance.now() } : { index: -1, time: 0 };
 
-		if (done.kind === 'tap') {
+		if (done.kind === 'pick') {
+			if (done.moved) return;
+			selected = done.index;
+			onSound(done.midi);
+		} else if (done.kind === 'tap') {
 			if (done.moved) return;
 			const added = addNote(notes, { midi: done.midi, start: done.start, length: drawLength }, end);
 			onSound(done.midi);
@@ -352,6 +386,7 @@
 
 	function cancel() {
 		gesture = null;
+		lastTap = { index: -1, time: 0 };
 		resizing = false;
 		preview = null;
 	}
@@ -362,6 +397,17 @@
 		const edit = keyEdit(event.key, event.shiftKey, notes[selected], grid);
 		if (!edit) return;
 		event.preventDefault();
+		applyEdit(edit);
+	}
+
+	/** @param {import('../../melody/roll/noteGestures.js').NoteStep} step a button on the note bar */
+	function stepPicked(step) {
+		if (readOnly || !notes[selected]) return;
+		applyEdit(stepEdit(step, notes[selected], grid));
+	}
+
+	/** @param {import('../../melody/roll/noteGestures.js').NoteEdit} edit */
+	function applyEdit(edit) {
 		if (edit === 'delete') {
 			const index = selected;
 			selected = -1;
@@ -372,11 +418,11 @@
 		nudge(edit);
 	}
 
-	/** @param {{ midi?: number, start?: number }} change */
+	/** @param {{ midi?: number, start?: number, length?: number }} change */
 	function nudge(change) {
 		const list = changeNote(notes, selected, change, end);
 		const moved = { ...notes[selected], ...change };
-		finish(list, noteIn(list, moved));
+		finish(list, noteIn(list, moved), change.length);
 	}
 </script>
 
@@ -502,6 +548,10 @@
 						>
 							{#if !readOnly}
 								<span class="grip" style:width="{resizeEdge(note, tickWidth)}px"></span>
+								{#if !preview && index === selected}
+									<span class="handle" data-handle use:tooltip={TIPS.melody.roll.lengthHandle}
+									></span>
+								{/if}
 							{/if}
 						</div>
 					{/each}
@@ -543,6 +593,9 @@
 		</div>
 	</div>
 </div>
+{#if !readOnly}
+	<NoteEditBar picked={!!notes[selected]} onStep={stepPicked} />
+{/if}
 
 <style>
 	.roll {
@@ -609,6 +662,28 @@
 	.surface.resizing * {
 		cursor: ew-resize;
 	}
+	/* The picked note's length, as a tab off its right end: big enough for a finger, beside the
+	   note rather than on it, so the finger doesn't hide the end it's moving */
+	.handle {
+		position: absolute;
+		top: -1px;
+		bottom: -1px;
+		left: 100%;
+		width: 14px;
+		touch-action: none;
+		cursor: ew-resize;
+		background:
+			linear-gradient(var(--color-ink), var(--color-ink)) center / 2px 50% no-repeat,
+			var(--color-raised);
+		border: 2px solid var(--color-ink);
+		border-left: none;
+		border-radius: 0 var(--corner-control) var(--corner-control) 0;
+	}
+	@media (pointer: coarse) {
+		.handle {
+			width: 1.75rem;
+		}
+	}
 	.row {
 		position: absolute;
 		left: 0;
@@ -642,7 +717,6 @@
 	}
 	.note {
 		position: absolute;
-		touch-action: none;
 		background: var(--voice-colour);
 		border: 1px solid color-mix(in oklab, var(--voice-colour) 60%, var(--color-ink));
 		/* square whatever the theme's roundness: a note's ends mark its exact start and length */
@@ -714,8 +788,9 @@
 		border: 2px solid var(--voice-colour);
 		background: var(--color-raised);
 	}
-	/* picked up: it rises off the grid */
+	/* picked up: it rises off the grid, and a finger on it moves it */
 	.note.selected {
+		touch-action: none;
 		outline: 2px solid var(--color-ink);
 		outline-offset: 1px;
 		z-index: 1;

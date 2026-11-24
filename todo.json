@@ -9,6 +9,18 @@
 	],
 	"suggestions": [
 		{
+			"id": "roll-touch-ipad",
+			"text": "Piano roll on a real iPad and iPhone: swipe scrolls, tap picks, drag the picked note or its length handle, the note bar's steps. Then: scroll the roll when a dragged note nears its edge?",
+			"done": false,
+			"addedAt": "2026-11-24"
+		},
+		{
+			"id": "transcribe-melody-opens-abc",
+			"text": "Transcribe's pencil: should its Melody tab open on ABC (the roll is already on the page)?",
+			"done": false,
+			"addedAt": "2026-11-24"
+		},
+		{
 			"id": "tracks-audio-editing",
 			"text": "Tracks: audio editing (trim, split, delete, move, level, fades, comping takes, Undo) and the tempo lane",
 			"done": true,

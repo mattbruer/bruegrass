@@ -74,25 +74,52 @@ export function resizedNote(grabbed, dx, { tickWidth, gridStep }) {
 }
 
 /**
+ * @typedef {'earlier' | 'later' | 'higher' | 'lower' | 'shorter' | 'longer' | 'delete'} NoteStep
+ * @typedef {{ midi: number } | { start: number } | { length: number } | 'delete'} NoteEdit
+ */
+
+/** @type {Record<string, NoteStep>} */
+const KEY_STEPS = {
+	ArrowUp: 'higher',
+	ArrowDown: 'lower',
+	ArrowLeft: 'earlier',
+	ArrowRight: 'later',
+	Delete: 'delete',
+	Backspace: 'delete'
+};
+
+/**
  * What a key does to the picked note: arrows move it (Shift: an octave up
  * or down), Delete or Backspace removes it.
  * @param {string} key
  * @param {boolean} shiftKey
  * @param {NotePlace} note
  * @param {RollGrid} grid
- * @returns {{ midi: number } | { start: number } | 'delete' | null}
+ * @returns {NoteEdit | null}
  */
-export function keyEdit(key, shiftKey, note, { gridStep, end, range }) {
-	if (key === 'Delete' || key === 'Backspace') return 'delete';
-	if (key === 'ArrowUp' || key === 'ArrowDown') {
-		const step = (key === 'ArrowUp' ? 1 : -1) * (shiftKey ? 12 : 1);
-		return { midi: withinRange(note.midi + step, range) };
-	}
-	if (key === 'ArrowLeft' || key === 'ArrowRight') {
-		const shift = key === 'ArrowLeft' ? -gridStep : gridStep;
-		return { start: Math.min(Math.max(0, note.start + shift), end - note.length) };
-	}
-	return null;
+export function keyEdit(key, shiftKey, note, grid) {
+	const step = KEY_STEPS[key];
+	if (!step) return null;
+	if (shiftKey && (step === 'higher' || step === 'lower'))
+		return { midi: withinRange(note.midi + (step === 'higher' ? 12 : -12), grid.range) };
+	return stepEdit(step, note, grid);
+}
+
+/**
+ * The picked note moved one step: a grid step in time or length, a semitone in pitch.
+ * @param {NoteStep} step
+ * @param {NotePlace} note
+ * @param {RollGrid} grid
+ * @returns {NoteEdit}
+ */
+export function stepEdit(step, note, { gridStep, end, range }) {
+	if (step === 'higher') return { midi: withinRange(note.midi + 1, range) };
+	if (step === 'lower') return { midi: withinRange(note.midi - 1, range) };
+	if (step === 'earlier') return { start: Math.max(0, note.start - gridStep) };
+	if (step === 'later') return { start: Math.min(note.start + gridStep, end - note.length) };
+	if (step === 'shorter') return { length: Math.max(gridStep, note.length - gridStep) };
+	if (step === 'longer') return { length: Math.min(note.length + gridStep, end - note.start) };
+	return 'delete';
 }
 
 /**

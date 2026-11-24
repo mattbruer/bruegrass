@@ -316,8 +316,8 @@
 					Double-click to delete.
 				</p>
 				<p class="touch-hint mt-2 hidden text-sm text-ink-soft">
-					Tap to add a note, swipe to scroll. Drag a note to move it, or its right end to change its
-					length. Double-tap to delete.
+					Tap to add a note; a swipe always scrolls. Tap a note to pick it, then drag it, or drag
+					its handle to change its length. The buttons step it exactly.
 				</p>
 				{#if drawing.isBass}
 					<BassLineNote notesOutside={drawing.notesOutside} />

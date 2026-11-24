@@ -239,6 +239,7 @@ export const TIPS = Object.freeze({
 		song: 'Pick a recording to transcribe. It becomes the open song’s recording.',
 		file: 'Open a recording from this device: an MP3, WAV or any song file.',
 		backToArranger: 'Go back to the song you came from, in the arranger.',
+		edit: 'Open the editor: the chart as text (sections, bars, chords) and the tune as ABC. The grid changes as you type.',
 		startSong:
 			'A new song on this recording’s bars, at its tempo, to write the chords and tune on.',
 		play: 'Play or pause the recording (Space).',
@@ -463,6 +464,16 @@ export const TIPS = Object.freeze({
 			},
 			key: 'The key the song is in. It’s guessed from the first chord; pick it here if the guess is wrong. With a capo, it says which shapes you play.',
 			delete: 'Delete the picked note (or press Delete).',
+			noteBar: {
+				earlier: 'Move the picked note a grid step earlier.',
+				later: 'Move the picked note a grid step later.',
+				lower: 'Move the picked note down a semitone.',
+				higher: 'Move the picked note up a semitone.',
+				shorter: 'Make the picked note a grid step shorter.',
+				longer: 'Make the picked note a grid step longer.',
+				delete: 'Delete the picked note.'
+			},
+			lengthHandle: 'Drag to make the note longer or shorter.',
 			octaveUp:
 				'Move every note of this part up an octave. The melody takes its harmony lines with it.',
 			octaveDown:
