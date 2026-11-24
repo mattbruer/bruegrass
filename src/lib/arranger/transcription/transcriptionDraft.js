@@ -14,12 +14,14 @@ import { clearDraft, readDraft, writeDraft } from '$lib/storage/drafts.js';
  *   time: string, timeChosen: boolean,
  *   cents: number,
  *   pickups: Record<number, number>,
- *   pickupBar: boolean
+ *   pickupBar: boolean,
+ *   guessed: Record<number, import('./barChords.js').Slots>
  * }} Transcription
  *   timeChosen: false until you've said the time signature (the bars aren't shown before)
  *   cents: the recording's pitch moved by this much (fine tuning)
  *   pickups: bar number → how many beats before it its section's tune starts (a marker's pickup)
  *   pickupBar: bar 1 is the pickup bar (only how bars are numbered on screen)
+ *   guessed: the bars Guess filled, as it filled them (which chords Clear guesses may empty)
  */
 
 /** @param {string} referenceKey */

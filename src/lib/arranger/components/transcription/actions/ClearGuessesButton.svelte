@@ -1,5 +1,5 @@
 <script>
-	/** Empty every bar’s chords, typed ones too. Styled by where it sits (class). */
+	/** Empty the bars Guess filled; chords you wrote or changed stay. Styled by where it sits (class). */
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -10,7 +10,7 @@
 <button
 	type="button"
 	class="ui-button {className}"
-	disabled={!transcription.hasChords}
-	onclick={() => transcription.clearChords()}
-	use:tooltip={TIPS.transcription.clearChords}>Clear chords</button
+	disabled={!transcription.barsGuessed.length}
+	onclick={() => transcription.clearGuesses()}
+	use:tooltip={TIPS.transcription.clearGuesses}>Clear guesses</button
 >

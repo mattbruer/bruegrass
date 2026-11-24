@@ -54,6 +54,7 @@ import { readChartOnBars } from './readChartOnBars.js';
 import { namedSections, withUniqueSectionNames } from './arrangementFromTranscription.js';
 import { chartWithTypedBar, isEmptyBar, isHeld, slotsOf, typedSlots } from './barChords.js';
 import { guessChords } from './chords/guessChords.js';
+import { barsStillGuessed } from './chords/guessedBars.js';
 import { DEFAULT_TIME, timeSignature } from './timeSignatures.js';
 import { keyFieldName, withKeyField } from '../chart/keyField.js';
 import { chordBoxProblem } from '../chart/knownChords.js';
@@ -122,6 +123,12 @@ export class TranscriptionState {
 	 * song's first ONE on bar 2 reads as bar 1 (barNumbers.js). Only the labels change.
 	 */
 	pickupBar = $state(false);
+	/**
+	 * The bars Guess filled, each as the chart read it back then, so Clear
+	 * guesses empties only those still as guessed. Bar number → its chords.
+	 * @type {Record<number, Slots>}
+	 */
+	guessed = $state.raw({});
 	/** The lane picked for the editor below: a part's voice id (the piano roll), or BAND_LANE (the chart as text). */
 	lane = $state(MELODY_CHANNEL);
 	/** The open bar's menu is for naming its marker (its name box takes the keys). */
@@ -179,8 +186,8 @@ export class TranscriptionState {
 	);
 	/** @type {Record<number, Slots>} bar number → its chords, a slot per beat */
 	chords = $derived(this.#chartOnBars.chords);
-	/** Whether any bar has a chord (one carrying on the chord before doesn't count). */
-	hasChords = $derived(Object.values(this.chords).some((slots) => !isEmptyBar(slots)));
+	/** The bars still holding Guess's chords (changed ones are yours). */
+	barsGuessed = $derived(barsStillGuessed(this.guessed, this.chords));
 	/** @type {Record<number, string>} bar number → the section (marker) starting there */
 	markers = $derived(this.#chartOnBars.markers);
 	/**
@@ -341,6 +348,7 @@ export class TranscriptionState {
 			this.timeChosen = draft.timeChosen;
 			this.pickups = draft.pickups;
 			this.pickupBar = draft.pickupBar;
+			this.guessed = draft.guessed;
 			this.player.setCents(draft.cents);
 			return;
 		}
@@ -569,14 +577,26 @@ export class TranscriptionState {
 			key: this.key,
 			duration: audio.duration
 		});
-		for (const [number, slots] of Object.entries(guessed)) this.setBarChords(Number(number), slots);
+		const numbers = Object.keys(guessed).map(Number);
+		for (const number of numbers) this.setBarChords(number, guessed[number]);
+		const written = numbers.filter((number) => this.chords[number]);
+		this.guessed = {
+			...this.#guessesKept(),
+			...Object.fromEntries(written.map((number) => [number, this.chords[number]]))
+		};
+		this.#keepDraft();
 	}
 
-	/** Empty every bar's chords, to guess again or start by ear. */
-	clearChords() {
-		for (const [number, slots] of Object.entries(this.chords)) {
-			if (!isEmptyBar(slots)) this.setBarChords(Number(number), []);
-		}
+	/** Empty the bars still as guessed, to guess again or work them out by ear; chords you wrote stay. */
+	clearGuesses() {
+		for (const number of this.barsGuessed) this.setBarChords(number, []);
+		this.guessed = {};
+		this.#keepDraft();
+	}
+
+	/** The remembered guesses that are still in the chart. */
+	#guessesKept() {
+		return Object.fromEntries(this.barsGuessed.map((number) => [number, this.guessed[number]]));
 	}
 
 	/**
@@ -775,8 +795,8 @@ export class TranscriptionState {
 		const other = this.tuningOtherWay;
 		this.tuningOtherWay = this.player.cents;
 		this.setTuning(other);
-		if (this.hasChords) {
-			this.clearChords();
+		if (this.barsGuessed.length) {
+			this.clearGuesses();
 			this.guessChords();
 		}
 	}
@@ -995,7 +1015,8 @@ export class TranscriptionState {
 			timeChosen: this.timeChosen,
 			cents: this.player.cents,
 			pickups: this.pickups,
-			pickupBar: this.pickupBar
+			pickupBar: this.pickupBar,
+			guessed: this.guessed
 		});
 	}
 }

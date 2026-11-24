@@ -1,8 +1,8 @@
 <script>
-	/** The Band lane's menu (⋯ beside its name): guess the chords from the recording, or clear them. */
+	/** The Band lane's menu (⋯ beside its name): guess the chords from the recording, or clear the guesses. */
 	import Popover from '$lib/components/Popover.svelte';
 	import GuessChordsButton from './actions/GuessChordsButton.svelte';
-	import ClearChordsButton from './actions/ClearChordsButton.svelte';
+	import ClearGuessesButton from './actions/ClearGuessesButton.svelte';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
@@ -14,5 +14,5 @@
 		>{/snippet}
 	<span class="ui-menu-heading">Chords</span>
 	<GuessChordsButton {transcription} class="ui-menu-item" />
-	<ClearChordsButton {transcription} class="ui-menu-item" />
+	<ClearGuessesButton {transcription} class="ui-menu-item" />
 </Popover>

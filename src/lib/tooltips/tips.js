@@ -337,11 +337,11 @@ export const TIPS = Object.freeze({
 		partLane: 'Edit this part in the piano roll below. A click anywhere on its lane picks it too.',
 		bandLane:
 			'The band (guitar, mandolin, bass) plays these chords along with the recording. Tap a bar to type its chords, or its name to write the whole chart as text below. Each instrument’s own level is in the mixer.',
-		bandMenu: 'Guess the chords from the recording, or clear them.',
+		bandMenu: 'Guess the chords from the recording, or clear the guesses.',
 		guessChords:
 			'Fill the empty bars with a guess from the recording; chords you typed stay. Then play it with the band and fix what sounds wrong.',
-		clearChords:
-			'Empty every bar’s chords, the ones you typed too, to guess again or work them out by ear.',
+		clearGuesses:
+			'Empty the bars that were guessed, to guess again or work them out by ear. Chords you typed, or changed after guessing, stay.',
 		addLane:
 			'Add another line of the tune to write by ear: the vocal, a mandolin break, a fiddle part. You name it first. It has its own instrument and level, and goes to the arranger with the rest.',
 		laneMenu: 'Name this part, and more.',
