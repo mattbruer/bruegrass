@@ -1,7 +1,7 @@
 <script>
 	/**
 	 * The bar across the top of every page: the app's name, a link to each
-	 * section (the one you're on is pressed in and lit), the tips on/off
+	 * section (the one you're on is pressed in and lit), the tuner, the tips on/off
 	 * button, what's stored on this device, and the Settings button. While developing on this machine,
 	 * dashed buttons for the dev tools too (Todo, and the Sampler on a
 	 * computer); they never appear in the real app. It stays at the top while you scroll.
@@ -15,6 +15,7 @@
 	import StorageIcon from './StorageIcon.svelte';
 	import MetronomeIcon from '$lib/arranger/components/icons/MetronomeIcon.svelte';
 	import TipsToggle from '$lib/tooltips/TipsToggle.svelte';
+	import TunerButton from '$lib/tuner/TunerButton.svelte';
 	import { isLocalDev } from '$lib/devOnly.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -67,7 +68,7 @@
 <header class="topbar print:hidden" bind:clientHeight={height}>
 	<!-- On a phone the wordmark makes way so the buttons fit: the lit button says where you are -->
 	<nav
-		class="ui-page-width flex items-center gap-1.5 max-sm:justify-between sm:gap-3"
+		class="ui-page-width flex items-center gap-1 max-sm:justify-between sm:gap-3"
 		aria-label="Main"
 	>
 		<a
@@ -96,6 +97,8 @@
 			</a>
 		{/each}
 
+		<TunerButton class="h-8 w-8 shrink-0 rounded-full sm:h-9 sm:w-9" />
+
 		{#if isLocalDev(page.url)}
 			{#each DEV_PAGES as tool (tool.path)}
 				<a
@@ -120,7 +123,7 @@
 
 		<a
 			href={resolve('/storage')}
-			class="flex h-9 w-9 shrink-0 items-center justify-center ui-button rounded-full"
+			class="flex h-8 w-8 shrink-0 items-center justify-center ui-button rounded-full sm:h-9 sm:w-9"
 			class:ui-button-on={isCurrentSection('/storage')}
 			aria-label="Stored on this device"
 			aria-current={isCurrentSection('/storage') ? 'page' : undefined}
@@ -131,7 +134,7 @@
 
 		<button
 			type="button"
-			class="flex h-9 w-9 shrink-0 items-center justify-center ui-button rounded-full"
+			class="flex h-8 w-8 shrink-0 items-center justify-center ui-button rounded-full sm:h-9 sm:w-9"
 			class:ui-button-on={settingsOpen}
 			aria-label="Settings"
 			use:tooltip={TIPS.app.settings}

@@ -1,13 +1,17 @@
 <script>
+	import { onMount } from 'svelte';
 	import SongButton from './SongButton.svelte';
 	import { songs } from '$lib/playlist/songs.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import { registerPlayer } from '$lib/audio/players.js';
 
 	let sortedSongs = songs.toSorted((a, b) => a.title.localeCompare(b.title));
 
 	let selectedIndex = $state(null);
 	let audio;
+
+	onMount(() => registerPlayer(() => audio.pause()));
 
 	function playSong(index) {
 		selectedIndex = index;

@@ -19,6 +19,7 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import { SoloClick } from './SoloClick.svelte.js';
+	import { registerPlayer } from '$lib/audio/players.js';
 
 	const click = new SoloClick();
 	const prefs = click.prefs;
@@ -55,8 +56,10 @@
 
 	onMount(() => {
 		addEventListener('keydown', onKey);
+		const signOff = registerPlayer(() => click.stop());
 		return () => {
 			removeEventListener('keydown', onKey);
+			signOff();
 			click.stop();
 		};
 	});

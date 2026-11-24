@@ -1,21 +1,22 @@
 <script>
 	/**
-	 * A tuning fork that opens the tuner. `onopen` runs first (Transcribe
-	 * pauses the recording, so the microphone hears only you).
+	 * A tuning fork that opens the tuner. Whatever is playing pauses first,
+	 * so the microphone hears only you.
 	 */
 	import { TunerState } from './TunerState.svelte.js';
 	import TunerDialog from './TunerDialog.svelte';
+	import { pauseAllPlayers } from '$lib/audio/players.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/** @type {{ onopen?: () => void, class?: string }} */
-	let { onopen, class: className = '' } = $props();
+	/** @type {{ class?: string }} */
+	let { class: className = '' } = $props();
 
 	const tuner = new TunerState();
 	let open = $state(false);
 
 	function start() {
-		onopen?.();
+		pauseAllPlayers();
 		open = true;
 		tuner.open();
 	}

@@ -32,6 +32,7 @@
 	import { keepTuneWithChart } from '$lib/arranger/state/tuneFollowsChart.svelte.js';
 	import { loadMyChords } from '$lib/arranger/voicings/myChords.svelte.js';
 	import { openDroppedSongFiles } from '$lib/arranger/share/dropSongFile.js';
+	import { registerPlayer } from '$lib/audio/players.js';
 
 	let { children } = $props();
 
@@ -65,10 +66,15 @@
 		offerSharedSong();
 		addEventListener('hashchange', offerSharedSong);
 		const stopCatchingDrops = openDroppedSongFiles((file) => arranger.receive.fromFile(file));
+		const signOff = registerPlayer(() => {
+			arranger.player.stop();
+			if (arranger.transcription.player.playing) arranger.transcription.player.pause();
+		});
 		// Leaving the arranger: the music and the click stop with it
 		return () => {
 			removeEventListener('hashchange', offerSharedSong);
 			stopCatchingDrops();
+			signOff();
 			arranger.player.stop();
 			arranger.transcription.dispose();
 		};

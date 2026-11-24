@@ -115,7 +115,7 @@
 			<SpeedControl {player} />
 			<TuningControl {transcription} />
 			<CountAlongButton {transcription} class="h-10 w-12" />
-			<TunerButton class="h-10 w-12" onopen={() => player.pause()} />
+			<TunerButton class="h-10 w-12" />
 		</div>
 
 		<div class="cluster">
