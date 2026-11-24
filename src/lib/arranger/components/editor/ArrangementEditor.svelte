@@ -5,7 +5,8 @@
 	 * keyboard, unless that's turned off in Settings. While a bar is being
 	 * heard (the band, or Transcribe's recording), it's lit in the text: a copy of the
 	 * text sits under the textarea, which goes see-through, and the copy
-	 * marks the bar.
+	 * marks the bar. Or, instead of typing, build it with buttons
+	 * (ChartBuilder): the choice is this device's habit (settings.chartEditor).
 	 */
 	import { onMount } from 'svelte';
 	import { useArranger } from '../../state/context.js';
@@ -16,6 +17,14 @@
 	import HelpLink from './HelpLink.svelte';
 	import MyChordsButton from '../voicings/MyChordsButton.svelte';
 	import ArrangementKeypad from '../keypad/ArrangementKeypad.svelte';
+	import ChartBuilder from '../builder/ChartBuilder.svelte';
+	import TabSwitch from '$lib/components/TabSwitch.svelte';
+	import { TIPS } from '$lib/tooltips/tips.js';
+
+	const WAYS = [
+		{ id: 'text', name: 'Text' },
+		{ id: 'buttons', name: 'Buttons' }
+	];
 
 	/* Timing that smooths over the phone keyboard opening and switching */
 	const SCROLL_AFTER_KEYBOARD_OPENS_MS = 300;
@@ -23,6 +32,8 @@
 
 	const arranger = useArranger();
 	const { arrangement, layout } = arranger;
+	// Unique: Transcribe shows this below its grid while the editor drawer has one too
+	const id = $props.id();
 
 	/** @type {HTMLTextAreaElement | undefined} */
 	let textarea = $state();
@@ -36,7 +47,8 @@
 	let keypadMode = $state(/** @type {'music' | 'text'} */ ('music'));
 
 	let usesKeypad = $derived(isTouchScreen && settings.musicKeypad);
-	let keypadVisible = $derived(usesKeypad && isEditing);
+	let typing = $derived(settings.chartEditor !== 'buttons');
+	let keypadVisible = $derived(usesKeypad && isEditing && typing);
 
 	/** @type {{ section: number, measure: number } | null} */
 	let playingBar = $state(null);
@@ -100,39 +112,49 @@
 </script>
 
 <div class="mb-2 flex items-center gap-2">
-	<label for="arrangement" class="sr-only">Song arrangement</label>
+	<TabSwitch
+		tabs={WAYS}
+		bind:value={settings.chartEditor}
+		tips={TIPS.editor.ways}
+		label="Edit by"
+	/>
 	<HelpLink />
 	<MyChordsButton />
 </div>
 
-<div class="relative">
-	{#if playingSpan}
-		{@const text = arrangement.text}
-		<!-- The zero-width space keeps a last empty line, as the textarea does -->
-		<div
-			bind:this={mirror}
-			class="chart-text pointer-events-none absolute inset-0 overflow-hidden ui-field"
-			aria-hidden="true"
-		>
-			{text.slice(0, playingSpan.from)}<mark bind:this={playingMark} class="playing-bar"
-				>{text.slice(playingSpan.from, playingSpan.to)}</mark
-			>{text.slice(playingSpan.to)}&#8203;
-		</div>
-	{/if}
-	<textarea
-		id="arrangement"
-		bind:this={textarea}
-		bind:value={arrangement.text}
-		class="chart-text relative block h-56 w-full ui-field"
-		class:see-through={playingSpan}
-		spellcheck="false"
-		autocapitalize="off"
-		autocomplete="off"
-		inputmode={usesKeypad && keypadMode === 'music' ? 'none' : undefined}
-		onscroll={followScroll}
-		onfocus={startedEditing}
-		onblur={maybeStoppedEditing}></textarea>
-</div>
+{#if typing}
+	<label for={id} class="sr-only">Song arrangement</label>
+	<div class="relative">
+		{#if playingSpan}
+			{@const text = arrangement.text}
+			<!-- The zero-width space keeps a last empty line, as the textarea does -->
+			<div
+				bind:this={mirror}
+				class="chart-text pointer-events-none absolute inset-0 overflow-hidden ui-field"
+				aria-hidden="true"
+			>
+				{text.slice(0, playingSpan.from)}<mark bind:this={playingMark} class="playing-bar"
+					>{text.slice(playingSpan.from, playingSpan.to)}</mark
+				>{text.slice(playingSpan.to)}&#8203;
+			</div>
+		{/if}
+		<textarea
+			{id}
+			bind:this={textarea}
+			bind:value={arrangement.text}
+			class="chart-text relative block h-56 w-full ui-field"
+			class:see-through={playingSpan}
+			spellcheck="false"
+			autocapitalize="off"
+			autocomplete="off"
+			inputmode={usesKeypad && keypadMode === 'music' ? 'none' : undefined}
+			onscroll={followScroll}
+			onfocus={startedEditing}
+			onblur={maybeStoppedEditing}></textarea>
+	</div>
+{:else}
+	<ChartBuilder {playingBar} />
+{/if}
 
 {#if arrangement.error}
 	<p class="mt-2 text-sm text-danger">{arrangement.error}</p>

@@ -30,6 +30,9 @@ export const settings = $state({
 	/** On touch screens, type arrangements with the music keypad (else the phone's keyboard). */
 	musicKeypad: true,
 
+	/** How the chart editor edits: typing the text, or with buttons (components/builder/). */
+	chartEditor: /** @type {'text' | 'buttons'} */ ('text'),
+
 	/** How the arranger shows chords: guitar shapes, concert, roman or nashville (see key.js). */
 	chordDisplay: /** @type {import('$lib/arranger/chart/key.js').ChordDisplay} */ ('shapes'),
 

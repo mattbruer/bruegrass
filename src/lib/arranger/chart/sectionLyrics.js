@@ -67,3 +67,20 @@ export function wordsInBar(lyrics, sections, bar) {
 	const source = section?.source ?? bar.section;
 	return lyrics[source]?.bars[bar.measure + (section?.barOffset ?? 0)] ?? '';
 }
+
+/**
+ * Lyric lines written from a section's words: the way back from
+ * lyricsFromLines, one line per row.
+ * @param {SectionLyrics} lyrics
+ * @returns {string[]}
+ */
+export function lyricLines({ pickup, bars, rowStarts }) {
+	const starts = [...new Set([0, ...rowStarts])].filter((at) => at < bars.length);
+	const lines = starts.map((from, row) => {
+		const to = starts[row + 1] ?? bars.length;
+		const words = bars.slice(from, to).map((text) => text.trim());
+		return `|${words.join(' |')}`;
+	});
+	if (pickup.trim()) lines[0] = pickup.trim() + ' ' + (lines[0] ?? '|');
+	return lines.every((line) => !line.replace(/[|\s]/g, '')) ? [] : lines;
+}

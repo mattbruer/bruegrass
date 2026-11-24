@@ -5,6 +5,7 @@
  */
 import { withChordFrom } from '../chart/withChordFrom.js';
 import { readArrangement } from '../chart/readArrangement.js';
+import { readWrittenChart, writeWrittenChart } from '../chart/writtenChart.js';
 import { chordLabel, keyOfChord, songKey, validChordDisplay } from '../chart/key.js';
 import { keyChoicesFor } from '../chart/keyChoices.js';
 import { TEMPO_DEFAULT, validTempo } from '../chart/tempo.js';
@@ -40,6 +41,8 @@ export class ArrangementState {
 	/** The text read into sections, or why it can't be. */
 	#read = $derived(readArrangement(this.text));
 	sections = $derived(this.#read.sections);
+	/** The chart as written, for the button editor to change (chart/writtenChart.js). */
+	written = $derived(readWrittenChart(this.text));
 	/** Why the chart can't be read ('' when it can). */
 	readError = $derived(this.#read.error);
 	/** Why the chart can't be played: it can't be read, or a chord isn't one the band knows. */
@@ -119,5 +122,13 @@ export class ArrangementState {
 	 */
 	setChordFrom(spot, name) {
 		this.text = withChordFrom(this.text, this.sections, spot, name);
+	}
+
+	/**
+	 * Change the chart as written (one of builder/chartEdits.js) and write it back.
+	 * @param {(chart: import('../chart/writtenChart.js').WrittenChart) => import('../chart/writtenChart.js').WrittenChart} edit
+	 */
+	editWritten(edit) {
+		this.text = writeWrittenChart(edit(this.written));
 	}
 }

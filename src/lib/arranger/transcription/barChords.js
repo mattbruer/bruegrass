@@ -6,28 +6,11 @@
  * so a bar's slots are written in the fewest chords that say the same
  * thing (`chartCell`).
  */
-import { beatGroups } from '../chart/timeline.js';
+import { chordPlaces } from '../chart/chordPlaces.js';
 import { NO_CHORD } from '../chart/noChord.js';
 import { withBarChords } from '../chart/withBarChords.js';
 
 /** @typedef {(string | null)[]} Slots */
-
-/**
- * The beats a chord may change on: where the band's boom falls (beats 1
- * and 3 in 4/4; bluegrass doesn't change chords faster), except in 3/4,
- * where any beat can.
- * @param {number} beats
- * @returns {number[]}
- */
-export function chordPlaces(beats) {
-	if (beats === 3) return [0, 1, 2];
-	let at = 0;
-	return beatGroups(beats).map((group) => {
-		const place = at;
-		at += group;
-		return place;
-	});
-}
 
 /**
  * The places a bar's boxes go: its chord places, or every beat when the

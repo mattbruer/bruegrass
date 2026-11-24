@@ -9,6 +9,12 @@
 	],
 	"suggestions": [
 		{
+			"id": "chart-buttons-editor",
+			"text": "The chart editor's Buttons way: try it on iPhone and Mac (tap a bar, tap chords; parts menu; time and words tabs). Next ideas: drag bars to reorder, keys mid-song, slash chords, arrow keys on a Mac",
+			"done": false,
+			"addedAt": "2026-11-24"
+		},
+		{
 			"id": "chart-lit-bar-band",
 			"text": "The bar playing lit in the chart's text (Transcribe, Arranger, Tracks): try it on iPhone with the keypad up",
 			"done": false,

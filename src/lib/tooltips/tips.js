@@ -208,7 +208,55 @@ export const TIPS = Object.freeze({
 		tabs: {
 			chords: 'Write the arrangement: sections, bars and chords.',
 			melody: 'Write the tune in ABC notation, drawn as sheet music under the chart.'
+		},
+		ways: {
+			text: 'Type the chart as text: the quickest way once you know how it’s written.',
+			buttons: 'Build the chart with buttons: tap a bar, then tap its chord. Nothing to get wrong.'
 		}
+	},
+
+	builder: {
+		bar: 'Tap to change this bar: its chord, time and words.',
+		newBar: 'Add a bar here: tap it, then tap its chord.',
+		undo: 'Undo the last change.',
+		sectionName: 'The part’s name, as the chart shows it: Verse, Chorus, Banjo break.',
+		sectionMenu: 'Move, copy, repeat or delete this part.',
+		addSection: 'Add a new part at the end of the song.',
+		moveUp: 'Move this part earlier in the song.',
+		moveDown: 'Move this part later in the song.',
+		duplicate: 'Add a copy of this part after it, to change.',
+		repeatOf: 'Make this part play another one again, so changing that one changes both.',
+		ownCopy: 'Give this part its own copy of the bars it repeats, to change on their own.',
+		deleteSection: 'Delete this part. Parts that repeat it keep its bars.',
+		tabs: {
+			chord: 'Choose the bar’s chords.',
+			bar: 'Add, copy or delete the bar, hold the chord before, or change its time.',
+			words: 'The words sung in this bar.'
+		},
+		slot: 'One of the bar’s chords: tap it, then a chord to change it. The bar’s beats are shared between them.',
+		addSlot: 'Split the bar: add a second chord, sharing its beats.',
+		removeSlot: 'Take this chord out of the bar.',
+		keyChord: 'Put this chord in the bar, then go on to the next bar.',
+		moreChords: 'Any chord: choose a root, then its kind.',
+		root: 'The chord’s root note.',
+		accidental: 'Sharp or flat root.',
+		quality: 'The kind of chord: tap to put it in the bar.',
+		mine: 'One of your own shapes (My chords).',
+		noChord: 'The band stops for this bar (N.C., no chord).',
+		hold: 'Leave the bar empty: the chord before it carries on.',
+		insertBefore: 'Add a bar before this one, with the same chord.',
+		copyBar: 'Add a copy of this bar after it.',
+		deleteBar: 'Delete this bar (its words go too).',
+		previous: 'The bar before.',
+		next: 'The bar after.',
+		time: 'The time signature of this bar.',
+		timeScope: {
+			bar: 'Change only this bar (a crooked bar with beats missing or extra).',
+			on: 'Change this bar and every bar after it, until another change.'
+		},
+		words: 'The words sung in this bar. Enter goes to the next bar.',
+		pickup: 'Words sung before the part’s first bar (a pickup).',
+		lineStart: 'Start a new line of words at this bar, on the lyric chart.'
 	},
 
 	chart: {

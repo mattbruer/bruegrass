@@ -24,6 +24,16 @@ Parsed by `parseArrangement.js`. Example: `"Chorus"|G,G|C,C|G,G|D,D|`, plus `"Br
   - Its audience is non-technical, so keep it in plain language with one idea per section.
   - Each example goes through `{@render example(...)}`, which draws it as a chart. The examples must parse.
 
+### Two ways to edit the chart
+
+The chart editor (`ArrangementEditor`, so the editor drawer and Transcribe both have it) switches between **Text** (typing, with the keypad on touch) and **Buttons** (`components/builder/`), remembered on this device (`settings.chartEditor`). The text stays the one place the song lives: Buttons reads it as written (`chart/writtenChart.js`: sections, bars with their chords and fields, repeats, lyric lines; nothing worked out, so writing back keeps everything typed and only tidies spacing) through `ArrangementState.written`, and each button is a plain function on that (`builder/chartEdits.js`) written back by `editWritten`.
+
+- Parts are cards with their name in a field (typed) and a ⋯ menu: move, copy, play another part again (`as`), give a repeat its own bars, delete (its repeats get its bars written out). Renaming a part renames its repeats.
+- Bars are tiles (4 across on a phone, 8 on a wider screen), lit while heard like the text. Tap one, then a chord: the next bar is picked, so a progression is a row of taps; the dashed + tile adds a bar. + chord splits a bar, as far as `chart/chordPlaces.js` allows (the one rule, shared with Transcribe and the strip: a chord changes only where the boom falls, so two in 4/4 and 2/2, three in 3/4); each chord gets an equal part of its tile, as it gets an equal part of the bar. The chord buttons are the key's own (`builder/chordChoices.js`, plain data: I IV V V7 vi ii iii II7 bVII in major), N.C., any root and kind (More…), and My chords.
+- The Bar tab adds, copies, holds (empty bar) or deletes a bar and sets its time, for this bar (`[2/4]`) or from here on (`[M:3/4]`) (`builder/barTimes.js`). The Words tab types a bar's words (Enter goes to the next bar), a part's pickup and where a line of words starts; words move with their bar.
+- Undo (50 steps) is kept while switching to Text and back; typing in the text clears it. Words typed in one bar undo as one.
+- Not in Buttons (still in Text): keys mid-song (`[K:]`, kept as written), slash chords, analysis marks (kept; set from the chord tutor).
+
 ### `timeline.js`
 
 The single source of musical time. All times are in quarter notes.

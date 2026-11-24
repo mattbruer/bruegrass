@@ -36,7 +36,7 @@
 	import { barsInPlayOrder } from '../../chart/chartBars.js';
 	import { placeInSong } from '../../chart/loop.js';
 	import GlassPlayhead from './GlassPlayhead.svelte';
-	import { chordPlaces } from '../../transcription/barChords.js';
+	import { chordPlaces } from '../../chart/chordPlaces.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
