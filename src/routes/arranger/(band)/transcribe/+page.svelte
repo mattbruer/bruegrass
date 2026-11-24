@@ -4,7 +4,8 @@
 	 * its beats are found; say its time signature to lay out the bars, and
 	 * slide it along the ruler so its ONE is on a bar line (a pickup in bar 1).
 	 * The ruler follows the recording. Write the song on those bars in the track
-	 * grid (chords by beat in their lane), the tune in the piano roll below.
+	 * grid (chords by beat in their lane), the tune in the piano roll below
+	 * (or, with the Band lane picked, the chart as text).
 	 * No band plays here: this page is for writing the song down; the band
 	 * is for practising. Desktop first; the phone gets its own layout later.
 	 *
@@ -29,6 +30,8 @@
 	import SendToArranger from '$lib/arranger/components/transcription/SendToArranger.svelte';
 	import TranscribeSetup from '$lib/arranger/components/transcription/TranscribeSetup.svelte';
 	import PartPane from '$lib/arranger/components/tracks/PartPane.svelte';
+	import ArrangementEditor from '$lib/arranger/components/editor/ArrangementEditor.svelte';
+	import { BAND_LANE } from '$lib/arranger/transcription/TranscriptionState.svelte.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import TimeSignatureSelect from '$lib/arranger/components/transcription/TimeSignatureSelect.svelte';
 	import TranscriptionKeySelect from '$lib/arranger/components/transcription/TranscriptionKeySelect.svelte';
@@ -224,7 +227,9 @@
 			</p>
 		{/if}
 		<TranscriptionGrid {transcription} />
-		{#if transcription.linked}
+		{#if transcription.linked && transcription.lane === BAND_LANE}
+			<section class="ui-card p-3 sm:p-4" aria-label="The chart"><ArrangementEditor /></section>
+		{:else if transcription.linked}
 			<PartPane
 				voice={transcription.lane}
 				name={transcription.laneName(transcription.lane)}
@@ -232,6 +237,7 @@
 				bind:view={settings.transcribe.bottomView}
 				bassStartsEmpty
 				keyMenu={false}
+				pickupBar={transcription.pickupBar}
 			/>
 		{/if}
 	{/if}

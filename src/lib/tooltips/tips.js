@@ -276,6 +276,8 @@ export const TIPS = Object.freeze({
 		}
 	},
 	transcription: {
+		pickupBar:
+			'This bar is only the notes before the song’s first downbeat. The bars are then counted from the next one, which becomes bar 1, as in Logic. Name the first section on that bar and say how many beats its tune starts early.',
 		sectionPickup:
 			'Where this section’s tune starts: on the bar, or a beat or more before it, when the singer comes in early (“I was…”). Only the tune: the chords stay on the bar.',
 		changeReference: 'Work out a different recording.',
@@ -317,7 +319,7 @@ export const TIPS = Object.freeze({
 		trimStart:
 			'Drag to trim the start: an intro, a false start or talking you don’t want is never played.',
 		trimEnd: 'Drag to trim the end: the song stops there, and no bars are written past it.',
-		more: 'The recording’s menu: fixes for the whole song’s beats (counting faster or slower, finding them again) and how the slowed-down sound is made.',
+		more: 'The recording’s menu: its tuning (how far from A = 440), fixes for the whole song’s beats (counting faster or slower, finding them again) and how the slowed-down sound is made.',
 		doubleBeats: 'For when the count is half the song’s speed: a beat between every two.',
 		halveBeats: 'For when the count is twice the song’s speed: every other beat.',
 		findAgain:
@@ -334,9 +336,10 @@ export const TIPS = Object.freeze({
 			"The waveform's colour. It's the same choice as Settings → Appearance → Waveform.",
 		partLane: 'Edit this part in the piano roll below. A click anywhere on its lane picks it too.',
 		bandLane:
-			'The band (guitar, mandolin, bass) plays these chords along with the recording. Tap a bar to type its chords. Each instrument’s own level is in the mixer.',
+			'The band (guitar, mandolin, bass) plays these chords along with the recording. Tap a bar to type its chords, or its name to write the whole chart as text below. Each instrument’s own level is in the mixer.',
+		bandMenu: 'Guess the chords from the recording, or clear them.',
 		guessChords:
-			'Fill the bars with a guess from the recording. Then play it with the band and fix what sounds wrong.',
+			'Fill the empty bars with a guess from the recording; chords you typed stay. Then play it with the band and fix what sounds wrong.',
 		clearChords:
 			'Empty every bar’s chords, the ones you typed too, to guess again or work them out by ear.',
 		addLane:

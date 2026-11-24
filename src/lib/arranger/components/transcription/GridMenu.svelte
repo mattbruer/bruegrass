@@ -54,7 +54,7 @@
 		{#if transcription.bar}
 			{@const bar = transcription.bar}
 			<div class="flex items-center gap-2">
-				<strong>Bar {bar.number}</strong>
+				<strong>{transcription.barName(bar.number)}</strong>
 				<button
 					type="button"
 					class="ml-auto size-7 ui-button text-sm"
@@ -63,6 +63,16 @@
 					use:tooltip={TIPS.transcription.closeMenu}>✕</button
 				>
 			</div>
+			{#if bar.number === 1}
+				<div class="flex items-center gap-2">
+					<ToggleSwitch
+						bind:on={() => transcription.pickupBar, (on) => transcription.setPickupBar(on)}
+						labelledBy="pickup-bar"
+						tip={TIPS.transcription.pickupBar}
+					/>
+					<span id="pickup-bar">Pickup bar</span>
+				</div>
+			{/if}
 			<label class="flex items-center gap-2">
 				<span>Marker</span>
 				<input
@@ -146,7 +156,8 @@
 			</div>
 		{:else if beat !== null && beatBar}
 			<div class="flex items-center gap-2">
-				<strong>Bar {beatBar.number}, beat {beat - beatBar.firstBeat + 1}</strong>
+				<strong>{transcription.barName(beatBar.number)}, beat {beat - beatBar.firstBeat + 1}</strong
+				>
 				<button
 					type="button"
 					class="ml-auto size-7 ui-button text-sm"

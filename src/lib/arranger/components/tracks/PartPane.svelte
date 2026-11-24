@@ -23,10 +23,12 @@
 	 *   view: string,
 	 *   bassStartsEmpty?: boolean,
 	 *   keyMenu?: boolean,
+	 *   pickupBar?: boolean,
 	 *   onClose?: () => void
 	 * }}
 	 *   voice: the part (a lane id); view: an id in tracks/partViews.js;
-	 *   bassStartsEmpty: an unwritten bass starts empty, to write by ear
+	 *   bassStartsEmpty: an unwritten bass starts empty, to write by ear;
+	 *   pickupBar: the first bar is a pickup, so the next is numbered 1
 	 */
 	let {
 		voice,
@@ -35,6 +37,7 @@
 		view = $bindable(),
 		bassStartsEmpty = false,
 		keyMenu = true,
+		pickupBar = false,
 		onClose
 	} = $props();
 
@@ -75,6 +78,7 @@
 			{clock}
 			{bassStartsEmpty}
 			{keyMenu}
+			{pickupBar}
 			view={view === 'tab' ? 'tab' : 'roll'}
 		/>
 	{/if}

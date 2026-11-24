@@ -83,7 +83,8 @@
 	 *   onSound: (midi: number) => void,
 	 *   onSeek?: (ticks: number) => void,
 	 *   zoom?: { across: number, down: number },
-	 *   lane?: { name: string, draw: import('svelte').Snippet<[{ width: number, height: number, tickWidth: number }]> }
+	 *   lane?: { name: string, draw: import('svelte').Snippet<[{ width: number, height: number, tickWidth: number }]> },
+	 *   pickupBar?: boolean
 	 * }}
 	 */
 	let {
@@ -109,7 +110,8 @@
 		onSound,
 		onSeek,
 		zoom = { across: 1, down: 1 },
-		lane
+		lane,
+		pickupBar = false
 	} = $props();
 	/** Everything that stays at the top while the rows scroll: the ruler, and the lane if any. */
 	let headHeight = $derived(RULER_HEIGHT + (lane ? LANE_HEIGHT : 0));
@@ -454,7 +456,7 @@
 				>
 					{#each score.bars as bar, index (index)}
 						<span class="bar-number" style:left="{bar.start * tickWidth}px"
-							>{barLabel(score.bars, index)}</span
+							>{barLabel(score.bars, index, pickupBar)}</span
 						>
 					{/each}
 				</div>

@@ -137,6 +137,50 @@
 	}
 }
 
+/* A row's name cell in a track grid (Transcribe's lanes, its Cycle and Beats
+   rows): raised, sticky at the left while the lanes scroll under it, with a
+   groove under it. The grid sets --lane-divider and --header-padding.
+   .picked marks the lane the editor below is showing. */
+@utility ui-track-header {
+	position: sticky;
+	left: 0;
+	z-index: 2;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem 0.3rem;
+	padding: 0.55rem var(--header-padding) 0.65rem;
+	text-align: left;
+	border-bottom: var(--lane-divider);
+	/* Raised: a lit top edge, a shaded bottom and a face curving away from the light */
+	background: var(--face-3d), var(--color-raised);
+	box-shadow:
+		var(--shadow-bevel),
+		inset -1px 0 0 var(--shadow-light-edge);
+
+	&.picked {
+		box-shadow:
+			var(--shadow-bevel),
+			inset 3px 0 0 var(--color-accent),
+			inset -1px 0 0 var(--shadow-light-edge);
+	}
+}
+
+/* A button in a ⋯ menu's panel: full width, its words at the left */
+@utility ui-menu-item {
+	@apply px-3 py-1.5 text-left text-sm;
+}
+
+/* A small heading over a group in a ⋯ menu's panel */
+@utility ui-menu-heading {
+	margin-top: 0.25rem;
+	font-size: 0.65rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--color-ink-soft);
+}
+
 /* The main action on a screen (Play): a button in the accent colour */
 @utility ui-button-primary {
 	color: var(--color-accent);

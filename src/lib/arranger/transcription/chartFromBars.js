@@ -16,7 +16,8 @@
  */
 import { NO_CHORD } from '../chart/noChord.js';
 import { chartCell, isEmptyBar, isHeld, slotsOf } from './barChords.js';
-import { SECTION_END, UNMARKED_SECTION } from './readChartOnBars.js';
+import { UNMARKED_SECTION } from '../chart/unmarkedSection.js';
+import { SECTION_END } from './readChartOnBars.js';
 
 /**
  * @param {import('./barPlan.js').Bar[]} bars

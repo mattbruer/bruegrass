@@ -1,7 +1,7 @@
 <script>
 	/**
-	 * Fine tuning, in the control bar so it can be nudged by ear while the
-	 * recording and the band play: a cent at a time (tap the number to go
+	 * Fine tuning (in the recording's menu, which stays open while it plays,
+	 * so it can be nudged by ear against the band): a cent at a time (tap the number to go
 	 * back to as recorded), or Find how far it is from A = 440. Between two
 	 * notes Find can go either way, so the other way is a button beside it.
 	 * The caption under it is the A the band tuned to.

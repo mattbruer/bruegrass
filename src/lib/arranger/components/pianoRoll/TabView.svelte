@@ -32,7 +32,8 @@
 	 *   onSelect: (tabNote: import('../../tab/fingering.js').TabNote) => void,
 	 *   onFret: (tabNote: import('../../tab/fingering.js').TabNote, fret: number) => void,
 	 *   onString: (tabNote: import('../../tab/fingering.js').TabNote, direction: -1 | 1) => void,
-	 *   onDelete: (tabNote: import('../../tab/fingering.js').TabNote) => void
+	 *   onDelete: (tabNote: import('../../tab/fingering.js').TabNote) => void,
+	 *   pickupBar?: boolean
 	 * }}
 	 */
 	let {
@@ -51,7 +52,8 @@
 		onSelect,
 		onFret,
 		onString,
-		onDelete
+		onDelete,
+		pickupBar = false
 	} = $props();
 
 	const tickWidth = $derived(tickWidthFor(gridStep, zoom.across));
@@ -149,7 +151,7 @@
 			>
 				{#each score.bars as bar, index (bar.start)}
 					<span class="bar-number" style:left="{bar.start * tickWidth}px"
-						>{barLabel(score.bars, index)}</span
+						>{barLabel(score.bars, index, pickupBar)}</span
 					>
 				{/each}
 			</div>

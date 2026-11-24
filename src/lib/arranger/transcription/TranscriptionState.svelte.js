@@ -28,6 +28,7 @@
 import { StretchPlayer } from '$lib/slowDowner/StretchPlayer.svelte.js';
 import { waveformPeaks } from '../takes/waveformPeaks.js';
 import { barAt, evenBarPlan, withBarLength } from './barPlan.js';
+import { barName } from './barNumbers.js';
 import {
 	beatSeconds,
 	gridBars,
@@ -86,7 +87,7 @@ export const PEAKS_PER_SECOND = 200;
 const HIT_SCALE = 6;
 /** The recording's and the band's lane ids among the lanes that can be muted and soloed. */
 const REFERENCE_LANE = 'reference';
-const BAND_LANE = 'band';
+export const BAND_LANE = 'band';
 
 /** How many changes to the beats Undo remembers. */
 const UNDO_STEPS = 50;
@@ -116,7 +117,12 @@ export class TranscriptionState {
 	 * @type {Record<number, number>}
 	 */
 	pickups = $state.raw({});
-	/** The part the piano roll edits (a voice id). */
+	/**
+	 * Bar 1 is the pickup bar: shown as "Pickup" (bar 0 in the clock), so the
+	 * song's first ONE on bar 2 reads as bar 1 (barNumbers.js). Only the labels change.
+	 */
+	pickupBar = $state(false);
+	/** The lane picked for the editor below: a part's voice id (the piano roll), or BAND_LANE (the chart as text). */
 	lane = $state(MELODY_CHANNEL);
 	/** The open bar's menu is for naming its marker (its name box takes the keys). */
 	naming = $state(false);
@@ -296,6 +302,7 @@ export class TranscriptionState {
 		this.timeChosen = false;
 		this.slidePreview = 0;
 		this.pickups = {};
+		this.pickupBar = false;
 		this.peaks = null;
 		this.hits = null;
 		this.pickingReference = false;
@@ -333,6 +340,7 @@ export class TranscriptionState {
 			this.time = draft.time;
 			this.timeChosen = draft.timeChosen;
 			this.pickups = draft.pickups;
+			this.pickupBar = draft.pickupBar;
 			this.player.setCents(draft.cents);
 			return;
 		}
@@ -682,6 +690,36 @@ export class TranscriptionState {
 		return this.pickups[number] ?? 0;
 	}
 
+	/**
+	 * Make bar 1 the pickup bar, or a plain bar again. Made one, the song's
+	 * first section starts on bar 2: a marker on bar 1 moves there (bar 2
+	 * had none), and bar 2's menu opens, to name it if it has no name yet and
+	 * to say in "Tune starts" how long the pickup is.
+	 * @param {boolean} on
+	 */
+	setPickupBar(on) {
+		this.pickupBar = on;
+		this.#keepDraft();
+		const [first, second] = this.bars;
+		if (!on || !first || !second) return this.closeMenus();
+		const name = this.markers[first.number];
+		if (name && !this.markers[second.number]) {
+			const markers = { ...this.markers, [second.number]: name };
+			delete markers[first.number];
+			this.#writeChart({ markers });
+		}
+		this.openBarMenu(second.number);
+		this.naming = !this.markers[second.number];
+	}
+
+	/**
+	 * A bar's name as shown in menus and buttons ("Pickup", "Bar 12").
+	 * @param {number} number
+	 */
+	barName(number) {
+		return barName(number, this.pickupBar);
+	}
+
 	#playAfterNaming = false;
 
 	/** The marker's name is typed: close its menu, and play on if it was playing. */
@@ -956,7 +994,8 @@ export class TranscriptionState {
 			time: this.time,
 			timeChosen: this.timeChosen,
 			cents: this.player.cents,
-			pickups: this.pickups
+			pickups: this.pickups,
+			pickupBar: this.pickupBar
 		});
 	}
 }

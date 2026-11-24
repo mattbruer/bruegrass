@@ -3,7 +3,7 @@
 	 * The track grid, Logic's way: the cycle strip (drag across it to play a
 	 * stretch over and over), a bar ruler that follows the recording,
 	 * the Beats row under it (a dot per beat), the recording bent onto the
-	 * bars (its menu: beats, tuning, the slowed-down sound), the chords by beat, and a lane for
+	 * bars (its menu: tuning, beats, the slowed-down sound), the chords by beat, and a lane for
 	 * each part being written (+ Lane adds another line of the tune; its menu
 	 * names it, or makes it the bass). Lane names stay put while the lanes
 	 * scroll sideways together; tap anywhere on a part's lane to edit it in
@@ -26,23 +26,17 @@
 	import GridMenu from './GridMenu.svelte';
 	import CycleStrip from '../tracks/CycleStrip.svelte';
 	import CycleSectionMenu from '../tracks/CycleSectionMenu.svelte';
-	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
-	import LaneVolume from './LaneVolume.svelte';
-	import InstrumentButton from '../mixer/instruments/InstrumentButton.svelte';
-	import { isTuneChannel } from '../../melody/harmony/partChannels.js';
-	import LaneColour from './LaneColour.svelte';
-	import LaneMenu from './LaneMenu.svelte';
 	import NameDialog from '$lib/components/NameDialog.svelte';
 	import { LANE_NAMES } from '../../transcription/laneNames.js';
 	import { voiceChannels } from '../../melody/harmony/partChannels.js';
-	import { mixer } from '../../mixer/mixer.svelte.js';
 	import ReferenceLane from './ReferenceLane.svelte';
+	import ReferenceHeader from './headers/ReferenceHeader.svelte';
+	import BandHeader from './headers/BandHeader.svelte';
+	import PartHeader from './headers/PartHeader.svelte';
 	import ChordLane from '../tracks/ChordLane.svelte';
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import ToggleSwitch from '$lib/settings/controls/ToggleSwitch.svelte';
-	import ReferenceMenu from './ReferenceMenu.svelte';
-	import GuessChordsButton from './GuessChordsButton.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -69,7 +63,8 @@
 		transcription.timeChosen
 			? rulerFromBars(
 					transcription.bars,
-					markersShown(transcription.markers, transcription.pickups)
+					markersShown(transcription.markers, transcription.pickups),
+					transcription.pickupBar
 				)
 			: []
 	);
@@ -152,17 +147,6 @@
 		const box = event.currentTarget.getBoundingClientRect();
 		transcription.seekToQuarters(scale.toQuarters(event.clientX - box.left) + scale.start);
 	}
-
-	/**
-	 * A click on a part's header picks the part, unless it was on one of its controls.
-	 * @param {MouseEvent} event
-	 * @param {string} id
-	 */
-	function pickFromHeader(event, id) {
-		const target = /** @type {HTMLElement} */ (event.target);
-		if (target.closest('.pick') || !target.closest('button, input, select, label, [role="slider"]'))
-			transcription.lane = id;
-	}
 </script>
 
 <div class="ui-sunk-frame rounded-[var(--corner-card)]">
@@ -183,7 +167,7 @@
 			style:--grid-offset="{scale.toX(0)}px"
 		>
 			{#if transcription.timeChosen}
-				<div class="header cycle-header ui-side-column">
+				<div class="cycle-header ui-side-column ui-track-header">
 					<button
 						type="button"
 						class="ui-button px-2 py-0.5 text-xs"
@@ -220,7 +204,8 @@
 						type="button"
 						class="ui-button px-1.5 py-0.5 text-xs font-semibold tabular-nums"
 						onclick={() => transcription.openBarHere()}
-						use:tooltip={TIPS.transcription.barHere}>Bar {transcription.barHere ?? ''} ▾</button
+						use:tooltip={TIPS.transcription.barHere}
+						>{transcription.barHere === null ? 'Bar' : transcription.barName(transcription.barHere)} ▾</button
 					>
 				{/if}
 			</div>
@@ -230,8 +215,11 @@
 				<TrackRuler bars={ruler} {scale} />
 			</div>
 
-			<div class="header beats-header ui-side-column" class:quiet={!transcription.fixingBeats}>
-				<span class="name">Beats</span>
+			<div
+				class="beats-header ui-side-column ui-track-header"
+				class:quiet={!transcription.fixingBeats}
+			>
+				<span class="beats-name">Beats</span>
 				{#if transcription.fixingBeats}
 					<button
 						type="button"
@@ -250,28 +238,11 @@
 			</div>
 			<BeatDots {transcription} {scale} />
 
-			<div class="header reference ui-side-column">
-				<span class="name">Reference</span>
-				<ReferenceMenu {transcription} />
-				<span class="lane-buttons">
-					<MuteSoloButtons settings={transcription.referenceLane} name="Reference" />
-					<LaneColour
-						bind:color={settings.appearance.waveform}
-						label="Waveform colour"
-						tip={TIPS.transcription.waveformColour}
-					/>
-				</span>
-				<LaneVolume level={transcription.referenceLane} name="Reference" />
-			</div>
+			<ReferenceHeader {transcription} />
 			<ReferenceLane {transcription} {scale} view={lanesView} />
 
 			{#if transcription.timeChosen}
-				<div class="header ui-side-column">
-					<span class="name" use:tooltip={TIPS.transcription.bandLane}>Band</span>
-					<GuessChordsButton {transcription} />
-					<MuteSoloButtons settings={transcription.band.lane} name="Band" />
-					<LaneVolume level={transcription.band.lane} name="Band" />
-				</div>
+				<BandHeader {transcription} />
 				<ChordLane
 					bars={chordBars}
 					slotsOf={(bar) => transcription.slotsOf(bar)}
@@ -281,30 +252,7 @@
 				/>
 
 				{#each parts as lane (lane.id)}
-					{@const channel = mixer.channels.find((each) => each.id === lane.id)}
-					<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
-					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<div
-						class="header part-header ui-side-column"
-						class:picked-lane={transcription.lane === lane.id}
-						onclick={(event) => pickFromHeader(event, lane.id)}
-					>
-						<button
-							type="button"
-							class="name pick"
-							onclick={() => (transcription.lane = lane.id)}
-							aria-pressed={transcription.lane === lane.id}
-							use:tooltip={TIPS.transcription.partLane}>{lane.name}</button
-						>
-						{#if channel}
-							<MuteSoloButtons settings={channel} name={lane.name} />
-							<LaneVolume level={channel} name={lane.name} />
-						{/if}
-						<div class="instrument-row">
-							{#if channel && isTuneChannel(lane.id)}<InstrumentButton {channel} />{/if}
-							<LaneMenu {transcription} {lane} />
-						</div>
-					</div>
+					<PartHeader {transcription} {lane} />
 					<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
@@ -318,7 +266,7 @@
 			{/if}
 
 			{#if transcription.linked && transcription.timeChosen}
-				<div class="header add ui-side-column">
+				<div class="add ui-side-column ui-track-header">
 					<button
 						type="button"
 						class="ui-button px-2 py-1 text-xs"
@@ -386,43 +334,11 @@
 		z-index: 3;
 	}
 
-	.corner,
-	.header {
+	.corner {
 		position: sticky;
 		left: 0;
 		z-index: 2;
 		border-bottom: var(--lane-divider);
-	}
-
-	.header {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.5rem 0.3rem;
-		padding: 0.55rem var(--header-padding) 0.65rem;
-		text-align: left;
-		/* Raised: a lit top edge, a shaded bottom and a face curving away from the light */
-		background: var(--face-3d), var(--color-raised);
-		box-shadow:
-			var(--shadow-bevel),
-			inset -1px 0 0 var(--shadow-light-edge);
-	}
-
-	.lane-buttons {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-	}
-
-	.pick {
-		flex: 1;
-		min-width: 0;
-		text-align: left;
-	}
-
-	.part-header {
-		cursor: pointer;
 	}
 
 	.beats-header {
@@ -430,53 +346,20 @@
 		flex-wrap: nowrap;
 		justify-content: flex-start;
 	}
-	.beats-header .name {
+	.beats-name {
 		flex: 1;
+		font-size: 0.8rem;
+		font-weight: 700;
 	}
 
-	.header.quiet .name {
+	.quiet .beats-name {
 		font-weight: 400;
 		color: var(--color-ink-soft);
 	}
 
-	.header.picked-lane {
-		background: var(--face-3d), var(--color-raised);
-		box-shadow:
-			var(--shadow-bevel),
-			inset 3px 0 0 var(--color-accent),
-			inset -1px 0 0 var(--shadow-light-edge);
-	}
-
-	.instrument-row {
-		display: flex;
-		align-items: center;
-		justify-content: flex-end;
-		gap: 0.375rem;
-		width: 100%;
-		margin: 0.25rem 0 0.35rem;
-	}
-
-	.instrument-row > :global(:first-child:not(:last-child)) {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.instrument-row :global(.instrument) {
-		padding: 0.45rem 0.6rem;
-		font-size: 0.78rem;
-	}
-
-	.header.add {
+	.add {
 		border-bottom: none;
 		padding: 0.35rem var(--header-padding);
-	}
-
-	.name {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		font-size: 0.8rem;
-		font-weight: 700;
 	}
 
 	.ruler {

@@ -1,7 +1,7 @@
 /**
  * What the piano roll and the TAB view share about time across: how wide
- * a tick is, and how bars are numbered (a short first bar is a pickup,
- * with no number, and the next bar is 1).
+ * a tick is, and how bars are numbered (a pickup first bar, short or
+ * marked so, is "Pickup", and the next bar is 1).
  */
 import { TICKS_PER_QUARTER } from './ticks.js';
 
@@ -25,9 +25,10 @@ export function isShortBar(bar) {
 /**
  * @param {import('./readScore.js').ScoreBar[]} bars
  * @param {number} index
+ * @param {boolean} [pickupBar] the first bar is a pickup though it's a whole bar (Transcribe's Pickup bar)
  */
-export function barLabel(bars, index) {
-	const pickup = isShortBar(bars[0]);
-	if (pickup && index === 0) return '';
+export function barLabel(bars, index, pickupBar = false) {
+	const pickup = pickupBar || isShortBar(bars[0]);
+	if (pickup && index === 0) return 'Pickup';
 	return String(pickup ? index : index + 1);
 }

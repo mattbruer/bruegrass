@@ -4,23 +4,32 @@
  * An odd bar shows its time signature, like Logic's ruler, and a marker
  * its section's name.
  */
+import { barLabel } from './barNumbers.js';
 
 /**
  * @param {import('./barPlan.js').Bar[]} bars
  * @param {Record<number, string>} [markers] bar number → the section starting there
+ * @param {boolean} [pickupBar] the first bar is a pickup (barNumbers.js)
  * @returns {import('../tracks/ruler.js').RulerBar[]}
  */
-export function rulerFromBars(bars, markers = {}) {
+export function rulerFromBars(bars, markers = {}, pickupBar = false) {
 	const first = bars[0]?.firstBeat ?? 0;
-	return [
-		...bars.map((bar) => ({
-			number: bar.number,
-			start: bar.firstBeat - first,
-			beats: bar.beats,
-			sectionName: markers[bar.number] ?? null,
-			label: bar.odd ? `${bar.number}  ${bar.beats}/4` : String(bar.number)
-		}))
-	];
+	return bars.map((bar) => ({
+		number: bar.number,
+		start: bar.firstBeat - first,
+		beats: bar.beats,
+		sectionName: markers[bar.number] ?? null,
+		label: rulerLabel(bar, pickupBar)
+	}));
+}
+
+/**
+ * @param {import('./barPlan.js').Bar} bar
+ * @param {boolean} pickupBar
+ */
+function rulerLabel(bar, pickupBar) {
+	const name = barLabel(bar.number, pickupBar);
+	return bar.odd ? `${name}  ${bar.beats}/4` : name;
 }
 
 /** Quarters of room before the first bar, so the lead-in's first beat isn't on the edge. */

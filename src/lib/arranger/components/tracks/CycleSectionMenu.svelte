@@ -13,7 +13,7 @@
 	/**
 	 * @type {{
 	 *   cycle: {
-	 *     sections: { number: number, name: string, region: Cycle }[],
+	 *     sections: { number: number, label?: string, name: string, region: Cycle }[],
 	 *     set: (region: Cycle) => void,
 	 *     isRegion: (region: Cycle) => boolean
 	 *   },
@@ -29,11 +29,12 @@
 	{#each cycle.sections as section (section.number)}
 		<button
 			type="button"
-			class="ui-button px-3 py-1.5 text-left text-sm"
+			class="ui-button ui-menu-item"
 			class:ui-button-on={cycle.isRegion(section.region)}
 			onclick={() => cycle.set(section.region)}
 			use:tooltip={TIPS.cycle.section}
-			>{section.name} <span class="text-ink-soft tabular-nums">bar {section.number}</span></button
+			>{section.name}
+			<span class="text-ink-soft tabular-nums">bar {section.label ?? section.number}</span></button
 		>
 	{:else}
 		<p class="max-w-56 text-sm text-ink-soft">{empty}</p>

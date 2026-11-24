@@ -16,15 +16,30 @@
 	 * @type {{
 	 *   time: number, duration: number,
 	 *   beat?: number, bars?: import('../../transcription/barPlan.js').Bar[],
+	 *   shownBar?: (number: number) => number,
 	 *   class?: string
-	 * }} beat and bars: where the playhead is in beats, and the bars (none: a clock only)
+	 * }} beat and bars: where the playhead is in beats, and the bars (none: a clock only);
+	 *   shownBar: the number a bar is shown with (a pickup bar shows as 0)
 	 */
-	let { time, duration, beat = 0, bars = [], class: className = '' } = $props();
+	let {
+		time,
+		duration,
+		beat = 0,
+		bars = [],
+		shownBar = (number) => number,
+		class: className = ''
+	} = $props();
 
 	const DECIMALS = 2;
+	/** The longest bar number it can show: the last bar's, or a minus one before a pickup. */
+	const widestBar = $derived(
+		[shownBar(bars.at(-1)?.number ?? 0), shownBar(0)]
+			.map(String)
+			.reduce((a, b) => (a.length >= b.length ? a : b))
+	);
 	/** Bars and beats, each with its label under it, as Logic's transport shows them. */
 	const fields = $derived([
-		{ label: 'Bar', value: place.bar, widest: bars.at(-1)?.number ?? 0 },
+		{ label: 'Bar', value: shownBar(place.bar), widest: widestBar },
 		{ label: 'Beat', value: place.beat, widest: Math.max(...bars.map((bar) => bar.beats)) },
 		{ label: '16th', value: place.division, widest: 4 }
 	]);
@@ -33,7 +48,9 @@
 	const text = $derived(formatClock(time, { decimals: DECIMALS }));
 	const widest = $derived(formatClock(duration, { decimals: DECIMALS }));
 	const spoken = $derived(
-		showBars ? `Bar ${place.bar}, beat ${place.beat}` : `${text} of ${formatClock(duration)}`
+		showBars
+			? `Bar ${shownBar(place.bar)}, beat ${place.beat}`
+			: `${text} of ${formatClock(duration)}`
 	);
 
 	function toggle() {

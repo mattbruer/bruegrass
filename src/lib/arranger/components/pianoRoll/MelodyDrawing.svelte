@@ -54,8 +54,9 @@
 	 *   bassStartsEmpty?: boolean,
 	 *   pickupQuarters?: number,
 	 *   keyMenu?: boolean,
-	 *   view?: 'roll' | 'tab'
-	 * }}
+	 *   view?: 'roll' | 'tab',
+	 *   pickupBar?: boolean
+	 * }} pickupBar: the first bar is a pickup, so the next is numbered 1
 	 */
 	let {
 		voice,
@@ -63,7 +64,8 @@
 		bassStartsEmpty = false,
 		pickupQuarters = 0,
 		keyMenu = true,
-		view = 'roll'
+		view = 'roll',
+		pickupBar = false
 	} = $props();
 
 	/** @param {number} ticks a click on the roll's ruler: play from there */
@@ -237,6 +239,7 @@
 					onFret={setFret}
 					onString={moveString}
 					onDelete={deleteTab}
+					{pickupBar}
 				/>
 				{#if pickedTab?.place}
 					<TabFretBar tabNote={pickedTab} {board} onFret={setFret} onString={moveString} />
@@ -286,6 +289,7 @@
 				onSeek={clock?.seek ? seek : undefined}
 				{zoom}
 				lane={clock ? undefined : { name: 'Tempo', draw: tempoLane }}
+				{pickupBar}
 			/>
 			{#snippet tempoLane(
 				/** @type {{ width: number, height: number, tickWidth: number }} */ {

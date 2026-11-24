@@ -15,13 +15,13 @@
 	import TransportGlyph from '../icons/TransportGlyph.svelte';
 	import SpeedControl from './SpeedControl.svelte';
 	import CountAlongButton from './CountAlongButton.svelte';
-	import TuningControl from './TuningControl.svelte';
 	import { soundById } from '$lib/slowDowner/sounds.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import { isTyping } from '$lib/utils/isTyping.js';
 	import PlayClock from './PlayClock.svelte';
+	import { shownBarNumber } from '../../transcription/barNumbers.js';
 	import TunerButton from '$lib/tuner/TunerButton.svelte';
 	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
 	import DrawerKey from '../page/DrawerKey.svelte';
@@ -109,6 +109,7 @@
 					duration={player.duration}
 					beat={transcription.quartersNow + (transcription.grid?.bars.firstBeat ?? 0)}
 					bars={transcription.bars}
+					shownBar={(number) => shownBarNumber(number, transcription.pickupBar)}
 					class="text-xl"
 				/>
 			</div>
@@ -116,7 +117,6 @@
 
 		<div class="cluster listening">
 			<SpeedControl {player} />
-			<TuningControl {transcription} />
 			<CountAlongButton {transcription} class="h-10 w-12" />
 			<TunerButton class="h-10 w-12" />
 		</div>

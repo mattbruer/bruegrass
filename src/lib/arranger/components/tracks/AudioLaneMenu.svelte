@@ -59,7 +59,7 @@
 		{#if lane.takes.length === 0}
 			<button
 				type="button"
-				class="ui-button px-3 py-1.5 text-left text-sm"
+				class="ui-button ui-menu-item"
 				onclick={() => recording.removeLane(lane.id)}
 				use:tooltip={TIPS.tracks.laneRemove}>Remove lane</button
 			>

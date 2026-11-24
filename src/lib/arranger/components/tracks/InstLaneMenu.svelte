@@ -62,14 +62,14 @@
 			{#if !bass.isWritten}
 				<button
 					type="button"
-					class="ui-button px-3 py-1.5 text-left text-sm"
+					class="ui-button ui-menu-item"
 					onclick={() => parts.useAsBass(lane.id)}
 					use:tooltip={TIPS.transcription.laneBass}>Make it the bass line</button
 				>
 			{/if}
 			<button
 				type="button"
-				class="ui-button px-3 py-1.5 text-left text-sm"
+				class="ui-button ui-menu-item"
 				onclick={remove}
 				use:tooltip={TIPS.tracks.instRemove}>Remove lane</button
 			>

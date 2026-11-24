@@ -14,5 +14,5 @@
 - Everything else is derived from those tokens in CSS: softer text colours, the shadow edges (OKLCH lighter/darker of the background, so dark themes work), and the corner sizes.
 - Settings → Appearance changes the same five variables at runtime (`theme.js` `applyTheme`, presets, and the WCAG contrast check).
 - `applyTheme` saves every variable it sets (`bruegrass.firstPaint`), and `src/app.html` puts them back before the first paint, so nothing flashes the wrong colour; a new themed variable needs nothing there.
-- Shared classes are in `src/lib/theme/ui.css`: `ui-card`, `ui-well`, `ui-button`, `ui-button-primary`, `ui-button-on`, `ui-field`. They're named for what a thing is, not how it looks.
+- Shared classes are in `src/lib/theme/ui.css`: `ui-card`, `ui-well`, `ui-button`, `ui-button-primary`, `ui-button-on`, `ui-field`, `ui-track-header` (a row's name cell in a track grid, `.picked` for the lane being edited), `ui-menu-item` and `ui-menu-heading` (a ⋯ menu's buttons and group headings). They're named for what a thing is, not how it looks.
 - Components must not hard-code colours or corner sizes. Use the variables `--color-*`, `--shadow-*` and `--corner-*`, or Tailwind classes like `text-ink-soft`.

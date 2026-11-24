@@ -13,6 +13,7 @@ import { barsInPlayOrder } from '../chart/chartBars.js';
 import { withMark } from '../chart/analysisMarks.js';
 import { isNoChord } from '../chart/noChord.js';
 import { sectionBlocks } from '../chart/sectionBlocks.js';
+import { UNMARKED_SECTION } from '../chart/unmarkedSection.js';
 
 /**
  * @typedef {{
@@ -24,8 +25,6 @@ import { sectionBlocks } from '../chart/sectionBlocks.js';
  *   all keyed by bar number; places: where each bar is written in the chart
  */
 
-/** The name chartFromBars gives bars in no section: before the first marker, and after an end. */
-export const UNMARKED_SECTION = 'Song';
 /** The marker that ends a section without starting another: the bars after it are in none. */
 export const SECTION_END = 'End';
 

@@ -1,13 +1,17 @@
 <script>
 	/**
-	 * The recording's menu, on its lane: the whole song's beats (counting
-	 * twice or half as fast, finding them again) and how the slowed-down sound is made.
+	 * The recording's menu, on its lane: its tuning (how far from A = 440),
+	 * the whole song's beats and how the slowed-down sound is made. It stays
+	 * open while the recording plays, so the tuning can be nudged by ear.
 	 */
 	import Popover from '$lib/components/Popover.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
+	import TuningControl from './TuningControl.svelte';
+	import DoubleBeatsButton from './actions/DoubleBeatsButton.svelte';
+	import HalveBeatsButton from './actions/HalveBeatsButton.svelte';
+	import FindBeatsAgainButton from './actions/FindBeatsAgainButton.svelte';
 	import { SOUNDS } from '$lib/slowDowner/sounds.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
-	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** @type {{ transcription: import('../../transcription/TranscriptionState.svelte.js').TranscriptionState }} */
@@ -18,26 +22,13 @@
 	{#snippet button()}<span aria-hidden="true">⋯</span><span class="sr-only"
 			>The recording's menu</span
 		>{/snippet}
-	<span class="heading">Beats</span>
-	<button
-		type="button"
-		class="ui-button px-3 py-1.5 text-left text-sm"
-		onclick={() => transcription.doubleBeats()}
-		use:tooltip={TIPS.transcription.doubleBeats}>Count twice as fast</button
-	>
-	<button
-		type="button"
-		class="ui-button px-3 py-1.5 text-left text-sm"
-		onclick={() => transcription.halveBeats()}
-		use:tooltip={TIPS.transcription.halveBeats}>Count half as fast</button
-	>
-	<button
-		type="button"
-		class="ui-button px-3 py-1.5 text-left text-sm"
-		onclick={() => transcription.findBeatsAgain()}
-		use:tooltip={TIPS.transcription.findAgain}>Find the beats again</button
-	>
-	<span class="heading">Slowed-down sound</span>
+	<span class="ui-menu-heading">Tuning</span>
+	<TuningControl {transcription} />
+	<span class="ui-menu-heading">Beats</span>
+	<DoubleBeatsButton {transcription} class="ui-menu-item" />
+	<HalveBeatsButton {transcription} class="ui-menu-item" />
+	<FindBeatsAgainButton {transcription} class="ui-menu-item" />
+	<span class="ui-menu-heading">Slowed-down sound</span>
 	<TabSwitch
 		tabs={SOUNDS}
 		bind:value={settings.transcribe.sound}
@@ -45,13 +36,3 @@
 		label="Sound"
 	/>
 </Popover>
-
-<style>
-	.heading {
-		margin-top: 0.25rem;
-		font-size: 0.65rem;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		color: var(--color-ink-soft);
-	}
-</style>

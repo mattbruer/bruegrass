@@ -3,6 +3,7 @@
  * the player loops while it's on. The region is kept while it's off, so
  * turning it on again (the Cycle button, C) brings it back.
  */
+import { barLabel } from './barNumbers.js';
 import { secondsAt, secondsAtBeat } from './tempoMap.js';
 import { sectionCycles } from './cycle.js';
 
@@ -28,8 +29,11 @@ export class CycleState {
 
 	/** The named sections as regions, for the Cycle menu (each with its name and bar). */
 	sections = $derived.by(() => {
-		const { markers, bars, grid } = this.#transcription;
-		return sectionCycles(markers, bars, grid?.bars.firstBeat ?? 0);
+		const { markers, bars, grid, pickupBar } = this.#transcription;
+		return sectionCycles(markers, bars, grid?.bars.firstBeat ?? 0).map((section) => ({
+			...section,
+			label: barLabel(section.number, pickupBar)
+		}));
 	});
 
 	#transcription;

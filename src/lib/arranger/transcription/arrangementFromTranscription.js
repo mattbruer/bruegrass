@@ -11,7 +11,7 @@
  */
 import { sectionBlocks } from '../chart/sectionBlocks.js';
 import { uniqueName } from '../state/uniqueName.js';
-import { UNMARKED_SECTION } from './readChartOnBars.js';
+import { UNMARKED_SECTION } from '../chart/unmarkedSection.js';
 
 const SECTION_LINE = /^\s*"([^"]+)"(.*)$/;
 /** Fields at the start of the first section line that last the whole song (`[M:3/4]`, `[K:G]`). */
