@@ -105,7 +105,7 @@ function quarters(meter) {
  * The voice to read chords from: the first with any chord symbols.
  * @param {any[][]} voices abcjs.synth.sequence(tune)
  */
-function chordVoice(voices) {
+export function chordVoice(voices) {
 	return (
 		voices.find((voice) =>
 			voice.some((element) =>
@@ -210,7 +210,7 @@ function partStarts(items, pickup) {
  *   moved: changes that aren't where they were written, the beat (from 0) they
  *   went to, and whether a later change there took their place
  */
-function barChords(beats, changes) {
+export function chordsOnPlaces(beats, changes) {
 	const places = chordPlaces(beats);
 	/** @type {(string | null)[]} */
 	const slots = Array(beats).fill(null);
@@ -372,7 +372,7 @@ export function arrangementFromAbc(voices) {
 			// A bar that's short or long for its time signature (crooked tunes)
 			meter = { beats, unit: 4 };
 		}
-		const { chords, moved } = barChords(beats, merged);
+		const { chords, moved } = chordsOnPlaces(beats, merged);
 		for (const change of moved) {
 			const what = change.dropped ? 'is left out' : `is moved to beat ${change.beat + 1}`;
 			notes.push(

@@ -33,6 +33,7 @@ import { TranscriptionState } from '../transcription/TranscriptionState.svelte.j
 import { AudioEditsState } from './AudioEditsState.svelte.js';
 import { EditHistory } from './EditHistory.svelte.js';
 import { HarmonyFollowState } from './HarmonyFollowState.svelte.js';
+import { ChartFollowsTuneState } from './ChartFollowsTuneState.svelte.js';
 import { abcjsIfLoaded, abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc, hasChords } from '../melody/abcChords.js';
 import { tuneWithChartChords } from '../melody/chordsFollowChart.js';
@@ -102,6 +103,7 @@ export class Arranger {
 	);
 	/** Asking whether the harmony parts should follow a chord edit. */
 	harmonyFollow = new HarmonyFollowState(this);
+	chartFollowsTune = new ChartFollowsTuneState(this);
 	/** Which song is open, and saving it (created last: it reads all of the above). */
 	song = new SongState(this);
 	/** Recording along with the band, and the song's takes. */

@@ -69,11 +69,10 @@
 				use:tooltip={TIPS.melody.abcLink}>ABC notation</a
 			>
 			(optional). It's drawn as sheet music under the chart, and the guitar plays it along with the band:
-			the tune's first full bar starts with the arrangement's first bar, at the song's tempo. The band
-			always plays the arrangement: if the tune has chord symbols (like <code>"G"</code>), the
-			arrangement can be written from them, and if it has none, the arrangement's chords can be
-			added to it. Write the tune at its real (concert) pitch. With a capo on, the sheet music can
-			also be shown in the key of the guitar's shapes.
+			the tune's first full bar starts with the arrangement's first bar, at the song's tempo. The chord
+			symbols (like <code>"G"</code>) are the chart's: change one here and the chart changes with
+			it, two chords a bar at most (three in 3/4). Write the tune at its real (concert) pitch. With
+			a capo on, the sheet music can also be shown in the key of the guitar's shapes.
 		</p>
 
 		{#if !melody.hasNotation && arrangement.isPlayable}
@@ -103,7 +102,8 @@
 
 		<textarea
 			id="abc-notation"
-			bind:value={melody.abcView}
+			value={melody.abcView}
+			oninput={(event) => arranger.chartFollowsTune.typed(event.currentTarget.value)}
 			aria-label="ABC notation"
 			placeholder={EXAMPLE_NOTATION}
 			class="h-56 w-full ui-field p-4 font-mono text-sm pointer-coarse:text-base"
@@ -111,6 +111,9 @@
 			autocapitalize="off"
 			autocomplete="off"></textarea>
 
+		{#each arranger.chartFollowsTune.problems as problem (problem)}
+			<p class="mt-1 text-sm text-danger">{problem}</p>
+		{/each}
 		<MelodyWarnings />
 		<ChordConversion />
 	{/if}
