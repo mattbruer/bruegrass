@@ -35,7 +35,7 @@ import { EditHistory } from './EditHistory.svelte.js';
 import { HarmonyFollowState } from './HarmonyFollowState.svelte.js';
 import { abcjsIfLoaded, abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc, hasChords } from '../melody/abcChords.js';
-import { barChordKeys, changedBars, tuneFollowingChords } from '../melody/chordsFollowChart.js';
+import { tuneWithChartChords } from '../melody/chordsFollowChart.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
 import { respellBass } from '../bass/respellBass.js';
 import { abcWithWords } from '../melody/words/abcWithWords.js';
@@ -345,17 +345,15 @@ export class Arranger {
 	}
 
 	/**
-	 * Bars whose chords changed in the chart: the tune's chord symbols there
-	 * become the chart's. A tune with no chord symbols is left without.
-	 * @param {string[]} before each bar's chords before the edit (barChordKeys)
+	 * The tune's chord symbols written fresh from the chart, every one. A
+	 * tune with no chord symbols is left without.
 	 */
-	followChords(before) {
+	followChords() {
 		const sequence = this.melody.sequence;
-		if (!sequence || !hasChords(sequence) || !this.arrangement.isPlayable) return;
-		const { sections, capoFret } = this.arrangement;
-		const bars = changedBars(before, barChordKeys(sections, capoFret));
+		const { sections, capoFret, readError } = this.arrangement;
+		if (!sequence || !hasChords(sequence) || readError || sections.length === 0) return;
 		const abc = this.melody.notation;
-		const followed = tuneFollowingChords(abc, sequence, sections, capoFret, bars);
+		const followed = tuneWithChartChords(abc, sequence, sections, capoFret);
 		if (followed !== abc) this.melody.notation = followed;
 	}
 

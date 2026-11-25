@@ -43,7 +43,7 @@ export function keepTuneWithChart(arranger) {
 			else if (chordsAfter) {
 				// A capo move rewrites the tune itself (Arranger.setCapo)
 				if (chordsBefore && chordsBefore.capo === chordsAfter.capo) {
-					arranger.followChords(chordsBefore.keys);
+					if (chordsBefore.keys.join() !== chordsAfter.keys.join()) arranger.followChords();
 					if (chordsBefore.keys.join() !== chordsAfter.keys.join())
 						arranger.harmonyFollow.chordsChanged(chordsBefore.chordAt);
 				}
