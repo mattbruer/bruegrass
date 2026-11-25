@@ -109,7 +109,7 @@
 			<li><a href="#key" class="hover:underline">The song's key</a></li>
 			<li><a href="#words" class="hover:underline">Words, for a chart the band can read</a></li>
 			<li><a href="#chords" class="hover:underline">Which chords can I use?</a></li>
-			<li><a href="#my-chords" class="hover:underline">Your own chord shapes</a></li>
+			<li><a href="#my-chords" class="hover:underline">Your own way of playing a chord</a></li>
 			<li><a href="#function" class="hover:underline">What each chord does</a></li>
 			<li><a href="#phone" class="hover:underline">Writing on a phone</a></li>
 			<li><a href="#mistakes" class="hover:underline">If something goes wrong</a></li>
@@ -328,31 +328,18 @@
 	</section>
 
 	<section id="my-chords">
-		<h2>11. Your own chord shapes</h2>
+		<h2>11. Your own way of playing a chord</h2>
 		<p>
-			Want a chord the guitar doesn't know, or a different way to play one? Press <b>My chords</b>
-			above the box, give the shape a name, and type its six frets from the low E string to the high e.
-			Use <code>x</code> for a string you don't play. G is <code>3,x,0,0,3,3</code>; when every fret
-			is one digit you can leave out the commas: <code>3x0033</code>.
+			On the <b>Tracks</b> page, tap a chord on the <b>Guitar</b> lane. Its editor opens under the
+			lanes: the shape the left hand holds (type the six frets from the low E string to the high e,
+			<code>x</code> for a string you don't play, or tap the diagram), and what the right hand does on
+			each beat: the boom's string, the chuck's strings, a note of your own for a run, an accent, or a
+			fill you write yourself.
 		</p>
-		<p>Then write the name in the chart like any other chord:</p>
-		<ul class="mb-4 list-disc space-y-2 pl-6">
-			<li>
-				<b>A new chord</b>, like <code>Cadd9</code>, plays your shape.
-			</li>
-			<li>
-				<b>A second shape</b> of a chord you already have: put a colon and a word after it, like
-				<code>G:high</code>. Plain <code>G</code> still plays the usual G.
-			</li>
-			<li>
-				<b>Your own G</b>: name it just <code>G</code>, and it plays instead of the usual one in
-				every song.
-			</li>
-		</ul>
-		{@render example(`"High G"|G|G:high|C|G:high/B|`)}
-		<p class="tip">
-			Your shapes are kept on this device, for every song. When you share a song (Export → Share
-			with a bandmate), the shapes it uses go with it.
+		<p>
+			A change is for that chord at that place in the song. To use it again, <b>Copy</b> it and
+			<b>Paste</b> it onto another chord, or keep it under <b>Patterns</b> for every song. Any chord
+			the theory knows plays, <code>Cadd9</code> included: the guitar works out a shape from its notes.
 		</p>
 	</section>
 
@@ -422,8 +409,8 @@
 		<p>A red message appears under the box. The usual causes:</p>
 		<ul class="mb-4 list-disc space-y-2 pl-6">
 			<li>
-				<b>No guitar shape</b>: a chord the guitar doesn't know yet (add it under <b>My chords</b>),
-				or a small letter (<code>g</code> instead of <code>G</code>).
+				<b>No guitar shape</b>: a chord the band doesn't know, or a small letter (<code>g</code>
+				instead of <code>G</code>).
 			</li>
 			<li>
 				<b>Unknown section</b>: the name after <code>as</code> doesn't match a part above. Check the spelling

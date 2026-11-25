@@ -53,15 +53,6 @@ export const TIME_KEYS = [
 /** A complete chord name, as far as the keypad can type one. */
 const CHORD = /^[A-G][#b]?(m|maj|min|dim|aug|sus|add)?\d*(:[^\s,|/]+)?(\/[A-G][#b]?)?$/;
 
-/** Prefix of the key id for one of your own chords (My chords). */
-const YOUR_CHORD = 'your-chord:';
-
-/**
- * The key id that types one of your own chord names.
- * @param {string} name
- */
-export const yourChordKey = (name) => YOUR_CHORD + name;
-
 /**
  * Insert text at the caret (replacing any selection).
  * @param {string} value
@@ -107,7 +98,7 @@ function chordKey(value, start, end, root) {
  * @param {string} value textarea text
  * @param {number} start selection start
  * @param {number} end selection end
- * @param {string} key a key id from KEYS, a TIME_KEYS text, yourChordKey(name) or 'leave-name'
+ * @param {string} key a key id from KEYS, a TIME_KEYS text or 'leave-name'
  * @returns {Edit}
  */
 export function applyKey(value, start, end, key) {
@@ -116,7 +107,6 @@ export function applyKey(value, start, end, key) {
 		return chordKey(value, start, end, /** @type {string} */ (keyDef.text));
 	if (keyDef?.kind === 'text')
 		return insertText(value, start, end, /** @type {string} */ (keyDef.text));
-	if (key.startsWith(YOUR_CHORD)) return chordKey(value, start, end, key.slice(YOUR_CHORD.length));
 	if (key.startsWith('[')) return insertText(value, start, end, key); // time signature
 
 	switch (key) {

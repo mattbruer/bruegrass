@@ -16,8 +16,7 @@ export const KNOWN_KEYS = {
 	},
 	'bruegrass.drafts': {
 		name: 'Drafts of unsaved work',
-		about:
-			'Work in progress that isn’t a song yet: transcriptions of recordings, a chord shape you’re typing.',
+		about: 'Work in progress that isn’t a song yet: transcriptions of recordings.',
 		items: ['draft', 'drafts']
 	},
 	'bruegrass.settings': {
@@ -39,9 +38,15 @@ export const KNOWN_KEYS = {
 		about: 'Every strip’s EQ, tuned for one pair of speakers or headphones.',
 		items: ['setup', 'setups']
 	},
+	'bruegrass.guitarPatterns': {
+		name: 'Guitar patterns',
+		about: 'How you changed the guitar on a chord, saved by name to use in any song.',
+		items: ['pattern', 'patterns']
+	},
 	'bruegrass.chordVoicings': {
-		name: 'My chords',
-		about: 'Your own guitar chord shapes.',
+		name: 'My chords (no longer used)',
+		about:
+			'Guitar shapes from My chords, which guitar patterns replaced. Nothing reads them now: safe to delete.',
 		items: ['chord', 'chords']
 	},
 	'bruegrass.thisDevice': {

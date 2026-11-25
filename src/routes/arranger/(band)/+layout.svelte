@@ -10,9 +10,8 @@
 	 *
 	 * It opens on the song this device had open last (else the starter song),
 	 * and your work saves itself as you go (state/autosave.svelte.js). If this
-	 * device has a listening setup, its EQs go on as the page starts. Your own
-	 * chord shapes (My chords) load at the start too, and the open song's
-	 * recorded takes whenever it changes. A share link (the page opened with
+	 * device has a listening setup, its EQs go on as the page starts, and the
+	 * open song's recorded takes load whenever it changes. A share link (the page opened with
 	 * one, or one pasted into the address bar) or a song file dropped on the
 	 * page offers its song.
 	 */
@@ -30,7 +29,6 @@
 	import { keepWorkSaved } from '$lib/arranger/state/autosave.svelte.js';
 	import { keepBassWithChart } from '$lib/arranger/state/bassFollowsChart.svelte.js';
 	import { keepTuneWithChart } from '$lib/arranger/state/tuneFollowsChart.svelte.js';
-	import { loadMyChords } from '$lib/arranger/voicings/myChords.svelte.js';
 	import { openDroppedSongFiles } from '$lib/arranger/share/dropSongFile.js';
 	import { registerPlayer } from '$lib/audio/players.js';
 
@@ -56,10 +54,9 @@
 	$effect(() => {
 		arranger.recording.showSong(arranger.song.savedId);
 	});
-	// These need this browser's storage, so they wait until the page is running: your own
-	// chord shapes, the EQs this device's speakers or headphones were tuned for, then the song
+	// These need this browser's storage, so they wait until the page is running: the EQs
+	// this device's speakers or headphones were tuned for, then the song
 	onMount(() => {
-		loadMyChords();
 		startThisDevicesSetup();
 		arranger.song.start().catch(console.error);
 		const offerSharedSong = () => arranger.receive.fromLink(location.hash);

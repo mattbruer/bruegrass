@@ -1,31 +1,18 @@
 /**
  * The guitar's chord book: the one place a chord name becomes a shape.
- * Your own shapes (My chords) come first, then the built-in ones in
- * guitar-chords.json, then a shape built from the chord's notes
- * (guitarVoicing.js), so any chord the theory knows can be played.
+ * The built-in ones in guitar-chords.json first, then a shape built from
+ * the chord's notes (guitarVoicing.js), so any chord the theory knows can
+ * be played. A shape of your own for one chord of a song is a change to
+ * how the guitar plays it there (guitarEdits.js), not the book's.
  *
- * Your shapes are set for the whole page (by voicings/myChords.svelte.js),
- * so playback, export, MIDI and the capo choice all play the same shapes.
- *
- * A name can have a variant after a colon, `G:high`, so one song can use
- * two shapes of the same chord. The variant only picks the shape: what the
- * chord is (root, fifth, slash bass) is read from the name before it.
+ * A name can still carry a variant after a colon, `G:high`: what the chord
+ * is (root, fifth, slash bass) is read from the name before it, and the
+ * book plays the plain chord's shape.
  */
 import builtIn from './guitar-chords.json';
 import { generatedShape } from './guitarVoicing.js';
 
 /** @typedef {(number | null)[]} Shape six frets, low E to high e, null = muted */
-
-/** @type {Record<string, Shape>} */
-let yourShapes = {};
-
-/**
- * Use these shapes ahead of the built-in ones, replacing any set before.
- * @param {Record<string, Shape>} shapes by chord name, without a slash bass
- */
-export function useYourShapes(shapes) {
-	yourShapes = shapes;
-}
 
 /**
  * Chord shape as written (no capo), low E to high e.
@@ -34,7 +21,7 @@ export function useYourShapes(shapes) {
  */
 export function chordShape(name) {
 	const shape = findShape(name);
-	if (!shape) throw new Error(`No guitar shape for ${name}: add one under My chords`);
+	if (!shape) throw new Error(`No guitar shape for ${name}`);
 	return shape;
 }
 
@@ -45,12 +32,9 @@ export function hasShape(name) {
 
 /** @param {string} name */
 function findShape(name) {
-	const chord = withoutBass(name);
+	const chord = withoutVariant(withoutBass(name));
 	return (
-		yourShapes[chord] ??
-		/** @type {Record<string, Shape>} */ (builtIn)[chord] ??
-		generatedShape(withoutVariant(chord)) ??
-		undefined
+		/** @type {Record<string, Shape>} */ (builtIn)[chord] ?? generatedShape(chord) ?? undefined
 	);
 }
 

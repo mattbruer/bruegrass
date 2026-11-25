@@ -13,14 +13,11 @@ export const PACKAGE_KIND = 'bluegrass-song';
  *   & { id: string | null }} SharedSong
  *   id: the song's id on the sender's device (null: never saved), so sending it again updates the copy
  * @typedef {Omit<import('$lib/storage/songTakes.js').TakeDocument, 'songId'> & { audio: TakeAudio }} SharedTake
- * @typedef {{ name: string, frets: (number | null)[] }} SharedChord
  * @typedef {{
  *   kind: typeof PACKAGE_KIND,
  *   song: SharedSong,
- *   chords: SharedChord[],
  *   takes: SharedTake[]
  * }} SongPackage
- *   chords: the sender's own shapes (My chords) that the song uses, or it wouldn't play;
  *   takes: every take (the one in use on each track says so), each with where its audio is in a song file
  */
 
@@ -29,12 +26,11 @@ export class ShareProblem extends Error {}
 
 /**
  * @param {SharedSong} song
- * @param {SharedChord[]} chords
  * @param {SharedTake[]} takes
  * @returns {SongPackage}
  */
-export function makePackage(song, chords, takes) {
-	return { kind: PACKAGE_KIND, song, chords, takes };
+export function makePackage(song, takes) {
+	return { kind: PACKAGE_KIND, song, takes };
 }
 
 /**

@@ -1,12 +1,11 @@
 <script>
 	/**
 	 * The chord buttons: the key's own chords, then any chord (a root, then
-	 * its kind), then your own shapes. Tapping one picks it.
+	 * its kind). Tapping one picks it.
 	 */
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import { NO_CHORD } from '../../chart/noChord.js';
-	import { myChords } from '../../voicings/myChords.svelte.js';
 	import {
 		ACCIDENTALS,
 		QUALITIES,
@@ -79,15 +78,6 @@
 					use:tooltip={TIPS.builder.quality}
 					onclick={() => name && onpick(name)}>{letter}{accidental}{id}</button
 				>
-			{/each}
-		</div>
-	{/if}
-
-	{#if myChords.all.length}
-		<div class="flex flex-wrap gap-1.5">
-			<span class="self-center text-xs text-ink-soft">Mine</span>
-			{#each myChords.all as voicing (voicing.id)}
-				{@render chord(voicing.name, TIPS.builder.mine)}
 			{/each}
 		</div>
 	{/if}

@@ -290,7 +290,6 @@ export const TIPS = Object.freeze({
 		root: 'The chord’s root note.',
 		accidental: 'Sharp or flat root.',
 		quality: 'The kind of chord: tap to put it in the bar.',
-		mine: 'One of your own shapes (My chords).',
 		noChord: 'The band stops for this bar (N.C., no chord).',
 		hold: 'Leave the bar empty: the chord before it carries on.',
 		insertBefore: 'Add a bar before this one, with the same chord.',
@@ -512,17 +511,6 @@ export const TIPS = Object.freeze({
 		print: 'Print the chart, or save it as a PDF.',
 		previous: 'The page before.',
 		next: 'The next page. On a touch screen you can swipe.'
-	},
-
-	myChords: {
-		open: 'Your own guitar shapes: a chord the guitar doesn’t know yet, or a second shape like G:high.',
-		pick: 'Change or delete this shape.',
-		name: 'The chord name, as you’ll write it in the chart: like Cadd9, or G:high for a second G.',
-		frets: 'Six frets, low E to high e, x for a muted string: 3,x,0,0,3,3 (or 3x0033).',
-		save: 'Save this shape on this device. Every song that uses the name plays it.',
-		new: 'Start a new shape.',
-		delete:
-			'Delete this shape from this device. Songs that use its name won’t play until it’s back.'
 	},
 
 	export: {

@@ -395,7 +395,7 @@
 		{
 			"id": "retire-my-chords",
 			"text": "Retire My chords in favour of guitar patterns (decide what replaces names like Cadd9 and G:high in the chart)",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-25"
 		},
 		{

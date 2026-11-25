@@ -15,7 +15,6 @@
 	import { barSpan } from '../../chart/barSpan.js';
 	import { onEveryFrame } from '$lib/audio/analysis/frameLoop.js';
 	import HelpLink from './HelpLink.svelte';
-	import MyChordsButton from '../voicings/MyChordsButton.svelte';
 	import ArrangementKeypad from '../keypad/ArrangementKeypad.svelte';
 	import ChartBuilder from '../builder/ChartBuilder.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
@@ -124,7 +123,6 @@
 		/>
 	{/if}
 	<HelpLink />
-	<MyChordsButton />
 </div>
 
 {#if typing}

@@ -1,6 +1,6 @@
 /**
  * Whether the band can play a chord: N.C., or a name the chord book has a
- * shape for (built in or under My chords). The one place a typed chord is
+ * shape for (built in, or built from its notes). The one place a typed chord is
  * checked, wherever it was typed (the chart, Transcribe).
  */
 import { hasShape } from '../instruments/chordBook.js';
@@ -21,7 +21,7 @@ export function isKnownChord(name) {
  */
 export function unknownChordMessage(name, where) {
 	const place = where ? ` (${where})` : '';
-	return `"${name}"${place} isn't a chord the band can play. Use one like G, Am, D7 or Bdim, or add its shape under My chords.`;
+	return `"${name}"${place} isn't a chord the band can play. Use one like G, Am, D7 or Bdim.`;
 }
 
 /**

@@ -1,17 +1,14 @@
 /**
- * Putting a song someone sent into this device's songs: the song itself,
- * the chord shapes it needs, and its takes. Nothing here deletes anything:
+ * Putting a song someone sent into this device's songs: the song itself
+ * (its guitar and mandolin changes ride inside it) and its takes. Nothing here deletes anything:
  *
  *   - Update: the song keeps its id, so sending it again updates the copy.
  *     Its fields are replaced; takes recorded here stay, takes already
  *     received are updated in place (nudges, which is in use).
  *   - Keep both (or a song that was never saved): a new song beside yours.
- *   - A chord name you already have with a different shape keeps yours.
  */
 import { createArrangement, getArrangement, saveArrangement } from '$lib/storage/arrangements.js';
 import { listTakes, putTake, updateTake, useTake } from '$lib/storage/songTakes.js';
-import { listChordVoicings } from '$lib/storage/chordVoicings.js';
-import { saveMyChord } from '../voicings/myChords.svelte.js';
 import { newId } from '$lib/storage/newId.js';
 import { unpackTakeAudio } from './takeFormat.js';
 
@@ -32,7 +29,6 @@ export async function yourCopyOf(songPackage) {
 export async function receiveSong(songPackage, audioFiles, { asNewSong }) {
 	const notes = [];
 	const songId = await saveReceivedSong(songPackage.song, asNewSong);
-	notes.push(...addChords(songPackage.chords));
 
 	const added = await addTakes(songPackage.takes, audioFiles, songId, asNewSong);
 	if (added > 0) notes.push(`${added} take${added === 1 ? '' : 's'} added.`);
@@ -52,20 +48,6 @@ async function saveReceivedSong(song, asNewSong) {
 	}
 	const title = asNewSong ? `${fields.title} (copy)` : fields.title;
 	return (await saveArrangement(createArrangement({ ...fields, title }))).id;
-}
-
-/** @param {import('./songPackage.js').SharedChord[]} chords */
-function addChords(chords) {
-	const yours = new Map(listChordVoicings().map((voicing) => [voicing.name, voicing.frets]));
-	const notes = [];
-	for (const chord of chords) {
-		const existing = yours.get(chord.name);
-		if (!existing) saveMyChord(chord);
-		else if (existing.join() !== chord.frets.join()) {
-			notes.push(`You already have your own ${chord.name} shape, so the song plays yours.`);
-		}
-	}
-	return notes;
 }
 
 /**

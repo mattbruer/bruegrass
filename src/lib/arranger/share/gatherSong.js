@@ -1,13 +1,11 @@
 /**
  * The open song, packed to send: what's on the page now (unsaved changes
- * included), the sender's own chord shapes it uses, and every take with its
+ * included) and every take with its
  * audio compressed to travel (takeFormat.js). A take that was itself
  * received goes on in the file it came in, so it's never compressed twice.
  */
 import { readSentAudio, readTakeAudio } from '$lib/storage/songTakes.js';
 import { readSongFields } from '../state/songFields.js';
-import { myChords } from '../voicings/myChords.svelte.js';
-import { withoutBass } from '../instruments/chordBook.js';
 import { makePackage } from './songPackage.js';
 import { packTakeAudio } from './takeFormat.js';
 
@@ -22,7 +20,6 @@ export async function gatherSong(arranger, { withTakes }) {
 		title: arranger.song.name || arranger.song.suggestedName,
 		...readSongFields(arranger)
 	};
-	const chords = chordsTheSongUses(arranger.arrangement.sections, myChords.all);
 
 	const takes = [];
 	const audioFiles = [];
@@ -35,7 +32,7 @@ export async function gatherSong(arranger, { withTakes }) {
 		takes.push({ ...details, audio });
 		audioFiles.push({ name: audio.file, bytes });
 	}
-	return { songPackage: makePackage(song, chords, takes), audioFiles };
+	return { songPackage: makePackage(song, takes), audioFiles };
 }
 
 /**
@@ -51,16 +48,4 @@ async function takeToSend(take) {
 	}
 	const channels = await readTakeAudio(take.id);
 	return channels ? packTakeAudio(name, channels, take.sampleRate) : null;
-}
-
-/**
- * Your own shapes the chart plays (without them it won't play on another device).
- * @param {{ measures: string[][] }[]} sections
- * @param {{ name: string, frets: (number | null)[] }[]} yourShapes
- */
-export function chordsTheSongUses(sections, yourShapes) {
-	const names = new Set(sections.flatMap((section) => section.measures.flat().map(withoutBass)));
-	return yourShapes
-		.filter((shape) => names.has(shape.name))
-		.map(({ name, frets }) => ({ name, frets }));
 }
