@@ -19,6 +19,8 @@ import { chordLabel, songKey } from '../chart/key.js';
 import { concertChord } from '../chart/concertChords.js';
 import { barQuarters, slotPositions } from '../chart/timeline.js';
 import { MAX_CAPO } from '../chart/capo.js';
+import { chordPlaces } from '../chart/chordPlaces.js';
+import { chartCell } from '../transcription/barChords.js';
 
 const EPSILON = 1e-6;
 
@@ -198,23 +200,33 @@ function partStarts(items, pickup) {
 }
 
 /**
- * Split a bar's beats into the fewest even slots (the arrangement's rule:
- * odd beats go to the earlier chords) that put every chord change on a slot.
+ * A bar's chords as the chart writes them (chartCell: one chord, or one on
+ * each chord place), each change moved to the nearest place a chord may
+ * change on (chordPlaces.js); a later change on the same place wins.
+ * The first change is always at 0, the bar line.
  * @param {number} beats quarters in the bar
  * @param {{ offset: number, name: string }[]} changes offset in quarters from the bar line, sorted, first at 0
+ * @returns {{ chords: string[], moved: { name: string, beat: number, dropped: boolean }[] }}
+ *   moved: changes that aren't where they were written, the beat (from 0) they
+ *   went to, and whether a later change there took their place
  */
-function barSlots(beats, changes) {
-	for (let n = 1; n <= beats; n++) {
-		const base = Math.floor(beats / n);
-		const extra = beats % n;
-		const starts = Array.from({ length: n }, (_, i) => i * base + Math.min(i, extra));
-		if (changes.every((change) => starts.includes(change.offset))) {
-			return starts.map(
-				(start) => changes.filter((change) => change.offset <= start).at(-1)?.name ?? ''
-			);
-		}
+function barChords(beats, changes) {
+	const places = chordPlaces(beats);
+	/** @type {(string | null)[]} */
+	const slots = Array(beats).fill(null);
+	const moved = [];
+	for (const { offset, name } of changes) {
+		// Halfway between two places, it moves later, so the bar keeps its first chord
+		const place = places.reduce((best, at) =>
+			Math.abs(at - offset) <= Math.abs(best - offset) ? at : best
+		);
+		if (place !== offset) moved.push({ name, beat: place });
+		slots[place] = name;
 	}
-	return changes.map((change) => change.name);
+	return {
+		chords: chartCell(slots, changes[0].name).split(','),
+		moved: moved.map((change) => ({ ...change, dropped: slots[change.beat] !== change.name }))
+	};
 }
 
 /**
@@ -285,6 +297,17 @@ function chooseCapo(names) {
 const meterText = (meter) => `${meter.beats}/${meter.unit}`;
 
 /**
+ * The beats a chord may change on, in words: "beats 1 and 3".
+ * @param {number} beats quarters in the bar
+ */
+const placesInWords = (beats) => {
+	const numbers = chordPlaces(beats).map((place) => place + 1);
+	return numbers.length === 1
+		? `beat ${numbers[0]}`
+		: `beats ${numbers.slice(0, -1).join(', ')} and ${numbers.at(-1)}`;
+};
+
+/**
  * An arrangement written from the tune's chord symbols.
  * @param {any[][]} voices abcjs.synth.sequence(tune)
  * @returns {{ text: string, capo: number, notes: string[] } | null} null when the
@@ -349,10 +372,17 @@ export function arrangementFromAbc(voices) {
 			// A bar that's short or long for its time signature (crooked tunes)
 			meter = { beats, unit: 4 };
 		}
+		const { chords, moved } = barChords(beats, merged);
+		for (const change of moved) {
+			const what = change.dropped ? 'is left out' : `is moved to beat ${change.beat + 1}`;
+			notes.push(
+				`Bar ${b + 1}: a bar's chord changes only on ${placesInWords(beats)}, so the change to ${change.name} ${what}.`
+			);
+		}
 		written.push({
 			section: sectionStarts.filter((time) => time <= bar.start + EPSILON).length,
 			meter,
-			chords: barSlots(beats, merged)
+			chords
 		});
 	});
 

@@ -74,8 +74,10 @@ export function isHeld(stored) {
 }
 
 /**
- * The bar as the chart writes it ("G", "G,C", "G,C,C,C"). A bar starting
- * with no chord carries on `carried` (the last chord before it).
+ * The bar as the chart writes it ("G", "G,C", in 3/4 "G,G,C"): one chord,
+ * or one on each chord place. A chord off the places can't be written that
+ * way, so it's written a chord a beat and the chart points it out.
+ * A bar starting with no chord carries on `carried` (the last chord before it).
  * @param {Slots} slots
  * @param {string} carried
  * @returns {string}
@@ -83,7 +85,7 @@ export function isHeld(stored) {
 export function chartCell(slots, carried) {
 	let last = carried;
 	const perBeat = slots.map((slot) => (last = slot || last));
-	for (let n = 1; n <= perBeat.length; n++) {
+	for (const n of [1, chordPlaces(perBeat.length).length]) {
 		const lengths = shares(perBeat.length, n);
 		const names = [];
 		let at = 0;
