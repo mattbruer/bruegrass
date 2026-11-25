@@ -28,7 +28,8 @@ import { firstBar } from '../takes/takeTiming.js';
 import { openRecordAlong } from '../takes/recordAlong.js';
 import { readAudioFile, takeAsWav } from '../takes/takeFiles.js';
 import { firstSound } from '../takes/takePickup.js';
-import { clipLength, clipStart, clipsOfTrack } from '../takes/clips.js';
+import { forgetStretchSources } from '$lib/audio/stretch/stretchSource.js';
+import { nativeContextOf } from '$lib/audio/nativeContext.js';
 import { filmOffset } from '../takes/filmOffset.js';
 import { isFilmed, withFilmedLane } from '../video/songVideo.js';
 
@@ -73,7 +74,8 @@ export class RecordingState {
 			this.takes,
 			this.#arranger.song.partNames,
 			this.#arranger.song.audioClips,
-			this.#arranger.song.video.lanes
+			this.#arranger.song.video.lanes,
+			this.#arranger.arrangement.bpm
 		)
 	);
 	/** The A/V lanes: each one a tile in the video view. */
@@ -112,6 +114,7 @@ export class RecordingState {
 		this.#songId = songId;
 		this.#buffers.clear();
 		this.#letGoOfFilms();
+		import('tone').then((Tone) => forgetStretchSources(nativeContextOf(Tone)));
 		this.takes = [];
 		await this.#reload();
 	}
@@ -378,24 +381,23 @@ export class RecordingState {
 	 * @returns {Promise<import('../takes/playTakes.js').PlayableClip[]>}
 	 */
 	async #playable(leaveOut) {
-		const { audioClips } = this.#arranger.song;
-		const clips = RECORD_TRACKS.filter((track) => track.id !== leaveOut).flatMap((track) =>
-			clipsOfTrack(track.id, audioClips, this.takes)
-		);
+		const clips = this.lanes.filter((lane) => lane.id !== leaveOut).flatMap((lane) => lane.clips);
 		const ready = [];
-		for (const { clip, take } of clips) {
+		for (const { clip, take, start, end, stretch } of clips) {
 			const audio = await this.audioOf(take);
 			if (!audio) continue;
 			ready.push({
 				trackId: take.trackId,
+				takeId: take.id,
 				buffer: audio.buffer,
-				start: clipStart(clip, take),
+				start,
 				from: clip.from,
-				seconds: clipLength(clip),
+				seconds: end - start,
+				speed: 1 / stretch,
 				gain: clip.gain,
-				fadeIn: clip.fadeIn,
-				fadeOut: clip.fadeOut,
-				soundFrom: Math.max(0, audio.soundFrom - clip.from)
+				fadeIn: clip.fadeIn * stretch,
+				fadeOut: clip.fadeOut * stretch,
+				soundFrom: Math.max(0, audio.soundFrom - clip.from) * stretch
 			});
 		}
 		return ready;

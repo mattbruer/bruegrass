@@ -10,8 +10,12 @@
 /**
  * Best first. H.264 in MP4 plays on every device a take may be sent to
  * (an iPhone can't play every WebM); WebM is the fallback for an older Chrome.
+ * avc3 before avc1: it carries the picture's settings with the frames, so a
+ * phone turned mid-take (the picture's size changes) still records; Chrome
+ * warns that avc1 can't.
  */
 const FORMATS = [
+	'video/mp4;codecs=avc3.4d002a,mp4a.40.2',
 	'video/mp4;codecs=avc1.4d002a,mp4a.40.2',
 	'video/mp4;codecs=avc1,opus',
 	'video/mp4',

@@ -14,6 +14,7 @@ import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { partName } from '../melody/partNames.js';
 import { RECORD_TRACKS } from '../takes/recordTracks.js';
 import { clipLength, clipStart, clipsOfTrack } from '../takes/clips.js';
+import { stretchOf } from '../takes/takeTempo.js';
 
 /**
  * @typedef {import('$lib/storage/songTakes.js').TakeDocument} TakeDocument
@@ -21,8 +22,9 @@ import { clipLength, clipStart, clipsOfTrack } from '../takes/clips.js';
  * @typedef {{ id: string, name: string, kind: 'chords' }} ChordsLane
  * @typedef {{ id: string, name: string, kind: 'notes', blocks: Block[] }} NotesLane
  * @typedef {ChordsLane | NotesLane} BandLane
- * @typedef {{ index: number, clip: import('../takes/clips.js').AudioClip, take: TakeDocument, start: number, end: number }} LaneClip
- *   index: its place on the lane; start, end: seconds from bar 1
+ * @typedef {{ index: number, clip: import('../takes/clips.js').AudioClip, take: TakeDocument, start: number, end: number, stretch: number }} LaneClip
+ *   index: its place on the lane; start, end: seconds from bar 1 at the song's tempo now;
+ *   stretch: how much longer its take lasts now than as recorded (takes/takeTempo.js)
  * @typedef {{ id: string, name: string, kind: 'take', filmed: boolean, takes: TakeDocument[], clips: LaneClip[] }} TakeLane
  *   filmed: an A/V lane (it films as it records)
  * @typedef {BandLane | TakeLane} Lane
@@ -55,9 +57,10 @@ export function bandLanes({ bass, melody, voices = [], names = {} }) {
  * @param {import('../melody/partNames.js').PartNames} [names]
  * @param {import('../takes/clips.js').EditedLanes} [edited] the lanes whose clips you've edited
  * @param {string[]} [filmed] the A/V lanes
+ * @param {number} [bpm] the song's tempo now (takes follow it; leave out: as recorded)
  * @returns {TakeLane[]}
  */
-export function takeLanes(takes, names = {}, edited = {}, filmed = []) {
+export function takeLanes(takes, names = {}, edited = {}, filmed = [], bpm = NaN) {
 	return RECORD_TRACKS.map((track) => ({
 		id: track.id,
 		name: partName(track.id, names, track.name),
@@ -66,8 +69,9 @@ export function takeLanes(takes, names = {}, edited = {}, filmed = []) {
 		filmed: filmed.includes(track.id),
 		takes: takes.filter((take) => take.trackId === track.id),
 		clips: clipsOfTrack(track.id, edited, takes).map(({ clip, take }, index) => {
-			const start = clipStart(clip, take);
-			return { index, clip, take, start, end: start + clipLength(clip) };
+			const stretch = Number.isFinite(bpm) ? stretchOf(take, bpm) : 1;
+			const start = clipStart(clip, take) * stretch;
+			return { index, clip, take, start, end: start + clipLength(clip) * stretch, stretch };
 		})
 	})).filter((lane) => lane.takes.length > 0 || names[lane.id]);
 }

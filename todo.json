@@ -11,18 +11,24 @@
 		{
 			"id": "video-follows-tempo",
 			"text": "Video: takes follow the tempo (sound stretched with the pitch kept, film at the matching speed); first measure four stretchers at once on an iPhone",
-			"done": false,
+			"done": true,
 			"addedAt": "2026-11-24"
 		},
 		{
 			"id": "video-iphone",
-			"text": "Video: record an A/V take on a real iPhone (camera, front-facing preview, the film lined up, size per minute)",
+			"text": "Video: record an A/V take on a real iPhone (camera, preview, the film lined up, size per minute), and play four lanes at a changed tempo: can its audio thread keep up?",
 			"done": false,
 			"addedAt": "2026-11-24"
 		},
 		{
 			"id": "video-nudge",
 			"text": "Video: Earlier / Later for a take's film, if a camera's own delay shows",
+			"done": false,
+			"addedAt": "2026-11-24"
+		},
+		{
+			"id": "video-slate",
+			"text": "Line up recordings made outside the app (a phone's camera, a bandmate's file) by a clap on the count-in",
 			"done": false,
 			"addedAt": "2026-11-24"
 		},

@@ -146,17 +146,29 @@ export function movedBy(clip, seconds) {
  * The same stretch of the song from another take (comping: the best verse
  * from one take, the chorus from another), in time with the band as that
  * take was recorded. Null when the other take doesn't cover any of it.
+ * Takes recorded at different tempos are matched by the song: a stretch of
+ * a take at 120 is twice as long in one at 60.
  * @param {AudioClip} clip
  * @param {TakeDocument} take
  * @param {TakeDocument} other
  * @returns {AudioClip | null}
  */
 export function fromTake(clip, take, other) {
-	const offset = takeStart(take) - takeStart(other);
-	const from = Math.max(0, clip.from + offset);
-	const to = Math.min(other.seconds, clip.to + offset);
+	const scale = take.bpm / other.bpm; // the clip's times, in the other take's tempo
+	const shift = clip.shift * scale;
+	const start = clipStart(clip, take) * scale - shift - takeStart(other);
+	const from = Math.max(0, start);
+	const to = Math.min(other.seconds, start + clipLength(clip) * scale);
 	if (to - from < SHORTEST_CLIP) return null;
-	return fitFades({ ...clip, takeId: other.id, from, to });
+	return fitFades({
+		...clip,
+		takeId: other.id,
+		from,
+		to,
+		shift,
+		fadeIn: clip.fadeIn * scale,
+		fadeOut: clip.fadeOut * scale
+	});
 }
 
 /**

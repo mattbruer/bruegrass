@@ -2,20 +2,26 @@
  * The audio lanes' clips playing with the band: one more stream for the
  * lookahead scheduler (like an instrument's), with one "note" per clip per
  * pass: the part of the clip that falls in the pass (takeTiming.js), on its
- * track's mixer channel. Each plays through a native buffer source and a
- * gain that carries its level and fades.
+ * track's mixer channel. Each plays through a native buffer source (or, for
+ * a take at another tempo than it was recorded at, a stretched source that
+ * keeps its pitch) and a gain that carries its level and fades.
  */
 import { sliceForPass } from './takeTiming.js';
+import { prepareStretchSources, startStretchSource } from '$lib/audio/stretch/stretchSource.js';
+import { nativeContextOf, nativeNodeOf } from '$lib/audio/nativeContext.js';
 import { EDGE_FADE } from './clips.js';
 import { dbToGain } from './clipLevel.js';
 
 /**
  * @typedef {{
- *   trackId: string, buffer: AudioBuffer, start: number, from: number, seconds: number,
- *   gain: number, fadeIn: number, fadeOut: number, soundFrom: number
+ *   trackId: string, takeId: string, buffer: AudioBuffer, start: number, from: number,
+ *   seconds: number, speed: number, gain: number, fadeIn: number, fadeOut: number,
+ *   soundFrom: number
  * }} PlayableClip
- *   start: seconds from bar 1; from: where in its take's audio it starts; seconds: how long;
- *   gain: dB; soundFrom: how far into the clip its sound begins (takePickup.js)
+ *   Song times at the tempo now (takeTempo.js): start: seconds from bar 1; seconds: how long;
+ *   fades; soundFrom: how far into the clip its sound begins (takePickup.js).
+ *   from: where in its take's audio it starts (the take's own seconds); speed: how fast the
+ *   take plays (1: as recorded, 0.5: at half its tempo); gain: dB
  * @typedef {{ time: number, value: number }} GainPoint seconds from the slice's start
  */
 
@@ -40,7 +46,10 @@ export async function createTakePlayback(Tone, clips, pass, channelInput) {
 	const audio = /** @type {BaseAudioContext} */ (
 		/** @type {unknown} */ (Tone.getContext().rawContext)
 	);
-	/** @type {Set<AudioBufferSourceNode>} */
+	// Stretched sources are worklets with imports: they run in the native context underneath
+	const native = nativeContextOf(Tone);
+	if (slices.some(({ clip }) => isStretched(clip))) await prepareStretchSources(native);
+	/** @type {Set<() => void>} how to stop each source playing */
 	const sources = new Set();
 
 	return {
@@ -49,35 +58,71 @@ export async function createTakePlayback(Tone, clips, pass, channelInput) {
 			period: pass.passLength,
 			/** @param {(typeof slices)[number]} slice @param {number} _i @param {number} at */
 			play(slice, _i, at) {
-				const source = audio.createBufferSource();
-				source.buffer = slice.clip.buffer;
 				const level = audio.createGain();
 				level.gain.setValueAtTime(0, at);
 				for (const point of slice.envelope) {
 					level.gain.linearRampToValueAtTime(point.value, at + point.time);
 				}
-				source.connect(level);
 				Tone.connect(level, slice.output);
-				source.onended = () => {
-					sources.delete(source);
-					level.disconnect();
-				};
-				sources.add(source);
-				source.start(at, slice.clip.from + slice.offset, slice.duration);
+				const stop = startSource(slice, at, level);
+				sources.add(stop);
+				setTimeout(
+					() => {
+						sources.delete(stop);
+						level.disconnect();
+					},
+					(at - audio.currentTime + slice.duration + LET_GO_AFTER) * 1000
+				);
 			}
 		},
 
 		stop() {
-			for (const source of sources) {
-				try {
-					source.stop();
-				} catch {
-					// already stopped
-				}
-			}
+			for (const stop of sources) stop();
 			sources.clear();
 		}
 	};
+
+	/**
+	 * Start a slice's sound into `level`.
+	 * @param {(typeof slices)[number]} slice
+	 * @param {number} at audio-clock time
+	 * @param {GainNode} level
+	 * @returns {() => void} stops it
+	 */
+	function startSource({ clip, offset, duration }, at, level) {
+		const from = clip.from + offset * clip.speed; // offset is song time; the take's own is scaled
+		if (isStretched(clip)) {
+			const source = startStretchSource(native, {
+				key: clip.takeId,
+				buffer: clip.buffer,
+				from,
+				speed: clip.speed,
+				at,
+				duration
+			});
+			source.node.connect(nativeNodeOf(level));
+			return source.stop;
+		}
+		const source = audio.createBufferSource();
+		source.buffer = clip.buffer;
+		source.connect(level);
+		source.start(at, from, duration);
+		return () => {
+			try {
+				source.stop();
+			} catch {
+				// already stopped
+			}
+		};
+	}
+}
+
+/** Seconds after a slice ends before its nodes are let go of. */
+const LET_GO_AFTER = 0.5;
+
+/** @param {{ speed: number }} clip a take at another tempo than it was recorded at */
+function isStretched(clip) {
+	return Math.abs(clip.speed - 1) > 1e-6;
 }
 
 /**

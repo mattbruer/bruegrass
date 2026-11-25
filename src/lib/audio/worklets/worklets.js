@@ -16,6 +16,7 @@ import limiterUrl from './truePeakLimiterProcessor.js?url';
 import loudnessUrl from './loudnessMeterProcessor.js?url';
 import takeRecorderUrl from './takeRecorderProcessor.js?url';
 import stretchPlayerUrl from './stretchPlayerProcessor.js?worker&url';
+import stretchSourceUrl from './stretchSourceProcessor.js?worker&url';
 import tunerUrl from './tunerProcessor.js?worker&url';
 
 /** Each processor's registered name, and the file that registers it. */
@@ -24,6 +25,7 @@ const PROCESSORS = Object.freeze({
 	'loudness-meter': loudnessUrl,
 	'take-recorder': takeRecorderUrl,
 	'stretch-player': stretchPlayerUrl,
+	'stretch-source': stretchSourceUrl,
 	tuner: tunerUrl
 });
 
@@ -56,6 +58,27 @@ export async function createWorkletNode(Tone, name, options) {
  */
 export async function createNativeWorkletNode(audio, name, options) {
 	await loadProcessor(audio, name);
+	return reportErrors(new AudioWorkletNode(audio, name, options), name);
+}
+
+/**
+ * For nodes made in the middle of playback, which can't wait for loading:
+ * load the processor first with this, then make them with
+ * createLoadedNativeWorkletNode.
+ * @param {BaseAudioContext} audio
+ * @param {ProcessorName} name
+ */
+export function loadNativeWorklet(audio, name) {
+	return loadProcessor(audio, name);
+}
+
+/**
+ * A node of a processor already loaded (loadNativeWorklet), made at once.
+ * @param {BaseAudioContext} audio
+ * @param {ProcessorName} name
+ * @param {AudioWorkletNodeOptions} [options]
+ */
+export function createLoadedNativeWorkletNode(audio, name, options) {
 	return reportErrors(new AudioWorkletNode(audio, name, options), name);
 }
 

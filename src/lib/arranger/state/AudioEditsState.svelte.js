@@ -4,6 +4,10 @@
  * so Undo takes it back, and writes the lane's clips into the song
  * (`song.audioClips`, takes/clips.js), which saves itself. The takes' audio
  * is never changed.
+ *
+ * Places come in as song time at the tempo now (where the playhead or a
+ * drag is); clips keep their take's own time, so each is turned into it
+ * here (takes/takeTempo.js).
  */
 import {
 	clipsOfTrack,
@@ -19,6 +23,7 @@ import {
 import { evenedOutGain, peakIn } from '../takes/clipLevel.js';
 import { sectionStarts } from '../tracks/sectionStarts.js';
 import { readTakeAudio } from '$lib/storage/songTakes.js';
+import { takeTime } from '../takes/takeTempo.js';
 
 /**
  * @typedef {import('../takes/clips.js').AudioClip} AudioClip
@@ -73,7 +78,7 @@ export class AudioEditsState {
 	 * @param {number} at seconds from bar 1
 	 */
 	split(at) {
-		this.#replacePicked((clip, take) => splitClip(clip, take, at) ?? [clip]);
+		this.#replacePicked((clip, take) => splitClip(clip, take, this.#inTake(at, take)) ?? [clip]);
 	}
 
 	/** Cut the picked clip at every section it crosses, ready to comp section by section. */
@@ -82,22 +87,28 @@ export class AudioEditsState {
 		const places = sectionStarts(arrangement.sections).map((quarters) =>
 			arrangement.clock.secondsAt(quarters)
 		);
-		this.#replacePicked((clip, take) => splitClipAt(clip, take, places));
+		this.#replacePicked((clip, take) =>
+			splitClipAt(
+				clip,
+				take,
+				places.map((place) => this.#inTake(place, take))
+			)
+		);
 	}
 
 	/** @param {number} at seconds from bar 1 */
 	trimStart(at) {
-		this.#replacePicked((clip, take) => [withStartAt(clip, take, at)]);
+		this.#replacePicked((clip, take) => [withStartAt(clip, take, this.#inTake(at, take))]);
 	}
 
 	/** @param {number} at seconds from bar 1 */
 	trimEnd(at) {
-		this.#replacePicked((clip, take) => [withEndAt(clip, take, at)]);
+		this.#replacePicked((clip, take) => [withEndAt(clip, take, this.#inTake(at, take))]);
 	}
 
 	/** @param {number} seconds later (negative: earlier) */
 	move(seconds) {
-		this.#replacePicked((clip) => [movedBy(clip, seconds)]);
+		this.#replacePicked((clip, take) => [movedBy(clip, this.#inTake(seconds, take))]);
 	}
 
 	/** @param {number} gain dB */
@@ -106,8 +117,22 @@ export class AudioEditsState {
 	}
 
 	/** @param {{ fadeIn?: number, fadeOut?: number }} fades seconds */
-	setFades(fades) {
-		this.#replacePicked((clip) => [withFades(clip, fades)]);
+	setFades({ fadeIn, fadeOut }) {
+		this.#replacePicked((clip, take) => [
+			withFades(clip, {
+				fadeIn: fadeIn === undefined ? undefined : this.#inTake(fadeIn, take),
+				fadeOut: fadeOut === undefined ? undefined : this.#inTake(fadeOut, take)
+			})
+		]);
+	}
+
+	/**
+	 * Song time now as the take's own time.
+	 * @param {number} seconds
+	 * @param {TakeDocument} take
+	 */
+	#inTake(seconds, take) {
+		return takeTime(seconds, take, this.#arranger.arrangement.bpm);
 	}
 
 	/** The picked clip as loud as it can go without clipping. */

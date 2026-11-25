@@ -85,8 +85,8 @@
 					{/if}
 
 					{#if take.bpm !== arrangement.bpm}
-						<p class="warning">
-							Recorded at {take.bpm} BPM; the song is at {arrangement.bpm} now, so it won’t line up.
+						<p class="text-xs text-ink-soft">
+							Recorded at {take.bpm} BPM: it plays at {arrangement.bpm}, stretched, its pitch kept.
 						</p>
 					{/if}
 				</li>
@@ -147,9 +147,5 @@
 
 	.nudge .details {
 		text-align: center;
-	}
-
-	.warning {
-		color: var(--color-danger);
 	}
 </style>

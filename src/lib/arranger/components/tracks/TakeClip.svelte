@@ -48,8 +48,8 @@
 	const at = $derived({
 		left: place.xAt(laneClip.start),
 		right: place.xAt(laneClip.end),
-		fadeIn: place.xAt(laneClip.start + clip.fadeIn) - place.xAt(laneClip.start),
-		fadeOut: place.xAt(laneClip.end) - place.xAt(laneClip.end - clip.fadeOut)
+		fadeIn: place.xAt(laneClip.start + clip.fadeIn * laneClip.stretch) - place.xAt(laneClip.start),
+		fadeOut: place.xAt(laneClip.end) - place.xAt(laneClip.end - clip.fadeOut * laneClip.stretch)
 	});
 	const shown = $derived.by(() => {
 		const dx = drag?.dx ?? 0;
