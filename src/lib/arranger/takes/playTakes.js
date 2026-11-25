@@ -15,11 +15,10 @@ import { dbToGain } from './clipLevel.js';
 /**
  * @typedef {{
  *   trackId: string, takeId: string, buffer: AudioBuffer, start: number, from: number,
- *   seconds: number, speed: number, gain: number, fadeIn: number, fadeOut: number,
- *   soundFrom: number
+ *   seconds: number, speed: number, gain: number, fadeIn: number, fadeOut: number
  * }} PlayableClip
  *   Song times at the tempo now (takeTempo.js): start: seconds from bar 1; seconds: how long;
- *   fades; soundFrom: how far into the clip its sound begins (takePickup.js).
+ *   fades.
  *   from: where in its take's audio it starts (the take's own seconds); speed: how fast the
  *   take plays (1: as recorded, 0.5: at half its tempo); gain: dB
  * @typedef {{ time: number, value: number }} GainPoint seconds from the slice's start

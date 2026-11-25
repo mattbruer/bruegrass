@@ -28,7 +28,6 @@ import { partName, withPartName } from '../melody/partNames.js';
 import { firstBar } from '../takes/takeTiming.js';
 import { openRecordAlong } from '../takes/recordAlong.js';
 import { readAudioFile, takeAsWav } from '../takes/takeFiles.js';
-import { firstSound } from '../takes/takePickup.js';
 import { forgetStretchSources } from '$lib/audio/stretch/stretchSource.js';
 import { nativeContextOf } from '$lib/audio/nativeContext.js';
 import { filmOffset } from '../takes/filmOffset.js';
@@ -93,7 +92,7 @@ export class RecordingState {
 	);
 
 	#songId = /** @type {string | null} */ (null);
-	/** Each take's audio, ready to play, and where its sound begins, by take id (made once; audio, not UI state). */
+	/** Each take's audio, ready to play, by take id (made once; audio, not UI state). */
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	#buffers = new Map();
 	/** Each A/V take's film as a URL a <video> can play, by take id (made once; let go with the song). */
@@ -406,20 +405,19 @@ export class RecordingState {
 		const clips = this.lanes.filter((lane) => lane.id !== leaveOut).flatMap((lane) => lane.clips);
 		const ready = [];
 		for (const { clip, take, start, end, stretch } of clips) {
-			const audio = await this.audioOf(take);
-			if (!audio) continue;
+			const buffer = await this.audioOf(take);
+			if (!buffer) continue;
 			ready.push({
 				trackId: take.trackId,
 				takeId: take.id,
-				buffer: audio.buffer,
+				buffer,
 				start,
 				from: clip.from,
 				seconds: end - start,
 				speed: 1 / stretch,
 				gain: clip.gain,
 				fadeIn: clip.fadeIn * stretch,
-				fadeOut: clip.fadeOut * stretch,
-				soundFrom: Math.max(0, audio.soundFrom - clip.from) * stretch
+				fadeOut: clip.fadeOut * stretch
 			});
 		}
 		return ready;
@@ -447,9 +445,9 @@ export class RecordingState {
 	}
 
 	/**
-	 * A take's audio, ready to play, and where its sound begins (null: it's gone).
+	 * A take's audio, ready to play (null: it's gone).
 	 * @param {TakeDocument} take
-	 * @returns {Promise<{ buffer: AudioBuffer, soundFrom: number } | null>}
+	 * @returns {Promise<AudioBuffer | null>}
 	 */
 	async audioOf(take) {
 		const kept = this.#buffers.get(take.id);
@@ -460,8 +458,7 @@ export class RecordingState {
 		const audio = Tone.getContext().rawContext;
 		const buffer = audio.createBuffer(channels.length, channels[0].length, take.sampleRate);
 		channels.forEach((channel, index) => buffer.copyToChannel(channel, index));
-		const ready = { buffer, soundFrom: firstSound(channels[0], take.sampleRate) };
-		this.#buffers.set(take.id, ready);
-		return ready;
+		this.#buffers.set(take.id, buffer);
+		return buffer;
 	}
 }
