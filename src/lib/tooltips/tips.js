@@ -439,7 +439,10 @@ export const TIPS = Object.freeze({
 		earlier:
 			'Show this take’s picture a little earlier, if it looks late against its sound (a camera can lag, an iPhone over Continuity Camera more).',
 		later: 'Show this take’s picture a little later, if it looks early against its sound.',
-		tile: 'This lane’s video, in time with the band. It plays the same takes and clips as the lane’s sound.'
+		tile: 'This lane’s video, in time with the band. Tap it to frame it: drag to move, pinch or scroll to zoom.',
+		framing:
+			'Drag to move the video in its tile; pinch, or scroll on a mouse or trackpad, to zoom. Tap outside it when it looks right.',
+		centre: 'Put this video back as it was: centred, zoomed out as far as it fills its tile.'
 	},
 
 	fullScreen: {

@@ -6,7 +6,7 @@
 	 * the song.
 	 */
 	import { useArranger } from '../../state/context.js';
-	import { layoutChoices, wallLayout } from '../../video/tileLayout.js';
+	import { layoutChoices, wallLayout, tileRows } from '../../video/tileLayout.js';
 	import { FRAMES } from '$lib/video/frames.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -53,13 +53,15 @@
 				>
 					<span
 						class="grid"
-						style:--columns={columns}
-						style:--rows={rows}
 						style:aspect-ratio="{layout.frame.width} / {layout.frame.height}"
 						aria-hidden="true"
 					>
-						{#each Array.from({ length: count }, (_, index) => index) as index (index)}
-							<span class="cell"></span>
+						{#each tileRows( Array.from({ length: count }, (_, index) => index), columns ) as row, index (index)}
+							<span class="row">
+								{#each row as cell (cell)}
+									<span class="cell"></span>
+								{/each}
+							</span>
 						{/each}
 					</span>
 				</button>
@@ -83,12 +85,18 @@
 		min-height: 2.75rem; /* a finger's worth */
 		padding: 0.25rem;
 	}
-	.grid {
-		display: grid;
-		grid-template-columns: repeat(var(--columns), 1fr);
-		grid-template-rows: repeat(var(--rows), 1fr);
+	.grid,
+	.row {
+		display: flex;
 		gap: 1px;
+	}
+	.grid {
+		flex-direction: column;
 		height: 1.75rem;
+	}
+	.row,
+	.cell {
+		flex: 1;
 	}
 	.cell {
 		border-radius: 1px;

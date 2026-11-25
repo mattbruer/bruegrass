@@ -33,6 +33,12 @@
 			"addedAt": "2026-11-24"
 		},
 		{
+			"id": "video-framing",
+			"text": "Video: frame each film in its tile (zoom, move) on a real iPhone with fingers; the export must use the same framing (framing.js filmRect)",
+			"done": false,
+			"addedAt": "2026-11-25"
+		},
+		{
 			"id": "video-slate",
 			"text": "Line up recordings made outside the app (a phone's camera, a bandmate's file) by a clap on the count-in",
 			"done": false,

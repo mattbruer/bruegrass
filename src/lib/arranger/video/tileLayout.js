@@ -74,3 +74,17 @@ export function filmShape(lanes, otherwise) {
 	if (shapes.length === 0) return otherwise;
 	return Math.exp(shapes.reduce((total, each) => total + each, 0) / shapes.length);
 }
+
+/**
+ * The tiles in rows, so many across. A short last row is shared out across
+ * the frame's width, so no corner of the video is left empty.
+ * @template T
+ * @param {T[]} tiles
+ * @param {number} columns
+ * @returns {T[][]}
+ */
+export function tileRows(tiles, columns) {
+	return Array.from({ length: Math.ceil(tiles.length / columns) }, (_, row) =>
+		tiles.slice(row * columns, (row + 1) * columns)
+	);
+}

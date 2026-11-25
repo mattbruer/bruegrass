@@ -4,15 +4,25 @@
  * Plain data; the films themselves are with the takes (storage/songTakes.js).
  */
 import { DEFAULT_FRAME, frameById } from '$lib/video/frames.js';
+import { validFraming } from '$lib/video/framing.js';
 
 /**
- * @typedef {{ lanes: string[], columns: number, frame: string }} SongVideo
+ * @typedef {{
+ *   lanes: string[], columns: number, frame: string,
+ *   framing: Record<string, import('$lib/video/framing.js').Framing>
+ * }} SongVideo
  *   lanes: the A/V lanes, by record track; columns: tiles across (0: the layout that shows
- *   the films biggest); frame: the finished video's shape, an id in $lib/video/frames.js
+ *   the films biggest); frame: the finished video's shape, an id in $lib/video/frames.js;
+ *   framing: how each lane's film sits in its tile, by record track (missing: centred)
  */
 
 /** @type {SongVideo} */
-export const NO_VIDEO = Object.freeze({ lanes: [], columns: 0, frame: DEFAULT_FRAME.id });
+export const NO_VIDEO = Object.freeze({
+	lanes: [],
+	columns: 0,
+	frame: DEFAULT_FRAME.id,
+	framing: {}
+});
 
 /**
  * @param {unknown} video as saved (missing on songs from before video)
@@ -23,8 +33,21 @@ export function validVideo(video) {
 	return {
 		lanes: Array.isArray(saved?.lanes) ? saved.lanes : [],
 		columns: Number.isInteger(saved?.columns) ? /** @type {number} */ (saved?.columns) : 0,
-		frame: frameById(saved?.frame ?? '').id
+		frame: frameById(saved?.frame ?? '').id,
+		framing: Object.fromEntries(
+			Object.entries(saved?.framing ?? {}).map(([id, framing]) => [id, validFraming(framing)])
+		)
 	};
+}
+
+/**
+ * @param {SongVideo} video
+ * @param {string} trackId
+ * @param {import('$lib/video/framing.js').Framing} framing
+ * @returns {SongVideo}
+ */
+export function withFraming(video, trackId, framing) {
+	return { ...video, framing: { ...video.framing, [trackId]: framing } };
 }
 
 /** @param {SongVideo} video @param {string} trackId */
