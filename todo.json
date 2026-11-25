@@ -393,6 +393,12 @@
 			"addedAt": "2026-11-25"
 		},
 		{
+			"id": "retire-my-chords",
+			"text": "Retire My chords in favour of guitar patterns (decide what replaces names like Cadd9 and G:high in the chart)",
+			"done": false,
+			"addedAt": "2026-11-25"
+		},
+		{
 			"id": "guitar-shape-editor",
 			"text": "The Guitar lane opens the same diagram editor for its shapes (six strings, boom notes marked)",
 			"done": true,

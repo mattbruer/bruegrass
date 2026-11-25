@@ -192,6 +192,13 @@ export const TIPS = Object.freeze({
 			note: 'Play one note of your own here instead: a run between chords.'
 		},
 		accent: 'Accent this beat: play it a little louder (>).',
+		copy: 'Copy how you changed this chord, to paste onto another.',
+		paste:
+			'Play this chord the way you copied. Onto the same chord, all of it; onto another, the right hand (chucks, accents, runs moved to its root), keeping its own shape and booms.',
+		patterns: 'Your patterns, for every song: use one here, or save this chord as one.',
+		usePattern: 'Play this chord this way (the right hand only, if it was made on another chord).',
+		deletePattern: 'Delete this pattern from every song.',
+		savePattern: 'Keep how you changed this chord as a pattern, to use in any song.',
 		noteString: 'Play the note on this string.',
 		writeFill:
 			'Leave this chord to a fill you write: the guitar rests, and your Guitar fills part plays what you write there (any notes, any rhythm, in TAB or the piano roll).',

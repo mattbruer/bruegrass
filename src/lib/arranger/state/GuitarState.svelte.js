@@ -8,10 +8,19 @@
  * A fill: a chord the guitar rests on while a part of the tune you write
  * plays instead (the Guitar fills part, on the band's own guitar sound),
  * made the first time it's needed and shared by every fill.
+ *
+ * Patterns (instruments/guitarPatterns.js): one chord's changes copied to
+ * paste onto another, or saved under a name for every song.
  */
 import { extraPartsIn } from '../melody/extraParts.js';
 import { mixer } from '../mixer/mixer.svelte.js';
 import { BAND_GUITAR } from '../instruments/tuneInstruments.js';
+import { isEmptyPattern, patternOf, patternOnto } from '../instruments/guitarPatterns.js';
+import {
+	deleteGuitarPattern,
+	listGuitarPatterns,
+	saveGuitarPattern
+} from '$lib/storage/guitarPatterns.js';
 import { guitarChords } from '../instruments/guitarPlan.js';
 import { withGuitarEdit, editedGuitar } from '../instruments/guitarEdits.js';
 import { isNoChord, sectionsToPlay } from '../chart/noChord.js';
@@ -33,6 +42,15 @@ export class GuitarState {
 
 	/** Where the picked chord starts (quarters from bar 1). */
 	pickedStart = $state(0);
+
+	/** A chord's changes, copied to paste onto another (kept for this visit). */
+	copied = /** @type {import('../instruments/guitarPatterns.js').GuitarPattern | null} */ (
+		$state.raw(null)
+	);
+	/** Your saved patterns, for every song (loaded with `loadPatterns`). */
+	patterns = /** @type {import('$lib/storage/guitarPatterns.js').SavedGuitarPattern[]} */ (
+		$state.raw([])
+	);
 
 	/** @param {import('./Arranger.svelte.js').Arranger} arranger */
 	constructor(arranger) {
@@ -95,6 +113,46 @@ export class GuitarState {
 		const channel = mixer.channels.find((each) => each.id === part);
 		if (channel) channel.instrument = BAND_GUITAR;
 		return part;
+	}
+
+	/** The picked chord's changes as a pattern (null: nothing changed to take). */
+	pickedPattern = $derived.by(() => {
+		const chord = this.picked;
+		if (!chord) return null;
+		const { song } = this.#arranger;
+		const pattern = patternOf(chord.name, editedGuitar(song.guitarChords, chord.start, chord.name));
+		return isEmptyPattern(pattern) ? null : pattern;
+	});
+
+	copy() {
+		this.copied = this.pickedPattern;
+	}
+
+	/**
+	 * Play the picked chord as a pattern says (all of it on the same chord,
+	 * the right hand on another).
+	 * @param {import('../instruments/guitarPatterns.js').GuitarPattern} pattern
+	 */
+	use(pattern) {
+		const chord = this.picked;
+		if (chord) this.change(patternOnto(pattern, chord.name));
+	}
+
+	async loadPatterns() {
+		this.patterns = await listGuitarPatterns();
+	}
+
+	/** @param {string} name keep the picked chord's changes as a pattern, for every song */
+	async savePattern(name) {
+		if (!this.pickedPattern) return;
+		await saveGuitarPattern(name, this.pickedPattern);
+		await this.loadPatterns();
+	}
+
+	/** @param {string} id */
+	async deletePattern(id) {
+		await deleteGuitarPattern(id);
+		await this.loadPatterns();
 	}
 
 	/** @param {number} quarters pick the chord sounding here */

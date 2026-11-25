@@ -29,6 +29,7 @@
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import FillChoice from './FillChoice.svelte';
 	import AccentButton from './AccentButton.svelte';
+	import PatternTools from './PatternTools.svelte';
 	import { FILL_PART_NAME } from '../../state/GuitarState.svelte.js';
 
 	/**
@@ -166,6 +167,7 @@
 	{#if !chord}
 		<p class="text-sm text-ink-soft">No chords to play yet: write some in the chart.</p>
 	{:else}
+		<PatternTools />
 		<div class="flex flex-wrap items-start gap-x-6 gap-y-4">
 			<ChordDiagram
 				frets={shape}

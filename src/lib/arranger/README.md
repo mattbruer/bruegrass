@@ -32,6 +32,7 @@ timeline
    │  instruments/seededRandom.js the repeatable random choices
    │  instruments/mandolin.js     off-beat chops, one per chord (songChops); yours from chopEdits.js
    │  instruments/guitarPlan.js   what the guitar plays on each chord (shape, booms, chucks, your notes, or a fill: it rests); yours from guitarEdits.js; guitar.js times it
+   │  instruments/guitarPatterns.js  one chord's guitar changes as a pattern, and onto another chord (the right hand, runs moved by root); saved by storage/guitarPatterns.js
    │  instruments/guitarSamples.js  the band's guitar samples as a tune instrument (a fill part plays on it)
    │  instruments/chopSound.js    the chop's percussive sound: noise tk, closing filter, fade-out
    │  instruments/bassline.js     the band's own bass part, root and fifth (instruments/upright.js plays it)
