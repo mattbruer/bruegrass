@@ -26,7 +26,7 @@ import { BAND_GUITAR_NOTES, bandGuitarSampleUrl } from './guitarSamples.js';
  * }} TuneInstrument
  *   family: the heading it's listed under; folder: the instrument's name in its set;
  *   notes: the MIDI notes it has a sample of (the others are pitched from the nearest);
- *   octave: semitones above where the guitar sounds the tune (12 is as written);
+ *   octave: semitones above where the guitar sounds the tune (12 is the piano roll's pitch, concert);
  *   struck: each note starts at its strike (soundStart.js), past the sample's silence and pick scrape
  */
 
@@ -138,7 +138,7 @@ export const TUNE_INSTRUMENTS = [
 		set: 'band',
 		folder: '',
 		notes: BAND_GUITAR_NOTES,
-		octave: 0,
+		octave: 12,
 		volumeDb: 0,
 		struck: true
 	},
