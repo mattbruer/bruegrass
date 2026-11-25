@@ -16,6 +16,7 @@ import { createTakeRecorder } from '$lib/audio/recording/takeRecorder.js';
 import { createWorkletNode } from '../../audio/worklets/worklets.js';
 import { cameraConstraints } from '$lib/video/camera.js';
 import { createVideoRecorder } from '$lib/video/videoRecorder.js';
+import { cameraReady } from '$lib/video/cameraReady.js';
 
 /** Input names that mean Bluetooth: a long delay, and call-quality sound. */
 const BLUETOOTH_NAMES = /airpods|bluetooth|hands-?free|beats|buds/i;
@@ -44,6 +45,7 @@ export async function openRecordAlong(Tone, deviceId, { filming = false, cameraI
 		const recorder = await createTakeRecorder(audio, mic.source, 1, (options) =>
 			createWorkletNode(Tone, 'take-recorder', options)
 		);
+		if (filming) await cameraReady(mic.stream); // or the film's picture starts late against its sound
 		const video = filming ? createVideoRecorder(mic.stream) : null;
 
 		return {
