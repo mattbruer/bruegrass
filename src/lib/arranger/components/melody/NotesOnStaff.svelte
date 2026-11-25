@@ -23,9 +23,12 @@
 		loadAbcjs().then((abcjs) => {
 			if (current)
 				abcjs.renderAbc(target, abc, {
-					staffwidth: 90,
-					paddingtop: 0,
-					paddingbottom: 0,
+					staffwidth: 110,
+					paddingtop: 10,
+					// Room under the staff for the mandolin's lowest note, the G below middle C, on its ledger lines
+					paddingbottom: 30,
+					paddingleft: 12,
+					paddingright: 12,
 					scale: 1.3
 				});
 		});
@@ -38,7 +41,7 @@
 <style>
 	.paper {
 		width: max-content;
-		padding: 0 0.25rem;
+		padding: 0.5rem 0.75rem;
 		border-radius: var(--corner-card);
 		background: var(--sheet-music-paper);
 		color: var(--sheet-music-ink);
