@@ -21,11 +21,13 @@ import { BAND_GUITAR_NOTES, bandGuitarSampleUrl } from './guitarSamples.js';
  *   folder: string,
  *   notes: number[],
  *   octave: number,
- *   volumeDb: number
+ *   volumeDb: number,
+ *   struck?: boolean
  * }} TuneInstrument
  *   family: the heading it's listed under; folder: the instrument's name in its set;
  *   notes: the MIDI notes it has a sample of (the others are pitched from the nearest);
- *   octave: semitones above where the guitar sounds the tune (12 is as written)
+ *   octave: semitones above where the guitar sounds the tune (12 is as written);
+ *   struck: each note starts at its strike (soundStart.js), past the sample's silence and pick scrape
  */
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -137,7 +139,8 @@ export const TUNE_INSTRUMENTS = [
 		folder: '',
 		notes: BAND_GUITAR_NOTES,
 		octave: 0,
-		volumeDb: 0
+		volumeDb: 0,
+		struck: true
 	},
 	fluidR3('banjo', 'Banjo', 'Plucked'),
 	fluidR3('sitar', 'Sitar', 'Plucked'),

@@ -7,6 +7,7 @@
 import { loadBuffer } from './band.js';
 import { SAMPLE_SETS } from './tuneInstruments.js';
 import { levelMatchDb } from './sampleLoudness.js';
+import { startOnTheBeat } from './soundStart.js';
 
 /** Seconds a note fades out when it ends, or when the same pitch is struck again. */
 const RELEASE = 0.15;
@@ -70,11 +71,12 @@ export function createTuneVoice(Tone, instrument, destination, { live = true } =
 			);
 			lastOn.get(midi)?.stop(Math.max(0, time - DAMP));
 
+			const rate = 2 ** ((midi - nearest.midi) / 12);
 			const player = new Tone.Player({
 				url: nearest.buffer,
 				volume: gainDb + instrument.volumeDb + levelDb,
 				fadeOut: RELEASE,
-				playbackRate: 2 ** ((midi - nearest.midi) / 12)
+				playbackRate: rate
 			}).connect(/** @type {any} */ (destination));
 			if (live)
 				player.onstop = () => {
@@ -84,7 +86,9 @@ export function createTuneVoice(Tone, instrument, destination, { live = true } =
 				};
 			players.add(player);
 			lastOn.set(midi, player);
-			player.start(time).stop(time + duration);
+			if (instrument.struck) startOnTheBeat(player, nearest.buffer, time, 0, rate);
+			else player.start(time);
+			player.stop(time + duration);
 		},
 
 		/** Stop at once and let go of the players. */

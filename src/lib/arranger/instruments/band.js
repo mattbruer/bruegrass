@@ -9,13 +9,10 @@ import { createUpright } from './upright.js';
 import { createTuneVoice } from './tuneVoice.js';
 import { tuneInstrument } from './tuneInstruments.js';
 import { melodyPitch } from '../melody/melody.js';
-import { soundStart } from './soundStart.js';
+import { startOnTheBeat } from './soundStart.js';
 import { CHOP_ARTICULATION } from './mandolin.js';
 import { CHOP_DECAY, CHOP_FADE_OUT, chopFilter, createChopTick } from './chopSound.js';
 import { tuningFix } from './sampleTuning.js';
-
-/** Seconds of a plucked sample kept before its strike: the pick catching the string. */
-const PICK_BEFORE_STRIKE = 0.005;
 
 /** Decoded samples, shared by every performance (and by live and offline audio). */
 /** @type {Map<string, Promise<import('tone').ToneAudioBuffer>>} */
@@ -100,23 +97,6 @@ export async function createBand(
 			Promise.all(urls.map((url) => loadBuffer(Tone, url)))
 		)
 	);
-
-	/**
-	 * Start a sample so its note is struck exactly at `at`, whatever silence
-	 * or scrape the recording has before it (soundStart.js). A pluck keeps
-	 * the pick's last moment before the strike; a graze starts `skip` past it,
-	 * leaving the pick's click out.
-	 * @param {import('tone').Player} player
-	 * @param {import('tone').ToneAudioBuffer} buffer
-	 * @param {number} at
-	 * @param {number} skip seconds of the sample after the strike left out (0: a pluck)
-	 * @param {number} [rate] the player's playback rate
-	 */
-	const startOnTheBeat = (player, buffer, at, skip, rate = 1) => {
-		const strike = soundStart(buffer);
-		const from = skip > 0 ? strike + skip : Math.max(0, strike - PICK_BEFORE_STRIKE);
-		return player.start(Math.max(0, at + (from - strike) / rate), from);
-	};
 
 	/** Live players, each with the nodes made just for it (a chop's filter). */
 	/** @type {Map<import('tone').Player, import('tone').ToneAudioNode[]>} */

@@ -9,6 +9,8 @@
 
 /** The note has been struck at this share of the sample's peak (a scrape stays under it). */
 const STRIKE_SHARE = 0.2;
+/** Seconds of a plucked sample kept before its strike: the pick catching the string. */
+const PICK_BEFORE_STRIKE = 0.005;
 
 /** @type {WeakMap<object, number>} */
 const measured = new WeakMap();
@@ -25,4 +27,21 @@ export function soundStart(buffer) {
 		measured.set(buffer, start);
 	}
 	return start;
+}
+
+/**
+ * Start a sample so its note is struck exactly at `at`, whatever silence
+ * or scrape the recording has before it. A pluck keeps the pick's last
+ * moment before the strike; a graze starts `skip` past it, leaving the
+ * pick's click out.
+ * @param {import('tone').Player} player
+ * @param {import('tone').ToneAudioBuffer} buffer
+ * @param {number} at
+ * @param {number} skip seconds of the sample after the strike left out (0: a pluck)
+ * @param {number} [rate] the player's playback rate
+ */
+export function startOnTheBeat(player, buffer, at, skip, rate = 1) {
+	const strike = soundStart(buffer);
+	const from = skip > 0 ? strike + skip : Math.max(0, strike - PICK_BEFORE_STRIKE);
+	return player.start(Math.max(0, at + (from - strike) / rate), from);
 }
