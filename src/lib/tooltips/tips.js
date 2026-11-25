@@ -434,8 +434,6 @@ export const TIPS = Object.freeze({
 		layout: 'Lay the videos out this way: how many across, and as many rows down as that takes.',
 		frame:
 			'The finished video’s shape: a Reel (9:16, tall, for Facebook and Instagram Reels), a feed post (4:5) or wide (16:9).',
-		covered:
-			'Facebook covers this part of a reel with its name, caption and buttons: keep faces and hands out of it.',
 		camera:
 			'The camera A/V lanes film with. On a Mac, a nearby iPhone shows here too (Continuity Camera). Kept on this device.',
 		earlier:

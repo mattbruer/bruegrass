@@ -7,8 +7,8 @@ import { DEFAULT_FRAME, frameById } from '$lib/video/frames.js';
 
 /**
  * @typedef {{ lanes: string[], columns: number, frame: string }} SongVideo
- *   lanes: the A/V lanes, by record track; columns: tiles across (0: the layout that crops
- *   the films least); frame: the finished video's shape, an id in $lib/video/frames.js
+ *   lanes: the A/V lanes, by record track; columns: tiles across (0: the layout that shows
+ *   the films biggest); frame: the finished video's shape, an id in $lib/video/frames.js
  */
 
 /** @type {SongVideo} */

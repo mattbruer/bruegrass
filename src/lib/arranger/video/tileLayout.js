@@ -32,8 +32,8 @@ export function layoutChoices(count) {
 }
 
 /**
- * How many across: the one chosen, or else the layout that crops the films
- * least (bestColumns).
+ * How many across: the one chosen, or else the layout that shows the films
+ * biggest (bestColumns).
  * @param {number} count
  * @param {number} chosen 0: none chosen
  * @param {number} frameShape the frame's width ÷ height
@@ -45,9 +45,9 @@ export function columnsFor(count, chosen, frameShape, filmShape) {
 }
 
 /**
- * The layout whose tiles are nearest the films' own shape, so filling a
- * tile crops the least: in a 9:16 reel, two films filmed upright go side by
- * side, three filmed sideways go one above another.
+ * The layout whose tiles are nearest the films' own shape, so each film
+ * (shown whole) fills most of its tile and the least is left black: in a
+ * 9:16 reel, three films filmed sideways go one above another.
  * @param {number} count
  * @param {number} frameShape width ÷ height
  * @param {number} filmShape width ÷ height

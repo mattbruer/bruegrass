@@ -172,7 +172,10 @@
 	--meter-hot: #f59e0b;
 	--meter-clip: #ef4444;
 	/* The tuner's screen: a deeper tone of the page, like an instrument's display */
-	--video-screen: oklch(from var(--theme-background) calc(l - 0.22) c h); /* behind a film */
+	/* A finished video is on black whatever the app's theme, and so is its preview */
+	--video-screen: #000;
+	--video-ink: #f2f2f2;
+	--video-ink-soft: #a3a3a3;
 	--tuner-screen: oklch(from var(--theme-background) calc(l - 0.09) calc(c + 0.015) h);
 
 	/* EQ bands, low to high (as in eqBands.js), each its own colour as in Logic */

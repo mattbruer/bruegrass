@@ -4,18 +4,14 @@
  * (Nov 2026): Reels 9:16 at 1080×1920 (Meta's Reels docs; Facebook shows
  * reels at up to 720p), the feed 4:5 at 1080×1350, landscape 16:9.
  *
- * `covered`: how much of the top and bottom the app's own buttons and
- * caption cover, in pixels of the frame (a reel: the name at the top, the
- * caption and Like / Comment / Share at the bottom; third-party guides, not
- * a Meta spec). Keep faces and hands out of it.
+ * Facebook lays its name, caption and buttons over a reel's top and bottom;
+ * a reel shows the films under them anyway (the user's own reels do).
  */
 
 /**
  * @typedef {{
- *   id: string, name: string, width: number, height: number,
- *   covered: { top: number, bottom: number, topSays: string, bottomSays: string }
+ *   id: string, name: string, width: number, height: number
  * }} VideoFrame
- *   covered: topSays, bottomSays: what covers each band, written on it
  */
 
 /** @type {readonly VideoFrame[]} */
@@ -24,27 +20,19 @@ export const FRAMES = Object.freeze([
 		id: 'reel',
 		name: 'Reel 9:16',
 		width: 1080,
-		height: 1920,
-		covered: {
-			top: 210,
-			bottom: 290,
-			topSays: 'Facebook shows your name here',
-			bottomSays: 'Facebook’s caption and buttons go here'
-		}
+		height: 1920
 	},
 	{
 		id: 'feed',
 		name: 'Feed 4:5',
 		width: 1080,
-		height: 1350,
-		covered: { top: 0, bottom: 0, topSays: '', bottomSays: '' }
+		height: 1350
 	},
 	{
 		id: 'wide',
 		name: 'Wide 16:9',
 		width: 1920,
-		height: 1080,
-		covered: { top: 0, bottom: 0, topSays: '', bottomSays: '' }
+		height: 1080
 	}
 ]);
 

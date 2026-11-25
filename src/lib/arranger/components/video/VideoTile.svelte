@@ -60,7 +60,7 @@
 	.film {
 		width: 100%;
 		height: 100%;
-		object-fit: cover; /* as the finished video will: each film fills its tile */
+		object-fit: contain; /* whole, at its own shape: what's left of the tile is black */
 	}
 	.mirrored {
 		transform: scaleX(-1);
@@ -73,7 +73,7 @@
 		padding: 1rem;
 		text-align: center;
 		font-size: 0.875rem;
-		color: var(--color-ink-soft);
+		color: var(--video-ink-soft);
 	}
 	figcaption {
 		position: absolute;
@@ -83,6 +83,6 @@
 		border-radius: var(--corner-small);
 		font-size: 0.75rem;
 		background: color-mix(in oklab, var(--video-screen), transparent 25%);
-		color: var(--color-ink);
+		color: var(--video-ink);
 	}
 </style>
