@@ -68,7 +68,9 @@ import { STRING_BAND_KEYS } from '../theory/usualKeys.js';
 import { bundledReference } from './bundledReferences.js';
 import { STARTER_SONG } from '../starterSong.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
-import { BASS_VOICE } from '../bass/readBass.js';
+import { BASS_VOICE, readBassScore, writtenBassNotes } from '../bass/readBass.js';
+import { bassAbcInUse } from '../bass/bassInUse.js';
+import { abcjsIfLoaded } from '../state/abcjsLoaded.svelte.js';
 import { mixer } from '../mixer/mixer.svelte.js';
 import { heardNotes, laneLevels } from './heardParts.js';
 import { TranscribeParts } from './TranscribeParts.svelte.js';
@@ -225,6 +227,12 @@ export class TranscriptionState {
 	);
 	/** Where the trimmed recording ends (seconds): playing stops there. */
 	endSeconds = $derived(this.grid?.trim.to ?? this.player.duration);
+	/** The bass the Bass lane shows and the band plays: the edited line, else the band's own (none until the song is this recording's). */
+	bassNotes = $derived(
+		this.linked
+			? (writtenBassNotes(readBassScore(bassAbcInUse(this.arranger), abcjsIfLoaded())) ?? [])
+			: []
+	);
 	/** The written parts' notes, on the recording's time (a written bass plays on the band's upright instead). */
 	heardNotes = $derived(
 		this.grid

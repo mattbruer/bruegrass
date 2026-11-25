@@ -2,8 +2,8 @@
  * The band in Transcribe: the arranger's guitar, mandolin and bass playing
  * the chart along with the recording (bandAlong.js times them to it). One
  * Band lane, with its own volume, mute and solo, sets how loud the whole
- * band is; each instrument's own level is the mixer's. A bass written by
- * ear has its own lane, so its mute and solo count too.
+ * band is; each instrument's own level is the mixer's. The Bass lane's mute
+ * and solo count for the band's bass too.
  */
 import { preparePerformance } from '../instruments/performance.js';
 import { createBand } from '../instruments/band.js';

@@ -349,6 +349,9 @@ export const TIPS = Object.freeze({
 		laneBass:
 			'Make this lane the song’s bass line. The lane goes; the bass is written from its notes.',
 		laneRemove: 'Take this lane away, with its notes.',
+		bassLane:
+			'The bass the band plays. It starts as the band’s own line, written from the chart. Tap it to edit it in the piano roll, or copy a bass line from the recording.',
+		useBandsBass: 'Go back to the band’s own bass line, written from the chart. Your edits go.',
 		clock: 'Where the playhead is: bar, beat and sixteenth, or the time. Click to switch.',
 		laneVolume:
 			'How loud this lane plays. Turn the recording down or a part up to hear the part over it. Double-click to put it back.',

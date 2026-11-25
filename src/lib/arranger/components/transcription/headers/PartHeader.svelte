@@ -11,6 +11,7 @@
 	import { isTuneChannel } from '../../../melody/harmony/partChannels.js';
 	import { mixer } from '../../../mixer/mixer.svelte.js';
 	import { picksTheLane } from './pickingClick.js';
+	import { BASS_VOICE } from '../../../bass/readBass.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/** @type {{ transcription: import('../../../transcription/TranscriptionState.svelte.js').TranscriptionState, lane: import('../../../tracks/lanes.js').BandLane }} */
@@ -28,7 +29,12 @@
 	class:picked
 	onclick={(event) => picksTheLane(event) && pick()}
 >
-	<LaneName name={lane.name} tip={TIPS.transcription.partLane} {picked} onpick={pick} />
+	<LaneName
+		name={lane.name}
+		tip={lane.id === BASS_VOICE ? TIPS.transcription.bassLane : TIPS.transcription.partLane}
+		{picked}
+		onpick={pick}
+	/>
 	{#if channel}
 		<MuteSoloButtons settings={channel} name={lane.name} />
 		<LaneVolume level={channel} name={lane.name} />

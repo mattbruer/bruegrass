@@ -30,8 +30,7 @@ import { EXTRA_PARTS, isExtraPart } from '../extraParts.js';
 import { echoZone, withoutPickupEcho, withPickupEcho } from './pickupEcho.js';
 import { isShortBar } from './rollLayout.js';
 import { BASS_VOICE, bassVoice, readBassScore } from '../../bass/readBass.js';
-import { blankBassAbc, generatedBassAbc } from '../../bass/bassAbc.js';
-import { bassSongOf } from '../../bass/bassSong.js';
+import { bassAbcInUse } from '../../bass/bassInUse.js';
 import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
 
 /** Every voice's place in the colour wheel: the melody, then each harmony part. */
@@ -290,10 +289,7 @@ export class MelodyDrawing {
 	}
 
 	#bassAbc() {
-		const written = this.arranger.bass.notation;
-		if (written.trim()) return written;
-		const song = bassSongOf(this.arranger);
-		return this.bassStartsEmpty ? blankBassAbc(song) : generatedBassAbc(song);
+		return bassAbcInUse(this.arranger, { startsEmpty: this.bassStartsEmpty });
 	}
 
 	/** @returns {Read | null} the tune's voices as MelodyState read them */

@@ -45,7 +45,7 @@
 	 */
 	let { transcription } = $props();
 
-	const { melody, bass, song } = useArranger();
+	const { melody, song } = useArranger();
 
 	/** The names column (px); the lanes scroll under it. */
 	const HEADER_WIDTH = 186;
@@ -53,9 +53,6 @@
 	const PIXELS_PER_QUARTER = 44;
 	/** The playhead sits this far across the lanes while following. */
 	const FOLLOW_AT = 1 / 3;
-
-	/** The written bass line (null: none yet). */
-	const writtenBass = $derived(bass.written);
 
 	const beatsPerBar = $derived(timeSignature(transcription.time).beatsPerBar);
 	/** Bars only once the time is chosen: before, the recording shows just its beats. */
@@ -88,7 +85,7 @@
 			? partLanes({
 					melody: melody.line,
 					voices: melody.tune ? voiceChannels(melody.tune) : [],
-					bass: writtenBass,
+					bass: transcription.bassNotes,
 					names: song.partNames
 				})
 			: []

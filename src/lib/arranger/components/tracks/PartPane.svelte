@@ -12,6 +12,7 @@
 	import { useArranger } from '../../state/context.js';
 	import { PART_VIEWS } from '../../tracks/partViews.js';
 	import { BASS_VOICE } from '../../bass/readBass.js';
+	import { bassAbcInUse } from '../../bass/bassInUse.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -41,9 +42,12 @@
 		onClose
 	} = $props();
 
-	const { melody, bass } = useArranger();
+	const arranger = useArranger();
+	const { melody } = arranger;
 
-	const sheetNotation = $derived(voice === BASS_VOICE ? bass.notation : undefined);
+	const sheetNotation = $derived(
+		voice === BASS_VOICE ? bassAbcInUse(arranger, { startsEmpty: bassStartsEmpty }) : undefined
+	);
 	const nothingWritten = $derived((sheetNotation ?? melody.notation).trim() === '');
 </script>
 
