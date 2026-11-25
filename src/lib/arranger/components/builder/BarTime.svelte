@@ -2,8 +2,10 @@
 	/** The picked bar's time signature: for this bar only, or from here on. */
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
+	import { useArranger } from '../../state/context.js';
+	import { styleOf } from '../../styles/styles.js';
 	import { setBarTime } from '../../builder/chartEdits.js';
-	import { TIME_CHOICES, timeBefore, timeFields } from '../../builder/barTimes.js';
+	import { timeBefore, timeFields } from '../../builder/barTimes.js';
 
 	const SCOPES = /** @type {const} */ ([
 		{ id: 'bar', name: 'This bar' },
@@ -19,7 +21,14 @@
 	 */
 	let { picked, times, edit } = $props();
 
+	const { arrangement } = useArranger();
+
 	let time = $derived(times[picked.section][picked.bar]);
+	/** The style's times, and the bar's own if the style doesn't offer it (a song changed style). */
+	let choices = $derived.by(() => {
+		const offered = styleOf(arrangement.style).times;
+		return offered.includes(time.time) ? offered : [...offered, time.time];
+	});
 	let isFirstBar = $derived(picked.section === 0 && picked.bar === 0);
 	/** A bar that changes the time for itself shows that; otherwise a change carries on. */
 	let scope = $derived(/** @type {'bar' | 'on'} */ (time.changes === 'bar' ? 'bar' : 'on'));
@@ -34,7 +43,7 @@
 <div class="flex flex-col gap-1.5">
 	<div class="flex flex-wrap items-center gap-1.5">
 		<span class="text-xs text-ink-soft">Time</span>
-		{#each TIME_CHOICES as choice (choice)}
+		{#each choices as choice (choice)}
 			<button
 				type="button"
 				class="ui-button px-2.5 py-1 text-sm font-semibold"

@@ -69,7 +69,10 @@ export class GuitarState {
 		const key = songKey(arrangement.sections);
 		const written = slotPositions(arrangement.sections);
 		try {
-			return guitarChords(sectionsToPlay(arrangement.sections), { edits: song.guitarChords })
+			return guitarChords(sectionsToPlay(arrangement.sections), {
+				edits: song.guitarChords,
+				style: arrangement.style
+			})
 				.filter((_, slot) => !isNoChord(written[slot].name))
 				.map((chord) => ({ ...chord, sounds: concertChord(chord.name, key, shift) }));
 		} catch {

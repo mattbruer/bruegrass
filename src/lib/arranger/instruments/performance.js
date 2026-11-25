@@ -35,7 +35,7 @@ import { tempoClock } from '../chart/tempoCurve.js';
  *   bass?: import('./bassline.js').BassNote[] | null, offset?: number,
  *   chops?: import('./chopEdits.js').ChopEdits,
  *   guitar?: import('./guitarEdits.js').GuitarEdits,
- *   swing?: number,
+ *   swing?: number, style?: string,
  *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[]
  * }} options
  *   transpose: semitones on top of the capo, for every instrument;
@@ -46,6 +46,7 @@ import { tempoClock } from '../chart/tempoCurve.js';
  *   band's own; offset: where these sections start in the song (quarters),
  *   for the edited bass and chops; chops: the mandolin chops you've changed; guitar: what you've changed about the guitar's chords;
  *   swing: how long-short the eighths are (chart/swing.js), for every instrument;
+ *   style: the song's (styles/styles.js), for the guitar's shapes so far;
  *   tempoCurve: the tempo lane's points (chart/tempoCurve.js), a ritard say
  */
 export function preparePerformance(
@@ -61,6 +62,7 @@ export function preparePerformance(
 		chops = {},
 		guitar = {},
 		swing = SWING_STRAIGHT,
+		style,
 		tempoCurve = []
 	} = {}
 ) {
@@ -88,7 +90,7 @@ export function preparePerformance(
 	const quiet = (notes) => withoutStops(notes, silent, (note) => note.time / quarter, passQuarters);
 
 	// Guitar: the capo where it reaches, resampling for the rest
-	const guitarPlayed = guitarChords(sections, { edits: guitar, offset });
+	const guitarPlayed = guitarChords(sections, { edits: guitar, offset, style });
 	const tuning = guitarTuning(guitarPlayed, shift);
 	const built = buildEvents(sections, { chords: guitarPlayed, bpm, capo: tuning.capo, loop });
 	const guitarPeriod = clock.secondsAt(built.duration / quarter);

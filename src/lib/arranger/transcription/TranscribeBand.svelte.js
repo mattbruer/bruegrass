@@ -30,6 +30,7 @@ export class TranscribeBand {
 			bpm: transcription.tempo || 120,
 			capo: arrangement.capoFret,
 			transpose: arrangement.transpose,
+			style: arrangement.style,
 			loop: false,
 			bass: bass.written,
 			chops: transcription.arranger.song.chops,

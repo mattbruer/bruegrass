@@ -29,7 +29,7 @@ timeline
    │  instruments/strumPatterns.js  the guitar's strum patterns, as data
    │  instruments/articulation.js  pluck and graze (how the pick meets a string), as data; soundStart.js finds where a sample's sound begins
    │  instruments/sampleTuning.js  puts each guitar sample in tune as it plays (fixes in guitarSampleFixes.js, written by scripts/measureSampleTuning.js)
-   │  styles/styles.js            the band's styles (Bluegrass, Celtic) as data; a song's `style` is saved with it, picked in the Band lane's ⋯ menu (Tracks and Transcribe) by components/page/StyleSelect.svelte. Nothing plays differently yet: each style's voicings, strums and bass will look it up here
+   │  styles/styles.js            the band's styles (Bluegrass, Celtic) as data: each has its time signatures (`times`: Celtic adds 6/8, 9/8, 12/8; the Bar tab offers the style's) and its own guitar-voicing generator (`voicing`: styles/bluegrass/bluegrassVoicing.js, styles/celtic/celticVoicing.js, which for now just calls bluegrass's). `chordBook.chordShape(name, style)` asks the style; `style` is passed down from the song through `preparePerformance` and `guitarChords`. A song's `style` is saved with it and picked in the Band lane's ⋯ menu (components/page/StyleSelect.svelte). Still bluegrass whatever the style: strums, bass, mandolin, chord-name checks (`hasShape`), the chord-places rule (`chart/chordPlaces.js`), Transcribe's time list
    │  instruments/seededRandom.js the repeatable random choices
    │  instruments/mandolin.js     off-beat chops, one per chord (songChops); yours from chopEdits.js
    │  instruments/guitarPlan.js   what the guitar plays on each chord (shape, booms, chucks, your notes, or a fill: it rests); yours from guitarEdits.js; guitar.js times it

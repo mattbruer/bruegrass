@@ -34,18 +34,18 @@ import { hitAt, hitSpans } from '../chart/hits.js';
 
 /**
  * @param {import('../chart/timeline.js').Section[]} sections
- * @param {{ edits?: import('./guitarEdits.js').GuitarEdits, offset?: number }} [options]
- *   edits: what you've changed; offset: where these sections start in the song (quarters)
+ * @param {{ edits?: import('./guitarEdits.js').GuitarEdits, offset?: number, style?: string }} [options]
+ *   edits: what you've changed; offset: where these sections start in the song (quarters); style: the song's (styles/styles.js)
  * @returns {GuitarChord[]}
  */
-export function guitarChords(sections, { edits = {}, offset = 0 } = {}) {
+export function guitarChords(sections, { edits = {}, offset = 0, style } = {}) {
 	const { beats, slots } = rhythm(sections);
 	const places = placesInSlots(beats);
 	const which = bandBooms(beats, slots, hitSpans(sections));
 	return slots.map((slot, k) => {
 		const start = slot.start + offset;
 		const change = editedGuitar(edits, start, slot.name);
-		const shape = change.shape ?? chordShape(slot.name);
+		const shape = change.shape ?? chordShape(slot.name, style);
 		const own = beats
 			.flatMap((beat, b) => (beat.slot === k ? [{ beat, place: places[b] }] : []))
 			.map(({ beat, place }, i) => ({

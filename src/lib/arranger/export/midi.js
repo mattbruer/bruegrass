@@ -82,7 +82,7 @@ export function velocityFromDb(db) {
  *   melody?: import('../melody/melody.js').Melody | null, tuneDb?: Record<string, number>,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null,
  *   chops?: import('../instruments/chopEdits.js').ChopEdits,
- *   guitar?: import('../instruments/guitarEdits.js').GuitarEdits,
+ *   guitar?: import('../instruments/guitarEdits.js').GuitarEdits, style?: string,
  *   partNames?: import('../melody/partNames.js').PartNames
  * }} options bass: the edited bass line, or null for the band's own; tuneDb: the Melody's and each harmony part's fader, by channel id; partNames: the names you gave the parts
  * @returns {Uint8Array}
@@ -98,6 +98,7 @@ export function arrangementToMidi(
 		bass: writtenBass = null,
 		chops = {},
 		guitar: guitarEdits = {},
+		style,
 		partNames = {}
 	} = {}
 ) {
@@ -110,7 +111,7 @@ export function arrangementToMidi(
 	const quarter = secondsPerQuarter(bpm);
 	/** @template {{ time: number }} T @param {T[]} notes */
 	const quiet = (notes) => withoutStops(notes, silent, (note) => note.time / quarter, passQuarters);
-	const guitarPlayed = guitarChords(playable, { edits: guitarEdits });
+	const guitarPlayed = guitarChords(playable, { edits: guitarEdits, style });
 	const tuning = guitarTuning(guitarPlayed, shift);
 	const events = quiet(
 		buildEvents(playable, { chords: guitarPlayed, capo: tuning.capo, bpm }).events

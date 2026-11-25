@@ -26,8 +26,8 @@ export function parseMeterField(token, section) {
 		);
 	const beats = Number(fraction[1]);
 	const unit = Number(fraction[2]);
-	if (unit !== 2 && unit !== 4) {
-		throw new Error(`${token} in ${section}: only time signatures over 4 or 2 are supported`);
+	if (unit !== 2 && unit !== 4 && unit !== 8) {
+		throw new Error(`${token} in ${section}: only time signatures over 2, 4 or 8 are supported`);
 	}
 	if (beats < 1 || beats > 12) throw new Error(`${token} in ${section}: 1 to 12 beats per bar`);
 	return { persistent, meter: { beats, unit } };

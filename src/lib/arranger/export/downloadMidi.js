@@ -30,6 +30,7 @@ export function downloadArrangementMidi({
 	bass = null,
 	chops = {},
 	guitar = {},
+	style,
 	partNames = {}
 }) {
 	const bytes = arrangementToMidi(sections, {
@@ -40,6 +41,7 @@ export function downloadArrangementMidi({
 		bass,
 		chops,
 		guitar,
+		style,
 		partNames,
 		tuneDb: Object.fromEntries([...channelsInUse(melody)].map((id) => [id, channelLevel(id)]))
 	});

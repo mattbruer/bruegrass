@@ -79,6 +79,7 @@
 			guitar: song.guitarChords,
 			partNames: song.partNames,
 			swing: arrangement.swing,
+			style: arrangement.style,
 			tempoCurve: arrangement.tempoCurve
 		};
 		try {

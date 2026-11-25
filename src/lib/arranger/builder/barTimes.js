@@ -7,9 +7,6 @@ import { DEFAULT_METER, barQuarters, meterText } from '../chart/timeline.js';
 import { chordPlaces } from '../chart/chordPlaces.js';
 import { parseMeterField } from '../chart/meterField.js';
 
-/** The times the builder offers, most used first. Only 4 and 2 below the line are supported. */
-export const TIME_CHOICES = ['4/4', '3/4', '2/4', '2/2', '5/4', '6/4'];
-
 /**
  * @typedef {{ time: string, changes: 'bar' | 'on' | null }} BarTime
  *   time: "3/4"; changes: whether this bar sets it (for itself, or from here on)

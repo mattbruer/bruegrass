@@ -122,6 +122,7 @@ export class PlayerState {
 				bass: this.#bass.written,
 				...this.#edits(),
 				swing: this.#arrangement.swing,
+				style: this.#arrangement.style,
 				tempoCurve: this.#arrangement.tempoCurve,
 				offset: this.#loop.startInSong,
 				takes: await this.takesToPlay(leaveOutTrack ?? null),
