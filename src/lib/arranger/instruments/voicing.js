@@ -16,10 +16,11 @@ import { toneSemitones } from '../theory/chordTypes.js';
  * @typedef {{
  *   strings: number[], lowestFret: number, highestFret: number, span: number,
  *   fewestStrings: number, rootInBass: boolean, everyString: boolean,
- *   score: (shape: Shape) => number
+ *   fifthOptional?: boolean, score: (shape: Shape) => number
  * }} Instrument
  *   strings: open MIDI pitches, low to high; lowestFret 0 allows open strings;
- *   span: how far apart fretted notes may be; everyString: no muting (a chop)
+ *   span: how far apart fretted notes may be; everyString: no muting (a chop);
+ *   fifthOptional: the plain 5th is never needed, even in a triad (a chop)
  * @typedef {{ root: number, type: import('../theory/chordTypes.js').ChordType }} Chord
  */
 
@@ -35,7 +36,7 @@ export function voiceChord(instrument, chord) {
 	const tones = toneSemitones(chord.type).map((tone) => (chord.root + tone) % 12);
 	let best = null;
 	let bestScore = -Infinity;
-	for (const needed of whatToKeep(chord, tones, instrument.strings.length)) {
+	for (const needed of whatToKeep(chord, tones, instrument)) {
 		for (const shape of allShapes(instrument, tones)) {
 			if (!holds(instrument, shape, chord.root, needed)) continue;
 			const score = instrument.score(shape);
@@ -52,17 +53,20 @@ export function voiceChord(instrument, chord) {
 /**
  * The notes a shape must sound, most complete first: every note; then
  * without the plain 5th (when the chord has four notes or more); then
- * without the root too, if there still aren't enough strings.
+ * without the root too, if there still aren't enough strings. An instrument
+ * whose 5th is optional starts without it.
  * @param {Chord} chord
  * @param {number[]} tones
- * @param {number} strings
+ * @param {Instrument} instrument
  * @returns {number[][]}
  */
-function whatToKeep(chord, tones, strings) {
+function whatToKeep(chord, tones, instrument) {
+	const strings = instrument.strings.length;
 	const fifth = (chord.root + PERFECT_FIFTH) % 12;
 	const withoutFifth = tones.filter((pc) => pc !== fifth);
-	const choices = [tones];
-	if (tones.length > 3 && withoutFifth.length < tones.length) choices.push(withoutFifth);
+	const choices = instrument.fifthOptional && tones.includes(fifth) ? [] : [tones];
+	const fifthMayGo = instrument.fifthOptional || tones.length > 3;
+	if (fifthMayGo && withoutFifth.length < tones.length) choices.push(withoutFifth);
 	if (withoutFifth.length > strings) choices.push(withoutFifth.filter((pc) => pc !== chord.root));
 	return choices.filter((needed) => needed.length <= strings);
 }

@@ -29,30 +29,40 @@ const MAX_FRET = 14;
 const CHOP_SPAN = 5;
 
 /**
- * A chop voiced from the chord's notes: all four courses fretted (so it can
- * be choked), the lowest that holds the chord.
- * @type {import('./voicing.js').Instrument}
+ * The ways a chop is held, voiced from the chord's notes: every course
+ * fretted, or the low three with the E course muted (C: 5-2-3-x). No open
+ * strings, so it can be choked, and never a muted low course. The 5th may be
+ * left out (C: C E C). The lowest one that holds the chord wins.
+ * @type {import('./voicing.js').Instrument[]}
  */
-const CHOP = {
-	strings: OPEN_MIDI,
+const CHOP_HANDS = [OPEN_MIDI, OPEN_MIDI.slice(0, 3)].map((strings) => ({
+	strings,
 	lowestFret: 1,
 	highestFret: MAX_FRET,
 	span: CHOP_SPAN,
-	fewestStrings: 4,
+	fewestStrings: strings.length,
 	rootInBass: false,
 	everyString: true,
-	score: (shape) => -height(shape.map(Number))
-};
+	fifthOptional: true,
+	score: (shape) => -height(pitchesOf(shape))
+}));
 
 /**
- * How high a chop sits: the sum of its frets (every course is fretted, so
- * that's how high its notes are), then its top note, so the high E stays low.
- * Lower is better.
- * @param {number[]} frets G D A E
+ * How high a chop sits: its notes on average, then its top note, so the high
+ * E stays low. Lower is better.
+ * @param {number[]} pitches low to high
  */
-function height(frets) {
-	const sum = frets.reduce((total, fret) => total + fret, 0);
-	return sum + frets[frets.length - 1] / 100;
+function height(pitches) {
+	const average = pitches.reduce((total, pitch) => total + pitch, 0) / pitches.length;
+	return average + pitches[pitches.length - 1] / 100;
+}
+
+/**
+ * The pitches a chop sounds, G course up; muted courses left out.
+ * @param {(number | null)[]} frets
+ */
+function pitchesOf(frets) {
+	return frets.flatMap((fret, course) => (fret === null ? [] : [OPEN_MIDI[course] + fret]));
 }
 
 const STROKE_GAP = 0.004; // s between courses on the downstroke (G → E)
@@ -68,7 +78,9 @@ export const CHOP_ARTICULATION = ARTICULATIONS.chop;
  * @typedef {{ time: number, course: number, fret: number, pitch: number, levelDb: number }} MandoNote
  */
 
-/** @type {Map<string, { frets: number[], pitches: number[] }>} */
+/** @typedef {{ frets: (number | null)[], pitches: number[] }} Chop frets G D A E, null = muted */
+
+/** @type {Map<string, Chop>} */
 const chops = new Map();
 
 /**
@@ -76,7 +88,7 @@ const chops = new Map();
  * then remembered.
  * @param {string} name
  * @param {number} [capo] transposes to concert pitch, like the guitar
- * @returns {{ frets: number[], pitches: number[] }}
+ * @returns {Chop}
  */
 export function chopVoicing(name, capo = 0) {
 	const root = (rootPitchClass(name) + capo) % 12;
@@ -84,17 +96,28 @@ export function chopVoicing(name, capo = 0) {
 	if (!type) throw new Error(`No mandolin chop shape for ${name}`);
 	const id = `${root}${type.suffix}`;
 	if (!chops.has(id)) {
-		const shape = voiceChord(CHOP, { root, type });
-		if (!shape) throw new Error(`No mandolin chop shape for ${name}`);
-		const frets = shape.map(Number);
-		chops.set(id, { frets, pitches: frets.map((fret, course) => OPEN_MIDI[course] + fret) });
+		const frets = lowest(
+			CHOP_HANDS.map((hand) => voiceChord(hand, { root, type }))
+				.filter((shape) => shape !== null)
+				.map((shape) => COURSES.map((_, course) => shape[course] ?? null))
+		);
+		if (!frets) throw new Error(`No mandolin chop shape for ${name}`);
+		chops.set(id, { frets, pitches: pitchesOf(frets) });
 	}
-	return /** @type {{ frets: number[], pitches: number[] }} */ (chops.get(id));
+	return /** @type {Chop} */ (chops.get(id));
+}
+
+/**
+ * @param {(number | null)[][]} shapes
+ * @returns {(number | null)[] | undefined}
+ */
+function lowest(shapes) {
+	return shapes.sort((a, b) => height(pitchesOf(a)) - height(pitchesOf(b)))[0];
 }
 
 /**
  * A chop on every off-beat chuck of the rhythm grid (with the guitar's strum),
- * as one note per course, struck G → E. On a hit (chart/hits.js) the mandolin
+ * as one note per fretted course, struck G → E. On a hit (chart/hits.js) the mandolin
  * plays only the hits it chops (CHOPPED_HITS), one chop on the hit itself,
  * then nothing until the next chord; it lays out on the rest.
  * @param {{ name?: string, measures: string[][] }[]} sections
@@ -114,13 +137,19 @@ export function chopNotes(sections, { capo = 0, bpm = 120 } = {}) {
 		const { frets } = chopVoicing(slots[beat.slot].name, capo);
 		const time = beat.time * quarter;
 		const levelDb = CHOP_ARTICULATION.levelDb + (rng() * 2 - 1) * LEVEL_JITTER_DB;
-		return frets.map((fret, course) => ({
-			time: time + course * STROKE_GAP,
-			course,
-			fret,
-			pitch: OPEN_MIDI[course] + fret,
-			levelDb
-		}));
+		return frets.flatMap((fret, course) =>
+			fret === null
+				? []
+				: [
+						{
+							time: time + course * STROKE_GAP,
+							course,
+							fret,
+							pitch: OPEN_MIDI[course] + fret,
+							levelDb
+						}
+					]
+		);
 	});
 }
 
