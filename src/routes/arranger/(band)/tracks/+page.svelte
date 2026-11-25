@@ -33,7 +33,7 @@
 	const { recording, loop, player, song, arrangement, layout, mandolin } = useArranger();
 	onDestroy(loop.playThroughWhile());
 
-	const cycle = new TracksCycleState(() => rulerBars(arrangement.sections));
+	const cycle = new TracksCycleState(() => rulerBars(arrangement.sections, player.songStart));
 
 	// The band loops the cycle's bars; a change while playing starts it again with them
 	let cycledBefore = '';

@@ -74,6 +74,20 @@ export function clipStart(clip, take) {
 	return takeStart(take) + clip.shift + clip.from;
 }
 
+/**
+ * A clip with whatever is before the song's start cut off (the count-in:
+ * only there to line the take up). Null: all of it is before.
+ * @param {AudioClip} clip
+ * @param {TakeDocument} take
+ * @param {number} songStart seconds from bar 1, at the tempo the take was recorded at
+ * @returns {AudioClip | null}
+ */
+export function fromSongStart(clip, take, songStart) {
+	const cut = songStart - clipStart(clip, take);
+	if (cut <= 0) return clip;
+	return cut < clipLength(clip) ? { ...clip, from: clip.from + cut } : null;
+}
+
 /** @param {AudioClip} clip */
 export function clipLength(clip) {
 	return clip.to - clip.from;

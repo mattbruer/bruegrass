@@ -101,7 +101,7 @@ export const TIPS = Object.freeze({
 
 	recording: {
 		countIn:
-			'How many bars of clicks before the song starts. A pickup comes in over the last of them.',
+			'How many bars of clicks before the song starts (before the pickup bar, if the tune has one).',
 		use: 'Play this take on its lane. The other takes on the lane are kept, but not played.',
 		earlier: 'Move the take a little earlier, if it sounds behind the band.',
 		later: 'Move the take a little later, if it sounds ahead of the band.',

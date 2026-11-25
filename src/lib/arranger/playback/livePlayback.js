@@ -12,6 +12,8 @@ import { createStream } from './scheduler.js';
 import { rhythm } from '../chart/timeline.js';
 import { songClickGrid } from './metronome/clickGrid.js';
 import { createTakePlayback } from '../takes/playTakes.js';
+import { songStartOf } from './songStart.js';
+import { firstBar } from '../takes/takeTiming.js';
 
 /** Lead before the first note, so nothing is clipped (seconds). */
 const START_DELAY = 0.1;
@@ -64,7 +66,7 @@ export async function playArrangement(sections, options = {}) {
 	forPlayback();
 
 	const performance = preparePerformance(sections, { ...options, loop: true });
-	const { passLength: duration, clock } = performance;
+	const { passLength: duration, quarter, clock } = performance;
 	const { slots: positions, beats: grid } = rhythm(sections);
 
 	const Tone = await import('tone');
@@ -84,16 +86,17 @@ export async function playArrangement(sections, options = {}) {
 	 * it was ever late, and never plays a note after its time has passed.
 	 */
 	const context = Tone.getContext();
-	// The band waits for the melody's pickup or a count-in, so bar 1 lands together
+	// A pickup is a whole bar before bar 1 (songStart.js); the count-in comes before that
 	const from = options.from ?? 0;
-	const lead =
-		from > 0
-			? (options.countIn ?? 0)
-			: Math.max(performance.melody?.leadIn ?? 0, options.countIn ?? 0);
+	const hasPickup = from === 0 && (performance.melody?.leadIn ?? 0) > 0;
+	const pickupBar = -clock.secondsAt(
+		songStartOf(hasPickup, firstBar(sections, 60 / quarter).quarters)
+	);
+	const lead = pickupBar + (options.countIn ?? 0);
 	const takes = await createTakePlayback(
 		Tone,
 		options.takes ?? [],
-		{ regionStart: options.regionStart ?? 0, passLength: duration, lead },
+		{ regionStart: options.regionStart ?? 0, passLength: duration, lead: pickupBar },
 		getChannel
 	);
 	// Carrying on part way through: bar 1 was in the past, and the notes before now are skipped
@@ -134,6 +137,8 @@ export async function playArrangement(sections, options = {}) {
 		barOne: start,
 		/** When the band comes in: bar 1, or where it carries on from (audio-clock seconds). */
 		startsAt: start + clock.secondsAt(from),
+		/** Where the song starts: the pickup bar, else where the band comes in (audio-clock seconds). */
+		songStartsAt: start + clock.secondsAt(from) - pickupBar,
 		/** How long the melody's pickup is before bar 1 (seconds; 0 without one). */
 		pickup: performance.melody?.leadIn ?? 0,
 		/** One pass, in seconds. */

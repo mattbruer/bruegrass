@@ -1,6 +1,6 @@
 <script>
 	/**
-	 * Bar numbers and section names across the top of the tracks, from the count-in bar on.
+	 * Bar numbers and section names across the top of the tracks, from where the song starts.
 	 * Zoomed far out, only every 2nd, 4th… bar is numbered.
 	 */
 	import { everyNth } from '../../tracks/thinOut.js';
@@ -28,7 +28,7 @@
 	{#each bars as bar (bar.number)}
 		<div
 			class="bar"
-			class:count-in={bar.number === 0}
+			class:pickup={bar.number === 0}
 			class:thinned={numberEvery > 1}
 			class:unnumbered={!numbered(bar)}
 			style:left="{scale.toX(bar.start)}px"
@@ -36,7 +36,7 @@
 		>
 			{#if numbered(bar)}
 				<span class="number" data-bar={bar.number}
-					>{bar.label ?? (bar.number === 0 ? 'Count-in' : bar.number)}</span
+					>{bar.label ?? (bar.number === 0 ? 'Pickup' : bar.number)}</span
 				>
 			{/if}
 			{#if bar.sectionName}
@@ -70,7 +70,7 @@
 	}
 
 	/* zoomed far out: a numbered bar's number runs on over the unnumbered ones after it */
-	.bar.thinned:not(.count-in) {
+	.bar.thinned:not(.pickup) {
 		overflow: visible;
 	}
 
@@ -84,7 +84,7 @@
 		font-variant-numeric: tabular-nums;
 	}
 
-	.count-in .number {
+	.pickup .number {
 		color: var(--color-ink-faint);
 	}
 

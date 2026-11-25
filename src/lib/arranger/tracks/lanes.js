@@ -13,7 +13,7 @@ import { EXTRA_PARTS } from '../melody/extraParts.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { partName } from '../melody/partNames.js';
 import { RECORD_TRACKS } from '../takes/recordTracks.js';
-import { clipLength, clipStart, clipsOfTrack } from '../takes/clips.js';
+import { clipLength, clipStart, clipsOfTrack, fromSongStart } from '../takes/clips.js';
 import { stretchOf } from '../takes/takeTempo.js';
 
 /**
@@ -58,9 +58,10 @@ export function bandLanes({ bass, melody, voices = [], names = {} }) {
  * @param {import('../takes/clips.js').EditedLanes} [edited] the lanes whose clips you've edited
  * @param {string[]} [filmed] the A/V lanes
  * @param {number} [bpm] the song's tempo now (takes follow it; leave out: as recorded)
+ * @param {number} [songStart] seconds from bar 1 at the tempo now: nothing before it shows
  * @returns {TakeLane[]}
  */
-export function takeLanes(takes, names = {}, edited = {}, filmed = [], bpm = NaN) {
+export function takeLanes(takes, names = {}, edited = {}, filmed = [], bpm = NaN, songStart = 0) {
 	return RECORD_TRACKS.map((track) => ({
 		id: track.id,
 		name: partName(track.id, names, track.name),
@@ -68,10 +69,12 @@ export function takeLanes(takes, names = {}, edited = {}, filmed = [], bpm = NaN
 		kind: 'take',
 		filmed: filmed.includes(track.id),
 		takes: takes.filter((take) => take.trackId === track.id),
-		clips: clipsOfTrack(track.id, edited, takes).map(({ clip, take }, index) => {
+		clips: clipsOfTrack(track.id, edited, takes).flatMap(({ clip: whole, take }, index) => {
 			const stretch = Number.isFinite(bpm) ? stretchOf(take, bpm) : 1;
+			const clip = fromSongStart(whole, take, songStart / stretch);
+			if (!clip) return [];
 			const start = clipStart(clip, take) * stretch;
-			return { index, clip, take, start, end: start + clipLength(clip) * stretch, stretch };
+			return [{ index, clip, take, start, end: start + clipLength(clip) * stretch, stretch }];
 		})
 	})).filter((lane) => lane.takes.length > 0 || names[lane.id]);
 }

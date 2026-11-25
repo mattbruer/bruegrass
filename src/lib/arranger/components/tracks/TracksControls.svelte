@@ -37,7 +37,7 @@
 
 	/** The song's bars, as the clock counts them. */
 	const bars = $derived(
-		rulerBars(arrangement.sections)
+		rulerBars(arrangement.sections, player.songStart)
 			.filter((bar) => bar.number > 0)
 			.map((bar) => ({ number: bar.number, firstBeat: bar.start, beats: bar.beats }))
 	);

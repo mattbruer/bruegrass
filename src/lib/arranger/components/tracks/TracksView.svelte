@@ -84,7 +84,7 @@
 	/** The tempo lane's height (px): a finger's worth. */
 	const TEMPO_LANE_HEIGHT = 44;
 
-	const bars = $derived(rulerBars(arrangement.sections));
+	const bars = $derived(rulerBars(arrangement.sections, player.songStart));
 	const band = $derived(
 		bandLanes({
 			bass: bassPart(arrangement.sections, {

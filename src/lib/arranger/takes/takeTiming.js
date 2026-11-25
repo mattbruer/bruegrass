@@ -4,9 +4,9 @@
  * Song time is seconds from bar 1 (negative before it). A take starts at
  * `startsAt` plus its by-ear `nudgeMs`, at the tempo it was recorded at.
  *
- * Every take file (downloaded or added) starts exactly one bar before bar 1:
- * the count-in bar, where a pickup is sung. That holds whatever the melody
- * does, so a file made on one device lines up on another.
+ * Every take file (downloaded or added) starts exactly one bar before bar 1,
+ * where a pickup bar is (playback/songStart.js). That holds whatever the
+ * melody does, so a file made on one device lines up on another.
  */
 import { DEFAULT_METER, barQuarters, slotPositions } from '../chart/timeline.js';
 
@@ -26,8 +26,8 @@ export function takeStart(take) {
 /**
  * The part of a clip one pass of playback plays: the pass runs from
  * `regionStart` (song seconds) for `passLength`. A pass from the top also
- * plays what's before bar 1 (the count-in bar: a sung pickup), and does
- * again at the end of every later pass, as the melody's pickup does.
+ * plays what's before bar 1 (in the pickup bar), and does again at the end
+ * of every later pass, as the melody's pickup does.
  * @param {{ start: number, seconds: number }} clip start: seconds from bar 1; seconds: how long
  * @param {{ regionStart: number, passLength: number }} pass
  * @returns {Slice | null} null when none of it falls in the pass; offset: how far into the clip

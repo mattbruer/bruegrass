@@ -27,7 +27,7 @@
 	{:else if recording.lanes.length > 0}
 		<p>
 			Headphones on (wired if you can). Record gives the count-in clicks, then the band plays the
-			song once while you record. If the tune starts with a pickup, sing it over the last clicks.
+			song once while you record. A pickup has a bar of its own after the clicks.
 		</p>
 	{/if}
 </div>

@@ -75,7 +75,8 @@ export class RecordingState {
 			this.#arranger.song.partNames,
 			this.#arranger.song.audioClips,
 			this.#arranger.song.video.lanes,
-			this.#arranger.arrangement.bpm
+			this.#arranger.arrangement.bpm,
+			this.#arranger.arrangement.clock.secondsAt(this.#arranger.player.songStart)
 		)
 	);
 	/** The A/V lanes: each one a tile in the video view. */

@@ -28,8 +28,8 @@ import { dbToGain } from './clipLevel.js';
  * @param {typeof import('tone')} Tone
  * @param {PlayableClip[]} clips
  * @param {{ regionStart: number, passLength: number, lead: number }} pass seconds;
- *   lead: how long before bar 1 playback starts (anything earlier is left out:
- *   the scheduler would drop a slice that starts before playback does)
+ *   lead: how long before bar 1 the song starts (the pickup bar; anything earlier,
+ *   such as the count-in, is left out)
  * @param {(id: string) => Promise<import('tone').ToneAudioNode>} channelInput
  */
 export async function createTakePlayback(Tone, clips, pass, channelInput) {

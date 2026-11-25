@@ -14,6 +14,7 @@ import { countInClicks } from '../playback/metronome/countIn.js';
 import { playCountIn } from '../playback/metronome/playCountIn.js';
 import { clickSoundById } from '../playback/metronome/sounds.js';
 import { firstBar } from '../takes/takeTiming.js';
+import { songStartOf } from '../playback/songStart.js';
 import { settings } from '$lib/settings/settings.svelte.js';
 
 /** @typedef {Awaited<ReturnType<typeof playArrangement>>} Playback */
@@ -39,6 +40,13 @@ export class PlayerState {
 	problem = $state('');
 
 	isPlaying = $derived(this.playback !== null);
+	/** Where the song starts, quarters from bar 1: the pickup bar's start when the tune has one (songStart.js). */
+	songStart = $derived(
+		songStartOf(
+			this.#melody.pickup > 0,
+			firstBar(this.#arrangement.sections, this.#arrangement.bpm).quarters
+		)
+	);
 
 	/** The click; it follows the playback's bars while the song plays. */
 	metronome;
@@ -122,7 +130,7 @@ export class PlayerState {
 				passes: once ? 1 : passes,
 				from
 			});
-			this.countInAt = this.playback.startsAt;
+			this.countInAt = this.playback.songStartsAt;
 			if (countInBars > 0) await this.#countIn(this.playback, bar, countInBars);
 			this.#resumable = once;
 			this.#onStop = onStop ?? null;
@@ -162,7 +170,7 @@ export class PlayerState {
 	 */
 	async #countIn(playback, bar, bars) {
 		const clicks = countInClicks({ bars, bar });
-		this.countInAt = playback.startsAt - clicks.seconds;
+		this.countInAt = playback.songStartsAt - clicks.seconds;
 		const Tone = await import('tone');
 		const metronomeInput = /** @type {import('tone').ToneAudioNode} */ (await getMetronomeInput());
 		if (this.playback !== playback) return; // stopped meanwhile

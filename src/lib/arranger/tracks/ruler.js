@@ -1,23 +1,25 @@
 /**
  * The bar ruler across the top of the tracks: the song's bars in play
- * order, after one count-in bar before bar 1, where a pickup is played and
- * where every take file starts. Times in quarter notes from bar 1.
+ * order, from where the song starts (playback/songStart.js: the pickup bar
+ * when there is one, else bar 1). Times in quarter notes from bar 1.
  */
 import { barsInPlayOrder } from '../chart/chartBars.js';
 
 /**
  * @typedef {{ number: number, start: number, beats: number, sectionName: string | null, label?: string }} RulerBar
- *   number: 0 for the count-in bar; sectionName: where a section starts; label: shown instead of the number
+ *   number: 0 for the pickup bar; sectionName: where a section starts; label: shown instead of the number
  *
  * @param {import('../chart/timeline.js').Section[]} sections
+ * @param {number} songStart quarters from bar 1 (negative: a pickup bar)
  * @returns {RulerBar[]}
  */
-export function rulerBars(sections) {
+export function rulerBars(sections, songStart) {
 	const bars = barsInPlayOrder(sections);
 	if (bars.length === 0) return [];
-	const countInBeats = bars[0].beats;
+	const pickupBar =
+		songStart < 0 ? [{ number: 0, start: songStart, beats: -songStart, sectionName: null }] : [];
 	return [
-		{ number: 0, start: -countInBeats, beats: countInBeats, sectionName: null },
+		...pickupBar,
 		...bars.map((bar) => ({
 			number: bar.index + 1,
 			start: bar.start,

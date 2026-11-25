@@ -1,9 +1,8 @@
 /**
- * The count-in before the band (Play with Count-in on, and every recorded
- * take): plain maths, no audio.
+ * The count-in before every recorded take: plain maths, no audio.
  *
- * A few bars of clicks before bar 1, like a bandleader's "one, two, three,
- * four". They click on through a pickup: the singer comes in over them.
+ * A few bars of clicks before the song starts (playback/songStart.js: the
+ * pickup bar when there is one), like a bandleader's "one, two, three, four".
  */
 
 /** The count-in lengths offered (bars). */
