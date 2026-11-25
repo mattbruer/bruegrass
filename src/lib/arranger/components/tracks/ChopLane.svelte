@@ -1,8 +1,7 @@
 <script>
 	/**
 	 * The mandolin's lane on the Tracks page: each chord as a chip as wide as
-	 * it lasts, with the chop it plays (5 2 3 x) where there's room, marked
-	 * when it's yours. Tap one to see it and change it (`onPick`, with where
+	 * it lasts, marked when its chop is yours. Tap one to see it and change it (`onPick`, with where
 	 * it starts). The chords themselves are typed on the guitar's lane.
 	 */
 	import { writeFrets } from '../../voicings/typedFrets.js';
@@ -19,9 +18,6 @@
 	 *   picked: where the chop open in the editor starts (null: none open)
 	 */
 	let { chops, picked, onPick, scale } = $props();
-
-	/** Narrower than this (px), a chip shows only the chord. */
-	const ROOM_FOR_FRETS = 64;
 </script>
 
 <div class="lane">
@@ -41,9 +37,6 @@
 			use:tooltip={TIPS.tracks.chop}
 		>
 			<span class="name">{chop.name}</span>
-			{#if width >= ROOM_FOR_FRETS}
-				<span class="frets">{writeFrets(chop.chop.frets).replaceAll(',', ' ')}</span>
-			{/if}
 		</button>
 	{/each}
 </div>
@@ -86,19 +79,9 @@
 		font-weight: 700;
 	}
 
-	.frets {
-		font-family: var(--font-mono, monospace);
-		font-size: 0.75rem;
-		color: var(--color-ink-soft);
-	}
-
 	.chip.edited {
 		border-color: var(--color-accent);
 		border-width: 2px;
-	}
-
-	.chip.edited .frets {
-		color: var(--color-accent);
 	}
 
 	.chip.picked {
