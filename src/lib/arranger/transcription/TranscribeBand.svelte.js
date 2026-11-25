@@ -31,7 +31,8 @@ export class TranscribeBand {
 			capo: arrangement.capoFret,
 			transpose: arrangement.transpose,
 			loop: false,
-			bass: bass.written
+			bass: bass.written,
+			chops: transcription.arranger.song.chops
 		});
 	});
 

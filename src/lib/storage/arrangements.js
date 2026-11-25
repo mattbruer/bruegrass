@@ -54,7 +54,7 @@ const SONGS_KEY = 'bruegrass.arrangements';
  *   each section's bars (null: kept whole, in abc); bass: the bass line in ABC once it's been
  *   edited ('' while the band writes it from the chart); bassTune: the bass line kept by
  *   section (null: kept whole, in bass); tab: each part's TAB instrument
- *   and the strings chosen for its notes, and its tuning if not standard (tab/songTab.svelte.js); partNames: the names you gave its parts (melody/partNames.js); laneOrder: its lanes' order on the Tracks page, by id ([]: the usual order); audioClips: the clips of each audio lane you've edited (takes/clips.js; a lane not in it plays its take in use whole); video: which audio lanes film and how their tiles are laid out (video/songVideo.js); reference: the
+ *   and the strings chosen for its notes, and its tuning if not standard (tab/songTab.svelte.js); partNames: the names you gave its parts (melody/partNames.js); laneOrder: its lanes' order on the Tracks page, by id ([]: the usual order); audioClips: the clips of each audio lane you've edited (takes/clips.js; a lane not in it plays its take in use whole); chops: the mandolin chops you've changed, by where their chord starts (instruments/chopEdits.js); video: which audio lanes film and how their tiles are laid out (video/songVideo.js); reference: the
  *   recording it was transcribed from (its key and name), if any (this song is that transcription);
  *   madeFrom: the recording whose transcription it was sent from (Send to the arranger), if any; tempoCurve: the tempo lane's points, each a share of `tempo` at a place in the song (chart/tempoCurve.js); swing: how long-short the eighths are, in percent (50 straight, chart/swing.js); transpose: semitones from the Key setting;
  *   mix: the mixer's settings (see mixSnapshot in mixer.svelte.js);
@@ -79,6 +79,7 @@ export function createArrangement(fields = {}) {
 		partNames: {},
 		laneOrder: [],
 		audioClips: {},
+		chops: {},
 		video: { lanes: [], columns: 0, frame: 'reel' },
 		reference: null,
 		madeFrom: null,

@@ -44,6 +44,7 @@ const TAIL_MAX = 8;
  *   bpm: number, capo: number, transpose: number,
  *   melody: import('../melody/melody.js').Melody | null,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null,
+ *   chops?: import('../instruments/chopEdits.js').ChopEdits,
  *   swing?: number,
  *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[],
  *   partNames?: import('../melody/partNames.js').PartNames
@@ -190,6 +191,7 @@ function planRender(song, mix) {
 		loop: false,
 		melody,
 		bass: song.bass ?? null,
+		chops: song.chops,
 		swing: song.swing,
 		tempoCurve: song.tempoCurve
 	});

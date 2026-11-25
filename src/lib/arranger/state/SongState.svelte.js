@@ -40,6 +40,8 @@ export class SongState {
 	laneOrder = /** @type {string[]} */ ($state.raw([]));
 	/** The audio lanes you've edited: their clips, by record track (takes/clips.js). */
 	audioClips = /** @type {import('../takes/clips.js').EditedLanes} */ ($state.raw({}));
+	/** The mandolin chops you've changed, by where their chord starts (instruments/chopEdits.js). */
+	chops = /** @type {import('../instruments/chopEdits.js').ChopEdits} */ ($state.raw({}));
 	/** Which audio lanes film (A/V lanes) and how their tiles are laid out (video/songVideo.js). */
 	video = /** @type {import('../video/songVideo.js').SongVideo} */ ($state.raw(NO_VIDEO));
 	/** The example this song started from, until it has a name of its own: it titles a new tune. */

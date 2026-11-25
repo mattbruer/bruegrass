@@ -80,6 +80,7 @@ export function velocityFromDb(db) {
  *   capo?: number, transpose?: number, bpm?: number,
  *   melody?: import('../melody/melody.js').Melody | null, tuneDb?: Record<string, number>,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null,
+ *   chops?: import('../instruments/chopEdits.js').ChopEdits,
  *   partNames?: import('../melody/partNames.js').PartNames
  * }} options bass: the edited bass line, or null for the band's own; tuneDb: the Melody's and each harmony part's fader, by channel id; partNames: the names you gave the parts
  * @returns {Uint8Array}
@@ -93,6 +94,7 @@ export function arrangementToMidi(
 		melody = null,
 		tuneDb = {},
 		bass: writtenBass = null,
+		chops = {},
 		partNames = {}
 	} = {}
 ) {
@@ -132,12 +134,14 @@ export function arrangementToMidi(
 
 	// Mandolin chops on the off-beats, one note per string, strummed G → E
 	/** @type {MidiNote[]} */
-	const mando = quiet(chopNotes(playable, { capo: mod12(shift), bpm })).map((note) => ({
-		tick: toTicks(note.time),
-		end: toTicks(note.time) + Math.round(CHOP_LENGTH * PPQ),
-		note: note.pitch + MANDO_OFFSET,
-		velocity: velocityFromDb(note.levelDb)
-	}));
+	const mando = quiet(chopNotes(playable, { capo: mod12(shift), bpm, edits: chops })).map(
+		(note) => ({
+			tick: toTicks(note.time),
+			end: toTicks(note.time) + Math.round(CHOP_LENGTH * PPQ),
+			note: note.pitch + MANDO_OFFSET,
+			velocity: velocityFromDb(note.levelDb)
+		})
+	);
 
 	// The melody, fingered and timed as it plays in the browser, ending with the pass
 	const tune = melody

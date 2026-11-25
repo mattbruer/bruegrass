@@ -21,6 +21,7 @@
 	import TracksView from '$lib/arranger/components/tracks/TracksView.svelte';
 	import RecordingNotes from '$lib/arranger/components/recording/RecordingNotes.svelte';
 	import PartPane from '$lib/arranger/components/tracks/PartPane.svelte';
+	import ChopPane from '$lib/arranger/components/mandolin/ChopPane.svelte';
 	import VideoSection from '$lib/arranger/components/video/VideoSection.svelte';
 	import { partName } from '$lib/arranger/melody/partNames.js';
 	import { TracksCycleState } from '$lib/arranger/state/TracksCycleState.svelte.js';
@@ -29,7 +30,7 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	const { recording, loop, player, song, arrangement, layout } = useArranger();
+	const { recording, loop, player, song, arrangement, layout, mandolin } = useArranger();
 	onDestroy(loop.playThroughWhile());
 
 	const cycle = new TracksCycleState(() => rulerBars(arrangement.sections));
@@ -81,6 +82,12 @@
 		pane?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 	}
 
+	/** @param {number} start a chord stepped to in the chop editor (stopped: the playhead goes there) */
+	function pickChop(start) {
+		mandolin.pickAt(start);
+		if (!player.isPlaying) player.goTo(start);
+	}
+
 	/** What the editor follows: the band, from the playhead. */
 	const bandClock = {
 		get playing() {
@@ -119,13 +126,21 @@
 			bind:this={pane}
 			style:scroll-margin-top="calc(var(--top-bar-height, 3.5rem) + {controlsHeight}px + 1rem)"
 		>
-			<PartPane
-				voice={editing}
-				name={partName(editing, song.partNames)}
-				clock={bandClock}
-				bind:view={settings.tracks.partView}
-				onClose={() => history.back()}
-			/>
+			{#if editing === 'mandolin'}
+				<ChopPane
+					name={partName(editing, song.partNames, 'Mandolin')}
+					onPick={pickChop}
+					onClose={() => history.back()}
+				/>
+			{:else}
+				<PartPane
+					voice={editing}
+					name={partName(editing, song.partNames)}
+					clock={bandClock}
+					bind:view={settings.tracks.partView}
+					onClose={() => history.back()}
+				/>
+			{/if}
 		</div>
 	{/if}
 	{#if recording.lanes.length === 0}

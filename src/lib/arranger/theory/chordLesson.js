@@ -4,7 +4,7 @@
  * improvise on, in plain words first ("the G major scale with C♯ instead
  * of C") and then by name (A Mixolydian).
  */
-import { keyName, noteName, notePc, mod12 } from '../chart/key.js';
+import { keyName, notePc, mod12, writtenNote as written } from '../chart/key.js';
 import { readChord } from './analyzeProgression.js';
 import { chordTones, scaleOfMode, scaleToPlay } from './scaleToPlay.js';
 import { OWN_MODES } from './modes.js';
@@ -167,12 +167,6 @@ function plainlyWritten(note) {
 	return note.accidental < 0
 		? written({ letter: flatOf, accidental: -1 })
 		: written({ letter: sharpOf, accidental: 1 });
-}
-
-/** A note as a musician writes it: C♯, B♭ */
-function written(/** @type {Note} */ note) {
-	const name = noteName(note);
-	return name[0] + name.slice(1).replaceAll('#', '♯').replaceAll('b', '♭');
 }
 
 /** @param {string[]} items "A♭, B♭ and E♭" */

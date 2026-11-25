@@ -30,6 +30,7 @@ const TICK = 0.1;
  *   capo?: number, transpose?: number, bpm?: number,
  *   melody?: import('../melody/melody.js').MelodyPart | null,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null, offset?: number,
+ *   chops?: import('../instruments/chopEdits.js').ChopEdits,
  *   swing?: number,
  *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[],
  *   takes?: import('../takes/playTakes.js').PlayableClip[],
@@ -39,7 +40,7 @@ const TICK = 0.1;
  *   melody: from melodyEvents() for these sections at this tempo, played on
  *   the guitar samples through the Melody channel, locked to the band;
  *   bass, offset: the song's edited bass line and where these sections start
- *   in it (quarters), see preparePerformance;
+ *   in it (quarters), see preparePerformance; chops: the mandolin chops you've changed;
  *   takes: recorded takes to play with it; regionStart: where these sections
  *   start in the song (seconds), for the takes;
  *   countIn: at least this long before bar 1 (seconds), e.g. a bar of clicks to record after;

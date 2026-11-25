@@ -11,7 +11,8 @@
 	 * clips (tap one to edit it). Names stay
 	 * put while the lanes scroll sideways together under the playhead. A
 	 * part's lane is picked by its name or a click on the lane: `onEdit`
-	 * opens its editor.
+	 * opens its editor. The Mandolin's lane shows its chops: its name, or a
+	 * chord on it, opens the chop there.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { bandLanes } from '../../tracks/lanes.js';
@@ -38,6 +39,7 @@
 	import CameraIcon from '../video/CameraIcon.svelte';
 	import InstLaneMenu from './InstLaneMenu.svelte';
 	import ChordLane from './ChordLane.svelte';
+	import ChopLane from './ChopLane.svelte';
 	import CycleStrip from './CycleStrip.svelte';
 	import CycleSectionMenu from './CycleSectionMenu.svelte';
 	import TempoLane from '../tempo/TempoLane.svelte';
@@ -54,8 +56,28 @@
 	 */
 	let { editing, onEdit, cycle } = $props();
 
-	const { arrangement, melody, recording, player, bass, song, parts, audioEdits, history } =
-		useArranger();
+	const {
+		arrangement,
+		melody,
+		recording,
+		player,
+		bass,
+		song,
+		parts,
+		audioEdits,
+		history,
+		mandolin
+	} = useArranger();
+
+	/** The lane whose chords open the mandolin's chops. */
+	const CHOPS_LANE = 'mandolin';
+
+	/** @param {number} start open the chop of the chord starting here (stopped: the playhead goes there too) */
+	function openChop(start) {
+		mandolin.pickAt(start);
+		if (!player.isPlaying) player.goTo(start);
+		onEdit(CHOPS_LANE);
+	}
 
 	/** The names column (px); the lanes scroll under it. */
 	const HEADER_WIDTH = 186;
@@ -291,6 +313,15 @@
 							</span>
 						{/if}
 						<AudioLaneMenu {lane} {lanes} />
+					{:else if lane.id === CHOPS_LANE}
+						<button
+							type="button"
+							class="name pick"
+							aria-pressed={picked}
+							onclick={() => openChop(player.resumeAt)}
+							use:tooltip={TIPS.tracks.editChops}>{lane.name}</button
+						>
+						<InstLaneMenu {lane} {lanes} />
 					{:else if lane.kind === 'notes'}
 						<button
 							type="button"
@@ -328,6 +359,15 @@
 									: 'Press Record to record on this lane'}</span
 							>
 						{/each}
+					</div>
+				{:else if lane.id === CHOPS_LANE}
+					<div class="lane" class:lifted>
+						<ChopLane
+							chops={mandolin.chops}
+							picked={picked ? (mandolin.picked?.start ?? null) : null}
+							onPick={openChop}
+							{scale}
+						/>
 					</div>
 				{:else if lane.kind === 'chords'}
 					<div class="lane" class:lifted>

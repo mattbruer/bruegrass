@@ -66,6 +66,15 @@ export function noteName(note) {
 }
 
 /**
+ * A note as a musician writes it: C♯, B♭.
+ * @param {Note} note
+ */
+export function writtenNote(note) {
+	const name = noteName(note);
+	return name[0] + name.slice(1).replaceAll('#', '♯').replaceAll('b', '♭');
+}
+
+/**
  * Split a chord name into root, quality/extension and optional bass note.
  * @param {string} name e.g. "G", "F#m7", "Bb/D"
  */

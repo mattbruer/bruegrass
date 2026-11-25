@@ -32,6 +32,7 @@ import { tempoClock } from '../chart/tempoCurve.js';
  *   bpm?: number, capo?: number, transpose?: number, loop?: boolean,
  *   melody?: import('../melody/melody.js').MelodyPart | null,
  *   bass?: import('./bassline.js').BassNote[] | null, offset?: number,
+ *   chops?: import('./chopEdits.js').ChopEdits,
  *   swing?: number,
  *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[]
  * }} options
@@ -41,7 +42,7 @@ import { tempoClock } from '../chart/tempoCurve.js';
  *   channel (Melody, or a harmony part's);
  *   bass: the song's edited bass line (BassState.written), or null for the
  *   band's own; offset: where these sections start in the song (quarters),
- *   for the edited bass;
+ *   for the edited bass and chops; chops: the mandolin chops you've changed;
  *   swing: how long-short the eighths are (chart/swing.js), for every instrument;
  *   tempoCurve: the tempo lane's points (chart/tempoCurve.js), a ritard say
  */
@@ -55,6 +56,7 @@ export function preparePerformance(
 		melody = null,
 		bass = null,
 		offset = 0,
+		chops = {},
 		swing = SWING_STRAIGHT,
 		tempoCurve = []
 	} = {}
@@ -106,7 +108,7 @@ export function preparePerformance(
 		}),
 		{ bpm }
 	);
-	const chops = quiet(chopNotes(sections, concert)).map((note) => ({
+	const chopped = quiet(chopNotes(sections, { ...concert, edits: chops, offset })).map((note) => ({
 		...note,
 		time: timeOnTheClock(note.time)
 	}));
@@ -137,8 +139,8 @@ export function preparePerformance(
 			feel: touch(bpm)
 		},
 		mandolin: {
-			chops,
-			urls: chops.map((note) => mandoSampleUrl(note.course, note.fret))
+			chops: chopped,
+			urls: chopped.map((note) => mandoSampleUrl(note.course, note.fret))
 		},
 		bass: {
 			notes: loop ? bassNotes : bassNotes.filter((note) => note.time < passLength),

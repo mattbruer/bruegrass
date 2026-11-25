@@ -13,6 +13,7 @@
  *   arranger.song          which song is open; New, Open, Rename; it saves itself
  *   arranger.recording     recording along with the band, and the song's takes
  *   arranger.audioEdits    editing the audio lanes' clips (trim, split, comp, level, fades)
+ *   arranger.mandolin      the mandolin's chop for each chord, and changing one
  *   arranger.history       Undo and Redo for the Tracks page's edits
  *   arranger.receive       a song someone sent (a share link or song file), waiting to be opened
  *   arranger.transcription the Transcribe page's work on a recording (kept while you visit the other pages)
@@ -31,6 +32,7 @@ import { ReceiveState } from './ReceiveState.svelte.js';
 import { PartsState } from './PartsState.svelte.js';
 import { TranscriptionState } from '../transcription/TranscriptionState.svelte.js';
 import { AudioEditsState } from './AudioEditsState.svelte.js';
+import { MandolinState } from './MandolinState.svelte.js';
 import { EditHistory } from './EditHistory.svelte.js';
 import { HarmonyFollowState } from './HarmonyFollowState.svelte.js';
 import { ChartFollowsTuneState } from './ChartFollowsTuneState.svelte.js';
@@ -77,16 +79,26 @@ export class Arranger {
 	loop = new LoopState(this.arrangement);
 	melody = new MelodyState((tune) => this.#tuneLayout(unitOfHeader(tune.header)));
 	bass = new BassState(() => this.#bassLayout());
-	player = new PlayerState(this.arrangement, this.loop, this.melody, this.bass);
+	player = new PlayerState(
+		this.arrangement,
+		this.loop,
+		this.melody,
+		this.bass,
+		() => this.song.chops
+	);
 	/** How many songs have been put on the page: a new one's chart isn't an edit of the last. */
 	songsLoaded = $state(0);
 	layout = new PageLayoutState();
-	/** Undo and Redo for the audio lanes' clips, the tempo lane and harmony rewrites. */
+	/** Undo and Redo for the audio lanes' clips, the mandolin's chops, the tempo lane and harmony rewrites. */
 	history = new EditHistory(
 		{
 			audioClips: {
 				read: () => this.song.audioClips,
 				write: (clips) => (this.song.audioClips = /** @type {any} */ (clips))
+			},
+			chops: {
+				read: () => this.song.chops,
+				write: (chops) => (this.song.chops = /** @type {any} */ (chops))
 			},
 			tempoCurve: {
 				read: () => this.arrangement.tempoCurve,
@@ -111,6 +123,8 @@ export class Arranger {
 	parts = new PartsState(this);
 	/** Editing the audio lanes' clips. */
 	audioEdits = new AudioEditsState(this);
+	/** The mandolin's chops, and changing one. */
+	mandolin = new MandolinState(this);
 	/** A song someone sent, waiting to be opened. */
 	receive = new ReceiveState(this);
 	/** Transcribing a recording: kept while you visit the other pages, so coming back carries on. */

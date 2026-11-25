@@ -381,6 +381,18 @@
 			"addedAt": "2026-11-23"
 		},
 		{
+			"id": "chop-editor-next",
+			"text": "Chop editor: hear the chop on its own, and use it for every same chord in the song",
+			"done": false,
+			"addedAt": "2026-11-25"
+		},
+		{
+			"id": "guitar-shape-editor",
+			"text": "The Guitar lane opens the same diagram editor for its shapes (six strings, boom notes marked)",
+			"done": false,
+			"addedAt": "2026-11-25"
+		},
+		{
 			"id": "tutor-reads-book",
 			"text": "Chord tutor and harmony parts read the Berklee tables (chordScaleFor) so there's one place for chord scales",
 			"done": false,

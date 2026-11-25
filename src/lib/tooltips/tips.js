@@ -170,6 +170,15 @@ export const TIPS = Object.freeze({
 		close: 'Close the editor (or go Back).'
 	},
 
+	chopEditor: {
+		before: 'The chord before, and its chop.',
+		after: 'The chord after, and its chop.',
+		frets:
+			'The chop’s frets, G course to E course, x for a muted course: 5,3,2,x. The diagram follows as you type.',
+		openOrMute: 'Tap to play this course open, or to mute it.',
+		bands: 'Forget your chop here: the band picks its own again.'
+	},
+
 	chordLane: {
 		bar: 'Tap to type this bar’s chords: a box on each beat a chord can change on (1 and 3 in 4/4), the chord where it changes.'
 	},
@@ -423,6 +432,9 @@ export const TIPS = Object.freeze({
 			'How fast the song goes, bar by bar. Tap or click to add a point and drag it up or down to slow down or speed up there, for a ritard at the end. Double-tap a point to remove it.',
 		edit: 'Open the editor to write the chords and the melody as text. The lanes change as you type.',
 		editPart: 'Edit this part: its piano roll opens under the lanes, and the band keeps playing.',
+		editChops:
+			'See the mandolin’s chops: the chord diagram for each chord opens under the lanes, to change.',
+		chop: 'Tap to see this chord’s mandolin chop, and change it. (Type chords on the guitar’s lane.)',
 		addVideoLane:
 			'Add an A/V lane: it films you with the camera as it records the sound, and its video shows with the others. You name it first.',
 		filmed: 'An A/V lane: Record films with the camera as well as recording the sound.'

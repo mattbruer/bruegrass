@@ -1,26 +1,38 @@
 /**
- * A chord shape typed as frets, low E to high e: `3,x,0,0,3,3`, or
- * `3x0033` when every fret is a single digit (easier on a phone).
- * x (or -) is a muted string.
+ * A chord shape typed as frets, lowest string first: `3,x,0,0,3,3` on the
+ * guitar, or `3x0033` when every fret is a single digit (easier on a
+ * phone); brackets around it are fine (`[5,3,2,x]`). x (or -) is a muted
+ * string. The instrument says how many strings and frets.
  */
 import { MAX_FRET } from '../instruments/guitar.js';
 
-const STRINGS = 6;
-const EXAMPLE = '3,x,0,0,3,3';
+/**
+ * @typedef {{ strings: number, maxFret: number, order: string, example: string }} FrettedNeck
+ *   order: how the strings run, in words; example: a shape, as typed
+ */
+
+/** @type {FrettedNeck} */
+const GUITAR = { strings: 6, maxFret: MAX_FRET, order: 'low E to high e', example: '3,x,0,0,3,3' };
+
+const COUNTS = ['None', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
 
 /**
  * @param {string} text
+ * @param {FrettedNeck} [neck]
  * @returns {{ frets: (number | null)[] | null, error: string }}
  */
-export function readFrets(text) {
-	const trimmed = text.trim();
+export function readFrets(text, neck = GUITAR) {
+	const trimmed = text
+		.trim()
+		.replace(/^\[|\]$/g, '')
+		.trim();
 	if (trimmed === '') return { frets: null, error: '' };
 
 	const parts = /[\s,]/.test(trimmed) ? trimmed.split(/[\s,]+/).filter(Boolean) : [...trimmed];
-	if (parts.length !== STRINGS) {
+	if (parts.length !== neck.strings) {
 		return {
 			frets: null,
-			error: `Six frets, low E to high e, like ${EXAMPLE} (that's ${parts.length})`
+			error: `${COUNTS[neck.strings] ?? neck.strings} frets, ${neck.order}, like ${neck.example} (that's ${parts.length})`
 		};
 	}
 
@@ -31,9 +43,11 @@ export function readFrets(text) {
 			frets.push(null);
 			continue;
 		}
-		if (!/^\d+$/.test(part)) return { frets: null, error: `“${part}” isn't a fret: use 0–12 or x` };
+		if (!/^\d+$/.test(part))
+			return { frets: null, error: `“${part}” isn't a fret: use 0–${neck.maxFret} or x` };
 		const fret = Number(part);
-		if (fret > MAX_FRET) return { frets: null, error: `Fret ${fret} is past fret ${MAX_FRET}` };
+		if (fret > neck.maxFret)
+			return { frets: null, error: `Fret ${fret} is past fret ${neck.maxFret}` };
 		frets.push(fret);
 	}
 	return { frets, error: '' };

@@ -30,6 +30,8 @@ export class PlayerState {
 	#melody;
 	/** @type {import('./BassState.svelte.js').BassState} */
 	#bass;
+	/** The mandolin chops you've changed (the song's). */
+	#chops;
 
 	/** What's playing now (null when stopped). Its position() and beats() read the audio clock. */
 	playback = /** @type {Playback | null} */ ($state(null));
@@ -70,12 +72,14 @@ export class PlayerState {
 	 * @param {import('./LoopState.svelte.js').LoopState} loop
 	 * @param {import('./MelodyState.svelte.js').MelodyState} melody
 	 * @param {import('./BassState.svelte.js').BassState} bass
+	 * @param {() => import('../instruments/chopEdits.js').ChopEdits} chops
 	 */
-	constructor(arrangement, loop, melody, bass) {
+	constructor(arrangement, loop, melody, bass, chops) {
 		this.#arrangement = arrangement;
 		this.#loop = loop;
 		this.#melody = melody;
 		this.#bass = bass;
+		this.#chops = chops;
 		this.metronome = new MetronomeState(this);
 	}
 
@@ -108,6 +112,7 @@ export class PlayerState {
 				bpm,
 				melody: this.#melodyForThisPass(),
 				bass: this.#bass.written,
+				chops: this.#chops(),
 				swing: this.#arrangement.swing,
 				tempoCurve: this.#arrangement.tempoCurve,
 				offset: this.#loop.startInSong,
