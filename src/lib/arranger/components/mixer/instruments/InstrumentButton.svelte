@@ -42,6 +42,8 @@
 		justify-content: space-between;
 		gap: 0.3rem;
 		width: 100%;
+		/* The name never widens the strip: it fits the strip, cut short if long */
+		contain: inline-size;
 		padding: 0.3rem 0.4rem;
 		font-size: 0.72rem;
 		font-weight: 700;
