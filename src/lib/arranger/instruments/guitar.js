@@ -314,15 +314,21 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 	const passes = loop ? kept + 1 : 1;
 	const end = loop ? passes * passLength : passLength + 2 * quarter;
 	const sequence = Array.from({ length: passes }, (_, p) =>
-		slots.map((slot) => ({ name: slot.name, start: (slot.start + p * quarters) * quarter }))
+		slots.map((slot, k) => ({
+			name: slot.name,
+			start: (slot.start + p * quarters) * quarter,
+			fill: chords[k].fill !== null
+		}))
 	).flat();
 
-	// When each slot's chord stops (next different chord, or the end)
+	// When each slot's chord stops (next different chord, a fill, or the end)
 	const chordEnds = new Array(sequence.length);
 	let chordEnd = end;
 	for (let k = sequence.length - 1; k >= 0; k--) {
 		chordEnds[k] = chordEnd;
-		if (k > 0 && sequence[k - 1].name !== sequence[k].name) chordEnd = sequence[k].start;
+		const before = sequence[k - 1];
+		const changes = before && (before.name !== sequence[k].name || before.fill || sequence[k].fill);
+		if (changes) chordEnd = sequence[k].start;
 	}
 
 	const { levelDb } = touch(bpm);
@@ -337,7 +343,7 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 	for (let p = 0; p < passes; p++) {
 		beats.forEach((beat, b) => {
 			const note = notes[b];
-			if (!note) return;
+			if (!note || chords[beat.slot].fill) return;
 			const k = p * slots.length + beat.slot;
 			events.push({
 				time: (beat.time + p * quarters) * quarter,
@@ -357,7 +363,7 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 			if (hit && hit.start < boom.time - 1e-6) return; // a hit rings here
 			for (const stroke of patternStrokes(hit?.hit ?? pattern, boom.length)) {
 				const beat = b + Math.floor(stroke.at);
-				if (notes[beat]) continue;
+				if (notes[beat] || chords[beats[beat].slot].fill) continue; // yours, or a fill: the guitar rests
 				const played = chords[beats[beat].slot];
 				const k = p * slots.length + beats[beat].slot;
 				const chord = sequence[k].name;

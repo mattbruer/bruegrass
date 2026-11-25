@@ -10,13 +10,14 @@
 
 	/**
 	 * @type {{
-	 *   chords: { start: number, length: number, bar: number, name: string, edited: boolean }[],
+	 *   chords: { start: number, length: number, bar: number, name: string, edited: boolean, fill?: string | null }[],
 	 *   picked: number | null,
 	 *   onPick: (start: number) => void,
 	 *   tip: string,
 	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>
 	 * }}
-	 *   picked: where the chord open in the editor starts (null: none open)
+	 *   picked: where the chord open in the editor starts (null: none open);
+	 *   fill: a part plays a fill there instead (the instrument rests)
 	 */
 	let { chords, picked, onPick, tip, scale } = $props();
 </script>
@@ -27,14 +28,20 @@
 			type="button"
 			class="chip"
 			class:edited={chord.edited}
+			class:fill={chord.fill}
 			class:picked={picked === chord.start}
 			style:left="{scale.toX(chord.start) + 2}px"
 			style:width="{scale.toX(chord.start + chord.length) - scale.toX(chord.start) - 4}px"
-			aria-label="{chord.name} in bar {chord.bar}{chord.edited ? ', changed by you' : ''}"
+			aria-label="{chord.name} in bar {chord.bar}{chord.fill
+				? ', a fill'
+				: chord.edited
+					? ', changed by you'
+					: ''}"
 			onclick={() => onPick(chord.start)}
 			use:tooltip={tip}
 		>
 			<span class="name">{chord.name}</span>
+			{#if chord.fill}<span class="tag">fill</span>{/if}
 		</button>
 	{/each}
 </div>
@@ -80,6 +87,18 @@
 	.chip.edited {
 		border-color: var(--color-accent);
 		border-width: 2px;
+	}
+
+	.chip.fill {
+		border-style: dashed;
+	}
+
+	.tag {
+		margin-left: 0.4rem;
+		font-size: 0.7rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		color: var(--color-accent);
 	}
 
 	.chip.picked {

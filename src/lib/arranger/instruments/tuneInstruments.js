@@ -7,7 +7,10 @@
  * The samples load from where the sets are published (GitHub Pages) for
  * now; copying them to our own storage is a change to `url` only.
  * Licences: tonejs-instruments CC BY 3.0 (credit nbrosowsky), FluidR3 GM MIT.
+ * The band's own guitar (our samples, one per string and fret) is here too,
+ * for parts that are the guitar's: a fill sounds like the guitar playing it.
  */
+import { BAND_GUITAR_NOTES, bandGuitarSampleUrl } from './guitarSamples.js';
 
 /**
  * @typedef {{
@@ -40,6 +43,10 @@ export const SAMPLE_SETS = {
 		/** @param {string} folder @param {number} midi */
 		url: (folder, midi) =>
 			`https://nbrosowsky.github.io/tonejs-instruments/samples/${folder}/${NOTE_NAMES[midi % 12].replace('#', 's')}${octaveOf(midi)}.mp3`
+	},
+	band: {
+		/** @param {string} _folder @param {number} midi */
+		url: (_folder, midi) => bandGuitarSampleUrl(midi)
 	},
 	fluidR3: {
 		/** @param {string} folder @param {number} midi */
@@ -101,6 +108,9 @@ const fluidR3 = (folder, name, family, octave = 12) => ({
 	volumeDb: 0
 });
 
+/** The band's own guitar, for a part the guitar plays (its fills). */
+export const BAND_GUITAR = 'band-guitar';
+
 /** @type {TuneInstrument[]} */
 export const TUNE_INSTRUMENTS = [
 	tonejs(
@@ -119,6 +129,16 @@ export const TUNE_INSTRUMENTS = [
 	fluidR3('rock_organ', 'Rock organ', 'Organ'),
 	fluidR3('accordion', 'Accordion', 'Reeds'),
 	fluidR3('tango_accordion', 'Tango accordion', 'Reeds'),
+	{
+		id: BAND_GUITAR,
+		name: 'Bluegrass guitar (the band’s)',
+		family: 'Plucked',
+		set: 'band',
+		folder: '',
+		notes: BAND_GUITAR_NOTES,
+		octave: 0,
+		volumeDb: 0
+	},
 	fluidR3('banjo', 'Banjo', 'Plucked'),
 	fluidR3('sitar', 'Sitar', 'Plucked'),
 	fluidR3('pizzicato_strings', 'Pizzicato strings', 'Plucked'),

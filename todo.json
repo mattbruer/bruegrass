@@ -388,7 +388,7 @@
 		},
 		{
 			"id": "eighth-note-runs",
-			"text": "Guitar runs in eighth notes: split a beat in two (the G run)",
+			"text": "Fills: mark several chords in one go, and the part editor scrolls to the fill",
 			"done": false,
 			"addedAt": "2026-11-25"
 		},

@@ -4,7 +4,8 @@
 	 * parts: the shape the left hand holds (typed low E to high e, or tapped
 	 * on the diagram), and what the right hand does on each beat (the boom's
 	 * one low note, the chuck's strummed strings, or a note of your own
-	 * instead, for a run between chords: never the band's own idea). Pick a beat and the
+	 * instead, for a run between chords: never the band's own idea). Or
+	 * the chord can be a fill: the guitar rests, and a part you write plays. Pick a beat and the
 	 * diagram lights the strings it plays. The notes are named against the
 	 * chord, listed and drawn on a staff. ‹ › step through the song's chords.
 	 * A change is saved with the song for this chord at this place; Band's
@@ -26,14 +27,28 @@
 	import BeatStrings from './BeatStrings.svelte';
 	import NotePicker from './NotePicker.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
+	import FillChoice from './FillChoice.svelte';
+	import { FILL_PART_NAME } from '../../state/GuitarState.svelte.js';
 
 	/**
-	 * @type {{ name: string, onPick: (start: number) => void, onClose?: () => void }}
-	 *   name: the lane's name; onPick: a chord was stepped to (the host moves the playhead there)
+	 * @type {{
+	 *   name: string,
+	 *   onPick: (start: number) => void,
+	 *   onOpenPart?: (id: string) => void,
+	 *   onClose?: () => void
+	 * }}
+	 *   name: the lane's name; onPick: a chord was stepped to (the host moves the playhead there);
+	 *   onOpenPart: open a part's editor (a fill's)
 	 */
-	let { name, onPick, onClose } = $props();
+	let { name, onPick, onOpenPart, onClose } = $props();
 
-	const { guitar } = useArranger();
+	const { guitar, parts } = useArranger();
+
+	/** Leave the chord to a fill, and open the part to write it in. */
+	async function writeFill() {
+		const part = await guitar.writeFill();
+		if (part) onOpenPart?.(part);
+	}
 
 	/** The strings' names, low E first. */
 	const STRING_NAMES = ['E', 'A', 'D', 'G', 'B', 'e'];
@@ -157,35 +172,54 @@
 			<div class="flex min-w-64 flex-1 flex-col gap-4">
 				<div class="flex flex-col gap-2">
 					<h3 class="heading">The right hand, beat by beat</h3>
-					<BeatPattern
-						{cards}
-						selected={Math.min(selected, cards.length - 1)}
-						onSelect={(i) => (selected = i)}
-					/>
-					{#if beat}
-						<TabSwitch
-							bind:value={() => (beat.note ? 'note' : beat.role), setKind}
-							tabs={kinds}
-							tips={TIPS.guitarEditor.kinds}
-							label="What this beat plays"
+					{#if chord.fill}
+						<FillChoice
+							fill={chord.fill}
+							partName={guitar.fillPart ? parts.name(guitar.fillPart) : FILL_PART_NAME}
+							canWrite={guitar.fillPart !== null || parts.canAdd}
+							onWrite={writeFill}
+							onOpen={() => chord?.fill && onOpenPart?.(chord.fill)}
+							onEnd={() => guitar.endFill()}
 						/>
-					{/if}
-					{#if beat?.note}
-						<NotePicker
-							note={beat.note}
-							strings={STRING_NAMES}
-							open={OPEN_MIDI}
-							maxFret={MAX_FRET}
-							chordName={chord.name}
-							onChange={setNote}
+					{:else}
+						<BeatPattern
+							{cards}
+							selected={Math.min(selected, cards.length - 1)}
+							onSelect={(i) => (selected = i)}
 						/>
-					{:else if beat}
-						<BeatStrings
-							role={beat.role}
-							chosen={stringsOf(beat)}
-							{notes}
-							strings={STRING_NAMES}
-							onChange={changeBeat}
+						{#if beat}
+							<TabSwitch
+								bind:value={() => (beat.note ? 'note' : beat.role), setKind}
+								tabs={kinds}
+								tips={TIPS.guitarEditor.kinds}
+								label="What this beat plays"
+							/>
+						{/if}
+						{#if beat?.note}
+							<NotePicker
+								note={beat.note}
+								strings={STRING_NAMES}
+								open={OPEN_MIDI}
+								maxFret={MAX_FRET}
+								chordName={chord.name}
+								onChange={setNote}
+							/>
+						{:else if beat}
+							<BeatStrings
+								role={beat.role}
+								chosen={stringsOf(beat)}
+								{notes}
+								strings={STRING_NAMES}
+								onChange={changeBeat}
+							/>
+						{/if}
+						<FillChoice
+							fill={chord.fill}
+							partName={guitar.fillPart ? parts.name(guitar.fillPart) : FILL_PART_NAME}
+							canWrite={guitar.fillPart !== null || parts.canAdd}
+							onWrite={writeFill}
+							onOpen={() => chord?.fill && onOpenPart?.(chord.fill)}
+							onEnd={() => guitar.endFill()}
 						/>
 					{/if}
 				</div>

@@ -2,7 +2,8 @@
  * What the guitar plays on each chord of the song, decided before anything
  * is timed: the shape the hand holds, the note each boom plays and the
  * strings each chuck strums, and any beat you've made a single picked note
- * instead (a run between chords: only ever yours). Yours where you've
+ * instead (a run between chords: only ever yours), or a fill: the chord
+ * left to a part you write, the guitar resting. Yours where you've
  * changed them (guitarEdits.js), else the band's: the chord book's shape, booms
  * alternating root and 5th (a new chord, or a new pass, starts on its
  * root), chucks on the strum strings. guitar.js times it all.
@@ -23,11 +24,12 @@ import { hitAt, hitSpans } from '../chart/hits.js';
  * @typedef {{
  *   start: number, length: number, bar: number, name: string,
  *   shape: Shape, booms: Boom[], chucks: number[][], beats: ChordBeat[],
- *   yours: { shape: boolean, booms: boolean, chucks: boolean, notes: boolean }, edited: boolean
+ *   yours: { shape: boolean, booms: boolean, chucks: boolean, notes: boolean, fill: boolean },
+ *   edited: boolean, fill: string | null
  * }} GuitarChord
  *   start, length: where it is in the song (quarters from bar 1); bar: its bar, from 1;
  *   name: as written; chucks: the strings each chuck strums, low first;
- *   yours: which parts you've changed
+ *   yours: which parts you've changed; fill: the part playing a fill here (the guitar rests), or null
  */
 
 /**
@@ -69,7 +71,8 @@ export function guitarChords(sections, { edits = {}, offset = 0 } = {}) {
 			shape: !!change.shape,
 			booms: !!change.booms,
 			chucks: !!change.chucks,
-			notes: own.some((beat) => beat.note !== null)
+			notes: own.some((beat) => beat.note !== null),
+			fill: !!change.fill
 		};
 		return {
 			start,
@@ -81,7 +84,8 @@ export function guitarChords(sections, { edits = {}, offset = 0 } = {}) {
 			chucks,
 			beats: own,
 			yours,
-			edited: Object.values(yours).some(Boolean)
+			edited: Object.values(yours).some(Boolean),
+			fill: change.fill ?? null
 		};
 	});
 }
