@@ -432,6 +432,15 @@ export const TIPS = Object.freeze({
 		open: 'Watch the A/V lanes’ videos side by side, as big as the screen allows.',
 		back: 'Back to the tracks.',
 		layout: 'Lay the videos out this way: how many across, and as many rows down as that takes.',
+		frame:
+			'The finished video’s shape: a Reel (9:16, tall, for Facebook and Instagram Reels), a feed post (4:5) or wide (16:9).',
+		covered:
+			'Facebook covers this part of a reel with its name, caption and buttons: keep faces and hands out of it.',
+		camera:
+			'The camera A/V lanes film with. On a Mac, a nearby iPhone shows here too (Continuity Camera). Kept on this device.',
+		earlier:
+			'Show this take’s picture a little earlier, if it looks late against its sound (a camera can lag, an iPhone over Continuity Camera more).',
+		later: 'Show this take’s picture a little later, if it looks early against its sound.',
 		tile: 'This lane’s video, in time with the band. It plays the same takes and clips as the lane’s sound.'
 	},
 

@@ -14,7 +14,7 @@ import { openMicInput } from '$lib/audio/recording/micInput.js';
 import { holdForMic } from '$lib/audio/audioSession.js';
 import { createTakeRecorder } from '$lib/audio/recording/takeRecorder.js';
 import { createWorkletNode } from '../../audio/worklets/worklets.js';
-import { CAMERA } from '$lib/video/camera.js';
+import { cameraConstraints } from '$lib/video/camera.js';
 import { createVideoRecorder } from '$lib/video/videoRecorder.js';
 
 /** Input names that mean Bluetooth: a long delay, and call-quality sound. */
@@ -23,13 +23,19 @@ const BLUETOOTH_NAMES = /airpods|bluetooth|hands-?free|beats|buds/i;
 /**
  * @param {typeof import('tone')} Tone
  * @param {string | null} deviceId which input (null: the device's default)
- * @param {{ filming?: boolean }} [options] filming: an A/V lane's take, with the camera
+ * @param {{ filming?: boolean, cameraId?: string | null }} [options] filming: an A/V lane's
+ *   take, with the camera (cameraId: which; null: the front camera)
  */
-export async function openRecordAlong(Tone, deviceId, { filming = false } = {}) {
+export async function openRecordAlong(Tone, deviceId, { filming = false, cameraId = null } = {}) {
 	const releaseSession = holdForMic(); // iPhone/iPad: before anything is awaited, while still in the tap
 	const audio = /** @type {AudioContext} */ (/** @type {unknown} */ (Tone.getContext().rawContext));
 	const mic = await Tone.start()
-		.then(() => openMicInput(audio, deviceId, { channels: 1, camera: filming ? CAMERA : null }))
+		.then(() =>
+			openMicInput(audio, deviceId, {
+				channels: 1,
+				camera: filming ? cameraConstraints(cameraId) : null
+			})
+		)
 		.catch((problem) => {
 			releaseSession();
 			throw problem;

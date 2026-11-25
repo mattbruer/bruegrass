@@ -21,9 +21,15 @@
 			"addedAt": "2026-11-24"
 		},
 		{
-			"id": "video-nudge",
-			"text": "Video: Earlier / Later for a take's film, if a camera's own delay shows",
+			"id": "video-continuity",
+			"text": "Video: film with an iPhone as the Mac's camera (Continuity Camera): pick it, record, and see how late its picture is",
 			"done": false,
+			"addedAt": "2026-11-24"
+		},
+		{
+			"id": "video-nudge",
+			"text": "Video: Earlier / Later for a take's picture (a camera's own delay)",
+			"done": true,
 			"addedAt": "2026-11-24"
 		},
 		{
@@ -34,7 +40,7 @@
 		},
 		{
 			"id": "video-share",
-			"text": "Video: films in a shared song file, and one finished video of the tiles to export (WebCodecs + a small MP4 muxer)",
+			"text": "Video: films in a shared song file, and one finished 1080×1920 reel of the tiles to export (WebCodecs + a small MP4 muxer)",
 			"done": false,
 			"addedAt": "2026-11-24"
 		},

@@ -79,7 +79,7 @@ export function createArrangement(fields = {}) {
 		partNames: {},
 		laneOrder: [],
 		audioClips: {},
-		video: { lanes: [], columns: 0 },
+		video: { lanes: [], columns: 0, frame: 'reel' },
 		reference: null,
 		madeFrom: null,
 		tempo: 120,

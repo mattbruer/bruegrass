@@ -54,16 +54,13 @@
 <style>
 	.tile {
 		position: relative;
-		aspect-ratio: 16 / 9;
 		overflow: hidden;
-		border-radius: var(--corner-card);
 		background: var(--video-screen);
-		box-shadow: var(--shadow-sunk);
 	}
 	.film {
 		width: 100%;
 		height: 100%;
-		object-fit: contain; /* a phone held upright films tall: show all of it */
+		object-fit: cover; /* as the finished video will: each film fills its tile */
 	}
 	.mirrored {
 		transform: scaleX(-1);
@@ -80,8 +77,8 @@
 	}
 	figcaption {
 		position: absolute;
-		left: 0.5rem;
-		bottom: 0.5rem;
+		left: 0.375rem;
+		top: 0.375rem;
 		padding: 0.125rem 0.5rem;
 		border-radius: var(--corner-small);
 		font-size: 0.75rem;

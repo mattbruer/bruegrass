@@ -7,6 +7,7 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import { formatClock } from '$lib/utils/formatClock.js';
+	import FilmNudge from '../video/FilmNudge.svelte';
 
 	/** @type {{ trackId: string }} */
 	let { trackId } = $props();
@@ -82,6 +83,10 @@
 								Later
 							</button>
 						</div>
+					{/if}
+
+					{#if take.inUse && take.video}
+						<FilmNudge {take} />
 					{/if}
 
 					{#if take.bpm !== arrangement.bpm}

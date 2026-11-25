@@ -91,6 +91,13 @@ export const settings = $state({
 		zoom: { across: 1, down: 1 }
 	},
 
+	// Video: set beside the A/V lanes' videos
+
+	video: {
+		/** The camera A/V lanes film with (a deviceId; null: the front camera). */
+		camera: /** @type {string | null} */ (null)
+	},
+
 	// The tuner: set from its dialog
 
 	tuner: {

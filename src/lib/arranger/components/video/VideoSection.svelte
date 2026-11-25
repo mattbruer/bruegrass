@@ -8,6 +8,7 @@
 	import { useArranger } from '../../state/context.js';
 	import VideoWall from './VideoWall.svelte';
 	import VideoLayoutPicker from './VideoLayoutPicker.svelte';
+	import CameraPicker from './CameraPicker.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -19,6 +20,7 @@
 		<div class="flex flex-wrap items-center justify-between gap-3">
 			<h2 class="text-lg font-semibold">Video</h2>
 			<div class="flex flex-wrap items-center gap-3">
+				<CameraPicker disabled={recording.isRecording} />
 				<VideoLayoutPicker />
 				<a
 					href={resolve('/arranger/video')}

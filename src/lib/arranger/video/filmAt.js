@@ -20,7 +20,11 @@ export function filmAt(clips, seconds) {
 	if (!here?.take.video) return null;
 	return {
 		take: here.take,
-		time: here.take.video.offset + here.clip.from + (seconds - here.start) / here.stretch,
+		time:
+			here.take.video.offset -
+			here.take.video.nudgeMs / 1000 +
+			here.clip.from +
+			(seconds - here.start) / here.stretch,
 		speed: 1 / here.stretch
 	};
 }

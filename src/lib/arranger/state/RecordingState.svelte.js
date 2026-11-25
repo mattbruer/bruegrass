@@ -20,6 +20,7 @@ import {
 	useTake
 } from '$lib/storage/songTakes.js';
 import { downloadFile } from '$lib/utils/downloadFile.js';
+import { settings } from '$lib/settings/settings.svelte.js';
 import { slugify } from '$lib/utils/slugify.js';
 import { RECORD_TRACKS, trackName } from '../takes/recordTracks.js';
 import { freeTrack, takeLanes } from '../tracks/lanes.js';
@@ -179,7 +180,10 @@ export class RecordingState {
 		let rig = null;
 		try {
 			const Tone = await import('tone');
-			rig = await openRecordAlong(Tone, null, { filming: isFilmed(song.video, trackId) });
+			rig = await openRecordAlong(Tone, null, {
+				filming: isFilmed(song.video, trackId),
+				cameraId: settings.video.camera
+			});
 			this.camera = rig.camera;
 			await rig.video?.start();
 			const regionStart = arrangement.clock.secondsAt(loop.startInSong);
@@ -236,6 +240,7 @@ export class RecordingState {
 		this.status = 'saving';
 		try {
 			const take = await rig.recorder.stop();
+			const picture = rig.camera?.getVideoTracks()[0]?.getSettings();
 			const film = (await rig.video?.stop()) ?? null;
 			const seconds = (take.channels[0]?.length ?? 0) / take.sampleRate;
 			this.lastInput = {
@@ -258,7 +263,13 @@ export class RecordingState {
 					nudgeMs: 0,
 					latencyMs: Math.round(rig.roundTrip * 1000),
 					video: film
-						? { type: film.type, offset: await filmOffset(film, take, filmStarted, rig.audio) }
+						? {
+								type: film.type,
+								offset: await filmOffset(film, take, filmStarted, rig.audio),
+								nudgeMs: 0,
+								width: picture?.width ?? 0,
+								height: picture?.height ?? 0
+							}
 						: null
 				},
 				take.channels,
@@ -334,6 +345,17 @@ export class RecordingState {
 		await updateTake({ ...take, nudgeMs: take.nudgeMs + changeMs });
 		await this.#reload();
 		this.#arranger.player.restartIfPlaying();
+	}
+
+	/**
+	 * Move an A/V take's picture later (negative: earlier) by eye, for a camera's own delay.
+	 * @param {TakeDocument} take
+	 * @param {number} changeMs
+	 */
+	async nudgeFilm(take, changeMs) {
+		if (!take.video) return;
+		await updateTake({ ...take, video: { ...take.video, nudgeMs: take.video.nudgeMs + changeMs } });
+		await this.#reload();
 	}
 
 	/** @param {TakeDocument} take make it the one its track plays, whole (Undo brings back the lane's edit) */

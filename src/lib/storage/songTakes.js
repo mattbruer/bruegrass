@@ -42,9 +42,10 @@ const DATABASE_VERSION = 2;
  *   nudgeMs: moved by ear on top of that;
  *   quality: 'compressed' when it arrived in a shared song (sent compressed), else 'full';
  *   video: an A/V take's film (missing or null: sound only)
- * @typedef {{ type: string, offset: number }} TakeVideo
+ * @typedef {{ type: string, offset: number, nudgeMs: number, width: number, height: number }} TakeVideo
  *   type: the file's format (video/mp4…); offset: seconds into the film where the take's
- *   first sample is
+ *   first sample is; nudgeMs: the picture moved later (negative: earlier) by eye, for a
+ *   camera's own delay; width, height: the picture's size as filmed
  */
 
 const database = keptOpen(DATABASE, DATABASE_VERSION, (db, oldVersion) => {
