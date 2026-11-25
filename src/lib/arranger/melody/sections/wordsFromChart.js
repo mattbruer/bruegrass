@@ -6,7 +6,7 @@
  */
 import { tuneReader } from '../abcjs.js';
 import { abcWithWords } from '../words/abcWithWords.js';
-import { hasLyrics } from '../roll/drawnMelody.js';
+import { hasLyrics } from '../words/wordsAgain.js';
 
 /**
  * @param {string} abc the tune as played

@@ -33,8 +33,9 @@ const COST_AWAY_FROM_HOME = 10;
 const COST_PER_FRET = 1;
 
 /**
- * @typedef {{ t: number, src: number, length: number, startChar: number | undefined, chord: string | null }} Item
- *   one note or rest as played: t/src/length in quarters; chord: its chord symbol
+ * @typedef {{ t: number, src: number, length: number, startChar: number | undefined, endChar: number | undefined, rest: boolean, chord: string | null }} Item
+ *   one note or rest as played: t/src/length in quarters; startChar/endChar: where it's
+ *   written in the ABC; chord: its chord symbol
  * @typedef {{ num: number, den: number }} AbcMeter
  * @typedef {{ start: number, length: number, meter: AbcMeter }} Measure
  */
@@ -70,6 +71,8 @@ export function walk(voice) {
 				src: element.timing * 4,
 				length,
 				startChar: element.elem?.startChar,
+				endChar: element.elem?.endChar,
+				rest: !!element.rest,
 				chord: chord ? plainChordName(chord.name) : null
 			});
 			t += length;

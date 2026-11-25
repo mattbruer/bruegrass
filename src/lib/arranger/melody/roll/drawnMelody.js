@@ -12,7 +12,7 @@ import { tuneReader } from '../abcjs.js';
 import { readScore } from './readScore.js';
 import { changedBars, newAbc, rewriteAbc, withKeySignature } from './scoreToAbc.js';
 import { withFreshHarmonyBars } from './freshHarmonyBars.js';
-import { abcWithWords } from '../words/abcWithWords.js';
+import { withChartWordsAgain } from '../words/wordsAgain.js';
 import { MELODY_CHANNEL, voiceChannels } from '../harmony/partChannels.js';
 import { ownName } from '../partNames.js';
 import { concertChordAt } from '../../chart/concertChords.js';
@@ -60,7 +60,7 @@ export function writeDrawnMelody({ abc, voice, score, notes, song, newTune = nul
 	if (voice !== MELODY_CHANNEL || !abcjs) return written;
 
 	const parse = readingEachOnce(tuneReader(abcjs));
-	let text = withWords(written, song, abcjs, parse);
+	let text = withChartWordsAgain(written, song, abcjs, parse);
 	if (song.sections.length > 0) {
 		const chordAt = concertChordAt(song.sections, song.capo);
 		text = withFreshHarmonyBars(text, parse, chordAt, changedBars(score, notes));
@@ -100,31 +100,6 @@ export function transposedDrawnMelody(abc, voices, semitones) {
 }
 
 /**
- * The chart's words placed again under the melody, if it had words.
- * @param {string} abc
- * @param {Song} song
- * @param {any} abcjs
- * @param {(abc: string) => any} parse
- */
-function withWords(abc, song, abcjs, parse) {
-	if (!hasWords(abc) || !hasLyrics(song.lyrics) || song.sections.length === 0) return abc;
-	const tune = parse(abc);
-	const sequence = tune && tryOrNull(() => abcjs.synth.sequence(tune, {}));
-	return sequence ? abcWithWords(abc, tune, sequence, song.sections, song.lyrics).abc : abc;
-}
-
-/** The melody (before any harmony part) has words under it. */
-function hasWords(/** @type {string} */ abc) {
-	const melodyEnd = abc.search(/^V:(?!1\b)/m);
-	return /^w:/m.test(melodyEnd === -1 ? abc : abc.slice(0, melodyEnd));
-}
-
-/** @param {import('../../chart/sectionLyrics.js').SectionLyrics[]} lyrics */
-export function hasLyrics(lyrics) {
-	return lyrics.some((section) => section.pickup.trim() || section.bars.some((bar) => bar.trim()));
-}
-
-/**
  * One edit passes the same text through several steps (words, harmony);
  * each version of it is parsed once.
  * @param {(abc: string) => any} parse
@@ -136,17 +111,4 @@ function readingEachOnce(parse) {
 		if (!read.has(abc)) read.set(abc, parse(abc));
 		return read.get(abc);
 	};
-}
-
-/**
- * @template T
- * @param {() => T} read
- * @returns {T | null}
- */
-function tryOrNull(read) {
-	try {
-		return read();
-	} catch {
-		return null;
-	}
 }

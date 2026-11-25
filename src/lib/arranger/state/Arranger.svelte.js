@@ -36,7 +36,7 @@ import { HarmonyFollowState } from './HarmonyFollowState.svelte.js';
 import { ChartFollowsTuneState } from './ChartFollowsTuneState.svelte.js';
 import { abcjsIfLoaded, abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc, hasChords } from '../melody/abcChords.js';
-import { tuneWithChartChords } from '../melody/chordsFollowChart.js';
+import { tuneFollowingChart } from '../melody/chordsFollowChart.js';
 import { transposeAbc } from '../melody/transposeAbc.js';
 import { respellBass } from '../bass/respellBass.js';
 import { abcWithWords } from '../melody/words/abcWithWords.js';
@@ -352,10 +352,12 @@ export class Arranger {
 	 */
 	followChords() {
 		const sequence = this.melody.sequence;
-		const { sections, capoFret, readError } = this.arrangement;
-		if (!sequence || !hasChords(sequence) || readError || sections.length === 0) return;
+		const abcjs = abcjsIfLoaded();
+		const { sections, capoFret, readError, text } = this.arrangement;
+		if (!abcjs || !sequence || !hasChords(sequence) || readError || sections.length === 0) return;
 		const abc = this.melody.notation;
-		const followed = tuneWithChartChords(abc, sequence, sections, capoFret);
+		const song = { sections, lyrics: readLyrics(text), capo: capoFret };
+		const followed = tuneFollowingChart(abc, sequence, abcjs, song);
 		if (followed !== abc) this.melody.notation = followed;
 	}
 

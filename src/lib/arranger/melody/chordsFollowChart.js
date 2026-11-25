@@ -11,6 +11,9 @@ import { songKey } from '../chart/key.js';
 import { concertChord } from '../chart/concertChords.js';
 import { isNoChord } from '../chart/noChord.js';
 import { chordSymbolPlaces } from './abcChords.js';
+import { tuneSplitAtChanges } from './splitHeldNotes.js';
+import { tuneReader } from './abcjs.js';
+import { hasLyrics, hasWords, withChartWordsAgain } from './words/wordsAgain.js';
 
 /** A chord symbol that's an annotation ("^n.c.", "_text"), not a chord. */
 const ANNOTATION = /^[\^_<>@]/;
@@ -33,6 +36,45 @@ export function barChordKeys(sections, capo) {
 				.map((chord) => `${concertChord(chord.name, chord.key ?? key, capo)}/${chord.length}`)
 				.join(',')
 	);
+}
+
+/**
+ * The tune following the chart's chords: a held note is split where the
+ * chord changes inside it (splitHeldNotes.js), so the change has a note to
+ * be shown on, and the chart's words are placed again on the new notes; then
+ * every symbol is written fresh. Words typed only in the ABC would slip off
+ * their notes, so a tune with those keeps its notes whole.
+ * @param {string} abc the tune
+ * @param {any[][]} voices abcjs.synth.sequence(tune) for that ABC
+ * @param {any} abcjs
+ * @param {{ sections: import('../chart/timeline.js').Section[], lyrics: import('../chart/sectionLyrics.js').SectionLyrics[], capo: number }} song
+ * @returns {string}
+ */
+export function tuneFollowingChart(abc, voices, abcjs, song) {
+	const split =
+		hasWords(abc) && !hasLyrics(song.lyrics) ? null : splitAndRead(abc, voices, abcjs, song);
+	const text = split?.text ?? abc;
+	return tuneWithChartChords(text, split?.voices ?? voices, song.sections, song.capo);
+}
+
+/**
+ * The tune with its held notes split at chord changes, and read again.
+ * @param {string} abc
+ * @param {any[][]} voices
+ * @param {any} abcjs
+ * @param {Parameters<typeof tuneFollowingChart>[3]} song
+ * @returns {{ text: string, voices: any[][] } | null} null when nothing was split, or it can't be read
+ */
+function splitAndRead(abc, voices, abcjs, song) {
+	const split = tuneSplitAtChanges(abc, voices, song.sections);
+	if (split === abc) return null;
+	const parse = tuneReader(abcjs);
+	const text = withChartWordsAgain(split, song, abcjs, parse);
+	try {
+		return { text, voices: abcjs.synth.sequence(parse(text), {}) };
+	} catch {
+		return null;
+	}
 }
 
 /**
