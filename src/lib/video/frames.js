@@ -13,15 +13,39 @@
 /**
  * @typedef {{
  *   id: string, name: string, width: number, height: number,
- *   covered: { top: number, bottom: number }
+ *   covered: { top: number, bottom: number, topSays: string, bottomSays: string }
  * }} VideoFrame
+ *   covered: topSays, bottomSays: what covers each band, written on it
  */
 
 /** @type {readonly VideoFrame[]} */
 export const FRAMES = Object.freeze([
-	{ id: 'reel', name: 'Reel 9:16', width: 1080, height: 1920, covered: { top: 210, bottom: 290 } },
-	{ id: 'feed', name: 'Feed 4:5', width: 1080, height: 1350, covered: { top: 0, bottom: 0 } },
-	{ id: 'wide', name: 'Wide 16:9', width: 1920, height: 1080, covered: { top: 0, bottom: 0 } }
+	{
+		id: 'reel',
+		name: 'Reel 9:16',
+		width: 1080,
+		height: 1920,
+		covered: {
+			top: 210,
+			bottom: 290,
+			topSays: 'Facebook shows your name here',
+			bottomSays: 'Facebook’s caption and buttons go here'
+		}
+	},
+	{
+		id: 'feed',
+		name: 'Feed 4:5',
+		width: 1080,
+		height: 1350,
+		covered: { top: 0, bottom: 0, topSays: '', bottomSays: '' }
+	},
+	{
+		id: 'wide',
+		name: 'Wide 16:9',
+		width: 1920,
+		height: 1080,
+		covered: { top: 0, bottom: 0, topSays: '', bottomSays: '' }
+	}
 ]);
 
 export const DEFAULT_FRAME = FRAMES[0];

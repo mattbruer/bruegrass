@@ -57,14 +57,18 @@
 			class="covered top"
 			style:height="{(frame.covered.top / frame.height) * 100}%"
 			use:tooltip={TIPS.video.covered}
-		></div>
+		>
+			<span>{frame.covered.topSays}</span>
+		</div>
 	{/if}
 	{#if frame.covered.bottom}
 		<div
 			class="covered bottom"
 			style:height="{(frame.covered.bottom / frame.height) * 100}%"
 			use:tooltip={TIPS.video.covered}
-		></div>
+		>
+			<span>{frame.covered.bottomSays}</span>
+		</div>
 	{/if}
 </div>
 
@@ -89,15 +93,31 @@
 	.covered {
 		position: absolute;
 		inset-inline: 0;
+		display: grid;
+		place-items: center;
+		padding-inline: 0.5rem;
 		background: color-mix(in oklab, var(--video-screen), transparent 55%);
 		border-block: 1px dashed color-mix(in oklab, var(--color-ink), transparent 60%);
 	}
+	/* Each label by its dashed line, clear of the tiles' name tags in the corners */
 	.covered.top {
 		top: 0;
 		border-top: none;
+		align-items: end;
+		padding-bottom: 0.25rem;
 	}
 	.covered.bottom {
 		bottom: 0;
 		border-bottom: none;
+		align-items: start;
+		padding-top: 0.25rem;
+	}
+	.covered span {
+		padding: 0.125rem 0.5rem;
+		border-radius: var(--corner-small);
+		font-size: 0.6875rem;
+		text-align: center;
+		background: color-mix(in oklab, var(--video-screen), transparent 20%);
+		color: var(--color-ink-soft);
 	}
 </style>
