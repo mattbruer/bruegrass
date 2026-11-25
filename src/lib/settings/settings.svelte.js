@@ -72,7 +72,9 @@ export const settings = $state({
 		/** The track grid's size multipliers (components/zoom/). */
 		zoom: { across: 1, down: 1 },
 		/** The part pane shows the part being edited as a piano roll, sheet music or TAB: an id in tracks/partViews.js. */
-		partView: 'roll'
+		partView: 'roll',
+		/** The A/V lanes' videos show under the tracks only once opened. */
+		showVideo: false
 	},
 
 	// Chord suggestions: set from the chord dialog

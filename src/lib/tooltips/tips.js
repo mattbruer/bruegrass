@@ -430,6 +430,7 @@ export const TIPS = Object.freeze({
 
 	video: {
 		open: 'Watch the A/V lanes’ videos side by side, as big as the screen allows.',
+		show: 'Show or hide the A/V lanes’ videos under the tracks.',
 		back: 'Back to the tracks.',
 		layout: 'Lay the videos out this way: how many across, and as many rows down as that takes.',
 		frame:

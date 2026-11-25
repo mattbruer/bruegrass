@@ -113,7 +113,7 @@
 	<TracksControls bind:height={controlsHeight} />
 	<RecordingNotes />
 	<TracksView {editing} onEdit={edit} {cycle} />
-	<VideoSection />
+	<VideoSection bind:open={settings.tracks.showVideo} />
 	{#if editing}
 		<div
 			bind:this={pane}
