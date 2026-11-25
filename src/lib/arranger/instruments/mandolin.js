@@ -1,8 +1,8 @@
 /**
  * Mandolin chop: a short, percussive closed chord on the off-beats (with the
- * guitar's chuck), using the movable chop shapes bluegrass players use for
- * major and minor chords, and a chop voiced from the chord's notes for every
- * other kind (voicing.js). No open strings, so every chord can be choked off.
+ * guitar's chuck), voiced from the chord's notes (voicing.js) as low on the
+ * neck as it goes: high chops jump out on the E course (the user's ear).
+ * No open strings, so every chord can be choked off.
  *
  * Samples live in static/samples/mando/{G,D,A,E}{0..14}.mp3, one per course
  * and fret, with the choke already recorded, so each note plays to its end.
@@ -25,44 +25,35 @@ export const COURSES = ['G', 'D', 'A', 'E'];
 const OPEN_MIDI = [55, 62, 69, 76];
 /** Highest fret with a sample. */
 const MAX_FRET = 14;
-/** Players stay around this fret, choosing whichever shape sits closest. */
-const HOME_FRET = 5;
-
-/**
- * Movable chop shapes: which course holds the root, and each course's fret
- * as an offset from that root fret (G D A E).
- */
-const SHAPES = [
-	// "G chop": 7-5-2-3 for G
-	{ name: 'G chop', rootString: 1, major: [2, 0, -3, -2], minor: [2, 0, -4, -2] },
-	// "A chop" (3-finger): 2-2-4-5 for A
-	{ name: 'A chop', rootString: 0, major: [0, 0, 2, 3], minor: [0, 0, 1, 3] },
-	// "C chop": 5-2-3-3 for C
-	{ name: 'C chop', rootString: 0, major: [0, -3, -2, -2], minor: [0, -4, -2, -2] }
-];
-
-/** Chord types the movable shapes above play; every other type is voiced from its notes (voicing.js). */
-const PLAIN_CHOPS = ['', 'm'];
+/** How far apart a chop's frets may be (one hand). */
+const CHOP_SPAN = 5;
 
 /**
  * A chop voiced from the chord's notes: all four courses fretted (so it can
- * be choked), near the home fret like the shapes above.
+ * be choked), the lowest that holds the chord.
  * @type {import('./voicing.js').Instrument}
  */
 const CHOP = {
 	strings: OPEN_MIDI,
 	lowestFret: 1,
 	highestFret: MAX_FRET,
-	span: 5,
+	span: CHOP_SPAN,
 	fewestStrings: 4,
 	rootInBass: false,
 	everyString: true,
-	score: (shape) => {
-		const frets = shape.map(Number);
-		const average = frets.reduce((sum, fret) => sum + fret, 0) / frets.length;
-		return -Math.abs(average - HOME_FRET) - (Math.max(...frets) - Math.min(...frets)) * 0.1;
-	}
+	score: (shape) => -height(shape.map(Number))
 };
+
+/**
+ * How high a chop sits: the sum of its frets (every course is fretted, so
+ * that's how high its notes are), then its top note, so the high E stays low.
+ * Lower is better.
+ * @param {number[]} frets G D A E
+ */
+function height(frets) {
+	const sum = frets.reduce((total, fret) => total + fret, 0);
+	return sum + frets[frets.length - 1] / 100;
+}
 
 const STROKE_GAP = 0.004; // s between courses on the downstroke (G → E)
 const LEVEL_JITTER_DB = 1.5; // per chop, so it doesn't sound machine-gunned
@@ -77,59 +68,28 @@ export const CHOP_ARTICULATION = ARTICULATIONS.chop;
  * @typedef {{ time: number, course: number, fret: number, pitch: number, levelDb: number }} MandoNote
  */
 
+/** @type {Map<string, { frets: number[], pitches: number[] }>} */
+const chops = new Map();
+
 /**
- * The chop voicing for a chord, closest to the home position.
+ * The chop voicing for a chord, worked out the first time it's asked for,
+ * then remembered.
  * @param {string} name
  * @param {number} [capo] transposes to concert pitch, like the guitar
- * @returns {{ frets: number[], pitches: number[], shape: string }}
+ * @returns {{ frets: number[], pitches: number[] }}
  */
 export function chopVoicing(name, capo = 0) {
-	const pc = (rootPitchClass(name) + capo) % 12;
-	const quality = /^[A-G][#b]?m(?!aj)/.test(name) ? 'minor' : 'major';
+	const root = (rootPitchClass(name) + capo) % 12;
 	const type = readChordName(withoutBass(withoutVariant(name)))?.type;
-	if (type && !PLAIN_CHOPS.includes(type.suffix)) return builtChop(name, { root: pc, type });
-
-	let best = null;
-	let bestScore = Infinity;
-	for (const shape of SHAPES) {
-		for (let root = 0; root <= MAX_FRET; root++) {
-			if ((OPEN_MIDI[shape.rootString] + root) % 12 !== pc) continue;
-			const frets = shape[quality].map((offset) => root + offset);
-			if (frets.some((fret) => fret < 1 || fret > MAX_FRET)) continue;
-			const average = frets.reduce((sum, fret) => sum + fret, 0) / frets.length;
-			const score = Math.abs(average - HOME_FRET);
-			if (score < bestScore) {
-				best = { frets, shape: shape.name };
-				bestScore = score;
-			}
-		}
-	}
-	if (!best) throw new Error(`No mandolin chop shape for ${name}`);
-	return { ...best, pitches: best.frets.map((fret, course) => OPEN_MIDI[course] + fret) };
-}
-
-/** @type {Map<string, { frets: number[], pitches: number[], shape: string }>} */
-const builtChops = new Map();
-
-/**
- * A chop for a chord the movable shapes don't play (a 7th, maj7, dim…),
- * worked out the first time it's asked for, then remembered.
- * @param {string} name
- * @param {import('./voicing.js').Chord} chord at concert pitch
- */
-function builtChop(name, chord) {
-	const id = `${chord.root}${chord.type.suffix}`;
-	if (!builtChops.has(id)) {
-		const shape = voiceChord(CHOP, chord);
+	if (!type) throw new Error(`No mandolin chop shape for ${name}`);
+	const id = `${root}${type.suffix}`;
+	if (!chops.has(id)) {
+		const shape = voiceChord(CHOP, { root, type });
 		if (!shape) throw new Error(`No mandolin chop shape for ${name}`);
 		const frets = shape.map(Number);
-		builtChops.set(id, {
-			frets,
-			shape: 'built',
-			pitches: frets.map((fret, course) => OPEN_MIDI[course] + fret)
-		});
+		chops.set(id, { frets, pitches: frets.map((fret, course) => OPEN_MIDI[course] + fret) });
 	}
-	return /** @type {{ frets: number[], pitches: number[], shape: string }} */ (builtChops.get(id));
+	return /** @type {{ frets: number[], pitches: number[] }} */ (chops.get(id));
 }
 
 /**
