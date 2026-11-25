@@ -28,26 +28,40 @@ const PERFECT_FIFTH = 7;
 const FINGERS = 4;
 
 /**
+ * The best shape for a chord, by the instrument's score.
  * @param {Instrument} instrument
  * @param {Chord} chord
  * @returns {Shape | null} null: no shape holds the chord here
  */
 export function voiceChord(instrument, chord) {
-	const tones = toneSemitones(chord.type).map((tone) => (chord.root + tone) % 12);
 	let best = null;
 	let bestScore = -Infinity;
-	for (const needed of whatToKeep(chord, tones, instrument)) {
-		for (const shape of allShapes(instrument, tones)) {
-			if (!holds(instrument, shape, chord.root, needed)) continue;
-			const score = instrument.score(shape);
-			if (score > bestScore) {
-				best = shape;
-				bestScore = score;
-			}
+	for (const shape of chordShapes(instrument, chord)) {
+		const score = instrument.score(shape);
+		if (score > bestScore) {
+			best = shape;
+			bestScore = score;
 		}
-		if (best) return best;
 	}
-	return null;
+	return best;
+}
+
+/**
+ * Every shape that holds the chord's important notes, for a player who
+ * chooses between them (voice leading).
+ * @param {Instrument} instrument
+ * @param {Chord} chord
+ * @returns {Shape[]}
+ */
+export function chordShapes(instrument, chord) {
+	const tones = toneSemitones(chord.type).map((tone) => (chord.root + tone) % 12);
+	for (const needed of whatToKeep(chord, tones, instrument)) {
+		const shapes = [...allShapes(instrument, tones)].filter((shape) =>
+			holds(instrument, shape, chord.root, needed)
+		);
+		if (shapes.length > 0) return shapes;
+	}
+	return [];
 }
 
 /**

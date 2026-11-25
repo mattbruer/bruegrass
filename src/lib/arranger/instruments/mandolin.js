@@ -12,7 +12,8 @@
 import { rootPitchClass } from './guitar.js';
 import { withoutBass, withoutVariant } from './chordBook.js';
 import { readChordName } from '../theory/chordTypes.js';
-import { voiceChord } from './voicing.js';
+import { chordShapes } from './voicing.js';
+import { nextVoicing, register } from './voiceLeading.js';
 import { rhythm } from '../chart/timeline.js';
 import { hitAt, hitSpans } from '../chart/hits.js';
 import { createRng } from './seededRandom.js';
@@ -32,7 +33,7 @@ const CHOP_SPAN = 5;
  * The ways a chop is held, voiced from the chord's notes: every course
  * fretted, or the low three with the E course muted (C: 5-2-3-x). No open
  * strings, so it can be choked, and never a muted low course. The 5th may be
- * left out (C: C E C). The lowest one that holds the chord wins.
+ * left out (C: C E C). Which one plays is voice leading's choice.
  * @type {import('./voicing.js').Instrument[]}
  */
 const CHOP_HANDS = [OPEN_MIDI, OPEN_MIDI.slice(0, 3)].map((strings) => ({
@@ -44,18 +45,8 @@ const CHOP_HANDS = [OPEN_MIDI, OPEN_MIDI.slice(0, 3)].map((strings) => ({
 	rootInBass: false,
 	everyString: true,
 	fifthOptional: true,
-	score: (shape) => -height(pitchesOf(shape))
+	score: (shape) => -register(pitchesOf(shape))
 }));
-
-/**
- * How high a chop sits: its notes on average, then its top note, so the high
- * E stays low. Lower is better.
- * @param {number[]} pitches low to high
- */
-function height(pitches) {
-	const average = pitches.reduce((total, pitch) => total + pitch, 0) / pitches.length;
-	return average + pitches[pitches.length - 1] / 100;
-}
 
 /**
  * The pitches a chop sounds, G course up; muted courses left out.
@@ -80,44 +71,48 @@ export const CHOP_ARTICULATION = ARTICULATIONS.chop;
 
 /** @typedef {{ frets: (number | null)[], pitches: number[] }} Chop frets G D A E, null = muted */
 
-/** @type {Map<string, Chop>} */
-const chops = new Map();
+/** @type {Map<string, Chop[]>} */
+const choices = new Map();
 
 /**
- * The chop voicing for a chord, worked out the first time it's asked for,
+ * Every chop that holds a chord, worked out the first time it's asked for,
  * then remembered.
  * @param {string} name
- * @param {number} [capo] transposes to concert pitch, like the guitar
- * @returns {Chop}
+ * @param {number} capo transposes to concert pitch, like the guitar
+ * @returns {Chop[]}
  */
-export function chopVoicing(name, capo = 0) {
+function chopChoices(name, capo) {
 	const root = (rootPitchClass(name) + capo) % 12;
 	const type = readChordName(withoutBass(withoutVariant(name)))?.type;
 	if (!type) throw new Error(`No mandolin chop shape for ${name}`);
 	const id = `${root}${type.suffix}`;
-	if (!chops.has(id)) {
-		const frets = lowest(
-			CHOP_HANDS.map((hand) => voiceChord(hand, { root, type }))
-				.filter((shape) => shape !== null)
-				.map((shape) => COURSES.map((_, course) => shape[course] ?? null))
-		);
-		if (!frets) throw new Error(`No mandolin chop shape for ${name}`);
-		chops.set(id, { frets, pitches: pitchesOf(frets) });
+	if (!choices.has(id)) {
+		const chops = CHOP_HANDS.flatMap((hand) => chordShapes(hand, { root, type })).map((shape) => {
+			const frets = COURSES.map((_, course) => shape[course] ?? null);
+			return { frets, pitches: pitchesOf(frets) };
+		});
+		if (chops.length === 0) throw new Error(`No mandolin chop shape for ${name}`);
+		choices.set(id, chops);
 	}
-	return /** @type {Chop} */ (chops.get(id));
+	return /** @type {Chop[]} */ (choices.get(id));
 }
 
 /**
- * @param {(number | null)[][]} shapes
- * @returns {(number | null)[] | undefined}
+ * The chop for a chord: the lowest, or after another chop, the nearest one
+ * (voiceLeading.js).
+ * @param {string} name
+ * @param {number} [capo]
+ * @param {Chop | null} [previous] the chop before it
+ * @returns {Chop}
  */
-function lowest(shapes) {
-	return shapes.sort((a, b) => height(pitchesOf(a)) - height(pitchesOf(b)))[0];
+export function chopVoicing(name, capo = 0, previous = null) {
+	return nextVoicing(chopChoices(name, capo), previous);
 }
 
 /**
  * A chop on every off-beat chuck of the rhythm grid (with the guitar's strum),
- * as one note per fretted course, struck G → E. On a hit (chart/hits.js) the mandolin
+ * as one note per fretted course, struck G → E, each chop led smoothly from
+ * the one before. On a hit (chart/hits.js) the mandolin
  * plays only the hits it chops (CHOPPED_HITS), one chop on the hit itself,
  * then nothing until the next chord; it lays out on the rest.
  * @param {{ name?: string, measures: string[][] }[]} sections
@@ -129,12 +124,15 @@ export function chopNotes(sections, { capo = 0, bpm = 120 } = {}) {
 	const rng = createRng(7);
 	const { beats, slots } = rhythm(sections);
 	const hits = hitSpans(sections);
+	/** @type {Chop | null} */
+	let previous = null;
 	return beats.flatMap((beat) => {
 		const hit = hitAt(beat.time, hits);
 		const onTheHit =
 			hit !== undefined && CHOPPED_HITS.includes(hit.hit) && Math.abs(hit.start - beat.time) < 1e-6;
 		if (hit ? !onTheHit : beat.role !== 'chuck') return [];
-		const { frets } = chopVoicing(slots[beat.slot].name, capo);
+		previous = chopVoicing(slots[beat.slot].name, capo, previous);
+		const { frets } = previous;
 		const time = beat.time * quarter;
 		const levelDb = CHOP_ARTICULATION.levelDb + (rng() * 2 - 1) * LEVEL_JITTER_DB;
 		return frets.flatMap((fret, course) =>
