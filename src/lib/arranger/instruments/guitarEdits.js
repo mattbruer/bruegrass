@@ -3,14 +3,17 @@
  * song: each where its chord starts (quarter notes from bar 1, as the song
  * plays) and for which chord (as written, the shape's name). Any part can
  * be left to the band: the shape the hand holds, the string each boom
- * plays, the strings each chuck strums. A change is only played while the
+ * plays, the strings each chuck strums, and any beat played as one picked
+ * note instead (a run: the band never plays one of its own). A change is only played while the
  * same chord is there, so changing the chart quietly drops it.
  */
 
 /**
  * @typedef {(number | null)[]} Shape six frets, low E to high e, null = muted
- * @typedef {{ shape?: Shape, booms?: number[], chucks?: number[][] }} GuitarChange
- *   booms: the string each boom plays, in order; chucks: the strings each chuck strums
+ * @typedef {{ string: number, fret: number }} PickedNote
+ * @typedef {{ shape?: Shape, booms?: number[], chucks?: number[][], notes?: (PickedNote | null)[] }} GuitarChange
+ *   booms: the string each boom plays, in order; chucks: the strings each chuck strums;
+ *   notes: by beat of the chord, the one note played there instead (null: the band's boom or chuck)
  * @typedef {Record<string, GuitarChange & { chord: string }>} GuitarEdits
  */
 
@@ -24,8 +27,8 @@
 export function editedGuitar(edits, start, chord) {
 	const edit = edits[String(start)];
 	if (!edit || edit.chord !== chord) return {};
-	const { shape, booms, chucks } = edit;
-	return { shape, booms, chucks };
+	const { shape, booms, chucks, notes } = edit;
+	return { shape, booms, chucks, notes };
 }
 
 /**
@@ -39,6 +42,13 @@ export function editedGuitar(edits, start, chord) {
 export function withGuitarEdit(edits, start, chord, change) {
 	const at = String(start);
 	const others = Object.fromEntries(Object.entries(edits).filter(([place]) => place !== at));
-	const kept = Object.fromEntries(Object.entries(change).filter(([, value]) => value));
+	const kept = Object.fromEntries(
+		Object.entries(change).filter(([, value]) => value && !isAllEmpty(value))
+	);
 	return Object.keys(kept).length > 0 ? { ...others, [at]: { chord, ...kept } } : others;
+}
+
+/** @param {unknown} value a list with nothing in it (notes all back to the band's) */
+function isAllEmpty(value) {
+	return Array.isArray(value) && value.every((each) => each === null);
 }

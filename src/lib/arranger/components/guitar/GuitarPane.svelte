@@ -3,7 +3,8 @@
 	 * How the guitar plays one chord of the song, to see and change, in two
 	 * parts: the shape the left hand holds (typed low E to high e, or tapped
 	 * on the diagram), and what the right hand does on each beat (the boom's
-	 * one low note, the chuck's strummed strings). Pick a beat and the
+	 * one low note, the chuck's strummed strings, or a note of your own
+	 * instead, for a run between chords: never the band's own idea). Pick a beat and the
 	 * diagram lights the strings it plays. The notes are named against the
 	 * chord, listed and drawn on a staff. ‹ › step through the song's chords.
 	 * A change is saved with the song for this chord at this place; Band's
@@ -23,6 +24,8 @@
 	import NotesOnStaff from '../melody/NotesOnStaff.svelte';
 	import BeatPattern from './BeatPattern.svelte';
 	import BeatStrings from './BeatStrings.svelte';
+	import NotePicker from './NotePicker.svelte';
+	import TabSwitch from '$lib/components/TabSwitch.svelte';
 
 	/**
 	 * @type {{ name: string, onPick: (start: number) => void, onClose?: () => void }}
@@ -48,9 +51,11 @@
 	const cards = $derived(
 		chord
 			? chord.beats.map((each) => ({
-					beat: each,
+					kind: each.note ? 'note' : each.role,
+					beatInBar: each.beatInBar,
 					notes: playedOn(each),
-					yours: each.role === 'boom' ? chord.yours.booms : chord.yours.chucks
+					yours:
+						each.note !== null || (each.role === 'boom' ? chord.yours.booms : chord.yours.chucks)
 				}))
 			: []
 	);
@@ -60,6 +65,7 @@
 	/** @param {import('../../instruments/guitarPlan.js').ChordBeat} each */
 	function stringsOf(each) {
 		if (!chord) return [];
+		if (each.note) return [each.note.string];
 		return each.role === 'boom' ? [chord.booms[each.place].string] : chord.chucks[each.place];
 	}
 
@@ -70,12 +76,48 @@
 	 */
 	function playedOn(each) {
 		if (!chord) return [];
+		if (each.note) return single(each.note);
 		if (each.role === 'chuck') {
 			return notes.filter((note) => chord.chucks[each.place].includes(note.string));
 		}
-		const boom = chord.booms[each.place];
-		const frets = STRING_NAMES.map((_, string) => (string === boom.string ? boom.fret : null));
+		return single(chord.booms[each.place]);
+	}
+
+	/** @param {{ string: number, fret: number }} picked one note, named against the chord */
+	function single(picked) {
+		if (!chord) return [];
+		const frets = STRING_NAMES.map((_, string) => (string === picked.string ? picked.fret : null));
 		return fretNotes(frets, OPEN_MIDI, chord.name);
+	}
+
+	/** @param {import('../../instruments/guitarPlan.js').ChordBeat} each a beat with a note: its letter, for the diagram */
+	function noteMark(each) {
+		const [named] = playedOn(each);
+		return named ? writtenNote(named) : '';
+	}
+
+	/** What the picked beat plays: the band's boom or chuck, or a note of yours. */
+	const kinds = $derived(
+		beat
+			? [
+					{ id: beat.role, name: beat.role === 'boom' ? 'Boom' : 'Chuck' },
+					{ id: 'note', name: 'Note' }
+				]
+			: []
+	);
+
+	/** @param {import('../../instruments/guitarEdits.js').PickedNote | null} note the picked beat's own note (null: the band's) */
+	function setNote(note) {
+		if (!chord || !beat) return;
+		const notes = chord.beats.map((each) => each.note);
+		notes[chord.beats.indexOf(beat)] = note;
+		guitar.change({ notes });
+	}
+
+	/** @param {string} kind turn the picked beat into a note (starting on the chord's boom) or back */
+	function setKind(kind) {
+		if (!chord || !beat) return;
+		setNote(kind === 'note' ? (beat.note ?? { ...chord.booms[0] }) : null);
 	}
 
 	/** @param {number[]} strings what the picked beat now plays */
@@ -108,6 +150,7 @@
 				maxFret={MAX_FRET}
 				instrument="Guitar"
 				{lit}
+				picked={beat?.note ? { ...beat.note, mark: noteMark(beat) } : null}
 				onChange={(next) => guitar.change({ shape: next })}
 			/>
 
@@ -120,6 +163,23 @@
 						onSelect={(i) => (selected = i)}
 					/>
 					{#if beat}
+						<TabSwitch
+							bind:value={() => (beat.note ? 'note' : beat.role), setKind}
+							tabs={kinds}
+							tips={TIPS.guitarEditor.kinds}
+							label="What this beat plays"
+						/>
+					{/if}
+					{#if beat?.note}
+						<NotePicker
+							note={beat.note}
+							strings={STRING_NAMES}
+							open={OPEN_MIDI}
+							maxFret={MAX_FRET}
+							chordName={chord.name}
+							onChange={setNote}
+						/>
+					{:else if beat}
 						<BeatStrings
 							role={beat.role}
 							chosen={stringsOf(beat)}

@@ -297,6 +297,14 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 	const { beats, quarters, slots } = rhythm(sections);
 	const places = placesInSlots(beats);
 	if (beats.length === 0) throw new Error('Nothing to play');
+	// The beats you've made one picked note (a run): it plays instead of the band's stroke there
+	const notes = beats.map((beat) => {
+		const slot = slots[beat.slot];
+		const own = chords[beat.slot].beats.find(
+			(each) => Math.abs(slot.start + each.at - beat.time) < 1e-6
+		);
+		return own?.note ?? null;
+	});
 
 	const quarter = secondsPerQuarter(bpm);
 	const passLength = quarters * quarter;
@@ -327,6 +335,21 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 	const mutes = [];
 
 	for (let p = 0; p < passes; p++) {
+		beats.forEach((beat, b) => {
+			const note = notes[b];
+			if (!note) return;
+			const k = p * slots.length + beat.slot;
+			events.push({
+				time: (beat.time + p * quarters) * quarter,
+				stop: chordEnds[k],
+				string: note.string,
+				fret: note.fret + capo,
+				chord: sequence[k].name,
+				part: 'bass',
+				levelDb: levelDb.bass,
+				fadeOut: CHORD_CHANGE_FADE
+			});
+		});
 		beats.forEach((boom, b) => {
 			if (boom.role !== 'boom') return;
 			const pattern = pickPattern(random);
@@ -334,6 +357,7 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 			if (hit && hit.start < boom.time - 1e-6) return; // a hit rings here
 			for (const stroke of patternStrokes(hit?.hit ?? pattern, boom.length)) {
 				const beat = b + Math.floor(stroke.at);
+				if (notes[beat]) continue;
 				const played = chords[beats[beat].slot];
 				const k = p * slots.length + beats[beat].slot;
 				const chord = sequence[k].name;

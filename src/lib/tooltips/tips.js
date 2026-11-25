@@ -180,8 +180,20 @@ export const TIPS = Object.freeze({
 	},
 
 	guitarEditor: {
-		boomBeat: 'A boom: the one low note picked on this beat. Tap to choose its string.',
-		chuckBeat: 'A chuck: the strings strummed on this beat. Tap to choose them.',
+		beats: {
+			boom: 'A boom: the one low note picked on this beat. Tap to choose its string, or make it a note of your own.',
+			chuck:
+				'A chuck: the strings strummed on this beat. Tap to choose them, or make it a note of your own.',
+			note: 'Your own note on this beat, part of a run. Tap to change it, or give the beat back to the band.'
+		},
+		kinds: {
+			boom: 'The band’s boom on this beat.',
+			chuck: 'The band’s chuck on this beat.',
+			note: 'Play one note of your own here instead: a run between chords.'
+		},
+		noteString: 'Play the note on this string.',
+		fretDown: 'The note a fret lower.',
+		fretUp: 'The note a fret higher.',
 		boomString: 'Boom on this string: its note in the shape.',
 		chuckString: 'Strum this string on this chuck, or leave it out.',
 		frets:

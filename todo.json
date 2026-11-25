@@ -387,6 +387,12 @@
 			"addedAt": "2026-11-25"
 		},
 		{
+			"id": "eighth-note-runs",
+			"text": "Guitar runs in eighth notes: split a beat in two (the G run)",
+			"done": false,
+			"addedAt": "2026-11-25"
+		},
+		{
 			"id": "guitar-shape-editor",
 			"text": "The Guitar lane opens the same diagram editor for its shapes (six strings, boom notes marked)",
 			"done": true,

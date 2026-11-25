@@ -82,6 +82,6 @@ export class GuitarState {
 
 	/** Forget every change to the picked chord: the band plays it its own way. */
 	reset() {
-		this.change({ shape: undefined, booms: undefined, chucks: undefined });
+		this.change({ shape: undefined, booms: undefined, chucks: undefined, notes: undefined });
 	}
 }

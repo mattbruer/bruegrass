@@ -1,8 +1,8 @@
 <script>
 	/**
 	 * A chord's beats as the guitarist counts them, one card each: a boom
-	 * (the one note picked low, what it is in the chord) or a chuck (the
-	 * strings strummed). Tap a card to pick that beat; the host shows what
+	 * (the one note picked low, what it is in the chord), a chuck (the
+	 * strings strummed) or a note of your own (part of a run). Tap a card to pick that beat; the host shows what
 	 * can change on it.
 	 */
 	import { writtenNote } from '../../chart/key.js';
@@ -11,37 +11,40 @@
 
 	/**
 	 * @typedef {{
-	 *   beat: import('../../instruments/guitarPlan.js').ChordBeat,
+	 *   kind: 'boom' | 'chuck' | 'note',
+	 *   beatInBar: number,
 	 *   notes: import('../../voicings/fretNotes.js').FretNote[],
 	 *   yours: boolean
 	 * }} BeatCard
-	 *   notes: what the beat plays (one for a boom); yours: you changed it
+	 *   beatInBar: from 0; notes: what the beat plays (one for a boom or a note); yours: you changed it
 	 */
 
 	/**
 	 * @type {{ cards: BeatCard[], selected: number, onSelect: (index: number) => void }}
 	 */
 	let { cards, selected, onSelect } = $props();
+
+	const ROLE_NAMES = { boom: 'Boom', chuck: 'Chuck', note: 'Note' };
 </script>
 
 <div class="cards" role="radiogroup" aria-label="The chord's beats">
 	{#each cards as card, i (i)}
-		{@const boom = card.beat.role === 'boom'}
+		{@const single = card.kind !== 'chuck'}
 		<button
 			type="button"
 			role="radio"
 			aria-checked={selected === i}
 			class="card"
 			class:on={selected === i}
-			class:boom
+			class:note={card.kind === 'note'}
 			onclick={() => onSelect(i)}
-			use:tooltip={boom ? TIPS.guitarEditor.boomBeat : TIPS.guitarEditor.chuckBeat}
+			use:tooltip={TIPS.guitarEditor.beats[card.kind]}
 		>
-			<span class="beat">{card.beat.beatInBar + 1}</span>
-			<span class="role">{boom ? 'Boom' : 'Chuck'}{card.yours ? ' · yours' : ''}</span>
+			<span class="beat">{card.beatInBar + 1}</span>
+			<span class="role">{ROLE_NAMES[card.kind]}{card.yours ? ' · yours' : ''}</span>
 			{#if card.notes.length === 0}
 				<span class="what quiet">nothing</span>
-			{:else if boom}
+			{:else if single}
 				<span class="what">{writtenNote(card.notes[0])}</span>
 				<span class="degree">{card.notes[0].words}</span>
 			{:else}
@@ -94,6 +97,11 @@
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 		color: var(--color-ink-soft);
+	}
+
+	.card.note {
+		border-style: dashed;
+		border-color: var(--color-accent);
 	}
 
 	.card.on .role {

@@ -1,8 +1,9 @@
 /**
  * What the guitar plays on each chord of the song, decided before anything
  * is timed: the shape the hand holds, the note each boom plays and the
- * strings each chuck strums. Yours where you've changed them
- * (guitarEdits.js), else the band's: the chord book's shape, booms
+ * strings each chuck strums, and any beat you've made a single picked note
+ * instead (a run between chords: only ever yours). Yours where you've
+ * changed them (guitarEdits.js), else the band's: the chord book's shape, booms
  * alternating root and 5th (a new chord, or a new pass, starts on its
  * root), chucks on the strum strings. guitar.js times it all.
  */
@@ -15,13 +16,14 @@ import { hitAt, hitSpans } from '../chart/hits.js';
 /**
  * @typedef {import('./guitarEdits.js').Shape} Shape
  * @typedef {{ string: number, fret: number }} Boom frets without the capo
- * @typedef {{ at: number, role: 'boom' | 'chuck', place: number, beatInBar: number }} ChordBeat
- *   at: quarters after the chord starts; place: which boom (or chuck) of the chord it is;
- *   beatInBar: from 0
+ * @typedef {{ at: number, role: 'boom' | 'chuck', place: number, beatInBar: number, note: Boom | null }} ChordBeat
+ *   at: quarters after the chord starts; role: what the band plays there; place: which boom
+ *   (or chuck) of the chord it is; beatInBar: from 0; note: the one note you play there instead
+ *   (part of a run), null: the band's boom or chuck
  * @typedef {{
  *   start: number, length: number, bar: number, name: string,
  *   shape: Shape, booms: Boom[], chucks: number[][], beats: ChordBeat[],
- *   yours: { shape: boolean, booms: boolean, chucks: boolean }, edited: boolean
+ *   yours: { shape: boolean, booms: boolean, chucks: boolean, notes: boolean }, edited: boolean
  * }} GuitarChord
  *   start, length: where it is in the song (quarters from bar 1); bar: its bar, from 1;
  *   name: as written; chucks: the strings each chuck strums, low first;
@@ -42,18 +44,15 @@ export function guitarChords(sections, { edits = {}, offset = 0 } = {}) {
 		const start = slot.start + offset;
 		const change = editedGuitar(edits, start, slot.name);
 		const shape = change.shape ?? chordShape(slot.name);
-		const own = beats.flatMap((beat, b) =>
-			beat.slot === k
-				? [
-						{
-							at: beat.time - slot.start,
-							role: beat.role,
-							place: places[b],
-							beatInBar: beat.beatInBar
-						}
-					]
-				: []
-		);
+		const own = beats
+			.flatMap((beat, b) => (beat.slot === k ? [{ beat, place: places[b] }] : []))
+			.map(({ beat, place }, i) => ({
+				at: beat.time - slot.start,
+				role: beat.role,
+				place,
+				beatInBar: beat.beatInBar,
+				note: change.notes?.[i] ?? null
+			}));
 		const booms = own
 			.filter((beat) => beat.role === 'boom')
 			.map(
@@ -66,7 +65,12 @@ export function guitarChords(sections, { edits = {}, offset = 0 } = {}) {
 			.map((beat) =>
 				(change.chucks?.[beat.place] ?? STRUM_STRINGS).filter((string) => shape[string] !== null)
 			);
-		const yours = { shape: !!change.shape, booms: !!change.booms, chucks: !!change.chucks };
+		const yours = {
+			shape: !!change.shape,
+			booms: !!change.booms,
+			chucks: !!change.chucks,
+			notes: own.some((beat) => beat.note !== null)
+		};
 		return {
 			start,
 			length: slot.length,
@@ -77,7 +81,7 @@ export function guitarChords(sections, { edits = {}, offset = 0 } = {}) {
 			chucks,
 			beats: own,
 			yours,
-			edited: yours.shape || yours.booms || yours.chucks
+			edited: Object.values(yours).some(Boolean)
 		};
 	});
 }

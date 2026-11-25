@@ -20,13 +20,25 @@
 	 *   maxFret: number,
 	 *   instrument: string,
 	 *   lit?: number[] | null,
+	 *   picked?: { string: number, fret: number, mark: string } | null,
 	 *   onChange: (frets: (number | null)[]) => void
 	 * }}
 	 *   courses: the strings' names, lowest first; marks: what each string's note is (R, 3, ♭7),
 	 *   null when muted; inChord: whether each string's note is one of the chord's own;
-	 *   instrument: its name, for screen readers
+	 *   instrument: its name, for screen readers; picked: one note played on its own (a run's),
+	 *   drawn as a dashed ring, on the shape or off it
 	 */
-	let { frets, marks, inChord, courses, maxFret, instrument, lit = null, onChange } = $props();
+	let {
+		frets,
+		marks,
+		inChord,
+		courses,
+		maxFret,
+		instrument,
+		lit = null,
+		picked = null,
+		onChange
+	} = $props();
 
 	/** How many frets show at once: enough that most chops sit under the nut. */
 	const ROWS = 7;
@@ -167,6 +179,13 @@
 			</g>
 		{/each}
 	{/each}
+	{#if picked && picked.fret >= firstFret - 1 && picked.fret < firstFret + ROWS}
+		{@const y = picked.fret === 0 ? TOP - 16 : yOf(picked.fret)}
+		<g class="picked" aria-hidden="true">
+			<circle cx={xOf(picked.string)} cy={y} r={DOT + 3} />
+			<text x={xOf(picked.string)} y={y - DOT - 6} text-anchor="middle">{picked.mark}</text>
+		</g>
+	{/if}
 </svg>
 
 <style>
@@ -258,6 +277,23 @@
 	.dim text,
 	.string.dim {
 		opacity: 0.3;
+	}
+
+	.picked {
+		pointer-events: none;
+	}
+
+	.picked circle {
+		fill: none;
+		stroke: var(--color-accent);
+		stroke-width: 2.5;
+		stroke-dasharray: 4 3;
+	}
+
+	.picked text {
+		fill: var(--color-accent);
+		font-size: 11px;
+		font-weight: 800;
 	}
 
 	.mute {
