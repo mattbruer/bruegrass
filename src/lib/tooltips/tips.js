@@ -385,6 +385,8 @@ export const TIPS = Object.freeze({
 		partLane: 'Edit this part in the piano roll below. A click anywhere on its lane picks it too.',
 		bandLane:
 			'The band (guitar, mandolin, bass) plays these chords along with the recording. Tap a bar to type its chords, or its name to write the whole chart as text below. Each instrument’s own level is in the mixer.',
+		bandStyle:
+			'The style the band plays: Bluegrass or Celtic. It changes how the guitar, mandolin and bass play your chords.',
 		bandMenu: 'Guess the chords from the recording, or clear the guesses.',
 		guessChords:
 			'Fill the empty bars with a guess from the recording; chords you typed stay. Then play it with the band and fix what sounds wrong.',

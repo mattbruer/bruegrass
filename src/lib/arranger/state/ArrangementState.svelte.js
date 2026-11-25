@@ -11,6 +11,7 @@ import { keyChoicesFor } from '../chart/keyChoices.js';
 import { TEMPO_DEFAULT, validTempo } from '../chart/tempo.js';
 import { validCapo } from '../chart/capo.js';
 import { SWING_STRAIGHT } from '../chart/swing.js';
+import { DEFAULT_STYLE } from '../styles/styles.js';
 import { tempoClock } from '../chart/tempoCurve.js';
 import { rhythm } from '../chart/timeline.js';
 import { chartAnalysis, functionOnItsOwn, placeId } from '../chart/chartAnalysis.js';
@@ -28,6 +29,8 @@ export class ArrangementState {
 	tempo = $state(TEMPO_DEFAULT);
 	/** How long-short the eighths are, in percent (chart/swing.js). */
 	swing = $state(SWING_STRAIGHT);
+	/** Which style the band plays (styles/styles.js). */
+	style = $state(DEFAULT_STYLE);
 	/**
 	 * The tempo lane's points: a ritard, say (chart/tempoCurve.js).
 	 * @type {import('../chart/tempoCurve.js').TempoPoint[]}

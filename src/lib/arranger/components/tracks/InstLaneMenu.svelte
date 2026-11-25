@@ -6,6 +6,8 @@
 	 */
 	import Popover from '$lib/components/Popover.svelte';
 	import MoveLane from './MoveLane.svelte';
+	import StyleSelect from '../page/StyleSelect.svelte';
+	import { BAND_LANE } from '../../tracks/lanes.js';
 	import { useArranger } from '../../state/context.js';
 	import { isExtraPart } from '../../melody/extraParts.js';
 	import { PART_NAME_LENGTH, ownName } from '../../melody/partNames.js';
@@ -57,6 +59,9 @@
 				use:tooltip={TIPS.tracks.laneName}
 			/>
 		</label>
+		{#if lane.id === BAND_LANE}
+			<StyleSelect />
+		{/if}
 		<MoveLane id={lane.id} {lanes} />
 		{#if added}
 			{#if !bass.isWritten}

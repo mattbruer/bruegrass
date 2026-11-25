@@ -29,6 +29,7 @@ timeline
    │  instruments/strumPatterns.js  the guitar's strum patterns, as data
    │  instruments/articulation.js  pluck and graze (how the pick meets a string), as data; soundStart.js finds where a sample's sound begins
    │  instruments/sampleTuning.js  puts each guitar sample in tune as it plays (fixes in guitarSampleFixes.js, written by scripts/measureSampleTuning.js)
+   │  styles/styles.js            the band's styles (Bluegrass, Celtic) as data; a song's `style` is saved with it, picked in the Band lane's ⋯ menu (Tracks and Transcribe) by components/page/StyleSelect.svelte. Nothing plays differently yet: each style's voicings, strums and bass will look it up here
    │  instruments/seededRandom.js the repeatable random choices
    │  instruments/mandolin.js     off-beat chops, one per chord (songChops); yours from chopEdits.js
    │  instruments/guitarPlan.js   what the guitar plays on each chord (shape, booms, chucks, your notes, or a fill: it rests); yours from guitarEdits.js; guitar.js times it

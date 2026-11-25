@@ -5,13 +5,14 @@
 import { applySongMix, songMixSnapshot } from '../mixer/listeningSetup.svelte.js';
 import { validCapo } from '../chart/capo.js';
 import { validSwing } from '../chart/swing.js';
+import { validStyle } from '../styles/styles.js';
 import { validTempoCurve } from '../chart/tempoCurve.js';
 import { songTab, tabSnapshot } from '../tab/songTab.svelte.js';
 import { validVideo } from '../video/songVideo.js';
 
 /**
  * @typedef {Pick<import('$lib/storage/arrangements.js').Arrangement,
- *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'tab' | 'partNames' | 'laneOrder' | 'audioClips' | 'chops' | 'guitarChords' | 'video' | 'recording' | 'madeFrom' | 'tempo' | 'tempoCurve' | 'swing' | 'capo' | 'transpose' | 'mix'>} SongFields
+ *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'tab' | 'partNames' | 'laneOrder' | 'audioClips' | 'chops' | 'guitarChords' | 'video' | 'recording' | 'madeFrom' | 'tempo' | 'tempoCurve' | 'swing' | 'style' | 'capo' | 'transpose' | 'mix'>} SongFields
  *   what a song is made of (its name is kept separately)
  */
 
@@ -39,6 +40,7 @@ export function readSongFields(arranger) {
 		tempo: arranger.arrangement.bpm,
 		tempoCurve: arranger.arrangement.tempoCurve,
 		swing: arranger.arrangement.swing,
+		style: arranger.arrangement.style,
 		capo: arranger.arrangement.capoFret,
 		transpose: arranger.arrangement.transpose,
 		mix: songMixSnapshot() // the song's own EQs, even while a listening setup is in use
@@ -61,6 +63,7 @@ export function loadSongIntoPage(arranger, song) {
 	arranger.arrangement.text = song.arrangement;
 	arranger.arrangement.tempo = song.tempo;
 	arranger.arrangement.swing = validSwing(song.swing);
+	arranger.arrangement.style = validStyle(song.style);
 	arranger.arrangement.tempoCurve = validTempoCurve(song.tempoCurve);
 	arranger.arrangement.capo = validCapo(song.capo);
 	arranger.arrangement.transpose = song.transpose;
