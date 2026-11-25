@@ -36,7 +36,7 @@ const MUTE_FADE = 0.04; // seconds: the hand comes down on the strings (a choked
 const STROKE_DB = { down: 0, up: -3 };
 
 /** How much louder an accented beat is (yours: guitarPlan.js), until samples at more velocities arrive. */
-const ACCENT_DB = 4;
+const ACCENT_DB = 8;
 
 /** Seed for the strum pattern choices, so a song always plays (and exports) the same. */
 const STRUM_SEED = 11;
