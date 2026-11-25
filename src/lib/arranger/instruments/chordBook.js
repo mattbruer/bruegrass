@@ -5,7 +5,7 @@
  * be played. A shape of your own for one chord of a song is a change to
  * how the guitar plays it there (guitarEdits.js), not the book's.
  *
- * A name can still carry a variant after a colon, `G:high`: what the chord
+ * A name can carry a variant after a colon, `G:high`: what the chord
  * is (root, fifth, slash bass) is read from the name before it, and the
  * book plays the plain chord's shape.
  */
