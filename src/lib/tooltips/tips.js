@@ -170,12 +170,28 @@ export const TIPS = Object.freeze({
 		close: 'Close the editor (or go Back).'
 	},
 
+	voicingEditor: {
+		before: 'The chord before, and how it’s played.',
+		after: 'The chord after, and how it’s played.'
+	},
+
+	chordDiagram: {
+		openOrMute: 'Tap to play this string open, or to mute it.'
+	},
+
+	guitarEditor: {
+		boomBeat: 'A boom: the one low note picked on this beat. Tap to choose its string.',
+		chuckBeat: 'A chuck: the strings strummed on this beat. Tap to choose them.',
+		boomString: 'Boom on this string: its note in the shape.',
+		chuckString: 'Strum this string on this chuck, or leave it out.',
+		frets:
+			'The shape’s frets, low E to high e, x for a muted string: 3,2,0,0,3,3. The diagram follows as you type.',
+		bands: 'Forget your changes to this chord: the band plays it its own way again.'
+	},
+
 	chopEditor: {
-		before: 'The chord before, and its chop.',
-		after: 'The chord after, and its chop.',
 		frets:
 			'The chop’s frets, G course to E course, x for a muted course: 5,3,2,x. The diagram follows as you type.',
-		openOrMute: 'Tap to play this course open, or to mute it.',
 		bands: 'Forget your chop here: the band picks its own again.'
 	},
 
@@ -434,7 +450,11 @@ export const TIPS = Object.freeze({
 		editPart: 'Edit this part: its piano roll opens under the lanes, and the band keeps playing.',
 		editChops:
 			'See the mandolin’s chops: the chord diagram for each chord opens under the lanes, to change.',
-		chop: 'Tap to see this chord’s mandolin chop, and change it. (Type chords on the guitar’s lane.)',
+		chop: 'Tap to see this chord’s mandolin chop, and change it. (Type chords on the Band lane.)',
+		editGuitar:
+			'See how the guitar plays each chord: its shape, and what it plays on each beat, to change.',
+		guitarChord:
+			'Tap to see how the guitar plays this chord (its shape, booms and chucks), and change it. (Type chords on the Band lane.)',
 		addVideoLane:
 			'Add an A/V lane: it films you with the camera as it records the sound, and its video shows with the others. You name it first.',
 		filmed: 'An A/V lane: Record films with the camera as well as recording the sound.'

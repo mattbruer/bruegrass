@@ -1,6 +1,6 @@
 import { chordShape, withoutVariant } from './chordBook.js';
 import { chordTypeOf, toneSemitones } from '../theory/chordTypes.js';
-import { rhythm, slotPositions } from '../chart/timeline.js';
+import { placesInSlots, rhythm } from '../chart/timeline.js';
 import { pickPattern, patternStrokes } from './strumPatterns.js';
 import { hitAt, hitSpans } from '../chart/hits.js';
 import { createRng } from './seededRandom.js';
@@ -13,12 +13,12 @@ import { ARTICULATIONS } from './articulation.js';
 export const STRINGS = ['E', 'A', 'D', 'G', 'B', 'ee'];
 
 /** MIDI note of each open string, low E to high e. */
-const OPEN_MIDI = [40, 45, 50, 55, 59, 64];
+export const OPEN_MIDI = [40, 45, 50, 55, 59, 64];
 
 /** Highest fret with a sample. */
 export const MAX_FRET = 12;
 
-/** Strings a strum plays, low first (an upstroke plays them high to low). */
+/** Strings a chuck strums unless you say otherwise, low first (an upstroke plays them high to low). */
 export const STRUM_STRINGS = [3, 4, 5];
 /** Strings a full strum (a hit) plays: all six. */
 const FULL_STRINGS = [0, 1, 2, 3, 4, 5];
@@ -254,15 +254,14 @@ function picked(articulation, lighterDb) {
  * How the guitar sounds a pitch shift (capo + transposition) with its
  * shapes: as much as possible with a capo, and anything the capo can't
  * reach (below the open shapes, or past the highest sample) by resampling.
- * @param {{ measures: string[][] }[]} sections
+ * @param {import('./guitarPlan.js').GuitarChord[]} chords what it plays (guitarPlan.js)
  * @param {number} shift semitones
  * @returns {{ capo: number, detune: number }} detune in semitones
  */
-export function guitarTuning(sections, shift) {
-	const names = slotPositions(sections).map((slot) => slot.name);
+export function guitarTuning(chords, shift) {
 	const highest = Math.max(
 		0,
-		...names.flatMap((name) => chordShape(name).filter((fret) => fret !== null))
+		...chords.flatMap((chord) => chord.shape.filter((fret) => fret !== null))
 	);
 	const capo = Math.min(Math.max(shift, 0), MAX_FRET - highest);
 	return { capo, detune: shift - capo };
@@ -282,19 +281,21 @@ export function guitarTuning(sections, shift) {
  * Each beat group of the rhythm grid from timeline.js (boom-chuck, or
  * boom-chuck-chuck in 3/4) gets a strum pattern (strumPatterns.js),
  * boom-chuck or bum-titty, chosen at random; a hit (chart/hits.js) plays
- * its own pattern once and the strumming stops until the next chord. Bass notes on the same chord
- * alternate root/fifth; a new chord (or a new pass) starts on
- * its root. A note rings until its string is played again or the chord
+ * its own pattern once and the strumming stops until the next chord. What
+ * each boom and chuck plays on a chord is decided in guitarPlan.js (the
+ * shape, root/5th booms, your changes). A note rings until its string is played again or the chord
  * changes. When looping, the notes span LOOP_PASSES passes and that rule
  * wraps into the next; otherwise it's one pass and the last chord rings one
  * extra half note.
  *
  * @param {import('../chart/timeline.js').Section[]} sections
- * @param {{ capo?: number, bpm?: number, loop?: boolean }} options
+ * @param {{ chords: import('./guitarPlan.js').GuitarChord[], capo?: number, bpm?: number, loop?: boolean }} options
+ *   chords: what it plays on each chord (guitarChords in guitarPlan.js)
  * @returns {{ events: NoteEvent[], duration: number }} duration: how long until the notes repeat (or end)
  */
-export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}) {
+export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = false }) {
 	const { beats, quarters, slots } = rhythm(sections);
+	const places = placesInSlots(beats);
 	if (beats.length === 0) throw new Error('Nothing to play');
 
 	const quarter = secondsPerQuarter(bpm);
@@ -324,18 +325,17 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 	let events = [];
 	/** @type {number[]} seconds: where the hand mutes every ringing string */
 	const mutes = [];
-	let repeat = 0;
 
 	for (let p = 0; p < passes; p++) {
-		/** @type {string | null} */
-		let lastBoom = null; // each pass starts on the root
 		beats.forEach((boom, b) => {
 			if (boom.role !== 'boom') return;
 			const pattern = pickPattern(random);
 			const hit = hitAt(boom.time, hits);
 			if (hit && hit.start < boom.time - 1e-6) return; // a hit rings here
 			for (const stroke of patternStrokes(hit?.hit ?? pattern, boom.length)) {
-				const k = p * slots.length + beats[b + Math.floor(stroke.at)].slot;
+				const beat = b + Math.floor(stroke.at);
+				const played = chords[beats[beat].slot];
+				const k = p * slots.length + beats[beat].slot;
 				const chord = sequence[k].name;
 				const time = (boom.time + stroke.at + p * quarters) * quarter;
 				const stop = chordEnds[k];
@@ -345,9 +345,7 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 					continue;
 				}
 				if (stroke.hit === 'bass') {
-					repeat = lastBoom === chord ? repeat + 1 : 0;
-					lastBoom = chord;
-					const bass = bassNote(chord, repeat % 2 === 0 ? 'root' : 'fifth');
+					const bass = played.booms[places[beat]];
 					events.push({
 						time,
 						stop,
@@ -361,9 +359,14 @@ export function buildEvents(sections, { capo = 0, bpm = 120, loop = false } = {}
 					continue;
 				}
 
-				const shape = chordShape(chord);
-				const played = stroke.hit === 'full' ? FULL_STRINGS : STRUM_STRINGS;
-				const strings = played.filter((string) => shape[string] !== null);
+				const { shape } = played;
+				const strings = (
+					stroke.hit === 'full'
+						? FULL_STRINGS
+						: beats[beat].role === 'chuck'
+							? played.chucks[places[beat]]
+							: STRUM_STRINGS
+				).filter((string) => shape[string] !== null);
 				const offsets = strumOffsets(strings, bpm, stroke);
 				strings.forEach((string, i) => {
 					events.push({

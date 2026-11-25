@@ -1,4 +1,5 @@
 import { buildEvents, guitarTuning, midiNote } from '../instruments/guitar.js';
+import { guitarChords } from '../instruments/guitarPlan.js';
 import { endBeforeStops, sectionsToPlay, stops, withoutStops } from '../chart/noChord.js';
 import { DEFAULT_METER, barQuarters, rhythm, slotPositions } from '../chart/timeline.js';
 import { melodyEvents, melodyPitch } from '../melody/melody.js';
@@ -81,6 +82,7 @@ export function velocityFromDb(db) {
  *   melody?: import('../melody/melody.js').Melody | null, tuneDb?: Record<string, number>,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null,
  *   chops?: import('../instruments/chopEdits.js').ChopEdits,
+ *   guitar?: import('../instruments/guitarEdits.js').GuitarEdits,
  *   partNames?: import('../melody/partNames.js').PartNames
  * }} options bass: the edited bass line, or null for the band's own; tuneDb: the Melody's and each harmony part's fader, by channel id; partNames: the names you gave the parts
  * @returns {Uint8Array}
@@ -95,6 +97,7 @@ export function arrangementToMidi(
 		tuneDb = {},
 		bass: writtenBass = null,
 		chops = {},
+		guitar: guitarEdits = {},
 		partNames = {}
 	} = {}
 ) {
@@ -107,8 +110,11 @@ export function arrangementToMidi(
 	const quarter = secondsPerQuarter(bpm);
 	/** @template {{ time: number }} T @param {T[]} notes */
 	const quiet = (notes) => withoutStops(notes, silent, (note) => note.time / quarter, passQuarters);
-	const tuning = guitarTuning(playable, shift);
-	const events = quiet(buildEvents(playable, { capo: tuning.capo, bpm }).events).map((event) => ({
+	const guitarPlayed = guitarChords(playable, { edits: guitarEdits });
+	const tuning = guitarTuning(guitarPlayed, shift);
+	const events = quiet(
+		buildEvents(playable, { chords: guitarPlayed, capo: tuning.capo, bpm }).events
+	).map((event) => ({
 		...event,
 		stop: endBeforeStops(event.time / quarter, event.stop / quarter, silent, passQuarters) * quarter
 	}));

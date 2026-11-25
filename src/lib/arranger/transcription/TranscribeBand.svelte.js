@@ -32,7 +32,8 @@ export class TranscribeBand {
 			transpose: arrangement.transpose,
 			loop: false,
 			bass: bass.written,
-			chops: transcription.arranger.song.chops
+			chops: transcription.arranger.song.chops,
+			guitar: transcription.arranger.song.guitarChords
 		});
 	});
 

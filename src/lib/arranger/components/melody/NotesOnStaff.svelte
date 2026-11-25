@@ -7,17 +7,17 @@
 	import { chordAbc } from '../../melody/chordOnStaff.js';
 
 	/**
-	 * @type {{ notes: import('../../melody/chordOnStaff.js').SpelledNote[], label: string }}
-	 *   label: what the drawing shows, for screen readers
+	 * @type {{ notes: import('../../melody/chordOnStaff.js').SpelledNote[], label: string, clef?: 'treble' | 'treble-8' }}
+	 *   label: what the drawing shows, for screen readers; clef: treble-8 for the guitar
 	 */
-	let { notes, label } = $props();
+	let { notes, label, clef = 'treble' } = $props();
 
 	/** @type {HTMLDivElement | undefined} */
 	let paper = $state();
 
 	$effect(() => {
 		const target = paper;
-		const abc = chordAbc(notes);
+		const abc = chordAbc(notes, clef);
 		if (!target) return;
 		let current = true;
 		loadAbcjs().then((abcjs) => {

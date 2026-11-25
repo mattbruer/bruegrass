@@ -17,6 +17,7 @@ import { channelsInUse } from '../melody/harmony/partChannels.js';
  *   melody: import('../melody/melody.js').Melody | null,
  *   bass?: import('../instruments/bassline.js').BassNote[] | null,
  *   chops?: import('../instruments/chopEdits.js').ChopEdits,
+ *   guitar?: import('../instruments/guitarEdits.js').GuitarEdits,
  *   partNames?: import('../melody/partNames.js').PartNames
  * }} arrangement bass: the edited bass line, or null for the band's own; partNames: the names you gave the parts (the tracks are named so)
  */
@@ -28,6 +29,7 @@ export function downloadArrangementMidi({
 	melody,
 	bass = null,
 	chops = {},
+	guitar = {},
 	partNames = {}
 }) {
 	const bytes = arrangementToMidi(sections, {
@@ -37,6 +39,7 @@ export function downloadArrangementMidi({
 		melody,
 		bass,
 		chops,
+		guitar,
 		partNames,
 		tuneDb: Object.fromEntries([...channelsInUse(melody)].map((id) => [id, channelLevel(id)]))
 	});

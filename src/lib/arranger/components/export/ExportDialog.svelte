@@ -76,6 +76,7 @@
 			melody: melody.line,
 			bass: arranger.bass.written,
 			chops: song.chops,
+			guitar: song.guitarChords,
 			partNames: song.partNames,
 			swing: arrangement.swing,
 			tempoCurve: arrangement.tempoCurve

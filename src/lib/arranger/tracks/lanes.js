@@ -3,8 +3,9 @@
  * on its own mixer channel (the lane's id). Times in quarter notes from
  * bar 1, so every lane lines up with the ruler.
  *
- * A chords lane (guitar, mandolin) is the chart's chords bar by bar,
- * drawn and edited by ChordLane from the chart itself. A notes lane is
+ * The chords lane (Band) is the chart's chords bar by bar, drawn and typed
+ * by ChordLane from the chart itself. A voicings lane (guitar, mandolin)
+ * is the same chords as that instrument plays them, each opening its editor. A notes lane is
  * blocks (bass, melody, harmony parts). A take lane is a record track:
  * its clips (takes/clips.js), where they sit on the song in seconds.
  */
@@ -20,8 +21,9 @@ import { stretchOf } from '../takes/takeTempo.js';
  * @typedef {import('$lib/storage/songTakes.js').TakeDocument} TakeDocument
  * @typedef {{ start: number, length: number, label?: string, pitch?: number }} Block
  * @typedef {{ id: string, name: string, kind: 'chords' }} ChordsLane
+ * @typedef {{ id: 'guitar' | 'mandolin', name: string, kind: 'voicings' }} VoicingsLane
  * @typedef {{ id: string, name: string, kind: 'notes', blocks: Block[] }} NotesLane
- * @typedef {ChordsLane | NotesLane} BandLane
+ * @typedef {ChordsLane | VoicingsLane | NotesLane} BandLane
  * @typedef {{ index: number, clip: import('../takes/clips.js').AudioClip, take: TakeDocument, start: number, end: number, stretch: number }} LaneClip
  *   index: its place on the lane; start, end: seconds from bar 1 at the song's tempo now;
  *   stretch: how much longer its take lasts now than as recorded (takes/takeTempo.js)
@@ -29,6 +31,9 @@ import { stretchOf } from '../takes/takeTempo.js';
  *   filmed: an A/V lane (it films as it records)
  * @typedef {BandLane | TakeLane} Lane
  */
+
+/** The lane of the chart's chords: not an instrument, so no mixer channel. */
+export const BAND_LANE = 'band';
 
 /**
  * @param {{
@@ -43,8 +48,9 @@ import { stretchOf } from '../takes/takeTempo.js';
  */
 export function bandLanes({ bass, melody, voices = [], names = {} }) {
 	return [
-		{ id: 'guitar', name: partName('guitar', names, 'Guitar'), kind: 'chords' },
-		{ id: 'mandolin', name: partName('mandolin', names, 'Mandolin'), kind: 'chords' },
+		{ id: BAND_LANE, name: partName(BAND_LANE, names, 'Band'), kind: 'chords' },
+		{ id: 'guitar', name: partName('guitar', names, 'Guitar'), kind: 'voicings' },
+		{ id: 'mandolin', name: partName('mandolin', names, 'Mandolin'), kind: 'voicings' },
 		{ id: 'bass', name: partName('bass', names), kind: 'notes', blocks: bassBlocks(bass) },
 		...tuneLanes(melody, voices, names)
 	];

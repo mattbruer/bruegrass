@@ -22,6 +22,7 @@
 	import RecordingNotes from '$lib/arranger/components/recording/RecordingNotes.svelte';
 	import PartPane from '$lib/arranger/components/tracks/PartPane.svelte';
 	import ChopPane from '$lib/arranger/components/mandolin/ChopPane.svelte';
+	import GuitarPane from '$lib/arranger/components/guitar/GuitarPane.svelte';
 	import VideoSection from '$lib/arranger/components/video/VideoSection.svelte';
 	import { partName } from '$lib/arranger/melody/partNames.js';
 	import { TracksCycleState } from '$lib/arranger/state/TracksCycleState.svelte.js';
@@ -30,7 +31,13 @@
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	const { recording, loop, player, song, arrangement, layout, mandolin } = useArranger();
+	const { recording, loop, player, song, arrangement, layout, mandolin, guitar } = useArranger();
+
+	/** The lanes whose editor is how that instrument plays a chord, rather than the piano roll. */
+	const VOICING_PANES = {
+		guitar: { Pane: GuitarPane, state: guitar, name: 'Guitar' },
+		mandolin: { Pane: ChopPane, state: mandolin, name: 'Mandolin' }
+	};
 	onDestroy(loop.playThroughWhile());
 
 	const cycle = new TracksCycleState(() => rulerBars(arrangement.sections, player.songStart));
@@ -82,9 +89,13 @@
 		pane?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 	}
 
-	/** @param {number} start a chord stepped to in the chop editor (stopped: the playhead goes there) */
-	function pickChop(start) {
-		mandolin.pickAt(start);
+	/**
+	 * A chord stepped to in a chord editor (stopped: the playhead goes there).
+	 * @param {{ pickAt: (start: number) => void }} state
+	 * @param {number} start
+	 */
+	function pickChord(state, start) {
+		state.pickAt(start);
 		if (!player.isPlaying) player.goTo(start);
 	}
 
@@ -126,10 +137,11 @@
 			bind:this={pane}
 			style:scroll-margin-top="calc(var(--top-bar-height, 3.5rem) + {controlsHeight}px + 1rem)"
 		>
-			{#if editing === 'mandolin'}
-				<ChopPane
-					name={partName(editing, song.partNames, 'Mandolin')}
-					onPick={pickChop}
+			{#if editing === 'guitar' || editing === 'mandolin'}
+				{@const voicing = VOICING_PANES[editing]}
+				<voicing.Pane
+					name={partName(editing, song.partNames, voicing.name)}
+					onPick={(/** @type {number} */ start) => pickChord(voicing.state, start)}
 					onClose={() => history.back()}
 				/>
 			{:else}

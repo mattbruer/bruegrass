@@ -35,7 +35,7 @@ export class MandolinState {
 	 * chord in to work out its parts).
 	 * @type {ChopInSong[]}
 	 */
-	chops = $derived.by(() => {
+	chords = $derived.by(() => {
 		const { arrangement, song } = this.#arranger;
 		if (!arrangement.isPlayable) return [];
 		const shift = mod12(arrangement.pitchShift);
@@ -58,7 +58,7 @@ export class MandolinState {
 
 	/** The picked chop: the one whose chord is sounding at `pickedStart`. */
 	picked = $derived(
-		this.chops.findLast((chop) => chop.start <= this.pickedStart + 1e-6) ?? this.chops[0] ?? null
+		this.chords.findLast((chop) => chop.start <= this.pickedStart + 1e-6) ?? this.chords[0] ?? null
 	);
 
 	/** @param {number} quarters pick the chop sounding here */

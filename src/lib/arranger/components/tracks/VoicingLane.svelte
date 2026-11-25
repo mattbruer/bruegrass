@@ -1,42 +1,40 @@
 <script>
 	/**
-	 * The mandolin's lane on the Tracks page: each chord as a chip as wide as
-	 * it lasts, marked when its chop is yours. Tap one to see it and change it (`onPick`, with where
-	 * it starts). The chords themselves are typed on the guitar's lane.
+	 * An instrument's lane of chords on the Tracks page (the guitar's, the
+	 * mandolin's): each chord as a chip as wide as it lasts, outlined when
+	 * you've changed how it's played. Tap one to see and change it there
+	 * (`onPick`, with where it starts). The chords themselves are typed on
+	 * the Band lane.
 	 */
-	import { writeFrets } from '../../voicings/typedFrets.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
-	import { TIPS } from '$lib/tooltips/tips.js';
 
 	/**
 	 * @type {{
-	 *   chops: import('../../state/MandolinState.svelte.js').ChopInSong[],
+	 *   chords: { start: number, length: number, bar: number, name: string, edited: boolean }[],
 	 *   picked: number | null,
 	 *   onPick: (start: number) => void,
+	 *   tip: string,
 	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>
 	 * }}
-	 *   picked: where the chop open in the editor starts (null: none open)
+	 *   picked: where the chord open in the editor starts (null: none open)
 	 */
-	let { chops, picked, onPick, scale } = $props();
+	let { chords, picked, onPick, tip, scale } = $props();
 </script>
 
 <div class="lane">
-	{#each chops as chop (chop.start)}
-		{@const width = scale.toX(chop.start + chop.length) - scale.toX(chop.start) - 4}
+	{#each chords as chord (chord.start)}
 		<button
 			type="button"
 			class="chip"
-			class:edited={chop.edited}
-			class:picked={picked === chop.start}
-			style:left="{scale.toX(chop.start) + 2}px"
-			style:width="{width}px"
-			aria-label="{chop.name} in bar {chop.bar}: chop {writeFrets(chop.chop.frets)}{chop.edited
-				? ', yours'
-				: ''}"
-			onclick={() => onPick(chop.start)}
-			use:tooltip={TIPS.tracks.chop}
+			class:edited={chord.edited}
+			class:picked={picked === chord.start}
+			style:left="{scale.toX(chord.start) + 2}px"
+			style:width="{scale.toX(chord.start + chord.length) - scale.toX(chord.start) - 4}px"
+			aria-label="{chord.name} in bar {chord.bar}{chord.edited ? ', changed by you' : ''}"
+			onclick={() => onPick(chord.start)}
+			use:tooltip={tip}
 		>
-			<span class="name">{chop.name}</span>
+			<span class="name">{chord.name}</span>
 		</button>
 	{/each}
 </div>

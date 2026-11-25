@@ -1,6 +1,7 @@
 /**
  * Notes sounded together, written in ABC as one chord in a whole note, each
- * spelled as given (B♭, not A♯), for drawing on a staff.
+ * spelled as given (B♭, not A♯), for drawing on a staff. The guitar's clef
+ * (`treble-8`) draws them an octave above how they sound, as guitar music is written.
  */
 
 const LETTERS = 'CDEFGAB';
@@ -13,11 +14,12 @@ const SIGNS = { '-2': '__', '-1': '_', 0: '', 1: '^', 2: '^^' };
 
 /**
  * @param {SpelledNote[]} notes
+ * @param {'treble' | 'treble-8'} [clef]
  * @returns {string} ABC
  */
-export function chordAbc(notes) {
+export function chordAbc(notes, clef = 'treble') {
 	const chord = notes.map(abcNote).join('');
-	return `X:1\nL:1\nK:C\n[${chord}]|\n`;
+	return `X:1\nL:1\nK:C clef=${clef}\n[${chord}]|\n`;
 }
 
 /** @param {SpelledNote} note */

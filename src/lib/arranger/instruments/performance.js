@@ -11,6 +11,7 @@
  * MIDI file.
  */
 import { buildEvents, guitarTuning, sampleUrl, touch } from './guitar.js';
+import { guitarChords } from './guitarPlan.js';
 import { bassEvents } from './upright.js';
 import { bassPart } from '../bass/songBass.js';
 import { chopNotes, mandoSampleUrl } from './mandolin.js';
@@ -33,6 +34,7 @@ import { tempoClock } from '../chart/tempoCurve.js';
  *   melody?: import('../melody/melody.js').MelodyPart | null,
  *   bass?: import('./bassline.js').BassNote[] | null, offset?: number,
  *   chops?: import('./chopEdits.js').ChopEdits,
+ *   guitar?: import('./guitarEdits.js').GuitarEdits,
  *   swing?: number,
  *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[]
  * }} options
@@ -42,7 +44,7 @@ import { tempoClock } from '../chart/tempoCurve.js';
  *   channel (Melody, or a harmony part's);
  *   bass: the song's edited bass line (BassState.written), or null for the
  *   band's own; offset: where these sections start in the song (quarters),
- *   for the edited bass and chops; chops: the mandolin chops you've changed;
+ *   for the edited bass and chops; chops: the mandolin chops you've changed; guitar: what you've changed about the guitar's chords;
  *   swing: how long-short the eighths are (chart/swing.js), for every instrument;
  *   tempoCurve: the tempo lane's points (chart/tempoCurve.js), a ritard say
  */
@@ -57,6 +59,7 @@ export function preparePerformance(
 		bass = null,
 		offset = 0,
 		chops = {},
+		guitar = {},
 		swing = SWING_STRAIGHT,
 		tempoCurve = []
 	} = {}
@@ -85,8 +88,9 @@ export function preparePerformance(
 	const quiet = (notes) => withoutStops(notes, silent, (note) => note.time / quarter, passQuarters);
 
 	// Guitar: the capo where it reaches, resampling for the rest
-	const tuning = guitarTuning(sections, shift);
-	const built = buildEvents(sections, { bpm, capo: tuning.capo, loop });
+	const guitarPlayed = guitarChords(sections, { edits: guitar, offset });
+	const tuning = guitarTuning(guitarPlayed, shift);
+	const built = buildEvents(sections, { chords: guitarPlayed, bpm, capo: tuning.capo, loop });
 	const guitarPeriod = clock.secondsAt(built.duration / quarter);
 	const events = onTheClock(
 		quiet(built.events).map((event) => ({

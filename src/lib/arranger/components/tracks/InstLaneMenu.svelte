@@ -24,8 +24,8 @@
 	const { parts, bass } = useArranger();
 
 	const added = $derived(isExtraPart(lane.id));
-	/** The guitar and mandolin aren't parts, so their own names are the lanes'. */
-	const ownLaneName = $derived(lane.kind === 'chords' ? lane.name : ownName(lane.id));
+	/** The Band, guitar and mandolin aren't parts, so their own names are the lanes'. */
+	const ownLaneName = $derived(lane.kind === 'notes' ? ownName(lane.id) : lane.name);
 
 	function remove() {
 		const hasNotes = lane.kind === 'notes' && lane.blocks.length > 0;

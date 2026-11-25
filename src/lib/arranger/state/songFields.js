@@ -11,7 +11,7 @@ import { validVideo } from '../video/songVideo.js';
 
 /**
  * @typedef {Pick<import('$lib/storage/arrangements.js').Arrangement,
- *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'tab' | 'partNames' | 'laneOrder' | 'audioClips' | 'chops' | 'video' | 'recording' | 'madeFrom' | 'tempo' | 'tempoCurve' | 'swing' | 'capo' | 'transpose' | 'mix'>} SongFields
+ *   'arrangement' | 'abc' | 'tune' | 'bass' | 'bassTune' | 'tab' | 'partNames' | 'laneOrder' | 'audioClips' | 'chops' | 'guitarChords' | 'video' | 'recording' | 'madeFrom' | 'tempo' | 'tempoCurve' | 'swing' | 'capo' | 'transpose' | 'mix'>} SongFields
  *   what a song is made of (its name is kept separately)
  */
 
@@ -32,6 +32,7 @@ export function readSongFields(arranger) {
 		laneOrder: arranger.song.laneOrder,
 		audioClips: arranger.song.audioClips,
 		chops: arranger.song.chops,
+		guitarChords: arranger.song.guitarChords,
 		video: arranger.song.video,
 		reference: arranger.song.reference,
 		madeFrom: arranger.song.madeFrom,
@@ -70,6 +71,7 @@ export function loadSongIntoPage(arranger, song) {
 	arranger.song.laneOrder = song.laneOrder ?? [];
 	arranger.song.audioClips = song.audioClips ?? {};
 	arranger.song.chops = song.chops ?? {};
+	arranger.song.guitarChords = song.guitarChords ?? {};
 	arranger.song.video = validVideo(song.video);
 	arranger.history.clear(); // another song: nothing to undo
 	arranger.song.reference = song.reference ?? null;

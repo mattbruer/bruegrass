@@ -11,8 +11,9 @@
 	 * clips (tap one to edit it). Names stay
 	 * put while the lanes scroll sideways together under the playhead. A
 	 * part's lane is picked by its name or a click on the lane: `onEdit`
-	 * opens its editor. The Mandolin's lane shows its chops: its name, or a
-	 * chord on it, opens the chop there.
+	 * opens its editor. The Band lane is the chart's chords, typed bar by
+	 * bar; the Guitar's and Mandolin's lanes are those chords as they play
+	 * them: the lane's name, or a chord on it, opens how it's played there.
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { bandLanes } from '../../tracks/lanes.js';
@@ -39,7 +40,7 @@
 	import CameraIcon from '../video/CameraIcon.svelte';
 	import InstLaneMenu from './InstLaneMenu.svelte';
 	import ChordLane from './ChordLane.svelte';
-	import ChopLane from './ChopLane.svelte';
+	import VoicingLane from './VoicingLane.svelte';
 	import CycleStrip from './CycleStrip.svelte';
 	import CycleSectionMenu from './CycleSectionMenu.svelte';
 	import TempoLane from '../tempo/TempoLane.svelte';
@@ -66,17 +67,28 @@
 		parts,
 		audioEdits,
 		history,
-		mandolin
+		mandolin,
+		guitar
 	} = useArranger();
 
-	/** The lane whose chords open the mandolin's chops. */
-	const CHOPS_LANE = 'mandolin';
+	/** The instruments whose lanes are chords, each opening how it plays them, and its tooltips. */
+	const VOICINGS = {
+		guitar: {
+			state: guitar,
+			tips: { name: TIPS.tracks.editGuitar, chord: TIPS.tracks.guitarChord }
+		},
+		mandolin: { state: mandolin, tips: { name: TIPS.tracks.editChops, chord: TIPS.tracks.chop } }
+	};
 
-	/** @param {number} start open the chop of the chord starting here (stopped: the playhead goes there too) */
-	function openChop(start) {
-		mandolin.pickAt(start);
+	/**
+	 * Open how an instrument plays the chord starting here (stopped: the playhead goes there too).
+	 * @param {'guitar' | 'mandolin'} id
+	 * @param {number} start
+	 */
+	function openVoicing(id, start) {
+		VOICINGS[id].state.pickAt(start);
 		if (!player.isPlaying) player.goTo(start);
-		onEdit(CHOPS_LANE);
+		onEdit(id);
 	}
 
 	/** The names column (px); the lanes scroll under it. */
@@ -313,13 +325,13 @@
 							</span>
 						{/if}
 						<AudioLaneMenu {lane} {lanes} />
-					{:else if lane.id === CHOPS_LANE}
+					{:else if lane.kind === 'voicings'}
 						<button
 							type="button"
 							class="name pick"
 							aria-pressed={picked}
-							onclick={() => openChop(player.resumeAt)}
-							use:tooltip={TIPS.tracks.editChops}>{lane.name}</button
+							onclick={() => openVoicing(lane.id, player.resumeAt)}
+							use:tooltip={VOICINGS[lane.id].tips.name}>{lane.name}</button
 						>
 						<InstLaneMenu {lane} {lanes} />
 					{:else if lane.kind === 'notes'}
@@ -360,12 +372,14 @@
 							>
 						{/each}
 					</div>
-				{:else if lane.id === CHOPS_LANE}
+				{:else if lane.kind === 'voicings'}
+					{@const voicing = VOICINGS[lane.id]}
 					<div class="lane" class:lifted>
-						<ChopLane
-							chops={mandolin.chops}
-							picked={picked ? (mandolin.picked?.start ?? null) : null}
-							onPick={openChop}
+						<VoicingLane
+							chords={voicing.state.chords}
+							picked={picked ? (voicing.state.picked?.start ?? null) : null}
+							onPick={(start) => openVoicing(lane.id, start)}
+							tip={voicing.tips.chord}
 							{scale}
 						/>
 					</div>

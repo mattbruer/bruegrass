@@ -134,3 +134,20 @@ export function rhythm(sections) {
 	const quarters = last ? last.barStart + barQuarters(last.meter) : 0;
 	return { beats, quarters, slots };
 }
+
+/**
+ * Each beat's place among its chord's booms, or among its chucks (0 for
+ * the first boom of a chord, 1 for the second…).
+ * @param {Beat[]} beats
+ * @returns {number[]}
+ */
+export function placesInSlots(beats) {
+	/** @type {Map<string, number>} */
+	const counts = new Map();
+	return beats.map((beat) => {
+		const key = `${beat.slot} ${beat.role}`;
+		const place = counts.get(key) ?? 0;
+		counts.set(key, place + 1);
+		return place;
+	});
+}

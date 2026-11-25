@@ -1,10 +1,12 @@
 <script>
 	/**
-	 * A mandolin chord diagram, G to E left to right, the nut (or the first
-	 * fret shown) at the top. Each fretted note is a dot naming what it is in
-	 * the chord (R, 3, ♭7), filled for the chord's own notes. Tap a place to
-	 * put a finger there, tap the dot again to mute the course; above the
-	 * nut, tap to play a course open or mute it.
+	 * A chord diagram for a fretted instrument (the mandolin, the guitar),
+	 * lowest string on the left, the nut (or the first fret shown) at the
+	 * top. Each fretted note is a dot naming what it is in the chord (R, 3,
+	 * ♭7), filled for the chord's own notes. Tap a place to put a finger
+	 * there, tap the dot again to mute the string; above the nut, tap to
+	 * play a string open or mute it. `lit`: only these strings sound right
+	 * now (one beat of the pattern); the others are dimmed.
 	 */
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -16,12 +18,15 @@
 	 *   inChord: boolean[],
 	 *   courses: string[],
 	 *   maxFret: number,
+	 *   instrument: string,
+	 *   lit?: number[] | null,
 	 *   onChange: (frets: (number | null)[]) => void
 	 * }}
-	 *   marks: what each course's note is (R, 3, ♭7), null when muted;
-	 *   inChord: whether each course's note is one of the chord's own
+	 *   courses: the strings' names, lowest first; marks: what each string's note is (R, 3, ♭7),
+	 *   null when muted; inChord: whether each string's note is one of the chord's own;
+	 *   instrument: its name, for screen readers
 	 */
-	let { frets, marks, inChord, courses, maxFret, onChange } = $props();
+	let { frets, marks, inChord, courses, maxFret, instrument, lit = null, onChange } = $props();
 
 	/** How many frets show at once: enough that most chops sit under the nut. */
 	const ROWS = 7;
@@ -61,7 +66,7 @@
 	width={width * 1.15}
 	class="diagram"
 	role="group"
-	aria-label="Mandolin chord diagram"
+	aria-label="{instrument} chord diagram"
 >
 	{#if firstFret === 1}
 		<rect class="nut" x={LEFT - 2} y={TOP - 4} width={width - 2 * LEFT + 4} height="5" />
@@ -80,7 +85,15 @@
 		/>
 	{/each}
 	{#each courses as name, course (name)}
-		<line class="string" x1={xOf(course)} x2={xOf(course)} y1={TOP} y2={TOP + ROWS * FRET_GAP} />
+		{@const dim = lit !== null && !lit.includes(course)}
+		<line
+			class="string"
+			class:dim
+			x1={xOf(course)}
+			x2={xOf(course)}
+			y1={TOP}
+			y2={TOP + ROWS * FRET_GAP}
+		/>
 		<text class="course" x={xOf(course)} y={height - 4} text-anchor="middle">{name}</text>
 
 		<!-- Above the nut: open or muted -->
@@ -88,12 +101,13 @@
 			class="tap"
 			role="button"
 			tabindex="0"
-			aria-label="{name} course: {frets[course] === null
+			class:dim
+			aria-label="{name} string: {frets[course] === null
 				? 'muted, tap to play it open'
 				: 'tap to mute'}"
 			onclick={() => set(course, frets[course] === null ? 0 : null)}
 			onkeydown={(event) => event.key === 'Enter' && set(course, frets[course] === null ? 0 : null)}
-			use:tooltip={TIPS.chopEditor.openOrMute}
+			use:tooltip={TIPS.chordDiagram.openOrMute}
 		>
 			<rect x={xOf(course) - STRING_GAP / 2} y="0" width={STRING_GAP} height={TOP - 6} />
 			{#if frets[course] === null}
@@ -120,9 +134,10 @@
 			{@const here = frets[course] === fret}
 			<g
 				class="tap"
+				class:dim
 				role="button"
 				tabindex="0"
-				aria-label="{name} course, fret {fret}{here ? ': tap to mute' : ''}"
+				aria-label="{name} string, fret {fret}{here ? ': tap to mute' : ''}"
 				aria-pressed={here}
 				onclick={() => set(course, here ? null : fret)}
 				onkeydown={(event) => event.key === 'Enter' && set(course, here ? null : fret)}
@@ -237,6 +252,12 @@
 
 	.open-mark.outside {
 		fill: var(--color-danger);
+	}
+
+	.dim circle,
+	.dim text,
+	.string.dim {
+		opacity: 0.3;
 	}
 
 	.mute {

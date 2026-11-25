@@ -12,7 +12,12 @@ import { MAX_FRET } from '../instruments/guitar.js';
  */
 
 /** @type {FrettedNeck} */
-const GUITAR = { strings: 6, maxFret: MAX_FRET, order: 'low E to high e', example: '3,x,0,0,3,3' };
+export const GUITAR_NECK = {
+	strings: 6,
+	maxFret: MAX_FRET,
+	order: 'low E to high e',
+	example: '3,x,0,0,3,3'
+};
 
 const COUNTS = ['None', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
 
@@ -21,7 +26,7 @@ const COUNTS = ['None', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
  * @param {FrettedNeck} [neck]
  * @returns {{ frets: (number | null)[] | null, error: string }}
  */
-export function readFrets(text, neck = GUITAR) {
+export function readFrets(text, neck = GUITAR_NECK) {
 	const trimmed = text
 		.trim()
 		.replace(/^\[|\]$/g, '')
