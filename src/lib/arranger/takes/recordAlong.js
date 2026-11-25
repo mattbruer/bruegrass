@@ -14,6 +14,8 @@ import { openMicInput } from '$lib/audio/recording/micInput.js';
 import { holdForMic } from '$lib/audio/audioSession.js';
 import { createTakeRecorder } from '$lib/audio/recording/takeRecorder.js';
 import { createWorkletNode } from '../../audio/worklets/worklets.js';
+import { CAMERA } from '$lib/video/camera.js';
+import { createVideoRecorder } from '$lib/video/videoRecorder.js';
 
 /** Input names that mean Bluetooth: a long delay, and call-quality sound. */
 const BLUETOOTH_NAMES = /airpods|bluetooth|hands-?free|beats|buds/i;
@@ -21,12 +23,13 @@ const BLUETOOTH_NAMES = /airpods|bluetooth|hands-?free|beats|buds/i;
 /**
  * @param {typeof import('tone')} Tone
  * @param {string | null} deviceId which input (null: the device's default)
+ * @param {{ filming?: boolean }} [options] filming: an A/V lane's take, with the camera
  */
-export async function openRecordAlong(Tone, deviceId) {
+export async function openRecordAlong(Tone, deviceId, { filming = false } = {}) {
 	const releaseSession = holdForMic(); // iPhone/iPad: before anything is awaited, while still in the tap
 	const audio = /** @type {AudioContext} */ (/** @type {unknown} */ (Tone.getContext().rawContext));
 	const mic = await Tone.start()
-		.then(() => openMicInput(audio, deviceId, { channels: 1 }))
+		.then(() => openMicInput(audio, deviceId, { channels: 1, camera: filming ? CAMERA : null }))
 		.catch((problem) => {
 			releaseSession();
 			throw problem;
@@ -35,10 +38,15 @@ export async function openRecordAlong(Tone, deviceId) {
 		const recorder = await createTakeRecorder(audio, mic.source, 1, (options) =>
 			createWorkletNode(Tone, 'take-recorder', options)
 		);
+		const video = filming ? createVideoRecorder(mic.stream) : null;
 
 		return {
 			audio,
 			recorder,
+			/** Films the take (null: an audio lane). */
+			video,
+			/** The camera, for a preview while recording (null: not filming). */
+			camera: filming ? mic.stream : null,
 			inputName: mic.label,
 			/** Bluetooth headphones' mic: worth a warning. */
 			bluetooth: BLUETOOTH_NAMES.test(mic.label),
@@ -46,6 +54,7 @@ export async function openRecordAlong(Tone, deviceId) {
 			roundTrip: outputLatency(audio) + mic.latency,
 
 			close() {
+				video?.dispose();
 				recorder.dispose();
 				mic.close();
 				releaseSession();

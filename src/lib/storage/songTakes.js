@@ -11,12 +11,13 @@
  *   takeAudio  each take's audio, by the take's id (big: read one at a time);
  *              a take received in a shared song also keeps the file it came
  *              in (`sent`), so sharing the song again passes it on unchanged
+ *   takeVideo  an A/V take's film, by the take's id (the file the camera made)
  */
 import { askToKeepData, finished, keptOpen, result } from './indexedDb.js';
 import { newId } from './newId.js';
 
 const DATABASE = 'bruegrass.takes';
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 
 /**
  * @typedef {{
@@ -33,18 +34,28 @@ const DATABASE_VERSION = 1;
  *   startsAt: number,
  *   nudgeMs: number,
  *   latencyMs: number,
- *   quality: 'full' | 'compressed'
+ *   quality: 'full' | 'compressed',
+ *   video?: TakeVideo | null
  * }} TakeDocument
  *   inUse: the take its track plays (one per track);
  *   startsAt: seconds from bar 1, already moved earlier by latencyMs (the delay measured when recording);
  *   nudgeMs: moved by ear on top of that;
- *   quality: 'compressed' when it arrived in a shared song (sent compressed), else 'full'
+ *   quality: 'compressed' when it arrived in a shared song (sent compressed), else 'full';
+ *   video: an A/V take's film (missing or null: sound only)
+ * @typedef {{ type: string, offset: number }} TakeVideo
+ *   type: the file's format (video/mp4…); offset: seconds into the film where the take's
+ *   first sample is
  */
 
-const database = keptOpen(DATABASE, DATABASE_VERSION, (db) => {
-	db.createObjectStore('takes', { keyPath: 'id' }).createIndex('bySong', 'songId');
-	db.createObjectStore('takeAudio', { keyPath: 'id' });
+const database = keptOpen(DATABASE, DATABASE_VERSION, (db, oldVersion) => {
+	if (oldVersion < 1) {
+		db.createObjectStore('takes', { keyPath: 'id' }).createIndex('bySong', 'songId');
+		db.createObjectStore('takeAudio', { keyPath: 'id' });
+	}
+	if (oldVersion < 2) db.createObjectStore('takeVideo', { keyPath: 'id' });
 });
+
+const ALL_STORES = ['takes', 'takeAudio', 'takeVideo'];
 
 /**
  * A song's takes, oldest first.
@@ -63,9 +74,10 @@ export async function listTakes(songId) {
  * Save a new take and its audio, and make it the one its track plays.
  * @param {Omit<TakeDocument, 'id' | 'inUse' | 'recordedAt' | 'quality'>} details
  * @param {Float32Array[]} channels
+ * @param {Blob | null} [film] an A/V take's video (`details.video` says its format and offset)
  * @returns {Promise<TakeDocument>}
  */
-export function addTake(details, channels) {
+export function addTake(details, channels, film = null) {
 	return putTake(
 		{
 			...details,
@@ -74,7 +86,8 @@ export function addTake(details, channels) {
 			recordedAt: new Date().toISOString(),
 			quality: 'full'
 		},
-		channels
+		channels,
+		{ film }
 	);
 }
 
@@ -84,15 +97,17 @@ export function addTake(details, channels) {
  * other takes on its track stop.
  * @param {TakeDocument} take
  * @param {Float32Array[]} channels
- * @param {{ bytes: Uint8Array, audio: import('$lib/arranger/share/takeFormat.js').TakeAudio } | null} [sent]
- *   the file a received take came in
+ * @param {{
+ *   sent?: { bytes: Uint8Array, audio: import('$lib/arranger/share/takeFormat.js').TakeAudio } | null,
+ *   film?: Blob | null
+ * }} [files] sent: the file a received take came in; film: an A/V take's video
  * @returns {Promise<TakeDocument>}
  */
-export async function putTake(take, channels, sent = null) {
+export async function putTake(take, channels, { sent = null, film = null } = {}) {
 	const db = await database();
 	const others = (await listTakes(take.songId)).filter((each) => each.trackId === take.trackId);
 
-	const transaction = db.transaction(['takes', 'takeAudio'], 'readwrite');
+	const transaction = db.transaction(ALL_STORES, 'readwrite');
 	const store = transaction.objectStore('takes');
 	if (take.inUse)
 		for (const other of others) if (other.inUse) store.put({ ...other, inUse: false });
@@ -100,6 +115,7 @@ export async function putTake(take, channels, sent = null) {
 	transaction
 		.objectStore('takeAudio')
 		.put(sent ? { id: take.id, channels, sent } : { id: take.id, channels });
+	if (film) transaction.objectStore('takeVideo').put({ id: take.id, film });
 	await finished(transaction);
 	await askToKeepData();
 	return take;
@@ -153,14 +169,24 @@ export async function readSentAudio(id) {
 }
 
 /**
+ * An A/V take's film (null: sound only, or it's gone).
+ * @param {string} id
+ * @returns {Promise<Blob | null>}
+ */
+export async function readTakeVideo(id) {
+	const db = await database();
+	const stored = await result(db.transaction('takeVideo').objectStore('takeVideo').get(id));
+	return stored?.film ?? null;
+}
+
+/**
  * Delete a take and its audio, for good.
  * @param {string} id
  */
 export async function deleteTake(id) {
 	const db = await database();
-	const transaction = db.transaction(['takes', 'takeAudio'], 'readwrite');
-	transaction.objectStore('takes').delete(id);
-	transaction.objectStore('takeAudio').delete(id);
+	const transaction = db.transaction(ALL_STORES, 'readwrite');
+	for (const store of ALL_STORES) transaction.objectStore(store).delete(id);
 	await finished(transaction);
 }
 
@@ -172,10 +198,8 @@ export async function deleteSongTakes(songId) {
 	const takes = await listTakes(songId);
 	if (takes.length === 0) return;
 	const db = await database();
-	const transaction = db.transaction(['takes', 'takeAudio'], 'readwrite');
-	for (const take of takes) {
-		transaction.objectStore('takes').delete(take.id);
-		transaction.objectStore('takeAudio').delete(take.id);
-	}
+	const transaction = db.transaction(ALL_STORES, 'readwrite');
+	for (const take of takes)
+		for (const store of ALL_STORES) transaction.objectStore(store).delete(take.id);
 	await finished(transaction);
 }

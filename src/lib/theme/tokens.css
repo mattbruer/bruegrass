@@ -172,6 +172,7 @@
 	--meter-hot: #f59e0b;
 	--meter-clip: #ef4444;
 	/* The tuner's screen: a deeper tone of the page, like an instrument's display */
+	--video-screen: oklch(from var(--theme-background) calc(l - 0.22) c h); /* behind a film */
 	--tuner-screen: oklch(from var(--theme-background) calc(l - 0.09) calc(c + 0.015) h);
 
 	/* EQ bands, low to high (as in eqBands.js), each its own colour as in Logic */

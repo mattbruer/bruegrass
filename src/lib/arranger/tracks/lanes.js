@@ -23,7 +23,8 @@ import { clipLength, clipStart, clipsOfTrack } from '../takes/clips.js';
  * @typedef {ChordsLane | NotesLane} BandLane
  * @typedef {{ index: number, clip: import('../takes/clips.js').AudioClip, take: TakeDocument, start: number, end: number }} LaneClip
  *   index: its place on the lane; start, end: seconds from bar 1
- * @typedef {{ id: string, name: string, kind: 'take', takes: TakeDocument[], clips: LaneClip[] }} TakeLane
+ * @typedef {{ id: string, name: string, kind: 'take', filmed: boolean, takes: TakeDocument[], clips: LaneClip[] }} TakeLane
+ *   filmed: an A/V lane (it films as it records)
  * @typedef {BandLane | TakeLane} Lane
  */
 
@@ -53,14 +54,16 @@ export function bandLanes({ bass, melody, voices = [], names = {} }) {
  * @param {TakeDocument[]} takes
  * @param {import('../melody/partNames.js').PartNames} [names]
  * @param {import('../takes/clips.js').EditedLanes} [edited] the lanes whose clips you've edited
+ * @param {string[]} [filmed] the A/V lanes
  * @returns {TakeLane[]}
  */
-export function takeLanes(takes, names = {}, edited = {}) {
+export function takeLanes(takes, names = {}, edited = {}, filmed = []) {
 	return RECORD_TRACKS.map((track) => ({
 		id: track.id,
 		name: partName(track.id, names, track.name),
 		/** @type {'take'} */
 		kind: 'take',
+		filmed: filmed.includes(track.id),
 		takes: takes.filter((take) => take.trackId === track.id),
 		clips: clipsOfTrack(track.id, edited, takes).map(({ clip, take }, index) => {
 			const start = clipStart(clip, take);

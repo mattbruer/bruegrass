@@ -20,6 +20,7 @@ import { STARTER_SONG } from '../starterSong.js';
 import { loadSongIntoPage, readSongFields } from './songFields.js';
 import { uniqueName } from './uniqueName.js';
 import { abcjsReady } from './abcjsLoaded.svelte.js';
+import { NO_VIDEO } from '../video/songVideo.js';
 
 export class SongState {
 	/** @type {import('./Arranger.svelte.js').Arranger} */
@@ -39,6 +40,8 @@ export class SongState {
 	laneOrder = /** @type {string[]} */ ($state.raw([]));
 	/** The audio lanes you've edited: their clips, by record track (takes/clips.js). */
 	audioClips = /** @type {import('../takes/clips.js').EditedLanes} */ ($state.raw({}));
+	/** Which audio lanes film (A/V lanes) and how their tiles are laid out (video/songVideo.js). */
+	video = /** @type {import('../video/songVideo.js').SongVideo} */ ($state.raw(NO_VIDEO));
 	/** The example this song started from, until it has a name of its own: it titles a new tune. */
 	exampleName = $state('');
 	/** The last song is open and its tune can be read (it names the song), so changes get saved from now on. */

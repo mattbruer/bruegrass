@@ -21,6 +21,7 @@
 	import TracksView from '$lib/arranger/components/tracks/TracksView.svelte';
 	import RecordingNotes from '$lib/arranger/components/recording/RecordingNotes.svelte';
 	import PartPane from '$lib/arranger/components/tracks/PartPane.svelte';
+	import VideoSection from '$lib/arranger/components/video/VideoSection.svelte';
 	import { partName } from '$lib/arranger/melody/partNames.js';
 	import { TracksCycleState } from '$lib/arranger/state/TracksCycleState.svelte.js';
 	import { rulerBars } from '$lib/arranger/tracks/ruler.js';
@@ -112,6 +113,7 @@
 	<TracksControls bind:height={controlsHeight} />
 	<RecordingNotes />
 	<TracksView {editing} onEdit={edit} {cycle} />
+	<VideoSection />
 	{#if editing}
 		<div
 			bind:this={pane}

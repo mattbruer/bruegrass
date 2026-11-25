@@ -55,11 +55,17 @@ export function watchInputs(onChange) {
  * Open an input in `context`. Asks for microphone permission the first time.
  * @param {BaseAudioContext & { createMediaStreamSource: AudioContext['createMediaStreamSource'] }} context
  * @param {string | null} deviceId which input (null: the computer's default)
- * @param {{ channels?: number }} [options] how many input channels to ask for
+ * @param {{ channels?: number, camera?: MediaTrackConstraints | null }} [options] how many
+ *   input channels to ask for; camera: film too, in the same stream (an iPhone lets only
+ *   one capture have the mic, so the camera's sound must be this one)
  */
-export async function openMicInput(context, deviceId, { channels = WANTED_CHANNELS } = {}) {
+export async function openMicInput(
+	context,
+	deviceId,
+	{ channels = WANTED_CHANNELS, camera = null } = {}
+) {
 	const releaseSession = holdForMic(); // before the first await, while still in the tap
-	const stream = await openStream(context, deviceId, channels).catch((problem) => {
+	const stream = await openStream(context, deviceId, channels, camera).catch((problem) => {
 		releaseSession();
 		throw problem;
 	});
@@ -72,6 +78,8 @@ export async function openMicInput(context, deviceId, { channels = WANTED_CHANNE
 		/** The input actually opened (the default resolves to a real device). */
 		deviceId: settings.deviceId ?? deviceId,
 		label: track.label,
+		/** The whole stream, camera included when asked for (for a video recorder or a preview). */
+		stream,
 		/** The browser's estimate of the input's delay, in seconds (0 when it doesn't say). */
 		latency: typeof settings.latency === 'number' ? settings.latency : 0,
 		channelCount: settings.channelCount ?? source.channelCount,
@@ -93,9 +101,11 @@ export async function openMicInput(context, deviceId, { channels = WANTED_CHANNE
  * @param {BaseAudioContext} context
  * @param {string | null} deviceId
  * @param {number} channels
+ * @param {MediaTrackConstraints | null} camera
  */
-function openStream(context, deviceId, channels) {
+function openStream(context, deviceId, channels, camera) {
 	return navigator.mediaDevices.getUserMedia({
+		video: camera ?? false,
 		audio: {
 			...RAW_INPUT,
 			...(deviceId ? { deviceId: { exact: deviceId } } : {}),

@@ -422,7 +422,17 @@ export const TIPS = Object.freeze({
 		tempoLane:
 			'How fast the song goes, bar by bar. Tap or click to add a point and drag it up or down to slow down or speed up there, for a ritard at the end. Double-tap a point to remove it.',
 		edit: 'Open the editor to write the chords and the melody as text. The lanes change as you type.',
-		editPart: 'Edit this part: its piano roll opens under the lanes, and the band keeps playing.'
+		editPart: 'Edit this part: its piano roll opens under the lanes, and the band keeps playing.',
+		addVideoLane:
+			'Add an A/V lane: it films you with the camera as it records the sound, and its video shows with the others. You name it first.',
+		filmed: 'An A/V lane: Record films with the camera as well as recording the sound.'
+	},
+
+	video: {
+		open: 'Watch the A/V lanes’ videos side by side, as big as the screen allows.',
+		back: 'Back to the tracks.',
+		layout: 'Lay the videos out this way: how many across, and as many rows down as that takes.',
+		tile: 'This lane’s video, in time with the band. It plays the same takes and clips as the lane’s sound.'
 	},
 
 	fullScreen: {

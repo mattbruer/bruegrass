@@ -35,6 +35,7 @@
 	import BlockLane from './BlockLane.svelte';
 	import TakeClip from './TakeClip.svelte';
 	import AudioLaneMenu from './AudioLaneMenu.svelte';
+	import CameraIcon from '../video/CameraIcon.svelte';
 	import InstLaneMenu from './InstLaneMenu.svelte';
 	import ChordLane from './ChordLane.svelte';
 	import CycleStrip from './CycleStrip.svelte';
@@ -99,7 +100,7 @@
 	}
 
 	/** Which + button is asking for the new lane's name (null: neither). */
-	let naming = $state(/** @type {'inst' | 'audio' | null} */ (null));
+	let naming = $state(/** @type {'inst' | 'audio' | 'video' | null} */ (null));
 
 	// A part taken away while its editor is open: close the editor
 	$effect(() => {
@@ -284,6 +285,11 @@
 							use:tooltip={TIPS.tracks.arm}
 						></button>
 						<span class="name">{lane.name}</span>
+						{#if lane.filmed}
+							<span class="filmed" aria-label="A/V lane" use:tooltip={TIPS.tracks.filmed}>
+								<CameraIcon />
+							</span>
+						{/if}
 						<AudioLaneMenu {lane} {lanes} />
 					{:else if lane.kind === 'notes'}
 						<button
@@ -359,6 +365,13 @@
 					onclick={() => (naming = 'audio')}
 					use:tooltip={TIPS.tracks.addLane}>+ Audio</button
 				>
+				<button
+					type="button"
+					class="ui-button px-2 py-1 text-xs"
+					disabled={!recording.canAddLane || recording.isRecording}
+					onclick={() => (naming = 'video')}
+					use:tooltip={TIPS.tracks.addVideoLane}>+ A/V</button
+				>
 			</div>
 
 			{#if cycle.on && cycle.region}
@@ -403,6 +416,15 @@
 	hint="What will you record on it? The vocal, a mandolin break, a fiddle part…"
 	saveLabel="Add lane"
 	onsave={(name) => recording.addLane(name)}
+/>
+
+<NameDialog
+	bind:open={() => naming === 'video', (open) => !open && (naming = null)}
+	title="New A/V lane"
+	suggestions={LANE_NAMES}
+	hint="It films you as it records. Who's playing what? The vocal, the banjo…"
+	saveLabel="Add lane"
+	onsave={(name) => recording.addLane(name, { filmed: true })}
 />
 
 <style>
@@ -514,6 +536,11 @@
 	}
 
 	/* Record-enable, Logic's: a round button, its dot red while it's the lane Record records on */
+	.filmed {
+		display: inline-grid;
+		color: var(--color-ink-soft);
+	}
+
 	.arm {
 		flex-shrink: 0;
 		display: grid;

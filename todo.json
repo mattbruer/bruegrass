@@ -9,6 +9,30 @@
 	],
 	"suggestions": [
 		{
+			"id": "video-follows-tempo",
+			"text": "Video: takes follow the tempo (sound stretched with the pitch kept, film at the matching speed); first measure four stretchers at once on an iPhone",
+			"done": false,
+			"addedAt": "2026-11-24"
+		},
+		{
+			"id": "video-iphone",
+			"text": "Video: record an A/V take on a real iPhone (camera, front-facing preview, the film lined up, size per minute)",
+			"done": false,
+			"addedAt": "2026-11-24"
+		},
+		{
+			"id": "video-nudge",
+			"text": "Video: Earlier / Later for a take's film, if a camera's own delay shows",
+			"done": false,
+			"addedAt": "2026-11-24"
+		},
+		{
+			"id": "video-share",
+			"text": "Video: films in a shared song file, and one finished video of the tiles to export (WebCodecs + a small MP4 muxer)",
+			"done": false,
+			"addedAt": "2026-11-24"
+		},
+		{
 			"id": "hits-listen",
 			"text": "Endings: listen to G~ and G! (try |C|G|D7,G~|), then: show the hit on the chord strip, a longer ring-out at the very end",
 			"done": false,
