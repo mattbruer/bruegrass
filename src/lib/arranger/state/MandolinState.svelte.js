@@ -6,7 +6,8 @@
  */
 import { songChops } from '../instruments/mandolin.js';
 import { withChopEdit } from '../instruments/chopEdits.js';
-import { sectionsToPlay } from '../chart/noChord.js';
+import { isNoChord, sectionsToPlay } from '../chart/noChord.js';
+import { slotPositions } from '../chart/timeline.js';
 import { concertChord } from '../chart/concertChords.js';
 import { mod12, songKey } from '../chart/key.js';
 import { withoutBass, withoutVariant } from '../instruments/chordBook.js';
@@ -28,20 +29,28 @@ export class MandolinState {
 		this.#arranger = arranger;
 	}
 
-	/** Every chord's chop, in order ([]: a chart the band can't play). @type {ChopInSong[]} */
+	/**
+	 * Every chord's chop, in order ([]: a chart the band can't play). None
+	 * where the chart says N.C.: the band is silent there (it only stands a
+	 * chord in to work out its parts).
+	 * @type {ChopInSong[]}
+	 */
 	chops = $derived.by(() => {
 		const { arrangement, song } = this.#arranger;
 		if (!arrangement.isPlayable) return [];
 		const shift = mod12(arrangement.pitchShift);
 		const key = songKey(arrangement.sections);
+		const written = slotPositions(arrangement.sections);
 		try {
 			return songChops(sectionsToPlay(arrangement.sections), {
 				capo: shift,
 				edits: song.chops
-			}).map((chop) => ({
-				...chop,
-				sounds: concertChord(withoutBass(withoutVariant(chop.name)), key, shift)
-			}));
+			})
+				.filter((_, slot) => !isNoChord(written[slot].name))
+				.map((chop) => ({
+					...chop,
+					sounds: concertChord(withoutBass(withoutVariant(chop.name)), key, shift)
+				}));
 		} catch {
 			return [];
 		}
