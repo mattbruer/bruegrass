@@ -17,14 +17,14 @@ import { hitAt, hitSpans } from '../chart/hits.js';
 /**
  * @typedef {import('./guitarEdits.js').Shape} Shape
  * @typedef {{ string: number, fret: number }} Boom frets without the capo
- * @typedef {{ at: number, role: 'boom' | 'chuck', place: number, beatInBar: number, note: Boom | null }} ChordBeat
+ * @typedef {{ at: number, role: 'boom' | 'chuck', place: number, beatInBar: number, note: Boom | null, accent: boolean }} ChordBeat
  *   at: quarters after the chord starts; role: what the band plays there; place: which boom
  *   (or chuck) of the chord it is; beatInBar: from 0; note: the one note you play there instead
- *   (part of a run), null: the band's boom or chuck
+ *   (part of a run), null: the band's boom or chuck; accent: you made this beat louder
  * @typedef {{
  *   start: number, length: number, bar: number, name: string,
  *   shape: Shape, booms: Boom[], chucks: number[][], beats: ChordBeat[],
- *   yours: { shape: boolean, booms: boolean, chucks: boolean, notes: boolean, fill: boolean },
+ *   yours: { shape: boolean, booms: boolean, chucks: boolean, notes: boolean, accents: boolean, fill: boolean },
  *   edited: boolean, fill: string | null
  * }} GuitarChord
  *   start, length: where it is in the song (quarters from bar 1); bar: its bar, from 1;
@@ -53,7 +53,8 @@ export function guitarChords(sections, { edits = {}, offset = 0 } = {}) {
 				role: beat.role,
 				place,
 				beatInBar: beat.beatInBar,
-				note: change.notes?.[i] ?? null
+				note: change.notes?.[i] ?? null,
+				accent: change.accents?.[i] ?? false
 			}));
 		const booms = own
 			.filter((beat) => beat.role === 'boom')
@@ -72,6 +73,7 @@ export function guitarChords(sections, { edits = {}, offset = 0 } = {}) {
 			booms: !!change.booms,
 			chucks: !!change.chucks,
 			notes: own.some((beat) => beat.note !== null),
+			accents: own.some((beat) => beat.accent),
 			fill: !!change.fill
 		};
 		return {

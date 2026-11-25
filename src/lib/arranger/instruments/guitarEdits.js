@@ -12,9 +12,10 @@
 /**
  * @typedef {(number | null)[]} Shape six frets, low E to high e, null = muted
  * @typedef {{ string: number, fret: number }} PickedNote
- * @typedef {{ shape?: Shape, booms?: number[], chucks?: number[][], notes?: (PickedNote | null)[], fill?: string }} GuitarChange
+ * @typedef {{ shape?: Shape, booms?: number[], chucks?: number[][], notes?: (PickedNote | null)[], accents?: boolean[], fill?: string }} GuitarChange
  *   booms: the string each boom plays, in order; chucks: the strings each chuck strums;
  *   notes: by beat of the chord, the one note played there instead (null: the band's boom or chuck);
+ *   accents: by beat of the chord, played louder (true) or as the band does;
  *   fill: the part (a tune voice) that plays a fill here instead: the guitar rests
  * @typedef {Record<string, GuitarChange & { chord: string }>} GuitarEdits
  */
@@ -29,8 +30,8 @@
 export function editedGuitar(edits, start, chord) {
 	const edit = edits[String(start)];
 	if (!edit || edit.chord !== chord) return {};
-	const { shape, booms, chucks, notes, fill } = edit;
-	return { shape, booms, chucks, notes, fill };
+	const { shape, booms, chucks, notes, accents, fill } = edit;
+	return { shape, booms, chucks, notes, accents, fill };
 }
 
 /**
@@ -52,5 +53,5 @@ export function withGuitarEdit(edits, start, chord, change) {
 
 /** @param {unknown} value a list with nothing in it (notes all back to the band's) */
 function isAllEmpty(value) {
-	return Array.isArray(value) && value.every((each) => each === null);
+	return Array.isArray(value) && value.every((each) => each === null || each === false);
 }

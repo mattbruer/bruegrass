@@ -191,6 +191,7 @@ export const TIPS = Object.freeze({
 			chuck: 'The band’s chuck on this beat.',
 			note: 'Play one note of your own here instead: a run between chords.'
 		},
+		accent: 'Accent this beat: play it a little louder (>).',
 		noteString: 'Play the note on this string.',
 		writeFill:
 			'Leave this chord to a fill you write: the guitar rests, and your Guitar fills part plays what you write there (any notes, any rhythm, in TAB or the piano roll).',

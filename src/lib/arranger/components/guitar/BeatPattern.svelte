@@ -13,10 +13,11 @@
 	 * @typedef {{
 	 *   kind: 'boom' | 'chuck' | 'note',
 	 *   beatInBar: number,
+	 *   accent: boolean,
 	 *   notes: import('../../voicings/fretNotes.js').FretNote[],
 	 *   yours: boolean
 	 * }} BeatCard
-	 *   beatInBar: from 0; notes: what the beat plays (one for a boom or a note); yours: you changed it
+	 *   beatInBar: from 0; accent: played louder; notes: what the beat plays (one for a boom or a note); yours: you changed it
 	 */
 
 	/**
@@ -40,7 +41,10 @@
 			onclick={() => onSelect(i)}
 			use:tooltip={TIPS.guitarEditor.beats[card.kind]}
 		>
-			<span class="beat">{card.beatInBar + 1}</span>
+			<span class="beat"
+				>{card.beatInBar + 1}{#if card.accent}<span class="accent" aria-label="accented">&gt;</span
+					>{/if}</span
+			>
 			<span class="role">{ROLE_NAMES[card.kind]}{card.yours ? ' · yours' : ''}</span>
 			{#if card.notes.length === 0}
 				<span class="what quiet">nothing</span>
@@ -89,6 +93,11 @@
 		font-size: 1.1rem;
 		font-weight: 800;
 		line-height: 1;
+	}
+
+	.accent {
+		margin-left: 0.3rem;
+		color: var(--color-accent);
 	}
 
 	.role {

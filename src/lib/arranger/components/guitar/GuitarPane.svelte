@@ -28,6 +28,7 @@
 	import NotePicker from './NotePicker.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import FillChoice from './FillChoice.svelte';
+	import AccentButton from './AccentButton.svelte';
 	import { FILL_PART_NAME } from '../../state/GuitarState.svelte.js';
 
 	/**
@@ -68,6 +69,7 @@
 			? chord.beats.map((each) => ({
 					kind: each.note ? 'note' : each.role,
 					beatInBar: each.beatInBar,
+					accent: each.accent,
 					notes: playedOn(each),
 					yours:
 						each.note !== null || (each.role === 'boom' ? chord.yours.booms : chord.yours.chucks)
@@ -129,6 +131,14 @@
 		guitar.change({ notes });
 	}
 
+	/** @param {boolean} on the picked beat accented (played louder) or not */
+	function setAccent(on) {
+		if (!chord || !beat) return;
+		const accents = chord.beats.map((each) => each.accent);
+		accents[chord.beats.indexOf(beat)] = on;
+		guitar.change({ accents });
+	}
+
 	/** @param {string} kind turn the picked beat into a note (starting on the chord's boom) or back */
 	function setKind(kind) {
 		if (!chord || !beat) return;
@@ -188,12 +198,15 @@
 							onSelect={(i) => (selected = i)}
 						/>
 						{#if beat}
-							<TabSwitch
-								bind:value={() => (beat.note ? 'note' : beat.role), setKind}
-								tabs={kinds}
-								tips={TIPS.guitarEditor.kinds}
-								label="What this beat plays"
-							/>
+							<div class="flex flex-wrap items-center gap-2">
+								<TabSwitch
+									bind:value={() => (beat.note ? 'note' : beat.role), setKind}
+									tabs={kinds}
+									tips={TIPS.guitarEditor.kinds}
+									label="What this beat plays"
+								/>
+								<AccentButton on={beat.accent} onChange={setAccent} />
+							</div>
 						{/if}
 						{#if beat?.note}
 							<NotePicker

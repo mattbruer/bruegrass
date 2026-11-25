@@ -35,6 +35,9 @@ const MUTE_FADE = 0.04; // seconds: the hand comes down on the strings (a choked
 /** An upstroke is a little lighter than a downstroke. */
 const STROKE_DB = { down: 0, up: -3 };
 
+/** How much louder an accented beat is (yours: guitarPlan.js), until samples at more velocities arrive. */
+const ACCENT_DB = 4;
+
 /** Seed for the strum pattern choices, so a song always plays (and exports) the same. */
 const STRUM_SEED = 11;
 
@@ -270,9 +273,10 @@ export function guitarTuning(chords, shift) {
 /**
  * @typedef {{
  *   time: number, stop: number, string: number, fret: number, chord: string,
- *   part: 'bass' | 'strum', levelDb: number, fadeOut: number
+ *   part: 'bass' | 'strum', levelDb: number, fadeOut: number, accent: boolean
  * }} NoteEvent
- *   fadeOut: seconds, from `stop`
+ *   fadeOut: seconds, from `stop`; accent: on a beat you accented (levelDb has it already;
+ *   a harder-played sample would be picked by it)
  */
 
 /**
@@ -297,14 +301,16 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 	const { beats, quarters, slots } = rhythm(sections);
 	const places = placesInSlots(beats);
 	if (beats.length === 0) throw new Error('Nothing to play');
-	// The beats you've made one picked note (a run): it plays instead of the band's stroke there
-	const notes = beats.map((beat) => {
+	// What you've said about each beat: one picked note of yours (a run) instead of the band's stroke, an accent
+	const planned = beats.map((beat) => {
 		const slot = slots[beat.slot];
-		const own = chords[beat.slot].beats.find(
+		return chords[beat.slot].beats.find(
 			(each) => Math.abs(slot.start + each.at - beat.time) < 1e-6
 		);
-		return own?.note ?? null;
 	});
+	const notes = planned.map((own) => own?.note ?? null);
+	const accent = (/** @type {number} */ b) => planned[b]?.accent ?? false;
+	const accentDb = (/** @type {number} */ b) => (accent(b) ? ACCENT_DB : 0);
 
 	const quarter = secondsPerQuarter(bpm);
 	const passLength = quarters * quarter;
@@ -352,8 +358,9 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 				fret: note.fret + capo,
 				chord: sequence[k].name,
 				part: 'bass',
-				levelDb: levelDb.bass,
-				fadeOut: CHORD_CHANGE_FADE
+				levelDb: levelDb.bass + accentDb(b),
+				fadeOut: CHORD_CHANGE_FADE,
+				accent: accent(b)
 			});
 		});
 		beats.forEach((boom, b) => {
@@ -383,8 +390,9 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 						fret: bass.fret + capo,
 						chord,
 						part: 'bass',
-						levelDb: levelDb.bass,
-						fadeOut: CHORD_CHANGE_FADE
+						levelDb: levelDb.bass + accentDb(beat),
+						fadeOut: CHORD_CHANGE_FADE,
+						accent: accent(beat)
 					});
 					continue;
 				}
@@ -406,8 +414,9 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 						fret: /** @type {number} */ (shape[string]) + capo,
 						chord,
 						part: 'strum',
-						levelDb: levelDb.strum + STROKE_DB[stroke.direction],
-						fadeOut: CHORD_CHANGE_FADE
+						levelDb: levelDb.strum + STROKE_DB[stroke.direction] + accentDb(beat),
+						fadeOut: CHORD_CHANGE_FADE,
+						accent: accent(beat)
 					});
 				});
 			}

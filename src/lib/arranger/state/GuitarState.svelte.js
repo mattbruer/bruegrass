@@ -128,6 +128,7 @@ export class GuitarState {
 			booms: undefined,
 			chucks: undefined,
 			notes: undefined,
+			accents: undefined,
 			fill: undefined
 		});
 	}
