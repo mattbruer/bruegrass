@@ -43,12 +43,6 @@ export const KNOWN_KEYS = {
 		about: 'How you changed the guitar on a chord, saved by name to use in any song.',
 		items: ['pattern', 'patterns']
 	},
-	'bruegrass.chordVoicings': {
-		name: 'My chords (no longer used)',
-		about:
-			'Guitar shapes from My chords, which guitar patterns replaced. Nothing reads them now: safe to delete.',
-		items: ['chord', 'chords']
-	},
 	'bruegrass.thisDevice': {
 		name: 'This device’s choices',
 		about:
