@@ -69,6 +69,8 @@ const TOUCH_BASS_RATIO = 0.5; // bass notes are still picked deliberately
 const TOUCH_STRUM_RATIO = 0.5; // a graze is already light, so it follows the tempo only half as much
 /* Booms are plucked, strums graze (articulation.js); a lighter touch darkens either, 10x per -12 dB */
 const PART_ARTICULATION = { bass: ARTICULATIONS.pluck, strum: ARTICULATIONS.graze };
+/** The rhythm guitar's strums sit well under its booms: this much below a graze (the user's ear). */
+const STRUM_DB = -6;
 const TOUCH_FADE_IN_PER_DB = 0.0005; // s of fade-in per dB lighter (3 ms at -6 dB)
 
 /* A slash chord's bass is found on these strings, low E first, up to this fret */
@@ -232,7 +234,7 @@ export function touch(bpm) {
 	const strum = picked(PART_ARTICULATION.strum, strumDb * TOUCH_STRUM_RATIO);
 	const bass = picked(PART_ARTICULATION.bass, strumDb * TOUCH_BASS_RATIO);
 	return {
-		levelDb: { strum: strum.levelDb, bass: bass.levelDb },
+		levelDb: { strum: strum.levelDb + STRUM_DB, bass: bass.levelDb },
 		cutoff: { strum: strum.cutoff, bass: bass.cutoff },
 		fadeIn: { strum: strum.fadeIn, bass: bass.fadeIn },
 		skip: { strum: strum.skip, bass: bass.skip }
