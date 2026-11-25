@@ -3,18 +3,23 @@
  * short noise "tk" where the hand and pick hit the strings, a filter that
  * starts bright and closes, and a fade so the chop stops like a hand
  * coming off the strings. Tuning lives here; band.js wires it in.
+ *
+ * Tuned toward percussion (the user's ear, Nov 2026: the chuck was buried
+ * under the notes): a louder, longer, lower tk, and the notes cut shorter
+ * and duller. A recorded chuck (muted strings) would replace the tk here:
+ * `createChopTick` is the one place that makes it.
  */
 
 /** Seconds from a chop's strike to silence. */
-export const CHOP_DECAY = 0.12;
+export const CHOP_DECAY = 0.08;
 /** Seconds of fade-out before that stop. */
-export const CHOP_FADE_OUT = 0.03;
+export const CHOP_FADE_OUT = 0.025;
 
 /** Each chop's low-pass starts at `from` Hz and closes to `to` Hz over `seconds`. */
-export const CHOP_SWEEP = { from: 8000, to: 2000, seconds: 0.03 };
+export const CHOP_SWEEP = { from: 6000, to: 1400, seconds: 0.02 };
 
 /** The "tk": a burst of noise through a band-pass, once per chop. */
-export const CHOP_TICK = { seconds: 0.015, frequency: 3000, q: 1, levelDb: -10 };
+export const CHOP_TICK = { seconds: 0.03, frequency: 2200, q: 0.7, levelDb: -2 };
 
 /**
  * A low-pass for one chop, bright at its strike and closing after.
