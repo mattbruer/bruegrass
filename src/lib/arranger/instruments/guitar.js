@@ -6,6 +6,7 @@ import { hitAt, hitSpans } from '../chart/hits.js';
 import { createRng } from './seededRandom.js';
 import { secondsPerQuarter } from '../chart/tempo.js';
 import { ARTICULATIONS } from './articulation.js';
+import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
 
 /** @typedef {import('../chart/timeline.js').SlotPosition} SlotPosition */
 
@@ -322,20 +323,19 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 	const passes = loop ? kept + 1 : 1;
 	const end = loop ? passes * passLength : passLength + 2 * quarter;
 	const sequence = Array.from({ length: passes }, (_, p) =>
-		slots.map((slot, k) => ({
+		slots.map((slot) => ({
 			name: slot.name,
-			start: (slot.start + p * quarters) * quarter,
-			fill: chords[k].fill !== null
+			start: (slot.start + p * quarters) * quarter
 		}))
 	).flat();
 
-	// When each slot's chord stops (next different chord, a fill, or the end)
+	// When each slot's chord stops (next different chord, or the end)
 	const chordEnds = new Array(sequence.length);
 	let chordEnd = end;
 	for (let k = sequence.length - 1; k >= 0; k--) {
 		chordEnds[k] = chordEnd;
 		const before = sequence[k - 1];
-		const changes = before && (before.name !== sequence[k].name || before.fill || sequence[k].fill);
+		const changes = before && before.name !== sequence[k].name;
 		if (changes) chordEnd = sequence[k].start;
 	}
 
@@ -348,14 +348,45 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 	/** @type {number[]} seconds: where the hand mutes every ringing string */
 	const mutes = [];
 
+	/** Is the band's strum replaced by a fill at this time (quarters from bar 1)? */
+	const inFill = (/** @type {number} */ slot, /** @type {number} */ time) => {
+		const fill = chords[slot].fill;
+		return !!fill && time >= fill.start - 1e-6;
+	};
+	/** The strum before a fill is let go as the fill starts. */
+	const stopBeforeFill = (
+		/** @type {number} */ slot,
+		/** @type {number} */ p,
+		/** @type {number} */ stop
+	) => {
+		const fill = chords[slot].fill;
+		return fill ? Math.min(stop, (fill.start + p * quarters) * quarter) : stop;
+	};
+
 	for (let p = 0; p < passes; p++) {
+		chords.forEach((chord) => {
+			chord.fill?.played.forEach((note) => {
+				const at = chord.fill.start + note.start / TICKS_PER_QUARTER + p * quarters;
+				events.push({
+					time: at * quarter,
+					stop: (at + note.length / TICKS_PER_QUARTER) * quarter,
+					string: note.string,
+					fret: note.fret + capo,
+					chord: chord.name,
+					part: 'bass',
+					levelDb: levelDb.bass,
+					fadeOut: CHORD_CHANGE_FADE,
+					accent: false
+				});
+			});
+		});
 		beats.forEach((beat, b) => {
 			const note = notes[b];
-			if (!note || chords[beat.slot].fill) return;
+			if (!note || inFill(beat.slot, beat.time)) return;
 			const k = p * slots.length + beat.slot;
 			events.push({
 				time: (beat.time + p * quarters) * quarter,
-				stop: chordEnds[k],
+				stop: stopBeforeFill(beat.slot, p, chordEnds[k]),
 				string: note.string,
 				fret: note.fret + capo,
 				chord: sequence[k].name,
@@ -372,12 +403,12 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 			if (hit && hit.start < boom.time - 1e-6) return; // a hit rings here
 			for (const stroke of patternStrokes(hit?.hit ?? pattern, boom.length)) {
 				const beat = b + Math.floor(stroke.at);
-				if (notes[beat] || chords[beats[beat].slot].fill) continue; // yours, or a fill: the guitar rests
+				if (notes[beat] || inFill(beats[beat].slot, beats[beat].time)) continue; // yours, or a fill: the guitar rests
 				const played = chords[beats[beat].slot];
 				const k = p * slots.length + beats[beat].slot;
 				const chord = sequence[k].name;
 				const time = (boom.time + stroke.at + p * quarters) * quarter;
-				const stop = chordEnds[k];
+				const stop = stopBeforeFill(beats[beat].slot, p, chordEnds[k]);
 
 				if (stroke.hit === 'mute') {
 					mutes.push(time);

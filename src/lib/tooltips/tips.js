@@ -201,9 +201,10 @@ export const TIPS = Object.freeze({
 		savePattern: 'Keep how you changed this chord as a pattern, to use in any song.',
 		noteString: 'Play the note on this string.',
 		writeFill:
-			'Leave this chord to a fill you write: the guitar rests, and your Guitar fills part plays what you write there (any notes, any rhythm, in TAB or the piano roll).',
-		openFill: 'Open the Guitar fills part, at this chord, to write the fill.',
-		endFill: 'The guitar plays this chord again. What you wrote in the fill part stays.',
+			'Write a fill for this chord: your notes play over its last bar or bars, in place of the band’s strum.',
+		fillBars: 'How many bars the fill lasts, counted back from the end of the chord.',
+		endFill: 'The band strums this chord again. The fill you wrote is forgotten.',
+		fillRoll: 'Draw the notes of the fill. Only the fill’s own bars are shown.',
 		fretDown: 'The note a fret lower.',
 		fretUp: 'The note a fret higher.',
 		boomString: 'Boom on this string: its note in the shape.',

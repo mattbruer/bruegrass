@@ -4,19 +4,19 @@
  * plays) and for which chord (as written, the shape's name). Any part can
  * be left to the band: the shape the hand holds, the string each boom
  * plays, the strings each chuck strums, and any beat played as one picked
- * note instead (a run: the band never plays one of its own), or the whole
- * chord left to a fill you write as a part of the tune (the guitar rests). A change is only played while the
+ * note instead (a run: the band never plays one of its own), or the last bars of the
+ * chord played as a fill you write instead (guitarFill.js). A change is only played while the
  * same chord is there, so changing the chart quietly drops it.
  */
 
 /**
  * @typedef {(number | null)[]} Shape six frets, low E to high e, null = muted
  * @typedef {{ string: number, fret: number }} PickedNote
- * @typedef {{ shape?: Shape, booms?: number[], chucks?: number[][], notes?: (PickedNote | null)[], accents?: boolean[], fill?: string }} GuitarChange
+ * @typedef {{ shape?: Shape, booms?: number[], chucks?: number[][], notes?: (PickedNote | null)[], accents?: boolean[], fill?: import('./guitarFill.js').Fill }} GuitarChange
  *   booms: the string each boom plays, in order; chucks: the strings each chuck strums;
  *   notes: by beat of the chord, the one note played there instead (null: the band's boom or chuck);
  *   accents: by beat of the chord, played louder (true) or as the band does;
- *   fill: the part (a tune voice) that plays a fill here instead: the guitar rests
+ *   fill: notes you wrote, played instead of the band's strum over the chord's last bars
  * @typedef {Record<string, GuitarChange & { chord: string }>} GuitarEdits
  */
 

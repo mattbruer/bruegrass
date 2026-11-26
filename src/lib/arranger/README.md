@@ -32,9 +32,9 @@ timeline
    │  styles/styles.js            the band's styles (Bluegrass, Celtic) as data: each has its time signatures (`times`: Celtic adds 6/8, 9/8, 12/8; the Bar tab offers the style's) and its own guitar-voicing generator (`voicing`: styles/bluegrass/bluegrassVoicing.js, styles/celtic/celticVoicing.js, which for now just calls bluegrass's). `chordBook.chordShape(name, style)` asks the style; `style` is passed down from the song through `preparePerformance` and `guitarChords`. A song's `style` is saved with it and picked in the Band lane's ⋯ menu (components/page/StyleSelect.svelte). Still bluegrass whatever the style: strums, bass, mandolin, chord-name checks (`hasShape`), the chord-places rule (`chart/chordPlaces.js`), Transcribe's time list
    │  instruments/seededRandom.js the repeatable random choices
    │  instruments/mandolin.js     off-beat chops, one per chord (songChops); yours from chopEdits.js
-   │  instruments/guitarPlan.js   what the guitar plays on each chord (shape, booms, chucks, your notes, or a fill: it rests); yours from guitarEdits.js; guitar.js times it
+   │  instruments/guitarPlan.js   what the guitar plays on each chord (shape, booms, chucks, your notes, or a fill: notes you write for its last bars, `guitarFill.js`); yours from guitarEdits.js; guitar.js times it
    │  instruments/guitarPatterns.js  one chord's guitar changes as a pattern, and onto another chord (the right hand, runs moved by root); saved by storage/guitarPatterns.js
-   │  instruments/guitarSamples.js  the band's guitar samples as a tune instrument (a fill part plays on it)
+   │  instruments/guitarSamples.js  the band's guitar samples as a tune instrument
    │  instruments/chopSound.js    the chop's percussive sound: noise tk, closing filter, fade-out
    │  instruments/bassline.js     the band's own bass part, root and fifth (instruments/upright.js plays it)
    │  instruments/instrumentRanges.js  where each instrument naturally plays (the upright's range: the roll stripes notes outside it)

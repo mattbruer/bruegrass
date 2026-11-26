@@ -99,12 +99,6 @@
 		if (!player.isPlaying) player.goTo(start);
 	}
 
-	/** @param {string} id a fill's part: its editor opens in TAB, the guitar's way of writing */
-	function openFill(id) {
-		settings.tracks.partView = 'tab';
-		edit(id);
-	}
-
 	/** What the editor follows: the band, from the playhead. */
 	const bandClock = {
 		get playing() {
@@ -148,7 +142,6 @@
 				<voicing.Pane
 					name={partName(editing, song.partNames, voicing.name)}
 					onPick={(/** @type {number} */ start) => pickChord(voicing.state, start)}
-					onOpenPart={openFill}
 					onClose={() => history.back()}
 				/>
 			{:else}

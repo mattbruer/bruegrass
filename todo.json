@@ -388,7 +388,7 @@
 		},
 		{
 			"id": "eighth-note-runs",
-			"text": "Fills: mark several chords in one go, and the part editor scrolls to the fill",
+			"text": "Fills: hear a note as you draw it, copy a fill to other chords, and place it at the start of a chord",
 			"done": false,
 			"addedAt": "2026-11-25"
 		},

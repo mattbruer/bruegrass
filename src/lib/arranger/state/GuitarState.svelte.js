@@ -5,16 +5,13 @@
  * changes are saved with the song (`song.guitarChords`,
  * instruments/guitarEdits.js), through Undo.
  *
- * A fill: a chord the guitar rests on while a part of the tune you write
- * plays instead (the Guitar fills part, on the band's own guitar sound),
- * made the first time it's needed and shared by every fill.
+ * A fill (instruments/guitarFill.js): notes you write for the picked
+ * chord's last bars, played in place of the band's strum.
  *
  * Patterns (instruments/guitarPatterns.js): one chord's changes copied to
  * paste onto another, or saved under a name for every song.
  */
-import { extraPartsIn } from '../melody/extraParts.js';
-import { mixer } from '../mixer/mixer.svelte.js';
-import { BAND_GUITAR } from '../instruments/tuneInstruments.js';
+import { emptyFill } from '../instruments/guitarFill.js';
 import { isEmptyPattern, patternOf, patternOnto } from '../instruments/guitarPatterns.js';
 import {
 	deleteGuitarPattern,
@@ -32,9 +29,6 @@ import { mod12, songKey } from '../chart/key.js';
  * @typedef {import('../instruments/guitarPlan.js').GuitarChord & { sounds: string }} GuitarChordInSong
  *   sounds: the chord as it sounds with the capo and key ("A" for a G shape with capo 2)
  */
-
-/** What the part the fills are written in is called, to begin with. */
-export const FILL_PART_NAME = 'Guitar fills';
 
 export class GuitarState {
 	/** @type {import('./Arranger.svelte.js').Arranger} */
@@ -87,35 +81,30 @@ export class GuitarState {
 			null
 	);
 
-	/** The part playing the song's fills, if it has one still (null: none yet). */
-	fillPart = $derived.by(() => {
-		const { song, melody } = this.#arranger;
-		const parts = extraPartsIn(melody.notation);
-		const used = Object.values(song.guitarChords).map((edit) => edit.fill);
-		return used.find((id) => id && parts.includes(id)) ?? null;
-	});
-
-	/**
-	 * Leave the picked chord to a fill: the guitar rests and the fill part
-	 * plays. The part is made the first time, named and on the band's guitar.
-	 * @returns {Promise<string | null>} the fill part (null: no room for another part)
-	 */
-	async writeFill() {
-		const part = this.fillPart ?? (await this.#newFillPart());
-		if (part) this.change({ fill: part });
-		return part;
+	/** The picked chord's fill as saved (bars and notes), or undefined. */
+	#savedFill() {
+		const chord = this.picked;
+		if (!chord) return undefined;
+		return editedGuitar(this.#arranger.song.guitarChords, chord.start, chord.name).fill;
 	}
 
-	/** The picked chord back to the band's guitar (what's written in the fill part stays). */
+	/** Play the picked chord's last bar as a fill you write, starting empty. */
+	writeFill() {
+		this.change({ fill: emptyFill() });
+	}
+
+	/** The picked chord back to the band's strum (the fill is forgotten). */
 	endFill() {
 		this.change({ fill: undefined });
 	}
 
-	async #newFillPart() {
-		const part = await this.#arranger.parts.add(FILL_PART_NAME);
-		const channel = mixer.channels.find((each) => each.id === part);
-		if (channel) channel.instrument = BAND_GUITAR;
-		return part;
+	/**
+	 * Change the picked chord's fill.
+	 * @param {Partial<import('../instruments/guitarFill.js').Fill>} change
+	 */
+	changeFill(change) {
+		const fill = this.#savedFill();
+		if (fill) this.change({ fill: { ...fill, ...change } });
 	}
 
 	/** The picked chord's changes as a pattern (null: nothing changed to take). */

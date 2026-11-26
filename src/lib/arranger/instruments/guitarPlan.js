@@ -2,8 +2,8 @@
  * What the guitar plays on each chord of the song, decided before anything
  * is timed: the shape the hand holds, the note each boom plays and the
  * strings each chuck strums, and any beat you've made a single picked note
- * instead (a run between chords: only ever yours), or a fill: the chord
- * left to a part you write, the guitar resting. Yours where you've
+ * instead (a run between chords: only ever yours), or a fill: notes you
+ * write for the chord's last bars, played in place of the strum. Yours where you've
  * changed them (guitarEdits.js), else the band's: the chord book's shape, booms
  * alternating root and 5th (a new chord, or a new pass, starts on its
  * root), chucks on the strum strings. guitar.js times it all.
@@ -13,6 +13,7 @@ import { STRUM_STRINGS, bassNoteIn } from './guitar.js';
 import { editedGuitar } from './guitarEdits.js';
 import { placesInSlots, rhythm } from '../chart/timeline.js';
 import { hitAt, hitSpans } from '../chart/hits.js';
+import { barsThatFit, fillSpan } from './guitarFill.js';
 
 /**
  * @typedef {import('./guitarEdits.js').Shape} Shape
@@ -25,11 +26,11 @@ import { hitAt, hitSpans } from '../chart/hits.js';
  *   start: number, length: number, bar: number, name: string,
  *   shape: Shape, booms: Boom[], chucks: number[][], beats: ChordBeat[],
  *   yours: { shape: boolean, booms: boolean, chucks: boolean, notes: boolean, accents: boolean, fill: boolean },
- *   edited: boolean, fill: string | null
+ *   edited: boolean, fill: import('./guitarFill.js').FillSpan | null, meter: import('../chart/timeline.js').Meter, room: number
  * }} GuitarChord
  *   start, length: where it is in the song (quarters from bar 1); bar: its bar, from 1;
  *   name: as written; chucks: the strings each chuck strums, low first;
- *   yours: which parts you've changed; fill: the part playing a fill here (the guitar rests), or null
+ *   yours: which parts you've changed; fill: your fill on this chord's last bars, or null; room: how many bars of fill fit in it
  */
 
 /**
@@ -87,7 +88,9 @@ export function guitarChords(sections, { edits = {}, offset = 0, style } = {}) {
 			beats: own,
 			yours,
 			edited: Object.values(yours).some(Boolean),
-			fill: change.fill ?? null
+			fill: fillSpan(change.fill, { start, length: slot.length, meter: slot.meter }),
+			meter: slot.meter,
+			room: barsThatFit(slot.length, slot.meter)
 		};
 	});
 }
