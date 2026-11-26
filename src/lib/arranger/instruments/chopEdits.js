@@ -1,8 +1,8 @@
 /**
  * Chops you've changed by hand, saved with the song: each where its chord
  * starts (quarter notes from bar 1, as the song plays) and for which chord
- * (at concert pitch, `chopChord` in mandolin.js). A changed chop is only
- * played while the same chord is there, so changing the chart, the capo or
+ * (as it sounds, `chopChord` in mandolin.js). A changed chop is only
+ * played while the same chord is there, so changing the chart or
  * the key quietly drops it and the band's own chop comes back.
  */
 

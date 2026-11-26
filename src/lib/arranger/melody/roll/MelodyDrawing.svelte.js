@@ -12,7 +12,7 @@
  * writes that line out with the change.
  */
 import { barsInPlayOrder } from '../../chart/chartBars.js';
-import { concertChord } from '../../chart/concertChords.js';
+import { withoutVariant } from '../../instruments/chordBook.js';
 import { isNoChord } from '../../chart/noChord.js';
 import { MELODY_CHANNEL } from '../harmony/partChannels.js';
 import { HARMONY_PARTS } from '../harmony/harmonyParts.js';
@@ -152,14 +152,11 @@ export class MelodyDrawing {
 	options = $derived.by(() => {
 		const note = this.notes[this.selected];
 		if (!note || this.voice === MELODY_CHANNEL || this.problem) return [];
-		const { arrangement, melodyKey } = this.arranger;
+		const { melodyKey } = this.arranger;
 		const under = this.chordsUnder.find(
 			(chord) => chord.at <= note.start && note.start < chord.at + chord.length
 		);
-		const chord =
-			under && !isNoChord(under.name)
-				? concertChord(under.name, under.key ?? arrangement.key, arrangement.capoFret)
-				: null;
+		const chord = under && !isNoChord(under.name) ? withoutVariant(under.name) : null;
 		return chordToneOptions(chord, melodyKey.spelling, note.midi);
 	});
 

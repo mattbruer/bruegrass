@@ -37,7 +37,7 @@ const TICK = 0.1;
  *   takes?: import('../takes/playTakes.js').PlayableClip[],
  *   regionStart?: number, countIn?: number, passes?: number, from?: number
  * }} options
- *   transpose: semitones on top of the capo, for every instrument;
+ *   capo: the guitar's, for its shapes only; transpose: the Key, semitones for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo, played on
  *   the guitar samples through the Melody channel, locked to the band;
  *   bass, offset: the song's edited bass line and where these sections start

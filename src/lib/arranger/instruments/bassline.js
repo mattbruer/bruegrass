@@ -12,8 +12,8 @@
  *   staccato note on beat 3.
  *
  * Pitches use the same MIDI numbering as the exported bass track (the open
- * low E of the bass is 40), and are in concert pitch, so the capo transposes
- * the line. Choices are seeded, so the same arrangement always exports the
+ * low E of the bass is 40), and are in concert pitch, so the Key setting
+ * (`shift`) transposes the line. Choices are seeded, so the same arrangement always exports the
  * same bass part.
  */
 import {
@@ -51,10 +51,10 @@ const VELOCITY_JITTER = 4;
 
 /**
  * @param {import('../chart/timeline.js').Section[]} sections
- * @param {{ capo?: number }} options
+ * @param {{ shift?: number }} options
  * @returns {BassNote[]} beats are quarter notes from the start
  */
-export function bassLine(sections, { capo = 0 } = {}) {
+export function bassLine(sections, { shift = 0 } = {}) {
 	const { beats, slots } = rhythm(sections);
 	/** @type {RawNote[]} */
 	const notes = [];
@@ -73,7 +73,7 @@ export function bassLine(sections, { capo = 0 } = {}) {
 			!slot.hit;
 		if (sameChord) boomOfChord++;
 		else {
-			chord = placeChord(slot.name, notes.at(-1)?.pitch ?? LOW, capo);
+			chord = placeChord(slot.name, notes.at(-1)?.pitch ?? LOW, shift);
 			boomOfChord = 0;
 		}
 		previousSlot = slot;
@@ -92,16 +92,16 @@ export function bassLine(sections, { capo = 0 } = {}) {
  * Where a chord's root and fifth go, near a pitch.
  * @param {string} name
  * @param {number} near
- * @param {number} capo
+ * @param {number} shift
  */
-function placeChord(name, near, capo) {
+function placeChord(name, near, shift) {
 	const slashBass = slashBassPitchClass(name);
 	if (slashBass !== null) {
 		// The slash note is the bass's root, alternating with the chord's fifth (or root)
-		const bass = nearest((slashBass + capo) % 12, near);
-		return { root: bass, fifth: nearest((alternatingPitchClass(name) + capo) % 12, bass) };
+		const bass = nearest((slashBass + shift) % 12, near);
+		return { root: bass, fifth: nearest((alternatingPitchClass(name) + shift) % 12, bass) };
 	}
-	let root = nearest((rootPitchClass(name) + capo) % 12, near);
+	let root = nearest((rootPitchClass(name) + shift) % 12, near);
 	let fifth = contraryFifth(name, root);
 	if (fifth === null) {
 		// Move the root an octave so the fifth can go the contrary way

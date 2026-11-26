@@ -11,6 +11,7 @@
 	import { GRIDS, gridTicks } from '../../melody/roll/ticks.js';
 	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
 	import { settings } from '$lib/settings/settings.svelte.js';
+	import { auditionGuitarNote } from '../../playback/auditionNote.js';
 	import PianoRoll from '../pianoRoll/PianoRoll.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -42,6 +43,11 @@
 	);
 
 	let selected = $state(-1);
+
+	/** @param {number} midi */
+	function sound(midi) {
+		auditionGuitarNote(midi, arranger.arrangement.pitchShift).catch(console.error);
+	}
 
 	/** @param {import('../../melody/roll/editNotes.js').DrawnNote[]} notes */
 	function commit(notes) {
@@ -100,7 +106,7 @@
 			playing={false}
 			playhead={() => null}
 			onCommit={commit}
-			onSound={() => {}}
+			onSound={sound}
 			{zoom}
 		/>
 	</div>

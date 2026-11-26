@@ -52,7 +52,7 @@
 	// Arriving with a song written from one of the app's recordings opens it (only when the song
 	// changes: picking another recording here mustn't bring this one back)
 	// Arriving with a song sent from a transcription brings that transcription back (only on
-	// arriving: Send to the arranger opens the song it makes while still here)
+	// arriving: Send to Tracks opens the song it makes while still here)
 	let arrived = false;
 	$effect(() => {
 		if (!song.ready) return;
@@ -73,7 +73,7 @@
 		const back = transcription.returnTo;
 		if (!back) return;
 		transcription.returnTo = null;
-		await goto(resolve('/arranger'));
+		await goto(resolve('/arranger/tracks'));
 		await song.open(back.id);
 	}
 

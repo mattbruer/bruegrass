@@ -3,8 +3,8 @@
  * lookahead scheduler (like an instrument's), with one "note" per clip per
  * pass: the part of the clip that falls in the pass (takeTiming.js), on its
  * track's mixer channel. Each plays through a native buffer source (or, for
- * a take at another tempo than it was recorded at, a stretched source that
- * keeps its pitch) and a gain that carries its level and fades.
+ * a take at another tempo than it was recorded at, or in another key, a stretched
+ * source that keeps its pitch, or moves it by the key) and a gain that carries its level and fades.
  */
 import { sliceForPass } from './takeTiming.js';
 import { prepareStretchSources, startStretchSource } from '$lib/audio/stretch/stretchSource.js';
@@ -15,12 +15,12 @@ import { dbToGain } from './clipLevel.js';
 /**
  * @typedef {{
  *   trackId: string, takeId: string, buffer: AudioBuffer, start: number, from: number,
- *   seconds: number, speed: number, gain: number, fadeIn: number, fadeOut: number
+ *   seconds: number, speed: number, semitones: number, gain: number, fadeIn: number, fadeOut: number
  * }} PlayableClip
  *   Song times at the tempo now (takeTempo.js): start: seconds from bar 1; seconds: how long;
  *   fades.
  *   from: where in its take's audio it starts (the take's own seconds); speed: how fast the
- *   take plays (1: as recorded, 0.5: at half its tempo); gain: dB
+ *   take plays (1: as recorded, 0.5: at half its tempo); semitones: how far it's moved to follow the key; gain: dB
  * @typedef {{ time: number, value: number }} GainPoint seconds from the slice's start
  */
 
@@ -96,6 +96,7 @@ export async function createTakePlayback(Tone, clips, pass, channelInput) {
 				buffer: clip.buffer,
 				from,
 				speed: clip.speed,
+				semitones: clip.semitones,
 				at,
 				duration
 			});
@@ -119,9 +120,9 @@ export async function createTakePlayback(Tone, clips, pass, channelInput) {
 /** Seconds after a slice ends before its nodes are let go of. */
 const LET_GO_AFTER = 0.5;
 
-/** @param {{ speed: number }} clip a take at another tempo than it was recorded at */
+/** @param {{ speed: number, semitones: number }} clip a take at another tempo or in another key than it was recorded in */
 function isStretched(clip) {
-	return Math.abs(clip.speed - 1) > 1e-6;
+	return Math.abs(clip.speed - 1) > 1e-6 || clip.semitones !== 0;
 }
 
 /**

@@ -49,8 +49,7 @@ export class ChartFollowsTuneState {
 			arrangement.text,
 			arrangement.sections,
 			before,
-			after,
-			arrangement.capoFret
+			after
 		);
 		this.problems = problems;
 		if (text !== arrangement.text) arrangement.text = text;

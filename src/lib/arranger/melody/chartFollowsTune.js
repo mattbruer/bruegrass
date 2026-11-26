@@ -9,7 +9,6 @@
  * places isn't written but pointed out.
  */
 import { barsInPlayOrder } from '../chart/chartBars.js';
-import { chordLabel, keyName, parseKeyName, songKey } from '../chart/key.js';
 import { withBarChords } from '../chart/withBarChords.js';
 import { chordsOnPlaces, chordVoice, walk } from './abcChords.js';
 
@@ -59,10 +58,9 @@ export function tuneChordsByBar(voices, bars) {
  * @param {import('../chart/timeline.js').Section[]} sections read from it
  * @param {any[][]} before abcjs.synth.sequence of the tune before the edit
  * @param {any[][]} after abcjs.synth.sequence of the tune now
- * @param {number} capo
  * @returns {{ text: string, problems: string[] }} problems: bars left as they were, and why
  */
-export function chartWithTuneChords(text, sections, before, after, capo) {
+export function chartWithTuneChords(text, sections, before, after) {
 	const bars = barsInPlayOrder(sections);
 	const was = tuneChordsByBar(before, bars);
 	const now = tuneChordsByBar(after, bars);
@@ -70,7 +68,6 @@ export function chartWithTuneChords(text, sections, before, after, capo) {
 	const problems = [];
 	if (!now) return { text, problems };
 
-	const key = songKey(sections);
 	let chart = text;
 	bars.forEach((bar, index) => {
 		const tune = now[index];
@@ -81,19 +78,7 @@ export function chartWithTuneChords(text, sections, before, after, capo) {
 			);
 			return;
 		}
-		const shapes = tune.chords.map((name) => shapeName(name, bar.chords[0]?.key ?? key, capo));
-		chart = withBarChords(chart, bar, shapes.join(','));
+		chart = withBarChords(chart, bar, tune.chords.join(','));
 	});
 	return { text: chart, problems };
-}
-
-/**
- * A chord at concert pitch as the chart writes it: the guitar's shape with the capo on.
- * @param {string} name concert pitch
- * @param {import('../chart/key.js').Key | null} key the chart's key there
- * @param {number} capo
- */
-function shapeName(name, key, capo) {
-	const concertKey = key && parseKeyName(keyName(key, capo));
-	return chordLabel(name, { key: concertKey, shift: -capo, mode: 'concert' });
 }

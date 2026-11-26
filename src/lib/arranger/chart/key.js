@@ -199,8 +199,8 @@ export function degree(note, tonic) {
 
 /**
  * How to show a chord.
- * - shapes: the guitar's shape with the capo on (as written, moved by any key change)
- * - concert: the sounding chord, after capo and key change
+ * - shapes: the shape the guitar holds (the chart's chord moved by the Key, less the capo)
+ * - concert: the sounding chord, after the key change
  * - nashville: its scale degree in the key (the same in every key)
  * - roman: what it does, which needs the chords around it, so it's worked
  *   out for the whole chart (chart/chartAnalysis.js), not here

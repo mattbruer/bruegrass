@@ -7,6 +7,7 @@ import { createRng } from './seededRandom.js';
 import { secondsPerQuarter } from '../chart/tempo.js';
 import { ARTICULATIONS } from './articulation.js';
 import { TICKS_PER_QUARTER } from '../melody/roll/ticks.js';
+import { SLUR_DB, SLUR_LANDS_AT } from './slurs.js';
 
 /** @typedef {import('../chart/timeline.js').SlotPosition} SlotPosition */
 
@@ -35,6 +36,7 @@ const MUTE_FADE = 0.04; // seconds: the hand comes down on the strings (a choked
 
 /** An upstroke is a little lighter than a downstroke. */
 const STROKE_DB = { down: 0, up: -3 };
+const CHOKE_AFTER = 1; // quarters a choked strum rings before the hand mutes it
 
 /** How much louder an accented beat is (yours: guitarPlan.js), until samples at more velocities arrive. */
 const ACCENT_DB = 8;
@@ -257,20 +259,20 @@ function picked(articulation, lighterDb) {
 }
 
 /**
- * How the guitar sounds a pitch shift (capo + transposition) with its
- * shapes: as much as possible with a capo, and anything the capo can't
- * reach (below the open shapes, or past the highest sample) by resampling.
+ * How the guitar plays its shapes with the capo you chose: the capo as far
+ * as the neck reaches (the shapes' highest fret plus the capo must stay on
+ * the samples), and anything past that by resampling, so the sound stays in the Key.
  * @param {import('./guitarPlan.js').GuitarChord[]} chords what it plays (guitarPlan.js)
- * @param {number} shift semitones
+ * @param {number} wanted the capo fret chosen
  * @returns {{ capo: number, detune: number }} detune in semitones
  */
-export function guitarTuning(chords, shift) {
+export function guitarTuning(chords, wanted) {
 	const highest = Math.max(
 		0,
 		...chords.flatMap((chord) => chord.shape.filter((fret) => fret !== null))
 	);
-	const capo = Math.min(Math.max(shift, 0), MAX_FRET - highest);
-	return { capo, detune: shift - capo };
+	const capo = Math.min(Math.max(wanted, 0), MAX_FRET - highest);
+	return { capo, detune: wanted - capo };
 }
 
 /**
@@ -312,6 +314,14 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 		);
 	});
 	const notes = planned.map((own) => own?.note ?? null);
+	const strums = planned.map((own) => own?.strum ?? null);
+	// A held or choked strum of yours ends the guitar's playing on that chord
+	const ended = new Set();
+	const silent = beats.map((beat, b) => {
+		const quiet = ended.has(beat.slot);
+		if (strums[b] && strums[b].end !== 'chuck') ended.add(beat.slot);
+		return quiet;
+	});
 	const accent = (/** @type {number} */ b) => planned[b]?.accent ?? false;
 	const accentDb = (/** @type {number} */ b) => (accent(b) ? ACCENT_DB : 0);
 
@@ -383,7 +393,7 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 		});
 		beats.forEach((beat, b) => {
 			const note = notes[b];
-			if (!note || inFill(beat.time)) return;
+			if (!note || silent[b] || inFill(beat.time)) return;
 			const k = p * slots.length + beat.slot;
 			events.push({
 				time: (beat.time + p * quarters) * quarter,
@@ -397,14 +407,36 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 				accent: accent(b)
 			});
 		});
+		beats.forEach((beat, b) => {
+			const strum = strums[b];
+			if (!strum || notes[b] || silent[b] || inFill(beat.time)) return;
+			const k = p * slots.length + beat.slot;
+			const time = (beat.time + p * quarters) * quarter;
+			const offsets = strumOffsets(strum.strings, bpm, { direction: 'down' });
+			if (strum.end === 'choke') mutes.push(time + CHOKE_AFTER * quarter);
+			strum.strings.forEach((string, i) => {
+				events.push({
+					time: time + offsets[i],
+					stop: stopBeforeFill(time, p, chordEnds[k]),
+					string,
+					fret: /** @type {number} */ (chords[beat.slot].shape[string]) + capo,
+					chord: sequence[k].name,
+					part: 'strum',
+					levelDb: levelDb.strum + STROKE_DB.down + accentDb(b),
+					fadeOut: CHORD_CHANGE_FADE,
+					accent: accent(b)
+				});
+			});
+		});
 		beats.forEach((boom, b) => {
 			if (boom.role !== 'boom') return;
 			const pattern = pickPattern(random);
 			const hit = hitAt(boom.time, hits);
 			if (hit && hit.start < boom.time - 1e-6) return; // a hit rings here
-			for (const stroke of patternStrokes(hit?.hit ?? pattern, boom.length)) {
+			const strokes = patternStrokes(hit?.hit ?? pattern, boom.length);
+			for (const [s, stroke] of strokes.entries()) {
 				const beat = b + Math.floor(stroke.at);
-				if (notes[beat] || inFill(beats[beat].time)) continue; // yours, or a fill: the guitar rests
+				if (notes[beat] || strums[beat] || silent[beat] || inFill(beats[beat].time)) continue; // yours, a held strum's rest, or a fill: the guitar rests
 				const played = chords[beats[beat].slot];
 				const k = p * slots.length + beats[beat].slot;
 				const chord = sequence[k].name;
@@ -415,19 +447,53 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 					mutes.push(time);
 					continue;
 				}
+				// The slur you chose for this beat: its string sounds `from`, then `to` part-way through, not picked again
+				const slur = stroke.hit === 'bass' || stroke.hit === 'strum' ? planned[beat]?.slur : null;
+				const span = ((strokes[s + 1]?.at ?? boom.length) - stroke.at) * quarter;
+				const slurred = (/** @type {number} */ strumDb) =>
+					slur
+						? [
+								{
+									time: time + span * SLUR_LANDS_AT,
+									stop,
+									string: slur.string,
+									fret: slur.to + capo,
+									chord,
+									part: /** @type {const} */ ('strum'),
+									levelDb: strumDb + SLUR_DB,
+									fadeOut: CHORD_CHANGE_FADE,
+									accent: false
+								}
+							]
+						: [];
+
 				if (stroke.hit === 'bass') {
 					const bass = played.booms[places[beat]];
 					events.push({
 						time,
 						stop,
 						string: bass.string,
-						fret: bass.fret + capo,
+						fret: (slur?.string === bass.string ? slur.from : bass.fret) + capo,
 						chord,
 						part: 'bass',
 						levelDb: levelDb.bass + accentDb(beat),
 						fadeOut: CHORD_CHANGE_FADE,
 						accent: accent(beat)
 					});
+					if (slur && slur.string !== bass.string) {
+						events.push({
+							time,
+							stop,
+							string: slur.string,
+							fret: slur.from + capo,
+							chord,
+							part: 'strum',
+							levelDb: levelDb.strum + STROKE_DB[stroke.direction],
+							fadeOut: CHORD_CHANGE_FADE,
+							accent: false
+						});
+					}
+					events.push(...slurred(levelDb.bass));
 					continue;
 				}
 
@@ -439,13 +505,16 @@ export function buildEvents(sections, { chords, capo = 0, bpm = 120, loop = fals
 							? played.chucks[places[beat]]
 							: STRUM_STRINGS
 				).filter((string) => shape[string] !== null);
+				if (slur && !strings.includes(slur.string)) strings.unshift(slur.string);
 				const offsets = strumOffsets(strings, bpm, stroke);
+				events.push(...slurred(levelDb.strum + STROKE_DB[stroke.direction]));
 				strings.forEach((string, i) => {
 					events.push({
 						time: time + offsets[i],
 						stop,
 						string,
-						fret: /** @type {number} */ (shape[string]) + capo,
+						fret:
+							(slur?.string === string ? slur.from : /** @type {number} */ (shape[string])) + capo,
 						chord,
 						part: 'strum',
 						levelDb: levelDb.strum + STROKE_DB[stroke.direction] + accentDb(beat),

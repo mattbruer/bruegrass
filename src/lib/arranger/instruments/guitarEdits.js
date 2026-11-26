@@ -12,11 +12,18 @@
 /**
  * @typedef {(number | null)[]} Shape six frets, low E to high e, null = muted
  * @typedef {{ string: number, fret: number }} PickedNote
- * @typedef {{ shape?: Shape, booms?: number[], chucks?: number[][], notes?: (PickedNote | null)[], accents?: boolean[], fill?: import('./guitarFill.js').Fill }} GuitarChange
- *   booms: the string each boom plays, in order; chucks: the strings each chuck strums;
+ * @typedef {{ shape?: Shape, madeAt?: number, booms?: (PickedNote | null)[], chucks?: number[][], notes?: (PickedNote | null)[], accents?: boolean[], slurs?: (import('./slurs.js').SlurEdit | null)[], strums?: (StrumEdit | null)[], fill?: import('./guitarFill.js').Fill }} GuitarChange
+ *   madeAt: the guitar's shift (Key less capo) the shape and picked notes were written at: at another they move (guitarPlan.js);
+ *   booms: the note each boom plays, in order, on any fret (null: the band's); chucks: the strings each chuck strums;
  *   notes: by beat of the chord, the one note played there instead (null: the band's boom or chuck);
  *   accents: by beat of the chord, played louder (true) or as the band does;
+ *   strums: by beat of the chord, a strum of your own (StrumEdit), null: the band's;
+ *   slurs: by beat of the chord, a slur on a string (slurs.js: a hammer-on or pull-off), null: none;
  *   fill: notes you wrote, played instead of the band's strum over the chord's last bars
+ * @typedef {{ strings: number[], end: 'chuck' | 'ring' | 'choke' }} StrumEdit
+ *   a strum of your own on a beat, whatever the band plays there: the strings (low first) and how it ends:
+ *   a chuck (rings like the band's), held (`~`: rings, the guitar plays no more until the next chord), choked (`!`:
+ *   muted a beat later, then no more until the next chord)
  * @typedef {Record<string, GuitarChange & { chord: string }>} GuitarEdits
  */
 
@@ -30,8 +37,28 @@
 export function editedGuitar(edits, start, chord) {
 	const edit = edits[String(start)];
 	if (!edit || edit.chord !== chord) return {};
-	const { shape, booms, chucks, notes, accents, fill } = edit;
-	return { shape, booms, chucks, notes, accents, fill };
+	const { shape, madeAt, chucks, notes, accents, slurs, strums, fill } = edit;
+	return {
+		shape,
+		madeAt,
+		booms: pickedBooms(edit.booms),
+		chucks,
+		notes,
+		accents,
+		slurs,
+		strums,
+		fill
+	};
+}
+
+/**
+ * Booms saved as notes; one saved the old way (a string only) is the band's again.
+ * @param {unknown[] | undefined} booms
+ */
+function pickedBooms(booms) {
+	return booms?.map((boom) =>
+		boom && typeof boom === 'object' ? /** @type {PickedNote} */ (boom) : null
+	);
 }
 
 /**

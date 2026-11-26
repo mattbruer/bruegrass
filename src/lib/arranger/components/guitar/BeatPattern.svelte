@@ -11,26 +11,29 @@
 
 	/**
 	 * @typedef {{
-	 *   kind: 'boom' | 'chuck' | 'note',
+	 *   kind: 'boom' | 'chuck' | 'strum' | 'note',
+	 *   mark: string,
 	 *   beatInBar: number,
 	 *   accent: boolean,
+	 *   slur: string,
 	 *   notes: import('../../voicings/fretNotes.js').FretNote[],
 	 *   yours: boolean
 	 * }} BeatCard
-	 *   beatInBar: from 0; accent: played louder; notes: what the beat plays (one for a boom or a note); yours: you changed it
+	 *   beatInBar: from 0; accent: played louder; slur: a slur on the beat, in words ("" for none); notes: what the beat plays (one for a boom or a note); yours: you changed it
 	 */
 
 	/**
-	 * @type {{ cards: BeatCard[], selected: number, onSelect: (index: number) => void }}
+	 * @type {{ cards: BeatCard[], strings: string[], selected: number, onSelect: (index: number) => void }}
+	 *   strings: the strings' names, low first
 	 */
-	let { cards, selected, onSelect } = $props();
+	let { cards, strings, selected, onSelect } = $props();
 
-	const ROLE_NAMES = { boom: 'Boom', chuck: 'Chuck', note: 'Note' };
+	const ROLE_NAMES = { boom: 'Boom', chuck: 'Chuck', strum: 'Strum', note: 'Note' };
 </script>
 
 <div class="cards" role="radiogroup" aria-label="The chord's beats">
 	{#each cards as card, i (i)}
-		{@const single = card.kind !== 'chuck'}
+		{@const single = card.kind === 'boom' || card.kind === 'note'}
 		<button
 			type="button"
 			role="radio"
@@ -45,15 +48,17 @@
 				>{card.beatInBar + 1}{#if card.accent}<span class="accent" aria-label="accented">&gt;</span
 					>{/if}</span
 			>
-			<span class="role">{ROLE_NAMES[card.kind]}{card.yours ? ' · yours' : ''}</span>
+			<span class="role">{ROLE_NAMES[card.kind]}{card.mark}{card.yours ? ' · yours' : ''}</span>
 			{#if card.notes.length === 0}
 				<span class="what quiet">nothing</span>
 			{:else if single}
 				<span class="what">{writtenNote(card.notes[0])}</span>
 				<span class="degree">{card.notes[0].words}</span>
+				<span class="degree">{strings[card.notes[0].string]} string</span>
 			{:else}
 				<span class="what chord">{card.notes.map((note) => writtenNote(note)).join(' ')}</span>
 			{/if}
+			{#if card.slur}<span class="slur">⌒ {card.slur}</span>{/if}
 		</button>
 	{/each}
 </div>
@@ -123,6 +128,12 @@
 
 	.what.chord {
 		font-size: 0.85rem;
+	}
+
+	.slur {
+		font-size: 0.75rem;
+		font-weight: 700;
+		color: var(--color-accent);
 	}
 
 	.quiet,

@@ -7,6 +7,8 @@ import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { getChannel } from '../mixer/mixerGraph.svelte.js';
 import { BASS_VOICE } from '../bass/readBass.js';
 import { createPartVoice } from './partVoice.js';
+import { BAND_GUITAR, tuneInstrument } from '../instruments/tuneInstruments.js';
+import { createTuneVoice } from '../instruments/tuneVoice.js';
 
 /** Seconds a drawn note rings when heard on its own. */
 const AUDITION_SECONDS = 0.7;
@@ -39,4 +41,20 @@ export async function auditionNote(midi, shift, channelId = MELODY_CHANNEL, at =
  */
 export function auditionBassNote(midi, shift) {
 	return auditionNote(midi, shift, BASS_VOICE);
+}
+
+/**
+ * Play one note of a guitar fill now: the band's guitar samples through the Guitar channel.
+ * @param {number} midi the pitch in the chart's key, as written
+ * @param {number} shift semitones (the Key setting)
+ */
+export async function auditionGuitarNote(midi, shift) {
+	forPlayback();
+
+	const Tone = await import('tone');
+	await Tone.start();
+	const voice = createTuneVoice(Tone, tuneInstrument(BAND_GUITAR), await getChannel('guitar'));
+	await voice.ready;
+	voice.play(midi - 12 + shift, AUDITION_SECONDS, Tone.now(), 0);
+	setTimeout(() => voice.stop(), (AUDITION_SECONDS + LET_GO_AFTER) * 1000);
 }

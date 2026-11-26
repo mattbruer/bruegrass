@@ -244,8 +244,8 @@
 		</p>
 		{@render example(`"Verse" [K:G] |D|D|G|G|`)}
 		<p class="tip">
-			Name the key of the chord shapes you play, before any capo: with G shapes and the capo on 2,
-			write <code>[K:G]</code>. A minor key has an <b>m</b>: <code>[K:Em]</code>.
+			Name the key the song is in: for a song in G, write <code>[K:G]</code>. A minor key has an
+			<b>m</b>: <code>[K:Em]</code>.
 		</p>
 		<p>
 			When the song <b>changes key</b>, say the new key where it changes, and it holds from there
@@ -316,7 +316,8 @@
 		</dl>
 		<p class="tip">
 			Type them exactly like that, with a capital letter. Want the song in a different key? Don't
-			rewrite it. Use the <b>Capo</b> box, or the <b>Key</b> menu above the chart.
+			rewrite it. Use the <b>Key</b> menu (on Tracks, in the Band lane's menu); the <b>Capo</b> only changes
+			the shapes the guitar plays.
 		</p>
 		<h3>A different bass note</h3>
 		<p>

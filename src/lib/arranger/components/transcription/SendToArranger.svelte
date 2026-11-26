@@ -1,7 +1,7 @@
 <script>
 	/**
-	 * "Send to the arranger": the sections you named (with markers) become a
-	 * new song in the arranger, one of two ways. Practise a part: one section
+	 * "Send to Tracks": the sections you named (with markers) become a
+	 * new song on the Tracks page, one of two ways. Practise a part: one section
 	 * on its own, looping, with the notes showing. Build an arrangement: the
 	 * sections you tick, in the recording's order, to rearrange there. Bars
 	 * you didn't name never go. The song's key must be named first (the band
@@ -50,7 +50,7 @@
 		problem = await arrangeFromTranscription(arranger, chosen, name, pickups);
 		if (problem) return;
 		open = false;
-		goto(resolve('/arranger'));
+		goto(resolve('/arranger/tracks'));
 	}
 </script>
 
@@ -60,10 +60,10 @@
 	onclick={start}
 	use:tooltip={TIPS.transcription.send}
 >
-	Send to the arranger…
+	Send to Tracks…
 </button>
 
-<Dialog bind:open title="Send to the arranger">
+<Dialog bind:open title="Send to Tracks">
 	<div class="px-6 pt-3 pb-6">
 		{#if sections.length === 0}
 			<p class="mb-3 text-sm">

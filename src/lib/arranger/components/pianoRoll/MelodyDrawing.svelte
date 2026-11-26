@@ -90,7 +90,6 @@
 		void bass.read;
 		void abcjsIfLoaded();
 		void arrangement.sections;
-		void arrangement.capoFret;
 		void arranger.melodyKey;
 		void pickupQuarters;
 		untrack(() => drawing.load());

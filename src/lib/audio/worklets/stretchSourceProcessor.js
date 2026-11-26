@@ -8,14 +8,16 @@
  * node of a context shares this scope), so playing a take again costs
  * nothing to send.
  *
- * Messages in:  { type: 'play', key, channels?, from, speed, at, duration }
+ * Messages in:  { type: 'play', key, channels?, from, speed, semitones?, at, duration }
  *                 channels: the recording (Float32Array per channel), when this
  *                 context may not have it yet; from: seconds into it; at: the
- *                 audio-clock time to start; duration: seconds of output
+ *                 audio-clock time to start; duration: seconds of output;
+ *                 semitones: moved up or down, the speed kept (0: the pitch as recorded)
  *               { type: 'stop' }  { type: 'forget' }  let go of every recording
  * Messages out: { type: 'kept', key }  the recording is here now
  */
 import { createStretcher } from '../stretch/stretcher.js';
+import { withPitchShift } from '../stretch/withPitchShift.js';
 
 /** @type {Map<string, Float32Array[]>} */
 const recordings = /** @type {any} */ (globalThis.stretchSourceRecordings ??= new Map());
@@ -23,7 +25,7 @@ const recordings = /** @type {any} */ (globalThis.stretchSourceRecordings ??= ne
 class StretchSourceProcessor extends AudioWorkletProcessor {
 	constructor() {
 		super();
-		/** @type {ReturnType<typeof createStretcher> | null} */
+		/** @type {ReturnType<typeof withPitchShift> | null} */
 		this.stretcher = null;
 		this.speed = 1;
 		this.startFrame = Infinity;
@@ -44,7 +46,10 @@ class StretchSourceProcessor extends AudioWorkletProcessor {
 		}
 		const channels = recordings.get(message.key);
 		if (!channels) return void (this.stopped = true);
-		this.stretcher = createStretcher({ left: channels[0], right: channels[1], sampleRate });
+		this.stretcher = withPitchShift(
+			createStretcher({ left: channels[0], right: channels[1], sampleRate })
+		);
+		this.stretcher.setCents((message.semitones ?? 0) * 100);
 		this.stretcher.seek(message.from);
 		this.speed = message.speed;
 		this.startFrame = Math.round(message.at * sampleRate);

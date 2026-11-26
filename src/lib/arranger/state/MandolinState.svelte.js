@@ -13,8 +13,8 @@ import { mod12, songKey } from '../chart/key.js';
 import { withoutBass, withoutVariant } from '../instruments/chordBook.js';
 
 /**
- * @typedef {import('../instruments/mandolin.js').SongChop & { sounds: string }} ChopInSong
- *   sounds: the chord at concert pitch, as the mandolin plays it ("A" for a G with capo 2)
+ * @typedef {import('../instruments/mandolin.js').SongChop & { label: string, sounds: string }} ChopInSong
+ *   label: the chord as the lane says it (concert pitch); sounds: the chord at concert pitch, as the mandolin plays it ("A" for a G with capo 2)
  */
 
 export class MandolinState {
@@ -43,12 +43,13 @@ export class MandolinState {
 		const written = slotPositions(arrangement.sections);
 		try {
 			return songChops(sectionsToPlay(arrangement.sections), {
-				capo: shift,
+				shift,
 				edits: song.chops
 			})
 				.filter((_, slot) => !isNoChord(written[slot].name))
 				.map((chop) => ({
 					...chop,
+					label: concertChord(chop.name, key, shift),
 					sounds: concertChord(withoutBass(withoutVariant(chop.name)), key, shift)
 				}));
 		} catch {

@@ -7,16 +7,16 @@
  * in quarter notes from bar 1's downbeat, as in melody.js and timeline.js.
  *
  * - ABC → arrangement: read the chord symbols ("G", "Am7", …) bar by bar,
- *   cut the tune into sections where it repeats (A part, B part), and pick a
- *   capo so the chords fall on the guitar's shapes, the way a bluegrass
- *   player would (a tune in A is G shapes with capo 2).
- * - Arrangement → ABC: write the arrangement's chords (at concert pitch)
+ *   cut the tune into sections where it repeats (A part, B part), and suggest
+ *   a capo so the chords fall on the guitar's shapes, the way a bluegrass
+ *   player would (a tune in A is G shapes with capo 2). The chart keeps the
+ *   chords as they sound.
+ * - Arrangement → ABC: write the arrangement's chords
  *   into a tune that has none, on the note where each change lands. Repeated
  *   bars share one place in the score, so they can only show one chord.
  */
-import { hasShape } from '../instruments/chordBook.js';
-import { chordLabel, songKey } from '../chart/key.js';
-import { concertChord } from '../chart/concertChords.js';
+import { hasShape, withoutVariant } from '../instruments/chordBook.js';
+import { chordLabel, keyName, parseKeyName, songKey } from '../chart/key.js';
 import { barQuarters, slotPositions } from '../chart/timeline.js';
 import { MAX_CAPO } from '../chart/capo.js';
 import { chordPlaces } from '../chart/chordPlaces.js';
@@ -245,13 +245,15 @@ function arrangementMeter(meter) {
 
 /**
  * Concert chord names as the guitar's shapes with a capo, simplified
- * (Cmaj7 → C, Am7 → Am, Am7/G → Am/G) where there's no shape for the full chord.
+ * (Cmaj7 → C, Am7 → Am, Am7/G → Am/G) where there's no shape for the full chord;
+ * `concert` is that simplified chord as it sounds.
  * @param {string[]} names concert pitch
  * @param {number} capo
  */
 function fitShapes(names, capo) {
 	const key = songKey([{ measures: [[names[0]]] }]);
-	/** @type {Map<string, { shape: string, simplified: boolean, missing: boolean }>} */
+	const shapesKey = key && parseKeyName(keyName(key, -capo));
+	/** @type {Map<string, { shape: string, concert: string, simplified: boolean, missing: boolean }>} */
 	const fitted = new Map();
 	for (const name of new Set(names)) {
 		const written = chordLabel(name, { key, shift: -capo, mode: 'concert' });
@@ -269,6 +271,9 @@ function fitShapes(names, capo) {
 		const slash = bass && /^[A-G][#b]?$/.test(bass) ? `/${bass}` : '';
 		fitted.set(name, {
 			shape: shape ? shape + slash : written,
+			concert: shape
+				? chordLabel(shape + slash, { key: shapesKey, shift: capo, mode: 'concert' })
+				: name,
 			simplified: shape !== undefined && shape + slash !== written,
 			missing: shape === undefined
 		});
@@ -399,7 +404,7 @@ export function arrangementFromAbc(voices) {
 			notes.push(`${name} is played as ${fit.shape} shape${capo ? ` with capo ${capo}` : ''}.`);
 	}
 	for (const bar of written) {
-		bar.chords = bar.chords.map((name) => fitted.get(name)?.shape ?? name);
+		bar.chords = bar.chords.map((name) => fitted.get(name)?.concert ?? name);
 	}
 
 	// Sections: one per part as played, lettered by where it starts in the score
@@ -456,16 +461,14 @@ export function arrangementFromAbc(voices) {
  * bars are written once, so they can show only one chord.
  * @param {any[][]} voices abcjs.synth.sequence(tune)
  * @param {import('../chart/timeline.js').Section[]} sections the whole arrangement
- * @param {{ capo?: number }} options
  * @returns {{ symbols: Map<number, { name: string, start: number }>, played: Item[], notes: string[] }}
  *   symbols: startChar → the chord at concert pitch and when it starts; played: the
  *   melody's notes and rests from bar 1; notes: what couldn't be shown as played
  */
-export function chordSymbolPlaces(voices, sections, { capo = 0 } = {}) {
+export function chordSymbolPlaces(voices, sections) {
 	const voice = voices[0] ?? [];
 	const { items, pickup } = walk(voice);
 	const slots = slotPositions(sections);
-	const key = songKey(sections);
 	/** @type {string[]} */
 	const notes = [];
 	/** @type {Map<number, { name: string, start: number }>} */
@@ -478,7 +481,7 @@ export function chordSymbolPlaces(voices, sections, { capo = 0 } = {}) {
 		.map((item) => ({ ...item, t: item.t - pickup }))
 		.filter((item) => item.t >= -EPSILON && item.t < end - EPSILON && item.startChar !== undefined);
 	/** @param {import('../chart/timeline.js').SlotPosition} slot */
-	const concert = (slot) => concertChord(slot.name, slot.key ?? key, capo);
+	const concert = (slot) => withoutVariant(slot.name);
 	const slotAt = (/** @type {number} */ time) =>
 		slots.filter((slot) => slot.start <= time + EPSILON).at(-1) ?? slots[0];
 	/** @param {number} time */
@@ -528,11 +531,10 @@ export function chordSymbolPlaces(voices, sections, { capo = 0 } = {}) {
  * @param {string} abc the tune, with no chord symbols of its own
  * @param {any[][]} voices abcjs.synth.sequence(tune) for that ABC
  * @param {import('../chart/timeline.js').Section[]} sections the whole arrangement
- * @param {{ capo?: number }} options
  * @returns {{ abc: string, notes: string[] }}
  */
-export function abcWithChords(abc, voices, sections, options = {}) {
-	const { symbols, notes } = chordSymbolPlaces(voices, sections, options);
+export function abcWithChords(abc, voices, sections) {
+	const { symbols, notes } = chordSymbolPlaces(voices, sections);
 	let result = abc;
 	for (const [startChar, { name }] of [...symbols].sort((a, b) => b[0] - a[0])) {
 		result = `${result.slice(0, startChar)}"${name}"${result.slice(startChar)}`;

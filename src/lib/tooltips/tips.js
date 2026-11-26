@@ -89,7 +89,11 @@ export const TIPS = Object.freeze({
 	},
 
 	song: {
-		new: 'Start an empty song. The song open now is already saved.',
+		new: 'Start a new song: name it and choose its key and time. The song open now is already saved.',
+		newTitle: 'What the song is called. You can rename it later.',
+		newKey: 'The key the song is in, as it sounds with no capo. Its chord goes in bar 1.',
+		newTime: 'How many beats in a bar. You can change it for any bar later.',
+		newStart: 'Start the song: its first chord, then empty bars to write chords over.',
 		examples:
 			'Start a new song from an example, or from a recording you write down in Transcribe. The song open now is already saved.',
 		open: 'Open one of your saved songs.',
@@ -128,8 +132,8 @@ export const TIPS = Object.freeze({
 		slower: 'Slower. Hold it down to keep going.',
 		faster: 'Faster. Hold it down to keep going.',
 		tempoNumber: 'The speed, in beats per minute. Tap to type a number.',
-		capo: 'Where the guitar’s capo sits. With a melody, it asks whether the song moves up or keeps its key.',
-		key: 'Move the whole song to another key. The guitar keeps its shapes and moves the capo to get there.',
+		capo: 'Where the guitar’s capo sits. The song sounds the same: the guitar’s chords change to the shapes you play with it.',
+		key: 'Move the whole song to another key. Every part follows it, and the guitar starts again with no capo.',
 		mixer: 'Open the mixer: levels, pan, EQ, reverb and loudness for each instrument.',
 		edit: 'Open the editor to write the chords and the melody. The chart changes as you type.',
 		export: 'Download the song: the full mix or stems as WAV files, or a MIDI file.',
@@ -145,7 +149,7 @@ export const TIPS = Object.freeze({
 		loopTo: 'The last bar of the loop.',
 		loopEverything: 'Go back to looping the whole arrangement.',
 		chordDisplay: {
-			shapes: 'Show chords as the guitar shapes you play (with the capo on).',
+			shapes: 'Show chords as the guitar shapes you play (the key, less the capo).',
 			concert: 'Show chords as they actually sound.',
 			roman:
 				'Show what each chord does, the way a jazz school analyses it: V7/V for a chord leading to the V, subV7 for a tritone sub.',
@@ -184,17 +188,36 @@ export const TIPS = Object.freeze({
 			boom: 'A boom: the one low note picked on this beat. Tap to choose its string, or make it a note of your own.',
 			chuck:
 				'A chuck: the strings strummed on this beat. Tap to choose them, or make it a note of your own.',
+			strum:
+				'A strum of yours on this beat. Tap to choose its strings and how it ends, or give the beat back to the band.',
 			note: 'Your own note on this beat, part of a run. Tap to change it, or give the beat back to the band.'
 		},
 		kinds: {
 			boom: 'The band’s boom on this beat.',
 			chuck: 'The band’s chuck on this beat.',
+			strum: 'Strum here, with strings and an ending you choose.',
 			note: 'Play one note of your own here instead: a run between chords.'
 		},
+		strumEnds: {
+			chuck: 'A plain strum: it rings until the next note on its strings, like a chuck.',
+			ring: 'Held (~): strummed once and left to ring. The guitar plays nothing more until the next chord.',
+			choke:
+				'Choked (!): strummed once and muted a beat later. The guitar plays nothing more until the next chord.'
+		},
 		accent: 'Accent this beat: play it a little louder (>).',
+		hammerOn:
+			'Hammer-on: a lower fret sounds with this beat, then halfway through your finger lands on a higher fret of the same string, with no new pick. Click again to remove it.',
+		pullOff:
+			'Pull-off: a higher fret sounds with this beat, then halfway through your finger pulls off, so the lower fret sounds with no new pick. Click again to remove it.',
+		slurString: 'Hammer or pull off on this string, using its fret in the shape as the higher one.',
+		slurLow: 'The lower of the two frets: open, or a fret below the higher one.',
 		copy: 'Copy how you changed this chord, to paste onto another.',
+		copyBars:
+			'Copy several chords in a row: this one is the first, then tap the last chord in the lane.',
+		copyBarsDone: 'Copy these chords, to paste from another chord on.',
+		copyBarsCancel: 'Leave without copying.',
 		paste:
-			'Play this chord the way you copied. Onto the same chord, all of it; onto another, the right hand (chucks, accents, runs moved to its root), keeping its own shape and booms.',
+			'Paste what you copied, from this chord on. On the same chord you get everything; on a different chord you get only the strumming (chucks, accents, runs), and its fingering stays.',
 		patterns: 'Your patterns, for every song: use one here, or save this chord as one.',
 		usePattern: 'Play this chord this way (the right hand only, if it was made on another chord).',
 		deletePattern: 'Delete this pattern from every song.',
@@ -335,10 +358,10 @@ export const TIPS = Object.freeze({
 			'Put a marker where the playhead is (on the nearest bar line), and type the part’s name.',
 		sectionEnd:
 			'The section before ends at the start of this bar, and this bar starts no new one: put it after a part you want on its own, like a mando break.',
-		send: 'Take the sections you named to the arranger: one part to practise, or several to build an arrangement from.',
+		send: 'Take the sections you named to Tracks: one part to practise, or several to build an arrangement from.',
 		song: 'Pick a recording to transcribe. It becomes the open song’s recording.',
 		file: 'Open a recording from this device: an MP3, WAV or any song file.',
-		backToArranger: 'Go back to the song you came from, in the arranger.',
+		backToArranger: 'Go back to the song you came from, on Tracks.',
 		edit: 'Open the editor: the chart as text (sections, bars, chords) and the tune as ABC. The grid changes as you type.',
 		startSong:
 			'A new song on this recording’s bars, at its tempo, to write the chords and tune on.',
@@ -362,7 +385,7 @@ export const TIPS = Object.freeze({
 			'Tune it the other way instead: to the note on the other side, a semitone away. Choose the one the band sounds in tune with. The chords are guessed again to match.',
 		countAlong:
 			'Click on every beat as the recording plays, higher on each ONE, so you can hear if the bars fit.',
-		key: 'The song’s key: the tune’s notes are spelled in it. Needed before you send it to the arranger.',
+		key: 'The song’s key: the tune’s notes are spelled in it. Needed before you send it to Tracks.',
 		time: 'How the song is counted. It lays the bars out on the ruler; a bar here and there with more or fewer beats is fixed in its own menu.',
 		slideReference:
 			'Drag the recording along the ruler, a beat at a time, until its ONE sits on a bar line. A pickup goes in bar 1, with the first ONE on bar 2. ⌘Z undoes.',
@@ -467,10 +490,8 @@ export const TIPS = Object.freeze({
 			'Cut the clip where each section starts, to pick the best take section by section.',
 		clipLevel: 'How loud this clip plays.',
 		evenOut: 'Turn the clip up (or down) so its loudest moment is just under the top.',
-		deleteClip: 'Take this clip away (Delete): the lane is silent there. Undo brings it back.',
+		deleteClip: 'Take this clip away (Delete): the lane is silent there.',
 		clipDone: 'Done editing this clip (Esc).',
-		undo: 'Undo the last edit to the clips or the tempo (⌘Z).',
-		redo: 'Redo what you undid (⇧⌘Z).',
 		tempoLane:
 			'How fast the song goes, bar by bar. Tap or click to add a point and drag it up or down to slow down or speed up there, for a ritard at the end. Double-tap a point to remove it.',
 		edit: 'Open the editor to write the chords and the melody as text. The lanes change as you type.',
@@ -585,7 +606,7 @@ export const TIPS = Object.freeze({
 				sixteenth: 'Notes snap to sixteenth notes: four to a beat, for fast fiddle runs.',
 				triplet: 'Notes snap to triplets: three to a beat, as in Irish tunes.'
 			},
-			key: 'The key the song is in. It’s guessed from the first chord; pick it here if the guess is wrong. With a capo, it says which shapes you play.',
+			key: 'The key the song is in. It’s guessed from the first chord; pick it here if the guess is wrong.',
 			delete: 'Delete the picked note (or press Delete).',
 			noteBar: {
 				earlier: 'Move the picked note a grid step earlier.',
@@ -636,11 +657,6 @@ export const TIPS = Object.freeze({
 	harmonyFollow: {
 		rewrite: 'Write these harmony parts again from the melody and the new chords.',
 		keep: 'Leave the harmony parts as they are; they may clash with the new chords.'
-	},
-
-	capoChoice: {
-		raise: 'Keep the chord shapes and move the whole song, melody too.',
-		keep: 'Keep the song where it sounds: the chart changes to new chord shapes for this capo.'
 	},
 
 	mixer: {

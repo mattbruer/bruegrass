@@ -1,7 +1,7 @@
 /**
  * The song a brand-new arrangement starts with, so the page has something
  * to play straight away. It's what the arranger shows when you open it,
- * your own songs open from the song bar. New starts from EMPTY_SONG below.
+ * your own songs open from the song bar. New starts from newSongIn below.
  *
  * To change it, replace both: the chord chart (see chart/parseArrangement.js
  * for the format; the words under it are for the lyric chart) and the
@@ -17,6 +17,7 @@
  */
 
 import { TEMPO_DEFAULT } from './chart/tempo.js';
+import { newChart } from './chart/newChart.js';
 
 export const STARTER_ARRANGEMENT = `
 "Verse"[M:3/4]|G|G|C|G|G|G|D|D|G|G|C|G|G|D|G|G|
@@ -53,9 +54,10 @@ export const STARTER_SONG = Object.freeze({
 	mix: null
 });
 
-/** A song with no chart and no tune: what New starts from. */
-export const EMPTY_SONG = Object.freeze({
-	...STARTER_SONG,
-	arrangement: '',
-	abc: ''
-});
+/**
+ * What New starts from: a blank chart in the key and time you name, and no tune.
+ * @param {{ key: string, time: string, style: string }} start
+ */
+export function newSong({ key, time, style }) {
+	return { ...STARTER_SONG, arrangement: newChart({ key, time }), abc: '', style };
+}

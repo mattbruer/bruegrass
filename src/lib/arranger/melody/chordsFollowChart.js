@@ -1,14 +1,13 @@
 /**
  * The tune's chord symbols, always the chart's. The chart is the one place
  * chords are kept: when its chords change, every symbol in the tune is
- * written fresh, at concert pitch, on the note each change lands on
+ * written fresh, on the note each change lands on
  * (abcChords.js `chordSymbolPlaces`). Writing all of them, rather than
  * only the bars that changed, keeps a symbol right when it depends on the
  * bar before (a G after a bar of C needs one; after a bar of G it doesn't).
  */
 import { barsInPlayOrder } from '../chart/chartBars.js';
-import { songKey } from '../chart/key.js';
-import { concertChord } from '../chart/concertChords.js';
+import { withoutVariant } from '../instruments/chordBook.js';
 import { isNoChord } from '../chart/noChord.js';
 import { chordSymbolPlaces } from './abcChords.js';
 import { tuneSplitAtChanges } from './splitHeldNotes.js';
@@ -22,19 +21,15 @@ const BEFORE_A_NOTE = /^(?:"[^"]*"|![^!]*!|[.~]|\s)*/;
 
 /**
  * What each bar plays, in play order, to tell when the chart's chords
- * change: its length and its chords at concert pitch.
+ * change: its length and its chords.
  * @param {import('../chart/timeline.js').Section[]} sections
- * @param {number} capo
  * @returns {string[]}
  */
-export function barChordKeys(sections, capo) {
-	const key = songKey(sections);
+export function barChordKeys(sections) {
 	return barsInPlayOrder(sections).map(
 		(bar) =>
 			`${bar.beats}:` +
-			bar.chords
-				.map((chord) => `${concertChord(chord.name, chord.key ?? key, capo)}/${chord.length}`)
-				.join(',')
+			bar.chords.map((chord) => `${withoutVariant(chord.name)}/${chord.length}`).join(',')
 	);
 }
 
@@ -47,14 +42,14 @@ export function barChordKeys(sections, capo) {
  * @param {string} abc the tune
  * @param {any[][]} voices abcjs.synth.sequence(tune) for that ABC
  * @param {any} abcjs
- * @param {{ sections: import('../chart/timeline.js').Section[], lyrics: import('../chart/sectionLyrics.js').SectionLyrics[], capo: number }} song
+ * @param {{ sections: import('../chart/timeline.js').Section[], lyrics: import('../chart/sectionLyrics.js').SectionLyrics[] }} song
  * @returns {string}
  */
 export function tuneFollowingChart(abc, voices, abcjs, song) {
 	const split =
 		hasWords(abc) && !hasLyrics(song.lyrics) ? null : splitAndRead(abc, voices, abcjs, song);
 	const text = split?.text ?? abc;
-	return tuneWithChartChords(text, split?.voices ?? voices, song.sections, song.capo);
+	return tuneWithChartChords(text, split?.voices ?? voices, song.sections);
 }
 
 /**
@@ -83,11 +78,10 @@ function splitAndRead(abc, voices, abcjs, song) {
  * @param {string} abc the tune
  * @param {any[][]} voices abcjs.synth.sequence(tune) for that ABC
  * @param {import('../chart/timeline.js').Section[]} sections the chart now
- * @param {number} capo
  * @returns {string}
  */
-export function tuneWithChartChords(abc, voices, sections, capo) {
-	const { symbols, played } = chordSymbolPlaces(voices, sections, { capo });
+export function tuneWithChartChords(abc, voices, sections) {
+	const { symbols, played } = chordSymbolPlaces(voices, sections);
 	/** @type {Map<number, string | null>} startChar → the symbol it gets (null: none) */
 	const edits = new Map();
 	for (const item of played) edits.set(/** @type {number} */ (item.startChar), null);

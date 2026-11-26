@@ -17,7 +17,7 @@
 	let { transcription, large = false } = $props();
 
 	const NOT_NAMED = '';
-	const keyChoices = $derived(songKeyChoices(transcription.arranger.arrangement.capoFret));
+	const keyChoices = $derived(songKeyChoices());
 </script>
 
 <label class="flex items-center gap-2">

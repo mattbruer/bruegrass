@@ -41,11 +41,9 @@ export function keepTuneWithChart(arranger) {
 			}
 			// While the chart can't be read, the last chords it could be read with stay
 			else if (chordsAfter) {
-				// A capo move rewrites the tune itself (Arranger.setCapo)
-				if (chordsBefore && chordsBefore.capo === chordsAfter.capo) {
-					if (chordsBefore.keys.join() !== chordsAfter.keys.join()) arranger.followChords();
-					if (chordsBefore.keys.join() !== chordsAfter.keys.join())
-						arranger.harmonyFollow.chordsChanged(chordsBefore.chordAt);
+				if (chordsBefore && chordsBefore.keys.join() !== chordsAfter.keys.join()) {
+					arranger.followChords();
+					arranger.harmonyFollow.chordsChanged(chordsBefore.chordAt);
 				}
 				chordsBefore = chordsAfter;
 			}
@@ -65,17 +63,14 @@ function barKeys(arranger) {
 }
 
 /**
- * Each bar's chords at concert pitch, and the capo they were worked out
- * with (null while the chart can't be read).
+ * Each bar's chords (null while the chart can't be read).
  * @param {import('./Arranger.svelte.js').Arranger} arranger
  */
 function chordKeys(arranger) {
 	const { arrangement } = arranger;
 	if (arrangement.readError) return null;
-	const capo = arrangement.capoFret;
 	return {
-		capo,
-		keys: barChordKeys(arrangement.sections, capo),
-		chordAt: concertChordAt(arrangement.sections, capo)
+		keys: barChordKeys(arrangement.sections),
+		chordAt: concertChordAt(arrangement.sections)
 	};
 }

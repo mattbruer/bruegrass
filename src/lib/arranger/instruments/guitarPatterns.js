@@ -1,7 +1,7 @@
 /**
  * A guitar pattern: what you changed about how the guitar plays one chord
  * (instruments/guitarEdits.js: the shape, booms, chucks, run notes and
- * accents; never a fill, which belongs to its place), taken to use on
+ * accents and the fill), taken to use on
  * another chord, in this song or any other.
  *
  * Onto the same chord, all of it comes. Onto another chord only the right
@@ -10,6 +10,7 @@
  * walk G A B is C D E on a C). That chord keeps its own shape and booms.
  */
 import { rootPitchClass, OPEN_MIDI, MAX_FRET } from './guitar.js';
+import { FILL_RANGE } from './guitarFill.js';
 import { withoutBass, withoutVariant } from './chordBook.js';
 
 /**
@@ -25,8 +26,8 @@ import { withoutBass, withoutVariant } from './chordBook.js';
  * @returns {GuitarPattern}
  */
 export function patternOf(chord, change) {
-	const { shape, booms, chucks, notes, accents } = change;
-	return { chord, change: { shape, booms, chucks, notes, accents } };
+	const { shape, madeAt, booms, chucks, notes, accents, slurs, strums, fill } = change;
+	return { chord, change: { shape, madeAt, booms, chucks, notes, accents, slurs, strums, fill } };
 }
 
 /**
@@ -42,17 +43,25 @@ export function patternOnto(pattern, chord) {
 	if (chord === pattern.chord) {
 		return {
 			shape: change.shape,
+			madeAt: change.madeAt,
 			booms: change.booms,
 			chucks: change.chucks,
 			notes: change.notes,
-			accents: change.accents
+			accents: change.accents,
+			slurs: change.slurs,
+			strums: change.strums,
+			fill: change.fill
 		};
 	}
 	const shift = rootShift(pattern.chord, chord);
 	return {
 		chucks: change.chucks,
 		accents: change.accents,
-		notes: change.notes?.map((note) => note && movedNote(note, shift))
+		slurs: change.slurs,
+		strums: change.strums,
+		madeAt: change.madeAt,
+		notes: change.notes?.map((note) => note && movedNote(note, shift)),
+		fill: change.fill && movedFill(change.fill, shift)
 	};
 }
 
@@ -81,7 +90,7 @@ function rootShift(from, to) {
  * @param {number} shift
  * @returns {PickedNote}
  */
-function movedNote(note, shift) {
+export function movedNote(note, shift) {
 	const lowest = OPEN_MIDI[0];
 	const highest = OPEN_MIDI[OPEN_MIDI.length - 1] + MAX_FRET;
 	let pitch = OPEN_MIDI[note.string] + note.fret + shift;
@@ -99,4 +108,21 @@ function movedNote(note, shift) {
 			: best
 	);
 	return { string, fret: pitch - OPEN_MIDI[string] };
+}
+
+/**
+ * A fill with its notes moved by some semitones, an octave back onto the neck if they'd fall off.
+ * @param {import('./guitarFill.js').Fill} fill
+ * @param {number} shift
+ * @returns {import('./guitarFill.js').Fill}
+ */
+function movedFill(fill, shift) {
+	const { lowest, highest } = FILL_RANGE;
+	const notes = fill.notes.map((note) => {
+		let midi = note.midi + shift;
+		while (midi < lowest) midi += 12;
+		while (midi > highest) midi -= 12;
+		return { ...note, midi };
+	});
+	return { ...fill, notes };
 }

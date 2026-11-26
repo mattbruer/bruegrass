@@ -19,7 +19,7 @@ import { OWN_MODES } from './modes.js';
  *   pitches: number[]
  * }} ChordLesson
  *   pitches: the scale as MIDI notes from its root up to the octave, around middle C
- *   (written, before any capo or key change)
+ *   (written, before any key change)
  */
 
 /* What to call the note a few letters above the root */

@@ -25,7 +25,7 @@ import { withPartBars } from './freshHarmonyBars.js';
  */
 export function harmonyOptions(abc, tune, partId, song) {
 	if (song.sections.length === 0 || !tune) return [];
-	const chordAt = concertChordAt(song.sections, song.capo);
+	const chordAt = concertChordAt(song.sections);
 	const now = partBlockText(abc, partId);
 
 	/** @type {Map<string, HarmonyOption>} */

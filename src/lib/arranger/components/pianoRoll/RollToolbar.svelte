@@ -27,7 +27,7 @@
 	const GUESS = '';
 	let named = $derived(arrangement.sections[0]?.key ?? null);
 	let guess = $derived(guessedKey(arrangement.sections));
-	let choices = $derived(songKeyChoices(arrangement.capoFret));
+	let choices = $derived(songKeyChoices());
 	let guessName = $derived(
 		guess
 			? (choices.find((choice) => choice.value === keyName(guess))?.name ?? keyName(guess))

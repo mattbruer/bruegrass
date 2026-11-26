@@ -26,6 +26,7 @@ import { RECORD_TRACKS, trackName } from '../takes/recordTracks.js';
 import { freeTrack, takeLanes } from '../tracks/lanes.js';
 import { partName, withPartName } from '../melody/partNames.js';
 import { firstBar } from '../takes/takeTiming.js';
+import { semitonesToFollow, soundingTonic } from '../takes/takeKey.js';
 import { openRecordAlong } from '../takes/recordAlong.js';
 import { readAudioFile, takeAsWav } from '../takes/takeFiles.js';
 import { forgetStretchSources } from '$lib/audio/stretch/stretchSource.js';
@@ -40,7 +41,7 @@ const SHORTEST_TAKE = 1;
  * @typedef {import('$lib/storage/songTakes.js').TakeDocument} TakeDocument
  * @typedef {{
  *   rig: import('../takes/recordAlong.js').RecordAlong,
- *   songId: string, trackId: string, bpm: number,
+ *   songId: string, trackId: string, bpm: number, sounds: number | null,
  *   regionStart: number, barOne: number, started: boolean, filmStarted: number
  * }} Recording
  *   regionStart: where the recorded pass starts in the song (seconds);
@@ -194,6 +195,7 @@ export class RecordingState {
 				trackId,
 				regionStart,
 				bpm: arrangement.bpm,
+				sounds: this.#tonicNow(),
 				barOne: 0,
 				started: false,
 				filmStarted: rig.audio.currentTime
@@ -234,7 +236,7 @@ export class RecordingState {
 	 * The band has stopped: save the take.
 	 * @param {Recording} recording
 	 */
-	async #finish({ rig, songId, trackId, regionStart, bpm, barOne, started, filmStarted }) {
+	async #finish({ rig, songId, trackId, regionStart, bpm, sounds, barOne, started, filmStarted }) {
 		removeEventListener('visibilitychange', this.#stopWhenHidden);
 		if (!started) return; // stopped before it began: record() lets go of the mic
 		this.status = 'saving';
@@ -256,6 +258,7 @@ export class RecordingState {
 					from: 'recording',
 					fileName: '',
 					bpm,
+					sounds,
 					sampleRate: take.sampleRate,
 					seconds,
 					// The mic hears you a round trip after the band played: move the take back by it
@@ -309,6 +312,7 @@ export class RecordingState {
 					from: 'file',
 					fileName: file.name,
 					bpm: arrangement.bpm,
+					sounds: this.#tonicNow(),
 					sampleRate,
 					seconds: channels[0].length / sampleRate,
 					startsAt: -bar.seconds,
@@ -397,6 +401,12 @@ export class RecordingState {
 		this.takes = this.#songId ? await listTakes(this.#songId) : [];
 	}
 
+	/** The song's tonic as it sounds now (takes follow it). */
+	#tonicNow() {
+		const { arrangement } = this.#arranger;
+		return soundingTonic(arrangement.key, arrangement.pitchShift);
+	}
+
 	/**
 	 * Every audio lane's clips, as audio ready to play.
 	 * @param {string | null} leaveOut a track to leave out (the one being recorded on)
@@ -416,6 +426,7 @@ export class RecordingState {
 				from: clip.from,
 				seconds: end - start,
 				speed: 1 / stretch,
+				semitones: semitonesToFollow(take, this.#tonicNow()),
 				gain: clip.gain,
 				fadeIn: clip.fadeIn * stretch,
 				fadeOut: clip.fadeOut * stretch

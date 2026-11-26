@@ -6,6 +6,7 @@
 	 */
 	import { writtenNote } from '../../chart/key.js';
 	import { fretNotes } from '../../voicings/fretNotes.js';
+	import FretStepper from './FretStepper.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -29,11 +30,6 @@
 			chordName
 		)[0] ?? null
 	);
-
-	/** @param {number} step */
-	function moveFret(step) {
-		onChange({ string: note.string, fret: Math.min(maxFret, Math.max(0, note.fret + step)) });
-	}
 </script>
 
 <div class="flex flex-col gap-2">
@@ -58,23 +54,9 @@
 			>
 		{/each}
 	</div>
-	<div class="flex items-center gap-1.5">
-		<button
-			type="button"
-			class="ui-button px-3 py-1 text-sm"
-			aria-label="A fret lower"
-			disabled={note.fret <= 0}
-			onclick={() => moveFret(-1)}
-			use:tooltip={TIPS.guitarEditor.fretDown}>−</button
-		>
-		<span class="min-w-16 text-center text-sm" aria-live="polite">fret {note.fret}</span>
-		<button
-			type="button"
-			class="ui-button px-3 py-1 text-sm"
-			aria-label="A fret higher"
-			disabled={note.fret >= maxFret}
-			onclick={() => moveFret(1)}
-			use:tooltip={TIPS.guitarEditor.fretUp}>+</button
-		>
-	</div>
+	<FretStepper
+		fret={note.fret}
+		{maxFret}
+		onChange={(fret) => onChange({ string: note.string, fret })}
+	/>
 </div>

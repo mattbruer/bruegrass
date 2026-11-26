@@ -4,9 +4,8 @@
  * lasts 1 to MAX_FILL_BARS bars, over whatever chords those bars hold.
  * Saved with the chord's changes (guitarEdits.js) as plain data:
  * `{ bars, notes }`, each note's `start` and `length` in ticks from the
- * fill's start (ticks.js) and `midi` the pitch as it sounds on the neck
- * without the capo, the way a TAB reads, so the capo moves it like the
- * rest of the guitar.
+ * fill's start (ticks.js) and `midi` the pitch in the chart's key, as written;
+ * the Key setting and the capo move it like the rest of the guitar (`fillSpan`).
  */
 import { OPEN_MIDI, MAX_FRET } from './guitar.js';
 import { barQuarters } from '../chart/timeline.js';
@@ -48,16 +47,17 @@ export function fillRoom(barStart, meter, songQuarters) {
  * Where a chord's fill is in the song: from the start of the chord's bar,
  * over the following bars and whatever chords they hold (null: no room).
  * @param {Fill | undefined} fill
- * @param {{ barStart: number, meter: import('../chart/timeline.js').Meter, room: number }} where
+ * @param {{ barStart: number, meter: import('../chart/timeline.js').Meter, room: number, shift?: number }} where
+ * shift: semitones the hand's shapes are from the chart's (the Key less the capo): the fill's notes are written in the chart's key
  * @returns {FillSpan | null}
  */
-export function fillSpan(fill, { barStart, meter, room }) {
+export function fillSpan(fill, { barStart, meter, room, shift = 0 }) {
 	if (!fill || !Array.isArray(fill.notes) || room === 0) return null;
 	const bars = Math.min(Math.max(fill.bars, 1), room);
 	const length = bars * barQuarters(meter);
 	const notes = keepWithin(fill.notes, length * TICKS_PER_QUARTER);
 	const played = notes.flatMap(({ midi, start, length }) => {
-		const spot = fretFor(midi);
+		const spot = fretFor(midi + shift);
 		return spot ? [{ start, length, ...spot }] : [];
 	});
 	return { start: barStart, bars, length, meter, notes, played };

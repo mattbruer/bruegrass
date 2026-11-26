@@ -26,9 +26,7 @@
 
 	function hearScale() {
 		if (!lesson) return;
-		// The lesson is in the chord's key on the chart (the shapes); the capo raises what the band sounds
-		const pitches = lesson.pitches.map((pitch) => pitch + arrangement.capoFret);
-		auditionScale(pitches, arrangement.transpose).catch(console.error);
+		auditionScale(lesson.pitches, arrangement.transpose).catch(console.error);
 	}
 </script>
 

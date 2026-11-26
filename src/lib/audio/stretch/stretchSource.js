@@ -28,11 +28,14 @@ export function prepareStretchSources(audio) {
  * ends itself after `duration`.
  * @param {BaseAudioContext} audio
  * @param {{
- *   key: string, buffer: AudioBuffer, from: number, speed: number, at: number, duration: number
+ *   key: string, buffer: AudioBuffer, from: number, speed: number, semitones?: number, at: number, duration: number
  * }} play key: names the recording (a take's id); from: seconds into it; speed: 0.5 = half
- *   speed; at: the audio-clock time to start; duration: seconds of output
+ *   speed; semitones: moved up (positive) or down, keeping the speed; at: the audio-clock time to start; duration: seconds of output
  */
-export function startStretchSource(audio, { key, buffer, from, speed, at, duration }) {
+export function startStretchSource(
+	audio,
+	{ key, buffer, from, speed, semitones = 0, at, duration }
+) {
 	const channelCount = buffer.numberOfChannels;
 	const node = createLoadedNativeWorkletNode(audio, 'stretch-source', {
 		numberOfInputs: 0,
@@ -44,7 +47,7 @@ export function startStretchSource(audio, { key, buffer, from, speed, at, durati
 		? undefined
 		: Array.from({ length: channelCount }, (_, index) => buffer.getChannelData(index));
 	node.port.onmessage = ({ data }) => data.type === 'kept' && keys.add(data.key);
-	node.port.postMessage({ type: 'play', key, channels, from, speed, at, duration });
+	node.port.postMessage({ type: 'play', key, channels, from, speed, semitones, at, duration });
 
 	return {
 		node,

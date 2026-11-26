@@ -58,14 +58,26 @@ export class ArrangementState {
 	capoFret = $derived(validCapo(this.capo));
 	/** The whole song's time (quarters from bar 1) in seconds, the tempo lane's bends included. */
 	clock = $derived(tempoClock(this.tempoCurve, this.bpm, rhythm(this.sections).quarters));
-	/** How far the sound is from the chords as written: capo plus key change. */
-	pitchShift = $derived(this.capoFret + this.transpose);
-	/** How far the shapes a guitarist plays with this capo are from the chords as written: the key change. */
-	shapesShift = $derived(this.transpose);
+	/** How far the sound is from the chords as written: the Key setting. The capo never changes it. */
+	pitchShift = $derived(this.transpose);
+	/** How far the shapes the guitarist holds are from the chords as written: the key change, less the capo. */
+	shapesShift = $derived(this.transpose - this.capoFret);
+	/**
+	 * A chord of the chart as it sounds in the Key now (the Band and Mandolin lanes).
+	 * @param {string} chord as written
+	 */
+	concertName = (chord) =>
+		chordLabel(chord, { key: this.key, shift: this.pitchShift, mode: 'concert' });
+
+	/** Move the song to another key. The guitar starts again with no capo. @param {number} transpose */
+	setKey(transpose) {
+		this.transpose = transpose;
+		this.capo = 0;
+	}
 
 	/** The song's key: the chart's [K:], else its first chord (null while there are no chords). */
 	key = $derived(songKey(this.sections));
-	keyChoices = $derived(keyChoicesFor(this.key, this.capoFret));
+	keyChoices = $derived(keyChoicesFor(this.key));
 	/** Every chord's function, worked out from where it goes, with your own marks. */
 	analysis = $derived(chartAnalysis(this.sections, this.key));
 

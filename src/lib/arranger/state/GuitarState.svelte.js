@@ -9,16 +9,20 @@
  * chord's last bars, played in place of the band's strum.
  *
  * Patterns (instruments/guitarPatterns.js): one chord's changes copied to
- * paste onto another, or saved under a name for every song.
+ * paste onto another, or saved under a name for every song. Copying bars
+ * (instruments/guitarBars.js) takes a run of chords: tap the first, then
+ * the last, so it works with a finger.
  */
 import { emptyFill } from '../instruments/guitarFill.js';
 import { isEmptyPattern, patternOf, patternOnto } from '../instruments/guitarPatterns.js';
+import { copiedBars, hasChanges, pasteBars } from '../instruments/guitarBars.js';
 import {
 	deleteGuitarPattern,
 	listGuitarPatterns,
 	saveGuitarPattern
 } from '$lib/storage/guitarPatterns.js';
 import { guitarChords } from '../instruments/guitarPlan.js';
+import { movedNote } from '../instruments/guitarPatterns.js';
 import { withGuitarEdit, editedGuitar } from '../instruments/guitarEdits.js';
 import { isNoChord, sectionsToPlay } from '../chart/noChord.js';
 import { slotPositions } from '../chart/timeline.js';
@@ -26,7 +30,8 @@ import { concertChord } from '../chart/concertChords.js';
 import { mod12, songKey } from '../chart/key.js';
 
 /**
- * @typedef {import('../instruments/guitarPlan.js').GuitarChord & { sounds: string }} GuitarChordInSong
+ * @typedef {import('../instruments/guitarPlan.js').GuitarChord & { label: string, sounds: string }} GuitarChordInSong
+ *   label: the chord the hand holds, as the lane and header say it;
  *   sounds: the chord as it sounds with the capo and key ("A" for a G shape with capo 2)
  */
 
@@ -37,10 +42,12 @@ export class GuitarState {
 	/** Where the picked chord starts (quarters from bar 1). */
 	pickedStart = $state(0);
 
-	/** A chord's changes, copied to paste onto another (kept for this visit). */
-	copied = /** @type {import('../instruments/guitarPatterns.js').GuitarPattern | null} */ (
-		$state.raw(null)
+	/** Chords' changes, copied to paste onto others, one chord or a run (kept for this visit). */
+	copied = /** @type {import('../instruments/guitarPatterns.js').GuitarPattern[]} */ (
+		$state.raw([])
 	);
+	/** While choosing the bars to copy: where the first and the last chord start (else null). */
+	range = /** @type {{ from: number, to: number } | null} */ ($state.raw(null));
 	/** Your saved patterns, for every song (loaded with `loadPatterns`). */
 	patterns = /** @type {import('$lib/storage/guitarPatterns.js').SavedGuitarPattern[]} */ (
 		$state.raw([])
@@ -65,10 +72,15 @@ export class GuitarState {
 		try {
 			return guitarChords(sectionsToPlay(arrangement.sections), {
 				edits: song.guitarChords,
-				style: arrangement.style
+				style: arrangement.style,
+				shift: arrangement.shapesShift
 			})
 				.filter((_, slot) => !isNoChord(written[slot].name))
-				.map((chord) => ({ ...chord, sounds: concertChord(chord.name, key, shift) }));
+				.map((chord) => ({
+					...chord,
+					label: chord.shapeName,
+					sounds: concertChord(chord.name, key, shift)
+				}));
 		} catch {
 			return [];
 		}
@@ -85,7 +97,7 @@ export class GuitarState {
 	#savedFill() {
 		const chord = this.picked;
 		if (!chord) return undefined;
-		return editedGuitar(this.#arranger.song.guitarChords, chord.start, chord.name).fill;
+		return editedGuitar(this.#arranger.song.guitarChords, chord.editAt, chord.name).fill;
 	}
 
 	/** Play the picked chord's last bar as a fill you write, starting empty. */
@@ -112,13 +124,70 @@ export class GuitarState {
 		const chord = this.picked;
 		if (!chord) return null;
 		const { song } = this.#arranger;
-		const pattern = patternOf(chord.name, editedGuitar(song.guitarChords, chord.start, chord.name));
+		const pattern = patternOf(
+			chord.name,
+			editedGuitar(song.guitarChords, chord.editAt, chord.name)
+		);
 		return isEmptyPattern(pattern) ? null : pattern;
 	});
 
-	copy() {
-		this.copied = this.pickedPattern;
+	/** The chords from `from` to `to` (either way round), by where they start. */
+	#chordsBetween(/** @type {number} */ from, /** @type {number} */ to) {
+		const [first, last] = [Math.min(from, to), Math.max(from, to)];
+		return this.chords.filter((chord) => chord.start >= first - 1e-6 && chord.start <= last + 1e-6);
 	}
+
+	/** The picked chord's changes, to paste (nothing to copy if it has none). */
+	copy() {
+		this.copied = this.pickedPattern ? [this.pickedPattern] : [];
+	}
+
+	/** Start choosing bars to copy, from the picked chord. */
+	startRange() {
+		this.range = { from: this.pickedStart, to: this.pickedStart };
+	}
+
+	/** @param {number} start the last chord of the run (tapped on the lane) */
+	extendRange(start) {
+		if (this.range) this.range = { from: this.range.from, to: start };
+	}
+
+	cancelRange() {
+		this.range = null;
+	}
+
+	/** The chords the range covers. */
+	rangeChords = $derived(this.range ? this.#chordsBetween(this.range.from, this.range.to) : []);
+
+	/** What the chosen chords have changed, in order. */
+	#rangePatterns = $derived(copiedBars(this.rangeChords, this.#arranger.song.guitarChords));
+
+	/** Is there anything changed in the chosen chords to copy? */
+	rangeHasChanges = $derived(hasChanges(this.#rangePatterns));
+
+	/** Copy the chosen bars, and leave choosing. */
+	copyRange() {
+		if (this.rangeHasChanges) this.copied = this.#rangePatterns;
+		this.range = null;
+	}
+
+	/** Paste what was copied from the picked chord on, a chord for each. */
+	paste() {
+		const { song, history } = this.#arranger;
+		const from = this.chords.findIndex((chord) => chord.start === this.picked?.start);
+		if (from < 0 || this.copied.length === 0) return;
+		const patterns = this.copied;
+		const targets = this.chords.slice(from);
+		history.edit(() => (song.guitarChords = pasteBars(song.guitarChords, targets, patterns)));
+	}
+
+	/** Where the lane marks: the chords being chosen, else the ones a paste here would cover. */
+	marked = $derived.by(() => {
+		if (this.range) return this.rangeChords.map((chord) => chord.start);
+		const from = this.chords.findIndex((chord) => chord.start === this.picked?.start);
+		if (from < 0 || this.copied.length < 2) return [];
+		return this.chords.slice(from, from + this.copied.length).map((chord) => chord.start);
+	});
 
 	/**
 	 * Play the picked chord as a pattern says (all of it on the same chord,
@@ -161,10 +230,13 @@ export class GuitarState {
 		const chord = this.picked;
 		if (!chord) return;
 		const { song, history } = this.#arranger;
-		const now = editedGuitar(song.guitarChords, chord.start, chord.name);
+		const now = rebased(
+			editedGuitar(song.guitarChords, chord.editAt, chord.name),
+			this.#arranger.arrangement.shapesShift
+		);
 		history.edit(
 			() =>
-				(song.guitarChords = withGuitarEdit(song.guitarChords, chord.start, chord.name, {
+				(song.guitarChords = withGuitarEdit(song.guitarChords, chord.editAt, chord.name, {
 					...now,
 					...change
 				}))
@@ -175,11 +247,33 @@ export class GuitarState {
 	reset() {
 		this.change({
 			shape: undefined,
+			madeAt: undefined,
 			booms: undefined,
 			chucks: undefined,
 			notes: undefined,
 			accents: undefined,
+			slurs: undefined,
+			strums: undefined,
 			fill: undefined
 		});
 	}
+}
+
+/**
+ * Your saved changes as they are at this shift (Key less capo): a shape made
+ * at another shift is the book's again, the picked notes and booms move with it, and
+ * what's written now is marked as made at this one.
+ * @param {import('../instruments/guitarEdits.js').GuitarChange} change
+ * @param {number} shift
+ * @returns {import('../instruments/guitarEdits.js').GuitarChange}
+ */
+function rebased(change, shift) {
+	const moved = shift - (change.madeAt ?? 0);
+	return {
+		...change,
+		madeAt: shift,
+		shape: moved === 0 ? change.shape : undefined,
+		notes: change.notes?.map((note) => note && movedNote(note, moved)),
+		booms: change.booms?.map((boom) => boom && movedNote(boom, moved))
+	};
 }

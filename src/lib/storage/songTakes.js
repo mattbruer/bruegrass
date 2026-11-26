@@ -29,6 +29,7 @@ const DATABASE_VERSION = 2;
  *   from: 'recording' | 'file',
  *   fileName: string,
  *   bpm: number,
+ *   sounds?: number | null,
  *   sampleRate: number,
  *   seconds: number,
  *   startsAt: number,
@@ -37,6 +38,7 @@ const DATABASE_VERSION = 2;
  *   quality: 'full' | 'compressed',
  *   video?: TakeVideo | null
  * }} TakeDocument
+ *   sounds: the song's tonic as it sounded when this was made (takes/takeKey.js), so it follows the key;
  *   inUse: the take its track plays (one per track);
  *   startsAt: seconds from bar 1, already moved earlier by latencyMs (the delay measured when recording);
  *   nudgeMs: moved by ear on top of that;

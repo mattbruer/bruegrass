@@ -14,17 +14,17 @@ const BARS_PER_LINE = 4;
 
 /**
  * @param {import('../../chart/chartBars.js').ChartBar[]} bars the section's bars, in play order
- * @param {{ songKey: import('../../chart/key.js').Key | null, capo: number,
+ * @param {{ songKey: import('../../chart/key.js').Key | null,
  *   spelling: import('../../theory/musicInKey.js').Key, unit: number }} song
  *   unit: ticks in the tune's unit note length (L:)
  * @returns {string} ABC bars
  */
-export function sectionRests(bars, { songKey, capo, spelling, unit }) {
-	const { score } = scoreFromChart(bars, songKey, capo, spelling);
+export function sectionRests(bars, { songKey, spelling, unit }) {
+	const { score } = scoreFromChart(bars, songKey, spelling);
 	const written = score.bars.map((bar) =>
 		writeBar(bar, barEvents(bar, [], score.chords), { key: bar.key ?? spelling, unit })
 	);
-	return barLines(withKeyFields(score.bars, written, melodyKey(songKey, capo).keyText));
+	return barLines(withKeyFields(score.bars, written, melodyKey(songKey).keyText));
 }
 
 /**

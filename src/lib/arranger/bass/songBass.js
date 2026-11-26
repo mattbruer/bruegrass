@@ -19,7 +19,7 @@ const EPSILON = 1e-6;
 /**
  * @param {import('../chart/timeline.js').Section[]} sections the bars to play (a loop region, or the song)
  * @param {{
- *   capo?: number, transpose?: number, written?: BassNote[] | null,
+ *   transpose?: number, written?: BassNote[] | null,
  *   offset?: number, passes?: number
  * }} options
  *   written: the edited line for the whole song (BassState.written), or null;
@@ -29,14 +29,11 @@ const EPSILON = 1e-6;
  * @returns {{ notes: BassNote[], passes: number }} beats in quarters from the
  *   first of these sections, at sounding pitch in the file's numbering
  */
-export function bassPart(
-	sections,
-	{ capo = 0, transpose = 0, written = null, offset = 0, passes = 1 } = {}
-) {
+export function bassPart(sections, { transpose = 0, written = null, offset = 0, passes = 1 } = {}) {
 	const quarters = rhythm(sections).quarters;
 	if (!written) {
 		const repeated = Array.from({ length: passes }, () => sections).flat();
-		return { notes: bandsBassLine(repeated, { capo: mod12(capo + transpose) }), passes };
+		return { notes: bandsBassLine(repeated, { shift: mod12(transpose) }), passes };
 	}
 	const end = offset + quarters;
 	const notes = written

@@ -5,7 +5,7 @@
  * puts in another key (`[K:]`) carries it, at concert pitch, so the ABC
  * changes key there too.
  */
-import { concertChord } from '../../chart/concertChords.js';
+import { withoutVariant } from '../../instruments/chordBook.js';
 import { isNoChord } from '../../chart/noChord.js';
 import { barsInPlayOrder } from '../../chart/chartBars.js';
 import { TICKS_PER_QUARTER } from './ticks.js';
@@ -17,30 +17,23 @@ const NEW_TUNE_UNIT = TICKS_PER_QUARTER / 2;
 /**
  * The empty score for the open song: its bars in play order, chords at
  * concert pitch, spelled in the melody's key.
- * @param {{ arrangement: { sections: import('../../chart/timeline.js').Section[], key: any, capoFret: number }, melodyKey: { spelling: any } }} arranger
+ * @param {{ arrangement: { sections: import('../../chart/timeline.js').Section[], key: any }, melodyKey: { spelling: any } }} arranger
  * @param {number} [pickupQuarters] a short bar before bar 1 this long (0: none)
  */
 export function blankScoreForSong({ arrangement, melodyKey }, pickupQuarters = 0) {
 	const bars = barsInPlayOrder(arrangement.sections);
-	return scoreFromChart(
-		bars,
-		arrangement.key,
-		arrangement.capoFret,
-		melodyKey.spelling,
-		pickupQuarters
-	);
+	return scoreFromChart(bars, arrangement.key, melodyKey.spelling, pickupQuarters);
 }
 
 /**
  * @param {import('../../chart/chartBars.js').ChartBar[]} chartBars
  * @param {import('../../chart/key.js').Key | null} songKey
- * @param {number} capo
  * @param {import('../../theory/musicInKey.js').Key} spelling
  * @param {number} [pickupQuarters] a short bar before bar 1; times then count from it
  * @returns {{ score: import('./readScore.js').Score, lineStarts: Map<number, string> }}
  *   lineStarts: bars that begin a section, each with the section's name
  */
-export function scoreFromChart(chartBars, songKey, capo, spelling, pickupQuarters = 0) {
+export function scoreFromChart(chartBars, songKey, spelling, pickupQuarters = 0) {
 	let meter = { num: 4, den: 4 };
 	const bars = [];
 	const chords = [];
@@ -62,7 +55,7 @@ export function scoreFromChart(chartBars, songKey, capo, spelling, pickupQuarter
 			meter,
 			from: null,
 			to: null,
-			...keyOfBar(bar, capo)
+			...keyOfBar(bar)
 		});
 		if (bar.sectionStart && !(barShift && bar.index === 0)) {
 			lineStarts.set(bar.index + barShift, bar.sectionName);
@@ -71,8 +64,7 @@ export function scoreFromChart(chartBars, songKey, capo, spelling, pickupQuarter
 		let at = start;
 		for (const chord of bar.chords) {
 			// No chord (N.C.) writes no chord symbol
-			if (!isNoChord(chord.name))
-				chords.push({ at, name: concertChord(chord.name, chord.key ?? songKey, capo) });
+			if (!isNoChord(chord.name)) chords.push({ at, name: withoutVariant(chord.name) });
 			at += chord.length * TICKS_PER_QUARTER;
 		}
 	}
@@ -86,13 +78,12 @@ function meterOf(text) {
 }
 
 /**
- * The key a chart bar names with `[K:]` (its first chord's), at concert pitch; none: the tune's own.
+ * The key a chart bar names with `[K:]` (its first chord's), none: the tune's own.
  * @param {import('../../chart/chartBars.js').ChartBar} bar
- * @param {number} capo
  */
-function keyOfBar(bar, capo) {
+function keyOfBar(bar) {
 	const named = bar.chords[0]?.key;
 	if (!named) return {};
-	const { keyText, spelling } = melodyKey(named, capo);
+	const { keyText, spelling } = melodyKey(named);
 	return { key: spelling, keyText };
 }

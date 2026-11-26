@@ -86,6 +86,6 @@ export class HarmonyFollowState {
 
 	#chordNow() {
 		const { arrangement } = this.#arranger;
-		return concertChordAt(arrangement.sections, arrangement.capoFret);
+		return concertChordAt(arrangement.sections);
 	}
 }

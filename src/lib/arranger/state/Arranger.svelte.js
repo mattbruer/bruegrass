@@ -19,7 +19,6 @@
  *   arranger.receive       a song someone sent (a share link or song file), waiting to be opened
  *   arranger.transcription the Transcribe page's work on a recording (kept while you visit the other pages)
  *   arranger.conversionReport  what the last conversion between chart and melody (chords, words) wants you to know
- *   arranger.capoAsked     a capo change waiting for "raise the song or keep its key?"
  */
 import { ArrangementState } from './ArrangementState.svelte.js';
 import { LoopState } from './LoopState.svelte.js';
@@ -41,7 +40,6 @@ import { ChartFollowsTuneState } from './ChartFollowsTuneState.svelte.js';
 import { abcjsIfLoaded, abcjsReady } from './abcjsLoaded.svelte.js';
 import { abcWithChords, arrangementFromAbc, hasChords } from '../melody/abcChords.js';
 import { tuneFollowingChart } from '../melody/chordsFollowChart.js';
-import { transposeAbc } from '../melody/transposeAbc.js';
 import { respellBass } from '../bass/respellBass.js';
 import { abcWithWords } from '../melody/words/abcWithWords.js';
 import { readLyrics } from '../chart/sectionLyrics.js';
@@ -54,8 +52,6 @@ import {
 import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { concertChordAt } from '../chart/concertChords.js';
 import { mixer } from '../mixer/mixer.svelte.js';
-import { transposeChart } from '../chart/transposeChart.js';
-import { validCapo } from '../chart/capo.js';
 import { withKeyField } from '../chart/keyField.js';
 import { respellDrawnMelody } from '../melody/roll/drawnMelody.js';
 import { melodyKey } from '../melody/roll/melodyKey.js';
@@ -171,9 +167,6 @@ export class Arranger {
 	/** Why the harmony parts couldn't be written, if they couldn't. */
 	harmonyProblem = $state('');
 
-	/** The capo fret asked for, while the page asks what the melody should do (else null). */
-	capoAsked = $state(/** @type {number | null} */ (null));
-
 	/** A name for the work: the tune's title, the song's name, else the first section's name. */
 	title = $derived(
 		this.melody.title ||
@@ -220,7 +213,6 @@ export class Arranger {
 		const bars = arrangement.readError ? [] : barsInPlayOrder(arrangement.sections);
 		const song = {
 			songKey: arrangement.key,
-			capo: arrangement.capoFret,
 			spelling: this.melodyKey.spelling,
 			unit
 		};
@@ -320,7 +312,10 @@ export class Arranger {
 			melody.line,
 			instances,
 			barsInPlayOrder(arrangement.sections),
-			{ songKey: arrangement.key, capo: arrangement.capoFret, spelling: this.melodyKey.spelling }
+			{
+				songKey: arrangement.key,
+				spelling: this.melodyKey.spelling
+			}
 		);
 	}
 
@@ -372,10 +367,10 @@ export class Arranger {
 	followChords() {
 		const sequence = this.melody.sequence;
 		const abcjs = abcjsIfLoaded();
-		const { sections, capoFret, readError, text } = this.arrangement;
+		const { sections, readError, text } = this.arrangement;
 		if (!abcjs || !sequence || !hasChords(sequence) || readError || sections.length === 0) return;
 		const abc = this.melody.notation;
-		const song = { sections, lyrics: readLyrics(text), capo: capoFret };
+		const song = { sections, lyrics: readLyrics(text) };
 		const followed = tuneFollowingChart(abc, sequence, abcjs, song);
 		if (followed !== abc) this.melody.notation = followed;
 	}
@@ -384,13 +379,12 @@ export class Arranger {
 	songForMelody() {
 		return {
 			sections: this.arrangement.isPlayable ? this.arrangement.sections : [],
-			lyrics: readLyrics(this.arrangement.text),
-			capo: this.arrangement.capoFret
+			lyrics: readLyrics(this.arrangement.text)
 		};
 	}
 
-	/** The melody's key (concert: the song's key moved by the capo). */
-	melodyKey = $derived(melodyKey(this.arrangement.key, this.arrangement.capoFret));
+	/** The melody's key: the song's own (the Key setting moves it at playback). */
+	melodyKey = $derived(melodyKey(this.arrangement.key));
 
 	/**
 	 * Name the song's key (the chart's [K:]), or go back to the first chord's
@@ -432,14 +426,12 @@ export class Arranger {
 		this.splitTuneIntoSections();
 	}
 
-	/** Write the arrangement's chords (at concert pitch) into a melody that has none. */
+	/** Write the arrangement's chords into a melody that has none. */
 	writeChordsIntoMelody() {
 		const sequence = this.melody.sequence;
 		if (!sequence || !this.arrangement.isPlayable) return;
 
-		const result = abcWithChords(this.melody.notation, sequence, this.arrangement.sections, {
-			capo: this.arrangement.capoFret
-		});
+		const result = abcWithChords(this.melody.notation, sequence, this.arrangement.sections);
 		this.melody.notation = result.abc;
 		this.conversionReport = {
 			title: "The arrangement's chords are written into the melody.",
@@ -480,7 +472,7 @@ export class Arranger {
 		if (!this.arrangement.isPlayable) return;
 		await abcjsReady();
 		const { notation: before, tune } = this.melody;
-		const chordAt = concertChordAt(this.arrangement.sections, this.arrangement.capoFret);
+		const chordAt = concertChordAt(this.arrangement.sections);
 		const result = tune
 			? withHarmonies(before, tune, chordAt, partIds)
 			: { abc: before, problem: 'The melody has no music to harmonise.' };
@@ -496,56 +488,5 @@ export class Arranger {
 			);
 			if (removed) channel.solo = false;
 		}
-	}
-
-	/**
-	 * Move the capo. The page asks first: raise the song with the capo (same
-	 * shapes), or keep its key (new shapes). A chart with no chords yet has
-	 * no key to keep, so the capo just moves.
-	 * @param {number} fret
-	 */
-	setCapo(fret) {
-		const capo = validCapo(fret);
-		if (capo === this.arrangement.capoFret) return;
-		if (this.arrangement.key) this.capoAsked = capo;
-		else this.#moveCapoWithBass(capo);
-	}
-
-	/**
-	 * Move the capo, everything sounding higher or lower: an edited bass line
-	 * moves with it, in the same step, so it still fits the chart.
-	 * @param {number} capo
-	 */
-	async #moveCapoWithBass(capo) {
-		const semitones = capo - this.arrangement.capoFret;
-		if (this.bass.isWritten) this.bass.notation = await transposeAbc(this.bass.notation, semitones);
-		this.arrangement.capo = capo;
-	}
-
-	/** Same shapes, everything sounds higher or lower: the melody moves with the band. */
-	async raiseSongWithCapo() {
-		const capo = this.capoAsked;
-		if (capo === null) return;
-		const semitones = capo - this.arrangement.capoFret;
-		if (this.melody.hasNotation) {
-			this.melody.notation = await transposeAbc(this.melody.notation, semitones);
-		}
-		await this.#moveCapoWithBass(capo);
-		this.capoAsked = null;
-	}
-
-	/** The song sounds the same: the chart's chords change to the shapes that reach it. */
-	keepKeyWithCapo() {
-		const capo = this.capoAsked;
-		if (capo === null) return;
-		const semitones = capo - this.arrangement.capoFret;
-		this.arrangement.text = transposeChart(this.arrangement.text, -semitones);
-		this.arrangement.capo = capo;
-		this.capoAsked = null;
-	}
-
-	/** Leave the capo where it was. */
-	cancelCapo() {
-		this.capoAsked = null;
 	}
 }

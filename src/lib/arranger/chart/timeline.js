@@ -6,13 +6,14 @@
 
 /**
  * @typedef {{ beats: number, unit: number }} Meter e.g. 3/4 = { beats: 3, unit: 4 }
- * @typedef {{ name?: string, measures: string[][], meters?: Meter[], held?: boolean[], hits?: (import('./hits.js').Hit | null)[][], keys?: (import('./key.js').Key | null)[], key?: import('./key.js').Key | null }} Section
+ * @typedef {{ name?: string, measures: string[][], meters?: Meter[], held?: boolean[], hits?: (import('./hits.js').Hit | null)[][], keys?: (import('./key.js').Key | null)[], key?: import('./key.js').Key | null, homes?: (number | null)[][] }} Section
  *   key: the song's, as the chart names it with [K:] before the first bar, else null (see key.js songKey);
- *   keys: each chord's, where a [K:] has named one (null before any)
+ *   keys: each chord's, where a [K:] has named one (null before any);
+ *   homes: in a part played again with `as`, where each chord starts in the part it repeats (quarters from bar 1; null elsewhere)
  * @typedef {{
  *   section: number, measure: number, chord: number, name: string, sectionName: string,
  *   start: number, length: number, bar: number, barStart: number, meter: Meter,
- *   key: import('./key.js').Key | null, hit: import('./hits.js').Hit | null
+ *   key: import('./key.js').Key | null, hit: import('./hits.js').Hit | null, home: number | null
  * }} SlotPosition one chord's span, in quarter notes; key: its named key (null: the song's); hit: struck once (hits.js)
  * @typedef {{ time: number, role: 'boom' | 'chuck', length: number, slot: number, bar: number, beatInBar: number }} Beat
  *   length: quarters until the next boom (for booms) or 1 (for chucks)
@@ -87,7 +88,8 @@ export function slotPositions(sections) {
 					barStart: time,
 					meter,
 					key: section.keys?.[m]?.[c] ?? null,
-					hit: section.hits?.[m]?.[c] ?? null
+					hit: section.hits?.[m]?.[c] ?? null,
+					home: section.homes?.[m]?.[c] ?? null
 				});
 				at += length;
 			});

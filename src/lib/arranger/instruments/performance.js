@@ -38,7 +38,7 @@ import { tempoClock } from '../chart/tempoCurve.js';
  *   swing?: number, style?: string,
  *   tempoCurve?: import('../chart/tempoCurve.js').TempoPoint[]
  * }} options
- *   transpose: semitones on top of the capo, for every instrument;
+ *   capo: the guitar's only, it never changes the sound; transpose: the Key, semitones for every instrument;
  *   melody: from melodyEvents() for these sections at this tempo (looping
  *   to match), played on the guitar samples, each voice through its own
  *   channel (Melody, or a harmony part's);
@@ -81,7 +81,7 @@ export function preparePerformance(
 		}));
 	const steadyPass = passQuarters * quarter;
 	const passLength = clock.passSeconds;
-	const shift = capo + transpose;
+	const shift = transpose;
 	// No-chord bars (N.C.): every part is worked out as if the chord before
 	// carried on, then the notes starting in them are left out
 	const sections = sectionsToPlay(written);
@@ -89,9 +89,14 @@ export function preparePerformance(
 	/** @template {{ time: number }} T @param {T[]} notes */
 	const quiet = (notes) => withoutStops(notes, silent, (note) => note.time / quarter, passQuarters);
 
-	// Guitar: the capo where it reaches, resampling for the rest
-	const guitarPlayed = guitarChords(sections, { edits: guitar, offset, style });
-	const tuning = guitarTuning(guitarPlayed, shift);
+	// Guitar: the shapes for the Key less the capo, played with the capo (resampling only if the neck runs out)
+	const guitarPlayed = guitarChords(sections, {
+		edits: guitar,
+		offset,
+		style,
+		shift: transpose - capo
+	});
+	const tuning = guitarTuning(guitarPlayed, capo);
 	const built = buildEvents(sections, { chords: guitarPlayed, bpm, capo: tuning.capo, loop });
 	const guitarPeriod = clock.secondsAt(built.duration / quarter);
 	const events = onTheClock(
@@ -103,10 +108,9 @@ export function preparePerformance(
 	);
 
 	// Bass and mandolin work in concert pitch and pick their own register
-	const concert = { bpm, capo: mod12(shift) };
+	const concert = { bpm, shift: mod12(shift) };
 	const bassLine = bassEvents(
 		bassPart(written, {
-			capo,
 			transpose,
 			written: bass,
 			offset,

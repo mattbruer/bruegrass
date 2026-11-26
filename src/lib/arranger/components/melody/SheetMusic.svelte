@@ -46,7 +46,7 @@
 	/** Both views are the same with no capo or key change, so the tabs only show when they differ. */
 	let canTranspose = $derived(arrangement.key !== null && arrangement.pitchShift !== 0);
 	let drawnTranspose = $derived(
-		canTranspose && melody.sheetView === 'shapes' ? -arrangement.capoFret : arrangement.transpose
+		canTranspose && melody.sheetView === 'shapes' ? arrangement.shapesShift : arrangement.transpose
 	);
 
 	/** @type {HTMLDivElement | undefined} */

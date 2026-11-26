@@ -3,7 +3,7 @@
  * the chart one names the key from that bar on (a B part in minor, a
  * modulation). The one before the first bar, on the first section's line,
  * names the song's key, for when the first chord doesn't give it (a song
- * that starts on the V). Keys name the guitar's shapes, before any capo.
+ * that starts on the V). The key is the song's own, as it sounds before any Key change.
  */
 import { parseKeyName } from './key.js';
 

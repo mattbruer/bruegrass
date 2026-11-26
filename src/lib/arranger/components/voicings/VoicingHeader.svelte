@@ -9,8 +9,8 @@
 	/**
 	 * @type {{
 	 *   name: string,
-	 *   chords: { start: number, name: string, bar: number, sounds?: string }[],
-	 *   picked: { start: number, name: string, bar: number, sounds?: string } | null,
+	 *   chords: { start: number, name: string, label?: string, bar: number, sounds?: string }[],
+	 *   picked: { start: number, name: string, label?: string, bar: number, sounds?: string } | null,
 	 *   onPick: (start: number) => void,
 	 *   onClose?: () => void
 	 * }}
@@ -40,8 +40,8 @@
 				use:tooltip={TIPS.voicingEditor.before}>‹</button
 			>
 			<span class="chord" aria-live="polite">
-				{picked.name}
-				{#if picked.sounds && picked.sounds !== picked.name}
+				{picked.label ?? picked.name}
+				{#if picked.sounds && picked.sounds !== (picked.label ?? picked.name)}
 					<span class="ml-1 text-ink-soft">(sounds {picked.sounds})</span>
 				{/if}
 			</span>

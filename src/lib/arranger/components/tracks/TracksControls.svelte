@@ -25,7 +25,6 @@
 	import PlayClock from '../transcription/PlayClock.svelte';
 	import TempoStepper from '../player/TempoStepper.svelte';
 	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
-	import UndoButtons from './UndoButtons.svelte';
 	import DrawerKey from '../page/DrawerKey.svelte';
 	import { animateKeys } from '../page/animateKeys.js';
 	import PencilIcon from '../icons/PencilIcon.svelte';
@@ -172,7 +171,6 @@
 		</div>
 
 		<div class="cluster">
-			<UndoButtons />
 			<ZoomControl zoom={settings.tracks.zoom} />
 		</div>
 	</div>

@@ -18,7 +18,7 @@ import { splitScore, unitOfHeader } from './splitTune.js';
  * @param {import('../melody.js').Melody} line its notes as played
  * @param {import('./tuneBySection.js').SectionInstance[]} instances
  * @param {import('../../chart/chartBars.js').ChartBar[]} chartBars the chart's bars in play order
- * @param {{ songKey: import('../../chart/key.js').Key | null, capo: number,
+ * @param {{ songKey: import('../../chart/key.js').Key | null,
  *   spelling: import('../../theory/musicInKey.js').Key }} song
  * @returns {{ tune: import('./tuneBySection.js').TuneBySection | null, problem: string }}
  */
@@ -33,7 +33,6 @@ export function splitPlayedOut(abc, tune, line, instances, chartBars, song) {
 	const { score: blank } = scoreFromChart(
 		chartBars,
 		song.songKey,
-		song.capo,
 		song.spelling,
 		pickupTicks / TICKS_PER_QUARTER
 	);

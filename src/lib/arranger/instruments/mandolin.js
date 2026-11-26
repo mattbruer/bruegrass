@@ -76,14 +76,14 @@ export const CHOP_ARTICULATION = ARTICULATIONS.chop;
 const choices = new Map();
 
 /**
- * The chord a chop holds, at concert pitch, as its root's pitch class and
+ * The chord a chop holds, as sounding, as its root's pitch class and
  * type ("0m7" for Cm7, whatever it's called): what a chop you've changed is
- * saved for (chopEdits.js).
+ * saved for (chopEdits.js), so moving the Key drops it.
  * @param {string} name
- * @param {number} capo transposes to concert pitch, like the guitar
+ * @param {number} shift semitones the song is moved (the Key setting)
  */
-export function chopChord(name, capo) {
-	const root = (rootPitchClass(name) + capo) % 12;
+export function chopChord(name, shift) {
+	const root = (rootPitchClass(name) + shift) % 12;
 	const type = readChordName(withoutBass(withoutVariant(name)))?.type;
 	if (!type) throw new Error(`No mandolin chop shape for ${name}`);
 	return { id: `${root}${type.suffix}`, root, type };
@@ -93,11 +93,11 @@ export function chopChord(name, capo) {
  * Every chop that holds a chord, worked out the first time it's asked for,
  * then remembered.
  * @param {string} name
- * @param {number} capo
+ * @param {number} shift
  * @returns {Chop[]}
  */
-function chopChoices(name, capo) {
-	const { id, root, type } = chopChord(name, capo);
+function chopChoices(name, shift) {
+	const { id, root, type } = chopChord(name, shift);
 	if (!choices.has(id)) {
 		const chops = CHOP_HANDS.flatMap((hand) => chordShapes(hand, { root, type })).map((shape) =>
 			chopOf(COURSES.map((_, course) => shape[course] ?? null))
@@ -117,12 +117,12 @@ export function chopOf(frets) {
  * The chop for a chord: the lowest, or after another chop, the nearest one
  * (voiceLeading.js).
  * @param {string} name
- * @param {number} [capo]
+ * @param {number} [shift]
  * @param {Chop | null} [previous] the chop before it
  * @returns {Chop}
  */
-export function chopVoicing(name, capo = 0, previous = null) {
-	return nextVoicing(chopChoices(name, capo), previous);
+export function chopVoicing(name, shift = 0, previous = null) {
+	return nextVoicing(chopChoices(name, shift), previous);
 }
 
 /**
@@ -135,18 +135,18 @@ export function chopVoicing(name, capo = 0, previous = null) {
  * The chop for each chord of the song, in order: yours where you've
  * changed it, else the band's, each led from the one before.
  * @param {import('../chart/timeline.js').Section[]} sections
- * @param {{ capo?: number, edits?: import('./chopEdits.js').ChopEdits, offset?: number }} [options]
+ * @param {{ shift?: number, edits?: import('./chopEdits.js').ChopEdits, offset?: number }} [options]
  *   edits: your chops; offset: where these sections start in the song (quarters)
  * @returns {SongChop[]}
  */
-export function songChops(sections, { capo = 0, edits = {}, offset = 0 } = {}) {
+export function songChops(sections, { shift = 0, edits = {}, offset = 0 } = {}) {
 	/** @type {Chop | null} */
 	let previous = null;
 	return slotPositions(sections).map((slot) => {
 		const start = slot.start + offset;
-		const chord = chopChord(slot.name, capo).id;
+		const chord = chopChord(slot.name, shift).id;
 		const yours = editedChop(edits, start, chord);
-		const chop = yours ? chopOf(yours) : chopVoicing(slot.name, capo, previous);
+		const chop = yours ? chopOf(yours) : chopVoicing(slot.name, shift, previous);
 		previous = chop;
 		const bar = slot.bar + 1;
 		return {
@@ -168,16 +168,16 @@ export function songChops(sections, { capo = 0, edits = {}, offset = 0 } = {}) {
  * plays only the hits it chops (CHOPPED_HITS), one chop on the hit itself,
  * then nothing until the next chord; it lays out on the rest.
  * @param {{ name?: string, measures: string[][] }[]} sections
- * @param {{ capo?: number, bpm?: number, edits?: import('./chopEdits.js').ChopEdits, offset?: number }} options
+ * @param {{ shift?: number, bpm?: number, edits?: import('./chopEdits.js').ChopEdits, offset?: number }} options
  *   edits: the chops you've changed; offset: where these sections start in the song (quarters)
  * @returns {MandoNote[]}
  */
-export function chopNotes(sections, { capo = 0, bpm = 120, edits = {}, offset = 0 } = {}) {
+export function chopNotes(sections, { shift = 0, bpm = 120, edits = {}, offset = 0 } = {}) {
 	const quarter = secondsPerQuarter(bpm);
 	const rng = createRng(7);
 	const { beats } = rhythm(sections);
 	const hits = hitSpans(sections);
-	const chops = songChops(sections, { capo, edits, offset });
+	const chops = songChops(sections, { shift, edits, offset });
 	return beats.flatMap((beat) => {
 		const hit = hitAt(beat.time, hits);
 		const onTheHit =

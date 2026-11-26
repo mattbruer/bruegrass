@@ -1,4 +1,4 @@
-import { DEFAULT_METER } from './timeline.js';
+import { DEFAULT_METER, slotPositions } from './timeline.js';
 import { parseMeterField } from './meterField.js';
 import { sectionBlocks } from './sectionBlocks.js';
 import { isKeyField, parseKeyField } from './keyField.js';
@@ -41,7 +41,7 @@ import { chartTokens, isBar } from './chartTokens.js';
  * @returns {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], marks: (string | null)[][], hits: (import('./hits.js').Hit | null)[][], held: boolean[], keys: (import('./key.js').Key | null)[][], key: import('./key.js').Key | null }[]}
  */
 export function parseArrangement(source) {
-	/** @type {{ name: string, measures?: string[][], meters?: import('./timeline.js').Meter[], marks?: (string | null)[][], hits?: (import('./hits.js').Hit | null)[][], held?: boolean[], keys?: (import('./key.js').Key | null)[][], reference?: string, key?: import('./key.js').Key | null }[]} */
+	/** @type {{ name: string, measures?: string[][], meters?: import('./timeline.js').Meter[], marks?: (string | null)[][], hits?: (import('./hits.js').Hit | null)[][], held?: boolean[], keys?: (import('./key.js').Key | null)[][], reference?: string, repeatOf?: string, homes?: (number | null)[][], key?: import('./key.js').Key | null }[]} */
 	const sections = [];
 	let meter = DEFAULT_METER;
 	/** @type {import('./key.js').Key | null} the key in force */
@@ -137,10 +137,12 @@ export function parseArrangement(source) {
 		section.hits = structuredClone(original.hits);
 		section.held = structuredClone(original.held);
 		section.keys = structuredClone(original.keys);
+		section.repeatOf = original.name;
 		delete section.reference;
 	}
 
 	for (const section of sections) section.key = songKey;
+	if (sections.some((section) => section.repeatOf)) markHomes(sections);
 
 	return /** @type {{ name: string, measures: string[][], meters: import('./timeline.js').Meter[], marks: (string | null)[][], hits: (import('./hits.js').Hit | null)[][], held: boolean[], keys: (import('./key.js').Key | null)[][], key: import('./key.js').Key | null }[]} */ (
 		sections
@@ -154,4 +156,25 @@ export function parseArrangement(source) {
 function carriedChord(chordBefore, section) {
 	if (chordBefore === null) throw new Error(`An empty bar needs a chord before it (${section})`);
 	return chordBefore;
+}
+
+/**
+ * Tell each part played again with `as` where its chords start in the part
+ * it repeats (`homes`), so what you change about a chord there is one change.
+ * @param {{ name: string, repeatOf?: string, measures: string[][], homes?: (number | null)[][] }[]} sections
+ */
+function markHomes(sections) {
+	const slots = slotPositions(/** @type {any} */ (sections));
+	sections.forEach((section) => {
+		if (!section.repeatOf) return;
+		const original = sections.findIndex((item) => item.name === section.repeatOf && !item.repeatOf);
+		section.homes = section.measures.map((measure, m) =>
+			measure.map(
+				(_, c) =>
+					slots.find((slot) => slot.section === original && slot.measure === m && slot.chord === c)
+						?.start ?? null
+			)
+		);
+		delete section.repeatOf;
+	});
 }

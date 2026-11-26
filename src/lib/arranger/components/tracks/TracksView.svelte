@@ -86,6 +86,7 @@
 	 * @param {number} start
 	 */
 	function openVoicing(id, start) {
+		if (id === 'guitar' && guitar.range) return guitar.extendRange(start);
 		VOICINGS[id].state.pickAt(start);
 		if (!player.isPlaying) player.goTo(start);
 		onEdit(id);
@@ -100,7 +101,6 @@
 	const band = $derived(
 		bandLanes({
 			bass: bassPart(arrangement.sections, {
-				capo: arrangement.capoFret,
 				transpose: arrangement.transpose,
 				written: bass.written
 			}).notes,
@@ -378,6 +378,7 @@
 						<VoicingLane
 							chords={voicing.state.chords}
 							picked={picked ? (voicing.state.picked?.start ?? null) : null}
+							marked={'marked' in voicing.state ? voicing.state.marked : undefined}
 							onPick={(start) => openVoicing(lane.id, start)}
 							tip={voicing.tips.chord}
 							{scale}
@@ -390,6 +391,7 @@
 							slotsOf={slotsOfBar}
 							isHeld={isHeldBar}
 							{setChords}
+							label={(name) => arrangement.concertName(name)}
 							{scale}
 						/>
 					</div>

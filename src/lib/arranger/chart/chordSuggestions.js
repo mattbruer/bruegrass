@@ -4,8 +4,8 @@
  * next chord (theory/chordsThatFit.js), named the way the chart writes
  * chords: guitar shapes, spelled in the key.
  *
- * Works in the shapes' pitch (the melody moved down by the capo), so a
- * suggestion is a chord to type straight into the chart.
+ * The chart and the tune are in the same key, so a suggestion is a chord to
+ * type straight into the chart.
  */
 import { rhythm } from './timeline.js';
 import { noteName, noteOfKey, notePc, parseChord, songKey } from './key.js';
@@ -31,14 +31,13 @@ const EPSILON = 1e-6;
  * @param {import('./timeline.js').Section[]} sections
  * @param {{ time: number, length: number, pitch: number }[]} melody the tune's lead notes at concert pitch
  * @param {ChordSpot} spot
- * @param {number} capo
  * @param {import('../theory/chordsThatFit.js').StrongBeats} strongBeats which colour notes a
  *   strong-beat note may be (the user's setting)
  * @returns {Suggestion[]} the chord sounding there now first (when it fits), then best first;
  *   empty when no melody sounds there
  */
-export function chordSuggestions(sections, melody, spot, capo, strongBeats) {
-	const read = readSpot(sections, melody, spot, capo);
+export function chordSuggestions(sections, melody, spot, strongBeats) {
+	const read = readSpot(sections, melody, spot);
 	if (!read) return [];
 	const { key, current, occurrences } = read;
 	return chordsThatFit(plainKey(key), occurrences, strongBeats)
@@ -74,13 +73,12 @@ export function chordSuggestions(sections, melody, spot, capo, strongBeats) {
  * @param {import('./timeline.js').Section[]} sections
  * @param {{ time: number, length: number, pitch: number }[]} melody at concert pitch
  * @param {ChordSpot} spot
- * @param {number} capo
  * @param {string} name any chord name, as the chart writes it
  * @param {import('../theory/chordsThatFit.js').StrongBeats} strongBeats
  * @returns {Breakdown | null} null: no melody there, or a chord the theory doesn't know
  */
-export function chordBreakdown(sections, melody, spot, capo, name, strongBeats) {
-	const read = readSpot(sections, melody, spot, capo);
+export function chordBreakdown(sections, melody, spot, name, strongBeats) {
+	const read = readSpot(sections, melody, spot);
 	const chord = plainChord(name);
 	if (!read || !chord || read.occurrences[0].notes.length === 0) return null;
 	const { key, barStart, occurrences } = read;
@@ -107,17 +105,14 @@ export function chordBreakdown(sections, melody, spot, capo, name, strongBeats) 
  * @param {import('./timeline.js').Section[]} sections
  * @param {{ time: number, length: number, pitch: number }[]} melody
  * @param {ChordSpot} spot
- * @param {number} capo
  */
-function readSpot(sections, melody, spot, capo) {
+function readSpot(sections, melody, spot) {
 	const songsKey = songKey(sections);
 	if (!songsKey) return null;
 	const { slots, beats } = rhythm(sections);
 	const spans = spansOf(slots, spot);
 	if (spans.length === 0) return null;
-	const notes = melody
-		.map((note) => ({ ...note, pitch: note.pitch - capo }))
-		.sort((a, b) => a.time - b.time);
+	const notes = [...melody].sort((a, b) => a.time - b.time);
 	const roled = noteRoles(notes, bandOf(slots, beats));
 	const first = slots[spans[0].slot];
 	return {

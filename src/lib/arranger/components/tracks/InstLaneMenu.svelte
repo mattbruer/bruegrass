@@ -7,6 +7,8 @@
 	import Popover from '$lib/components/Popover.svelte';
 	import MoveLane from './MoveLane.svelte';
 	import StyleSelect from '../page/StyleSelect.svelte';
+	import KeySelect from '../player/KeySelect.svelte';
+	import CapoSelect from '../player/CapoSelect.svelte';
 	import { BAND_LANE } from '../../tracks/lanes.js';
 	import { useArranger } from '../../state/context.js';
 	import { isExtraPart } from '../../melody/extraParts.js';
@@ -61,6 +63,9 @@
 		</label>
 		{#if lane.id === BAND_LANE}
 			<StyleSelect />
+			<KeySelect />
+		{:else if lane.id === 'guitar'}
+			<CapoSelect />
 		{/if}
 		<MoveLane id={lane.id} {lanes} />
 		{#if added}

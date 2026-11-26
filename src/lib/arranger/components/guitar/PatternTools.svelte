@@ -37,12 +37,40 @@
 	<button
 		type="button"
 		class="ui-button px-3 py-1 text-sm"
-		disabled={!guitar.copied}
-		onclick={() => guitar.copied && guitar.use(guitar.copied)}
+		disabled={guitar.copied.length === 0}
+		onclick={() => guitar.paste()}
 		use:tooltip={TIPS.guitarEditor.paste}
-		>Paste{#if guitar.copied}<span class="ml-1 text-ink-soft">(from {guitar.copied.chord})</span
+		>Paste{#if guitar.copied.length > 0}<span class="ml-1 text-ink-soft"
+				>({guitar.copied.length > 1
+					? `${guitar.copied.length} chords from ${guitar.copied[0].chord}`
+					: `from ${guitar.copied[0].chord}`})</span
 			>{/if}</button
 	>
+	{#if guitar.range}
+		<span class="text-sm text-ink-soft">Tap the last chord in the lane above.</span>
+		<button
+			type="button"
+			class="ui-button px-3 py-1 text-sm"
+			disabled={!guitar.rangeHasChanges}
+			onclick={() => guitar.copyRange()}
+			use:tooltip={TIPS.guitarEditor.copyBarsDone}
+			>Copy {guitar.rangeChords.length}
+			{guitar.rangeChords.length === 1 ? 'chord' : 'chords'}</button
+		>
+		<button
+			type="button"
+			class="ui-button px-3 py-1 text-sm"
+			onclick={() => guitar.cancelRange()}
+			use:tooltip={TIPS.guitarEditor.copyBarsCancel}>Cancel</button
+		>
+	{:else}
+		<button
+			type="button"
+			class="ui-button px-3 py-1 text-sm"
+			onclick={() => guitar.startRange()}
+			use:tooltip={TIPS.guitarEditor.copyBars}>Copy bars…</button
+		>
+	{/if}
 	<Popover class="px-3 py-1 text-sm" tip={TIPS.guitarEditor.patterns}>
 		{#snippet button()}Patterns ▾{/snippet}
 		<div class="menu flex flex-col gap-2">

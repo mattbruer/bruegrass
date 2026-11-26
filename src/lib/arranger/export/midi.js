@@ -102,8 +102,7 @@ export function arrangementToMidi(
 		partNames = {}
 	} = {}
 ) {
-	const shift = capo + transpose;
-	// Same split as playback: capo where it reaches, plain transposition beyond
+	const shift = transpose; // the capo never changes the sound
 	// No-chord bars (N.C.): worked out as if the chord before carried on, then left silent
 	const playable = sectionsToPlay(sections);
 	const silent = stops(sections);
@@ -111,8 +110,12 @@ export function arrangementToMidi(
 	const quarter = secondsPerQuarter(bpm);
 	/** @template {{ time: number }} T @param {T[]} notes */
 	const quiet = (notes) => withoutStops(notes, silent, (note) => note.time / quarter, passQuarters);
-	const guitarPlayed = guitarChords(playable, { edits: guitarEdits, style });
-	const tuning = guitarTuning(guitarPlayed, shift);
+	const guitarPlayed = guitarChords(playable, {
+		edits: guitarEdits,
+		style,
+		shift: transpose - capo
+	});
+	const tuning = guitarTuning(guitarPlayed, capo);
 	const events = quiet(
 		buildEvents(playable, { chords: guitarPlayed, capo: tuning.capo, bpm }).events
 	).map((event) => ({
@@ -132,7 +135,7 @@ export function arrangementToMidi(
 
 	// Bass player: the edited line, or its own root and fifth
 	/** @type {MidiNote[]} */
-	const bass = bassPart(sections, { capo, transpose, written: writtenBass }).notes.map((note) => ({
+	const bass = bassPart(sections, { transpose, written: writtenBass }).notes.map((note) => ({
 		tick: Math.round(note.beat * PPQ),
 		end: Math.round((note.beat + note.length * note.gate) * PPQ),
 		note: note.pitch,
@@ -141,7 +144,7 @@ export function arrangementToMidi(
 
 	// Mandolin chops on the off-beats, one note per string, strummed G → E
 	/** @type {MidiNote[]} */
-	const mando = quiet(chopNotes(playable, { capo: mod12(shift), bpm, edits: chops })).map(
+	const mando = quiet(chopNotes(playable, { shift: mod12(shift), bpm, edits: chops })).map(
 		(note) => ({
 			tick: toTicks(note.time),
 			end: toTicks(note.time) + Math.round(CHOP_LENGTH * PPQ),

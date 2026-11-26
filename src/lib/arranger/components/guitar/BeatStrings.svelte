@@ -11,14 +11,15 @@
 	/**
 	 * @type {{
 	 *   role: 'boom' | 'chuck',
+	 *   beatNumber: number,
 	 *   chosen: number[],
 	 *   notes: import('../../voicings/fretNotes.js').FretNote[],
 	 *   strings: string[],
 	 *   onChange: (chosen: number[]) => void
 	 * }}
-	 *   chosen: the strings the beat plays now; notes: the shape's notes, a string each
+	 *   beatNumber: the beat in the bar, from 1; chosen: the strings the beat plays now; notes: the shape's notes, a string each
 	 */
-	let { role, chosen, notes, strings, onChange } = $props();
+	let { role, beatNumber, chosen, notes, strings, onChange } = $props();
 
 	/** @param {number} string */
 	function choose(string) {
@@ -34,7 +35,9 @@
 
 <div class="flex flex-col gap-1.5">
 	<span class="text-sm">
-		{role === 'boom' ? 'Boom on which string?' : 'Strum which strings?'}
+		{role === 'boom'
+			? `Beat ${beatNumber} booms on which string?`
+			: `Beat ${beatNumber} strums which strings?`}
 	</span>
 	<div class="flex flex-wrap gap-1.5" role={role === 'boom' ? 'radiogroup' : 'group'}>
 		{#each notes as note (note.string)}

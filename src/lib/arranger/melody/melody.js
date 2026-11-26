@@ -149,9 +149,8 @@ function firstBarLine(tune) {
  *   loop?: boolean
  * }} options sections: what's playing; offset: quarters of the full
  *   arrangement before it (for a loop region); shift: semitones to move
- *   the melody. ABC is written at concert pitch, so this is the Key
- *   setting's transposition only: the capo just lets the guitar's shapes
- *   reach the concert key the tune is already in; loop: repeat the pickup
+ *   the melody: the Key setting (the ABC is in the chart's key, and the
+ *   capo never moves it); loop: repeat the pickup
  *   at the end of the pass, leading back to the top (off for a single pass
  *   that just ends, like the MIDI export)
  * @returns {MelodyPart}

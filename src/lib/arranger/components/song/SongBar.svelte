@@ -4,9 +4,9 @@
 	 * themselves (state/autosave.svelte.js), so there's no Save.
 	 */
 	import { useArranger } from '../../state/context.js';
-	import { EMPTY_SONG } from '../../starterSong.js';
 	import RenameSongDialog from './RenameSongDialog.svelte';
 	import OpenSongDialog from './OpenSongDialog.svelte';
+	import NewSongDialog from './NewSongDialog.svelte';
 	import ExampleSongSelect from './ExampleSongSelect.svelte';
 	import ExportButton from '../export/ExportButton.svelte';
 	import PayloadButton from './PayloadButton.svelte';
@@ -18,6 +18,7 @@
 
 	let renameDialogOpen = $state(false);
 	let openDialogOpen = $state(false);
+	let newDialogOpen = $state(false);
 
 	let displayName = $derived(song.name || song.suggestedName);
 	let status = $derived(
@@ -37,7 +38,7 @@
 	<button
 		type="button"
 		class="ui-button px-4 py-2"
-		onclick={() => song.startNew(EMPTY_SONG)}
+		onclick={() => (newDialogOpen = true)}
 		use:tooltip={TIPS.song.new}>New</button
 	>
 	<button
@@ -60,3 +61,4 @@
 
 <RenameSongDialog bind:open={renameDialogOpen} />
 <OpenSongDialog bind:open={openDialogOpen} />
+<NewSongDialog bind:open={newDialogOpen} />

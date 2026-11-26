@@ -21,7 +21,6 @@
 					arrangement.sections,
 					melody.line.notes.filter((note) => note.channel === MELODY_CHANNEL),
 					spot,
-					arrangement.capoFret,
 					name,
 					settings.chords.strongBeats
 				)

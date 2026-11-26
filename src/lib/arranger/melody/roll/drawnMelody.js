@@ -25,8 +25,7 @@ import { transposed } from './octaves.js';
  *   id: its channel (MELODY_CHANNEL, a harmony part's or an extra part's id)
  * @typedef {{
  *   sections: import('../../chart/timeline.js').Section[],
- *   lyrics: import('../../chart/sectionLyrics.js').SectionLyrics[],
- *   capo: number
+ *   lyrics: import('../../chart/sectionLyrics.js').SectionLyrics[]
  * }} Song what the words and harmony parts are written from
  */
 
@@ -62,7 +61,7 @@ export function writeDrawnMelody({ abc, voice, score, notes, song, newTune = nul
 	const parse = readingEachOnce(tuneReader(abcjs));
 	let text = withChartWordsAgain(written, song, abcjs, parse);
 	if (song.sections.length > 0) {
-		const chordAt = concertChordAt(song.sections, song.capo);
+		const chordAt = concertChordAt(song.sections);
 		text = withFreshHarmonyBars(text, parse, chordAt, changedBars(score, notes));
 	}
 	return text;

@@ -29,11 +29,13 @@
 	 *   slotsOf: (bar: LaneBar) => Slots,
 	 *   isHeld: (bar: LaneBar) => boolean,
 	 *   setChords: (bar: LaneBar, typed: (string | null)[]) => string,
-	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>
+	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>,
+	 *   label?: (name: string) => string
 	 * }}
+	 *   label: how a chord is written on its chip (the Tracks page shows the key change; typing still takes the chart's own chords);
 	 *   setChords: writes a bar's boxes, one slot per beat; returns why it couldn't ('' : kept)
 	 */
-	let { bars, slotsOf, isHeld, setChords, scale } = $props();
+	let { bars, slotsOf, isHeld, setChords, scale, label = (name) => name } = $props();
 
 	/** @type {number | null} the bar open for typing */
 	let editing = $state(null);
@@ -150,7 +152,7 @@
 				onclick={() => open(bar)}
 				aria-label="Bar {bar.number} chords: {isHeld(bar)
 					? 'the chord before carries on'
-					: changes.map((change) => change.name).join(', ') || 'none yet'}"
+					: changes.map((change) => label(change.name)).join(', ') || 'none yet'}"
 				use:tooltip={TIPS.chordLane.bar}
 			>
 				{#if isHeld(bar)}
@@ -163,7 +165,7 @@
 						class="chip"
 						class:unknown={!isKnownChord(change.name)}
 						style:left="{change.beat * quarter + 2}px"
-						style:width="{change.beats * quarter - 4}px">{change.name}</span
+						style:width="{change.beats * quarter - 4}px">{label(change.name)}</span
 					>
 				{/each}
 			</button>

@@ -1,6 +1,6 @@
 /**
- * A chord name with its notes as pitch classes, so F# and Gb (as a capo
- * move or a new key may spell them) count as the same chord.
+ * A chord name with its notes as pitch classes, so F# and Gb (as a new
+ * key may spell them) count as the same chord.
  */
 
 const LETTERS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
