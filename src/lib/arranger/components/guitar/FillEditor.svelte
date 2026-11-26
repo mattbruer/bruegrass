@@ -8,15 +8,19 @@
 	import { useArranger } from '../../state/context.js';
 	import { fillScore } from '../../instruments/fillScore.js';
 	import { FILL_RANGE } from '../../instruments/guitarFill.js';
-	import { gridTicks } from '../../melody/roll/ticks.js';
+	import { GRIDS, gridTicks } from '../../melody/roll/ticks.js';
+	import ZoomControl from '$lib/components/zoom/ZoomControl.svelte';
+	import { settings } from '$lib/settings/settings.svelte.js';
 	import PianoRoll from '../pianoRoll/PianoRoll.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	/** The fill's notes snap to sixteenths (the smallest the band's strum uses), and a tap draws an eighth. */
-	const GRID = gridTicks('sixteenth');
-	const DRAWN_LENGTH = gridTicks('eighth');
+	/** Sixteenths to begin with: the fill's notes are often finer than the strum's. A tap draws one grid step. */
+	let grid = $state(/** @type {import('../../melody/roll/ticks.js').GridId} */ ('sixteenth'));
+	const gridStep = $derived(gridTicks(grid));
+	/** One zoom for every piano roll. */
+	const zoom = $derived(settings.pianoRoll.zoom);
 
 	const arranger = useArranger();
 	const { guitar } = arranger;
@@ -56,6 +60,19 @@
 					label="How many bars the fill lasts"
 				/>
 			{/if}
+			<div class="flex gap-1" role="group" aria-label="Note lengths">
+				{#each GRIDS as each (each.id)}
+					<button
+						type="button"
+						class="ui-button px-3 py-1.5 text-sm"
+						class:ui-button-on={grid === each.id}
+						aria-pressed={grid === each.id}
+						onclick={() => (grid = each.id)}
+						use:tooltip={TIPS.melody.roll.grids[each.id]}>{each.name}</button
+					>
+				{/each}
+			</div>
+			<ZoomControl {zoom} />
 			<button
 				type="button"
 				class="ui-button px-3 py-1.5 text-sm"
@@ -73,8 +90,8 @@
 			usualRange={FILL_RANGE}
 			playable={FILL_RANGE}
 			end={roll.end}
-			gridStep={GRID}
-			drawLength={DRAWN_LENGTH}
+			{gridStep}
+			drawLength={gridStep}
 			readOnly={false}
 			bind:selected
 			colour={0}
@@ -84,6 +101,7 @@
 			playhead={() => null}
 			onCommit={commit}
 			onSound={() => {}}
+			{zoom}
 		/>
 	</div>
 {/if}
