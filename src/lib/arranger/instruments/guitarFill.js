@@ -46,7 +46,7 @@ export function barsThatFit(chordLength, meter) {
  */
 export function fillSpan(fill, chord) {
 	const room = barsThatFit(chord.length, chord.meter);
-	if (!fill || room === 0) return null;
+	if (!fill || !Array.isArray(fill.notes) || room === 0) return null;
 	const bars = Math.min(Math.max(fill.bars, 1), room);
 	const length = bars * barQuarters(chord.meter);
 	const notes = keepWithin(fill.notes, length * TICKS_PER_QUARTER);
