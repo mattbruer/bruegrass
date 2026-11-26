@@ -201,8 +201,9 @@ export const TIPS = Object.freeze({
 		savePattern: 'Keep how you changed this chord as a pattern, to use in any song.',
 		noteString: 'Play the note on this string.',
 		writeFill:
-			'Write a fill for this chord: your notes play over its last bar or bars, in place of the band’s strum.',
-		fillBars: 'How many bars the fill lasts, counted back from the end of the chord.',
+			'Write a fill for this chord: your notes play from this chord’s bar, for 1 to 4 bars, in place of the band’s strum.',
+		fillBars:
+			'How many bars the fill lasts, from this chord’s bar. It can run over the next chords.',
 		endFill: 'The band strums this chord again. The fill you wrote is forgotten.',
 		fillRoll: 'Draw the notes of the fill. Only the fill’s own bars are shown.',
 		fretDown: 'The note a fret lower.',

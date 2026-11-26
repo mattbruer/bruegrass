@@ -1,7 +1,7 @@
 <script>
 	/**
-	 * A fill on the picked chord: how many bars it lasts (counted back from
-	 * the end of the chord) and its notes, drawn on a piano roll that shows
+	 * A fill on the picked chord: how many bars it lasts (from the chord's
+	 * bar, over the chords those bars hold) and its notes, drawn on a piano roll that shows
 	 * only those bars. It plays in place of the band's strum. The host says
 	 * where it sits.
 	 */
@@ -24,12 +24,7 @@
 	const chord = $derived(guitar.picked);
 	const fill = $derived(chord?.fill ?? null);
 	const roll = $derived(
-		chord && fill
-			? fillScore(
-					{ name: chord.name, bars: fill.bars, meter: fill.meter },
-					arranger.melodyKey.spelling
-				)
-			: null
+		chord && fill ? fillScore(fill, guitar.chords, arranger.melodyKey.spelling) : null
 	);
 
 	const barChoices = $derived(

@@ -13,7 +13,7 @@ import { STRUM_STRINGS, bassNoteIn } from './guitar.js';
 import { editedGuitar } from './guitarEdits.js';
 import { placesInSlots, rhythm } from '../chart/timeline.js';
 import { hitAt, hitSpans } from '../chart/hits.js';
-import { barsThatFit, fillSpan } from './guitarFill.js';
+import { fillRoom, fillSpan } from './guitarFill.js';
 
 /**
  * @typedef {import('./guitarEdits.js').Shape} Shape
@@ -30,7 +30,7 @@ import { barsThatFit, fillSpan } from './guitarFill.js';
  * }} GuitarChord
  *   start, length: where it is in the song (quarters from bar 1); bar: its bar, from 1;
  *   name: as written; chucks: the strings each chuck strums, low first;
- *   yours: which parts you've changed; fill: your fill on this chord's last bars, or null; room: how many bars of fill fit in it
+ *   yours: which parts you've changed; fill: your fill on this chord's last bars, or null; room: how many bars of fill can start at its bar
  */
 
 /**
@@ -40,7 +40,7 @@ import { barsThatFit, fillSpan } from './guitarFill.js';
  * @returns {GuitarChord[]}
  */
 export function guitarChords(sections, { edits = {}, offset = 0, style } = {}) {
-	const { beats, slots } = rhythm(sections);
+	const { beats, slots, quarters } = rhythm(sections);
 	const places = placesInSlots(beats);
 	const which = bandBooms(beats, slots, hitSpans(sections));
 	return slots.map((slot, k) => {
@@ -69,6 +69,7 @@ export function guitarChords(sections, { edits = {}, offset = 0, style } = {}) {
 			.map((beat) =>
 				(change.chucks?.[beat.place] ?? STRUM_STRINGS).filter((string) => shape[string] !== null)
 			);
+		const room = fillRoom(slot.barStart, slot.meter, quarters);
 		const yours = {
 			shape: !!change.shape,
 			booms: !!change.booms,
@@ -88,9 +89,9 @@ export function guitarChords(sections, { edits = {}, offset = 0, style } = {}) {
 			beats: own,
 			yours,
 			edited: Object.values(yours).some(Boolean),
-			fill: fillSpan(change.fill, { start, length: slot.length, meter: slot.meter }),
+			fill: fillSpan(change.fill, { barStart: slot.barStart + offset, meter: slot.meter, room }),
 			meter: slot.meter,
-			room: barsThatFit(slot.length, slot.meter)
+			room
 		};
 	});
 }

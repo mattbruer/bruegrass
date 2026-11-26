@@ -1,7 +1,7 @@
 /**
- * A fill: a few notes you write for one chord, played where the band's
- * strum would have been. It sits at the end of the chord (a fill leads into
- * what comes next) and lasts 1 or more bars, up to the chord's own length.
+ * A fill: a few notes you write, played where the band's strum
+ * would have been. It starts at the bar of the chord you wrote it on and
+ * lasts 1 to MAX_FILL_BARS bars, over whatever chords those bars hold.
  * Saved with the chord's changes (guitarEdits.js) as plain data:
  * `{ bars, notes }`, each note's `start` and `length` in ticks from the
  * fill's start (ticks.js) and `midi` the pitch as it sounds on the neck
@@ -29,39 +29,38 @@ export function emptyFill() {
 	return { bars: 1, notes: [] };
 }
 
+/** The most bars one fill lasts. */
+export const MAX_FILL_BARS = 4;
+
 /**
- * How many bars of fill fit in a chord (0: the chord is shorter than a bar).
- * @param {number} chordLength quarters
+ * How many bars of fill can start at this bar: up to MAX_FILL_BARS, and not
+ * past the end of the song's pass.
+ * @param {number} barStart quarters from bar 1
  * @param {import('../chart/timeline.js').Meter} meter
+ * @param {number} songQuarters length of one pass
  */
-export function barsThatFit(chordLength, meter) {
-	return Math.floor(chordLength / barQuarters(meter) + 1e-6);
+export function fillRoom(barStart, meter, songQuarters) {
+	const left = Math.floor((songQuarters - barStart) / barQuarters(meter) + 1e-6);
+	return Math.max(0, Math.min(MAX_FILL_BARS, left));
 }
 
 /**
- * Where a chord's fill is in the song: its last bars (null: no room for one).
+ * Where a chord's fill is in the song: from the start of the chord's bar,
+ * over the following bars and whatever chords they hold (null: no room).
  * @param {Fill | undefined} fill
- * @param {{ start: number, length: number, meter: import('../chart/timeline.js').Meter }} chord
+ * @param {{ barStart: number, meter: import('../chart/timeline.js').Meter, room: number }} where
  * @returns {FillSpan | null}
  */
-export function fillSpan(fill, chord) {
-	const room = barsThatFit(chord.length, chord.meter);
+export function fillSpan(fill, { barStart, meter, room }) {
 	if (!fill || !Array.isArray(fill.notes) || room === 0) return null;
 	const bars = Math.min(Math.max(fill.bars, 1), room);
-	const length = bars * barQuarters(chord.meter);
+	const length = bars * barQuarters(meter);
 	const notes = keepWithin(fill.notes, length * TICKS_PER_QUARTER);
 	const played = notes.flatMap(({ midi, start, length }) => {
 		const spot = fretFor(midi);
 		return spot ? [{ start, length, ...spot }] : [];
 	});
-	return {
-		start: chord.start + chord.length - length,
-		bars,
-		length,
-		meter: chord.meter,
-		notes,
-		played
-	};
+	return { start: barStart, bars, length, meter, notes, played };
 }
 
 /**
