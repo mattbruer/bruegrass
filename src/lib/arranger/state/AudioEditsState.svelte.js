@@ -67,6 +67,7 @@ export class AudioEditsState {
 	 */
 	pick(trackId, index) {
 		this.picked = { trackId, index };
+		this.#arranger.virtuals.letGo(); // one thing picked at a time: one set of tools
 	}
 
 	letGo() {

@@ -510,6 +510,26 @@ export const TIPS = Object.freeze({
 			'How fast the song goes, bar by bar. Tap or click to add a point and drag it up or down to slow down or speed up there, for a ritard at the end. Double-tap a point to remove it.',
 		edit: 'Open the editor to write the chords and the melody as text. The lanes change as you type.',
 		editPart: 'Edit this part: its piano roll opens under the lanes, and the band keeps playing.',
+		virtualLane:
+			'Tap a bar to pick it, then tap another to pick the bars between (tap inside to let go). Its tools show under the controls.',
+		undo: 'Take back the last edit (⌘Z). It says what and where first, and shows the place on the lanes after.',
+		redo: 'Do the edit you took back again (⇧⌘Z).',
+		virtuals: {
+			repeat:
+				'Play these bars again straight after themselves, over what’s there (R). Press again for another time round.',
+			copy: 'Copy these bars’ notes (⌘C), then tap a bar on any part’s lane and Paste.',
+			paste: 'Lay the copied notes in from the first picked bar, over what’s there (⌘V).',
+			clear: 'Empty these bars (Delete).',
+			takeOut:
+				'Take these bars out of this part and pull the rest of it in to close the gap. The chords stay where they are.',
+			insert:
+				'Put as many empty bars as are picked in before them, and push the rest of this part later. Notes pushed past the end are lost (Undo brings them back).',
+			editNotes: 'Open this part’s piano roll at these bars.',
+			done: 'Done with these bars (Esc).',
+			playedAgain:
+				'The part is written with a repeat, so the band plays these bars more than once: a change here is heard every time.',
+			forgetCopy: 'Forget the copied bars.'
+		},
 		editGeneratedPart:
 			'A line written from the lane it hangs under: it follows that lane’s notes and the chords, and takes its name. Open its piano roll to try other notes or lock bars.',
 		copyPart:

@@ -3,12 +3,12 @@
 	 * The Tracks page's control bar, like Transcribe's: where you are (Play,
 	 * back to the start, the clock), Record (on the armed audio lane, after
 	 * the count-in), how it sounds (the click, the tempo), the editor and the mixer, Undo and Zoom, and the
-	 * picked clip's tools under them. Pictures move on hover, or once on a tap (animateKeys.js). It stays
+	 * picked clip's or bars' tools under them (`onEdit` opens a part's editor). Pictures move on hover, or once on a tap (animateKeys.js). It stays
 	 * in view under the top bar (`height`: how tall it is, for what scrolls
 	 * under it). Space plays and stops.
 	 */
-	/** @type {{ height?: number }} */
-	let { height = $bindable(0) } = $props();
+	/** @type {{ height?: number, onEdit: (lane: string) => void }} */
+	let { height = $bindable(0), onEdit } = $props();
 
 	import { useArranger } from '../../state/context.js';
 	import { rulerBars } from '../../tracks/ruler.js';
@@ -30,6 +30,8 @@
 	import PencilIcon from '../icons/PencilIcon.svelte';
 	import SlidersIcon from '../icons/SlidersIcon.svelte';
 	import ClipTools from './ClipTools.svelte';
+	import VirtualTools from './VirtualTools.svelte';
+	import UndoKeys from './UndoKeys.svelte';
 
 	const { arrangement, player, recording } = useArranger();
 	const { metronome } = player;
@@ -171,10 +173,12 @@
 		</div>
 
 		<div class="cluster">
+			<UndoKeys />
 			<ZoomControl zoom={settings.tracks.zoom} />
 		</div>
 	</div>
 	<ClipTools />
+	<VirtualTools {onEdit} />
 </div>
 
 <style>

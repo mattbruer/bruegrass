@@ -9,6 +9,30 @@
 	],
 	"suggestions": [
 		{
+			"id": "undo-more",
+			"text": "Undo: a list of steps to jump back through; marks for clip, chop, guitar and tempo steps; ghosts of the notes an Undo took away",
+			"done": false,
+			"addedAt": "2026-11-27"
+		},
+		{
+			"id": "song-structure-edits",
+			"text": "Take out / insert bars for the whole song at once (the chart, every lane, the takes): Logic's cut and insert time, its own design",
+			"done": false,
+			"addedAt": "2026-11-27"
+		},
+		{
+			"id": "virtuals-next",
+			"text": "Virtuals, next: move or transpose the picked bars (an octave, a step in the key), paste an octave down (melody onto the bass), pick bars across several lanes, Repeat ×n",
+			"done": false,
+			"addedAt": "2026-11-27"
+		},
+		{
+			"id": "virtuals-iphone",
+			"text": "Virtuals on a real iPhone: tap bars on a part's lane, Repeat, Copy then Paste onto another lane, Take out, and Undo's caption and marks",
+			"done": false,
+			"addedAt": "2026-11-27"
+		},
+		{
 			"id": "video-follows-tempo",
 			"text": "Video: takes follow the tempo (sound stretched with the pitch kept, film at the matching speed); first measure four stretchers at once on an iPhone",
 			"done": true,

@@ -24,7 +24,9 @@ import { chordsUnderBars } from './chordsUnderBars.js';
 import { chordToneOptions } from './chordToneOptions.js';
 import { gridTicks } from './ticks.js';
 import { playedTime, playheadTicks } from './playheadTicks.js';
-import { rewriteAbc } from './scoreToAbc.js';
+import { writeVoiceNotes } from '../../state/writeVoiceNotes.js';
+import { describeNoteEdit } from '../../virtuals/describeNoteEdit.js';
+import { playedSpans } from '../../virtuals/playedSpans.js';
 import { BASS_ROWS, LANE_ROWS, MELODY_ROWS } from './pitchRows.js';
 import { UPRIGHT_RANGE, isOutside } from '../../instruments/instrumentRanges.js';
 import { isExtraPart } from '../extraParts.js';
@@ -192,9 +194,33 @@ export class MelodyDrawing {
 	 */
 	commit(notes) {
 		if (this.readOnly) return;
-		const own = withoutPickupEcho(notes, this.current?.score.notes ?? [], this.echo);
+		const before = this.current?.score.notes ?? [];
+		const own = withoutPickupEcho(notes, before, this.echo);
 		this.notes = withPickupEcho(own, this.echo);
-		this.#write(this.current?.id ?? MELODY_CHANNEL, own);
+		const voice = this.current?.id ?? MELODY_CHANNEL;
+		const edit = describeNoteEdit(before, own);
+		const where = edit && this.#where([voice, ...this.#linesFrom(voice)], edit.from, edit.to);
+		this.arranger.history.edit(
+			() => this.#write(voice, own),
+			edit ? { label: edit.label, where } : undefined
+		);
+	}
+
+	/**
+	 * Where an edit was, for Undo to show: these lanes, between these ticks.
+	 * @param {string[]} lanes
+	 * @param {number} from
+	 * @param {number} to
+	 */
+	#where(lanes, from, to) {
+		return { lanes, spans: playedSpans(this.ownBars ? null : this.#sequence, from, to) };
+	}
+
+	/** @param {string} voice the lines generated from it (written again when it changes) */
+	#linesFrom(voice) {
+		return this.arranger.melody.generated
+			.filter((part) => part.lead === voice)
+			.map((part) => part.id);
 	}
 
 	/**
@@ -227,9 +253,24 @@ export class MelodyDrawing {
 	moveOctave(direction) {
 		if (!this.canMoveOctave(direction)) return;
 		const semitones = OCTAVE * direction;
-		if (this.#octaveVoices.length === 1) return this.commit(transposed(this.notes, semitones));
-		const { melody } = this.arranger;
-		melody.notation = transposedDrawnMelody(melody.notation, this.#octaveVoices, semitones);
+		const voices = this.#octaveVoices;
+		const { melody, history } = this.arranger;
+		const about = {
+			label: direction > 0 ? 'Octave up' : 'Octave down',
+			where: this.#where(
+				voices.map((each) => each.id),
+				0,
+				this.end
+			)
+		};
+		history.edit(() => {
+			if (voices.length === 1) {
+				const own = transposed(voices[0].score.notes, semitones);
+				this.notes = withPickupEcho(own, this.echo);
+				return this.#write(voices[0].id, own);
+			}
+			melody.notation = transposedDrawnMelody(melody.notation, voices, semitones);
+		}, about);
 	}
 
 	/** The voice's notes as the roll shows them. */
@@ -248,42 +289,32 @@ export class MelodyDrawing {
 	 * @param {DrawnNote[]} notes
 	 */
 	#write(voice, notes) {
-		if (voice === BASS_VOICE) return this.#writeBass(notes);
-		const { melody } = this.arranger;
-		const song = this.arranger.songForMelody();
-		const abc = melody.notation;
+		const { bassStartsEmpty } = this;
+		if (voice === BASS_VOICE) {
+			const read = bassVoice(this.#bassRead());
+			if (read) writeVoiceNotes(this.arranger, read, notes, { bassStartsEmpty });
+			return;
+		}
 		const base = this.#fromAbc() ?? this.#fromChart();
 		const drawn = base.voices.find((each) => each.id === voice);
-		if (!drawn || drawn.problem) return;
-		const newTune = base.lineStarts
-			? {
-					title: this.arranger.title,
-					keyText: this.arranger.melodyKey.keyText,
-					lineStarts: base.lineStarts
-				}
-			: null;
+		if (!drawn) return;
+		if (!base.lineStarts) return writeVoiceNotes(this.arranger, drawn, notes);
+		const { melody } = this.arranger;
+		const newTune = {
+			title: this.arranger.title,
+			keyText: this.arranger.melodyKey.keyText,
+			lineStarts: base.lineStarts
+		};
 		melody.notation = writeDrawnMelody({
-			abc,
+			abc: melody.notation,
 			voice,
 			score: drawn.score,
 			notes,
-			song,
-			newTune,
-			abcjs: abcjsIfLoaded()
+			song: this.arranger.songForMelody(),
+			newTune
 		});
 		// A tune drawn from the chart starts kept by section
-		if (newTune) this.arranger.splitTuneIntoSections();
-	}
-
-	/**
-	 * The bass line with these notes, saved in the song's bass field. The
-	 * first edit writes out the band's own line with it.
-	 * @param {DrawnNote[]} notes
-	 */
-	#writeBass(notes) {
-		const read = this.#bassRead();
-		if (!read || read.problem) return;
-		this.arranger.bass.notation = rewriteAbc(this.#bassAbc(), read.score, notes);
+		this.arranger.splitTuneIntoSections();
 	}
 
 	/** The bass line in use, read: the song's edited one, else the band's own. */

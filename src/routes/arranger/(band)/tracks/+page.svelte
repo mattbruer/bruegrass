@@ -127,7 +127,7 @@
 		</a>
 	</div>
 	<SongBar />
-	<TracksControls bind:height={controlsHeight} />
+	<TracksControls bind:height={controlsHeight} onEdit={edit} />
 	<RecordingNotes />
 	<TracksView {editing} onEdit={edit} {cycle} />
 	<VideoSection bind:open={settings.tracks.showVideo} />

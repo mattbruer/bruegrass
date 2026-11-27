@@ -13,6 +13,7 @@
  *   arranger.song          which song is open; New, Open, Rename; it saves itself
  *   arranger.recording     recording along with the band, and the song's takes
  *   arranger.audioEdits    editing the audio lanes' clips (trim, split, comp, level, fades)
+ *   arranger.virtuals      editing the virtuals (piano-roll parts) bars at a time: repeat, copy, paste, clear, take out, insert
  *   arranger.mandolin      the mandolin's chop for each chord, and changing one
  *   arranger.guitar        the guitar's shape, booms and chucks for each chord, and changing them
  *   arranger.history       Undo and Redo for the Tracks page's edits
@@ -32,6 +33,7 @@ import { ReceiveState } from './ReceiveState.svelte.js';
 import { PartsState } from './PartsState.svelte.js';
 import { TranscriptionState } from '../transcription/TranscriptionState.svelte.js';
 import { AudioEditsState } from './AudioEditsState.svelte.js';
+import { VirtualEditsState } from './VirtualEditsState.svelte.js';
 import { MandolinState } from './MandolinState.svelte.js';
 import { GuitarState } from './GuitarState.svelte.js';
 import { EditHistory } from './EditHistory.svelte.js';
@@ -76,24 +78,30 @@ export class Arranger {
 	/** How many songs have been put on the page: a new one's chart isn't an edit of the last. */
 	songsLoaded = $state(0);
 	layout = new PageLayoutState();
-	/** Undo and Redo for the audio lanes' clips, the mandolin's chops, the guitar's chords and the tempo lane. */
+	/** Undo and Redo for the parts' notes, the audio lanes' clips, the mandolin's chops, the guitar's chords and the tempo lane. */
 	history = new EditHistory(
 		{
+			tune: keptTextField(this.melody, 'Change the tune'),
+			bassLine: keptTextField(this.bass, 'Change the bass line'),
 			audioClips: {
 				read: () => this.song.audioClips,
-				write: (clips) => (this.song.audioClips = /** @type {any} */ (clips))
+				write: (clips) => (this.song.audioClips = /** @type {any} */ (clips)),
+				label: 'Edit a clip'
 			},
 			chops: {
 				read: () => this.song.chops,
-				write: (chops) => (this.song.chops = /** @type {any} */ (chops))
+				write: (chops) => (this.song.chops = /** @type {any} */ (chops)),
+				label: 'Change a mandolin chop'
 			},
 			guitarChords: {
 				read: () => this.song.guitarChords,
-				write: (chords) => (this.song.guitarChords = /** @type {any} */ (chords))
+				write: (chords) => (this.song.guitarChords = /** @type {any} */ (chords)),
+				label: 'Change a guitar chord'
 			},
 			tempoCurve: {
 				read: () => this.arrangement.tempoCurve,
-				write: (points) => (this.arrangement.tempoCurve = /** @type {any} */ (points))
+				write: (points) => (this.arrangement.tempoCurve = /** @type {any} */ (points)),
+				label: 'Change the tempo lane'
 			}
 		},
 		() => this.player.restartIfPlaying()
@@ -106,6 +114,8 @@ export class Arranger {
 	parts = new PartsState(this);
 	/** Editing the audio lanes' clips. */
 	audioEdits = new AudioEditsState(this);
+	/** Editing the virtuals (the parts written with the piano roll) bars at a time on their lanes. */
+	virtuals = new VirtualEditsState(this);
 	/** The mandolin's chops, and changing one. */
 	mandolin = new MandolinState(this);
 	/** What the guitar plays on each chord, and changing it. */
@@ -452,4 +462,20 @@ export class Arranger {
 			notes: result.notes
 		};
 	}
+}
+
+/**
+ * The tune or the bass line as Undo keeps it: what's stored (by section, or
+ * the whole text), so taking a step back puts back exactly that.
+ * @param {{ notation: string, bySection: unknown, load: (abc: string, bySection: any) => void }} kept
+ * @param {string} label
+ * @returns {import('./EditHistory.svelte.js').UndoableField}
+ */
+function keptTextField(kept, label) {
+	return {
+		read: () => kept.bySection ?? kept.notation,
+		write: (value) =>
+			typeof value === 'string' ? kept.load(value, null) : (kept.bySection = value),
+		label
+	};
 }

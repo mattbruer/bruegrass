@@ -77,6 +77,7 @@ export function loadSongIntoPage(arranger, song) {
 	arranger.song.guitarChords = song.guitarChords ?? {};
 	arranger.song.video = validVideo(song.video);
 	arranger.history.clear(); // another song: nothing to undo
+	arranger.virtuals.letGo();
 	arranger.song.reference = song.reference ?? null;
 	arranger.song.madeFrom = song.madeFrom ?? null;
 

@@ -10,8 +10,10 @@
 	 * solo and volume; an audio lane's also has its record button, and its
 	 * clips (tap one to edit it). Names stay
 	 * put while the lanes scroll sideways together under the playhead. A
-	 * part's lane is picked by its name or a click on the lane: `onEdit`
-	 * opens its editor. The Band lane is the chart's chords, typed bar by
+	 * virtual's (a part written with the piano roll) name opens its editor
+	 * (`onEdit`); a tap on its lane picks bars to edit there (VirtualTools),
+	 * and moves an open editor to it. What Undo or Redo just changed is
+	 * marked on its lanes, and scrolled to. The Band lane is the chart's chords, typed bar by
 	 * bar; the Guitar's and Mandolin's lanes are those chords as they play
 	 * them: the lane's name, or a chord on it, opens how it's played there.
 	 */
@@ -37,6 +39,7 @@
 	import TrackRuler from './TrackRuler.svelte';
 	import TrackBarMenu from './TrackBarMenu.svelte';
 	import BlockLane from './BlockLane.svelte';
+	import SpanMarks from './SpanMarks.svelte';
 	import TakeClip from './TakeClip.svelte';
 	import AudioLaneMenu from './AudioLaneMenu.svelte';
 	import CameraIcon from '../video/CameraIcon.svelte';
@@ -70,8 +73,24 @@
 		audioEdits,
 		history,
 		mandolin,
-		guitar
+		guitar,
+		virtuals
 	} = useArranger();
+
+	/**
+	 * A tap on a virtual's lane picks the bar there; an editor open on another part follows it.
+	 * @param {MouseEvent & { currentTarget: HTMLElement }} event
+	 * @param {string} id
+	 */
+	function tapVirtual(event, id) {
+		const box = event.currentTarget.getBoundingClientRect();
+		virtuals.tapAt(id, scale.start + scale.toQuarters(event.clientX - box.left));
+		const open = lanes.find((lane) => lane.id === editing);
+		if (open?.kind === 'notes' && open.id !== id) onEdit(id);
+	}
+
+	/** What Undo or Redo just changed, to mark on its lanes. */
+	const shown = $derived(history.shown?.where ? history.shown : null);
 
 	/** The instruments whose lanes are chords, each opening how it plays them, and its tooltips. */
 	const VOICINGS = {
@@ -429,8 +448,28 @@
 					>
 						<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
 						<!-- svelte-ignore a11y_no_static_element_interactions -->
-						<div class="part" class:picked onclick={() => onEdit(lane.id)}>
+						<div
+							class="part"
+							class:picked
+							onclick={(event) => tapVirtual(event, lane.id)}
+							use:tooltip={TIPS.tracks.virtualLane}
+						>
 							<BlockLane {lane} {scale} hollow={generated} />
+							{#if virtuals.picked?.lane === lane.id}
+								<SpanMarks spans={virtuals.spans} {scale} kind="picked" />
+							{/if}
+							{#if shown?.where?.lanes.includes(lane.id)}
+								{#key shown.count}
+									<SpanMarks
+										spans={shown.where.spans}
+										{scale}
+										kind="changed"
+										label={shown.where.lanes[0] === lane.id
+											? `${shown.verb === 'Undo' ? 'Undone' : 'Redone'}: ${shown.label}`
+											: ''}
+									/>
+								{/key}
+							{/if}
 						</div>
 					</div>
 				{/if}
@@ -626,6 +665,7 @@
 	}
 
 	.part {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		cursor: pointer;
