@@ -3,8 +3,10 @@
  * the chart: the section's tune loses the bars that went and gets rests (with
  * the chart's chords) where bars came, in every voice. Old and new bars are
  * matched in order like a text diff (bass/matchBars.js), so every other bar
- * keeps its notes. A section whose tune has repeats or endings, or whose bars
- * don't line up with its chart bars one for one, is left as it is.
+ * keeps its notes. A section that kept its number of bars has had chords or
+ * a time signature changed, not bars added: each bar keeps its notes, unless
+ * its time signature changed. A section whose tune has repeats or endings,
+ * or whose bars don't line up with its chart bars one for one, is left as it is.
  */
 import { matchBars } from '../../bass/matchBars.js';
 import { barLines } from './sectionRests.js';
@@ -29,10 +31,32 @@ export function sectionBarKeys(sections, instances) {
 		const section = sections[index];
 		if (!section || instance.name !== instance.source || instance.source in keys) return;
 		keys[instance.source] = section.measures.map(
-			(chords, bar) => `${JSON.stringify(section.meters[bar])} ${chords.join(',')}`
+			(chords, bar) => `${JSON.stringify(section.meters[bar])}${METER_END}${chords.join(',')}`
 		);
 	});
 	return keys;
+}
+
+/** Where a bar's key (sectionBarKeys) moves from its time signature to its chords. */
+const METER_END = ' ';
+
+/** @param {string} key a bar's key (sectionBarKeys) */
+function meterOf(key) {
+	return key.slice(0, key.indexOf(METER_END));
+}
+
+/**
+ * Which old bar each new bar is. The same number of bars: each bar is
+ * itself (a chord changed is still the same bar), unless its time
+ * signature changed. Otherwise bars came or went, found like a text diff.
+ * @param {string[]} old
+ * @param {string[]} now
+ * @returns {Map<number, number>} new bar index → old bar index
+ */
+function sameBars(old, now) {
+	if (old.length !== now.length) return matchBars(old, now);
+	const kept = now.flatMap((key, index) => (meterOf(key) === meterOf(old[index]) ? [index] : []));
+	return new Map(kept.map((index) => [index, index]));
 }
 
 /**
@@ -49,7 +73,8 @@ export function partsFollowingBars(parts, before, after, emptyBars) {
 		const old = before[section];
 		const now = after[section];
 		if (!old || !now || old.join('|') === now.join('|')) continue;
-		const matched = matchBars(old, now);
+		const matched = sameBars(old, now);
+		if (old.length === now.length && matched.size === now.length) continue;
 		const empty = splitBars(emptyBars(section));
 		/** @type {Record<string, string>} */
 		const moved = {};

@@ -13,7 +13,6 @@ import { REVERB_DEFAULTS } from '../../audio/reverb/reverbSettings.js';
 import { FADER_MIN } from '../../audio/mixer/faderTaper.js';
 import { flatEq } from '../../audio/eq/eqBands.js';
 import { DEFAULT_OUTPUT_GAIN_DB } from '../../audio/output/outputSettings.js';
-import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { EXTRA_PARTS } from '../melody/extraParts.js';
 import { RECORD_TRACKS } from '../takes/recordTracks.js';
 import { defaultTuneInstrument } from '../instruments/tuneInstruments.js';
@@ -57,7 +56,7 @@ function channelStrip({ id, name, pan = 0, send = SEND_FULLY }) {
 }
 
 /**
- * A channel the tune plays on (the melody or a harmony part): it also picks an instrument.
+ * A channel the tune plays on (the melody or an extra part): it also picks an instrument.
  * @param {{ id: string, name: string }} channel
  */
 function tuneStrip({ id, name }) {
@@ -70,9 +69,7 @@ export const mixer = $state({
 		channelStrip({ id: 'mandolin', name: 'Mandolin', pan: -PAN_SPREAD }),
 		channelStrip({ id: 'bass', name: 'Bass', send: SEND_NONE }),
 		tuneStrip({ id: 'melody', name: 'Melody' }),
-		// One per harmony part; the mixer shows them only while the song has the part
-		...HARMONY_PARTS.map((part) => tuneStrip({ id: part.id, name: part.name })),
-		// One per extra part (+ Lane in Transcribe), shown while the song has it
+		// One per extra part (yours or a generated harmony line), shown while the song has it
 		...EXTRA_PARTS.map((part) => tuneStrip({ id: part.id, name: part.name })),
 		// One per record track; the mixer shows them only while the track has a take
 		...RECORD_TRACKS.map((track) => channelStrip({ id: track.id, name: track.name }))

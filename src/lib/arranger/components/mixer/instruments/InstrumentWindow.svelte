@@ -9,13 +9,12 @@
 	import { mixer } from '../../../mixer/mixer.svelte.js';
 	import { auditionNote } from '../../../playback/auditionNote.js';
 	import { useArranger } from '../../../state/context.js';
-	import { partName } from '../../../melody/partNames.js';
 	import { closeInstruments, instrumentWindow } from './instrumentWindowState.svelte.js';
 
 	/** The note a choice is heard on: G above middle C, concert pitch. */
 	const PREVIEW_NOTE = 67;
 
-	const { player, arrangement, song } = useArranger();
+	const { player, arrangement, parts } = useArranger();
 	const families = instrumentFamilies();
 
 	let channel = $derived(mixer.channels.find((each) => each.id === instrumentWindow.channelId));
@@ -32,7 +31,7 @@
 
 <Dialog
 	bind:open={() => open, (isOpen) => !isOpen && closeInstruments()}
-	title={channel ? `${partName(channel.id, song.partNames, channel.name)} plays on` : 'Instrument'}
+	title={channel ? `${parts.name(channel.id, channel.name)} plays on` : 'Instrument'}
 >
 	{#if channel}
 		<div class="flex flex-col gap-4 px-6 pt-4 pb-6">

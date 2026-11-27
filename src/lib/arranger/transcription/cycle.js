@@ -151,3 +151,35 @@ export function sectionCycles(markers, bars, origin) {
 		})
 		.filter((section) => section.name !== SECTION_END);
 }
+
+/**
+ * The bar line next to a place, later (direction 1) or earlier (-1). Null
+ * past the song's first or last line.
+ * @param {number} quarters
+ * @param {1 | -1} direction
+ * @param {number[]} lines
+ */
+function lineNextTo(quarters, direction, lines) {
+	const EPSILON = 1e-6;
+	const line =
+		direction > 0
+			? lines.find((each) => each > quarters + EPSILON)
+			: lines.findLast((each) => each < quarters - EPSILON);
+	return line ?? null;
+}
+
+/**
+ * The cycle with an end (or both, to slide it) stepped to the next bar
+ * line, for tapping a bar at a time. Null when that can't be done (past the
+ * song's ends, or the cycle would be empty).
+ * @param {Cycle} cycle
+ * @param {'from' | 'to' | 'both'} end
+ * @param {1 | -1} direction
+ * @param {number[]} lines
+ * @returns {Cycle | null}
+ */
+export function nudgedCycle(cycle, end, direction, lines) {
+	const from = end === 'to' ? cycle.from : lineNextTo(cycle.from, direction, lines);
+	const to = end === 'from' ? cycle.to : lineNextTo(cycle.to, direction, lines);
+	return from !== null && to !== null && to > from ? { from, to } : null;
+}

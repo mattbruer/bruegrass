@@ -1,11 +1,18 @@
 <script>
 	/**
-	 * An instrument lane's menu (⋯ beside its name): a name of your own,
-	 * moving it up or down, and, for a part added with + Inst, making it the
-	 * bass line (rare: most people never write a bass) or taking it away.
+	 * An instrument lane's menu (⋯ beside its name): a name of your own (a
+	 * generated line's is its lead's, shown but not typed),
+	 * moving it up or down; for the melody or a part you wrote, harmony
+	 * lines generated from it; for a generated line, copying it to a lane of
+	 * its own; for an added part, making it the bass line (rare: most people
+	 * never write a bass) or taking it away.
 	 */
 	import Popover from '$lib/components/Popover.svelte';
 	import MoveLane from './MoveLane.svelte';
+	import CopyToLaneButton from './CopyToLaneButton.svelte';
+	import HarmonyChoices from '../melody/HarmonyChoices.svelte';
+	import { isGenerated } from '../../melody/harmony/generatedParts.js';
+	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
 	import StyleSelect from '../page/StyleSelect.svelte';
 	import KeySelect from '../player/KeySelect.svelte';
 	import CapoSelect from '../player/CapoSelect.svelte';
@@ -25,9 +32,12 @@
 	 */
 	let { lane, lanes } = $props();
 
-	const { parts, bass } = useArranger();
+	const { parts, bass, melody } = useArranger();
 
 	const added = $derived(isExtraPart(lane.id));
+	const generated = $derived(isGenerated(melody.generated, lane.id));
+	/** A line harmony can be written from: the melody, or a part you wrote. */
+	const leads = $derived(lane.id === MELODY_CHANNEL || (added && !generated));
 	/** The Band, guitar and mandolin aren't parts, so their own names are the lanes'. */
 	const ownLaneName = $derived(lane.kind === 'notes' ? ownName(lane.id) : lane.name);
 
@@ -47,20 +57,31 @@
 	{#snippet button()}<span aria-hidden="true">⋯</span><span class="sr-only">{lane.name}'s menu</span
 		>{/snippet}
 	<div class="menu">
-		<label class="flex flex-col gap-1 text-sm">
-			<span class="heading">Name</span>
-			<input
-				class="ui-field px-2 py-1"
-				value={lane.name}
-				placeholder={ownLaneName}
-				maxlength={PART_NAME_LENGTH}
-				onchange={rename}
-				onkeydown={(event) => {
-					if (event.key === 'Enter') event.currentTarget.blur();
-				}}
-				use:tooltip={TIPS.tracks.laneName}
-			/>
-		</label>
+		{#if generated && lane.kind === 'notes' && lane.lead}
+			<div class="flex flex-col gap-1 text-sm">
+				<span class="heading">Name</span>
+				<span class="font-semibold">{lane.name}</span>
+				<span class="text-xs text-[var(--color-ink-soft)]"
+					>Written from {parts.name(lane.lead)}, and named after it: rename that lane to rename this
+					one.</span
+				>
+			</div>
+		{:else}
+			<label class="flex flex-col gap-1 text-sm">
+				<span class="heading">Name</span>
+				<input
+					class="ui-field px-2 py-1"
+					value={lane.name}
+					placeholder={ownLaneName}
+					maxlength={PART_NAME_LENGTH}
+					onchange={rename}
+					onkeydown={(event) => {
+						if (event.key === 'Enter') event.currentTarget.blur();
+					}}
+					use:tooltip={TIPS.tracks.laneName}
+				/>
+			</label>
+		{/if}
 		{#if lane.id === BAND_LANE}
 			<StyleSelect />
 			<KeySelect />
@@ -68,8 +89,14 @@
 			<CapoSelect />
 		{/if}
 		<MoveLane id={lane.id} {lanes} />
+		{#if leads}
+			<HarmonyChoices lead={lane.id} />
+		{/if}
+		{#if generated}
+			<CopyToLaneButton part={lane.id} class="ui-menu-item" />
+		{/if}
 		{#if added}
-			{#if !bass.isWritten}
+			{#if !bass.isWritten && !generated}
 				<button
 					type="button"
 					class="ui-button ui-menu-item"

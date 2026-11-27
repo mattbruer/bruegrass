@@ -1,17 +1,19 @@
 /**
  * The piano roll's way in and out of the tune's ABC: the melody and each
- * harmony part, every one a voice the roll can edit. The open tune is read
- * in MelodyState; these take what it read.
+ * added part, every one a voice the roll shows. The open tune is read in
+ * MelodyState; these take what it read.
  *
- * Writing the melody rewrites the drawn bars, then brings the rest along:
- * words under it are placed again on the new notes (when the chart has the
- * words), and the harmony parts are written fresh in the changed bars only,
- * so hand edits elsewhere stay. Writing a harmony part changes just that part.
+ * Writing a voice rewrites the drawn bars, then brings the rest along:
+ * under the melody, its words are placed again on the new notes (when the
+ * chart has the words), and the lines generated from the voice are written
+ * fresh in the changed bars only. A generated line's changed bars are locked.
  */
 import { tuneReader } from '../abcjs.js';
 import { readScore } from './readScore.js';
 import { changedBars, newAbc, rewriteAbc, withKeySignature } from './scoreToAbc.js';
 import { withFreshHarmonyBars } from './freshHarmonyBars.js';
+import { generatedParts, isGenerated } from '../harmony/generatedParts.js';
+import { withBarsKept } from '../harmony/keptBars.js';
 import { withChartWordsAgain } from '../words/wordsAgain.js';
 import { MELODY_CHANNEL, voiceChannels } from '../harmony/partChannels.js';
 import { ownName } from '../partNames.js';
@@ -56,15 +58,33 @@ export function readVoices(abc, tune) {
 export function writeDrawnMelody({ abc, voice, score, notes, song, newTune = null, abcjs }) {
 	if (newTune) return newAbc(score, notes, newTune);
 	const written = rewriteAbc(abc, score, notes);
-	if (voice !== MELODY_CHANNEL || !abcjs) return written;
+	if (!abcjs) return written;
 
 	const parse = readingEachOnce(tuneReader(abcjs));
-	let text = withChartWordsAgain(written, song, abcjs, parse);
+	// Your change to a generated line locks its bars, so the line never writes over it
+	if (isGenerated(generatedParts(written), voice)) {
+		return withVoiceBarsKept(written, parse, voice, changedBars(score, notes));
+	}
+	let text = voice === MELODY_CHANNEL ? withChartWordsAgain(written, song, abcjs, parse) : written;
 	if (song.sections.length > 0) {
 		const chordAt = concertChordAt(song.sections);
-		text = withFreshHarmonyBars(text, parse, chordAt, changedBars(score, notes));
+		text = withFreshHarmonyBars(text, parse, chordAt, voice, changedBars(score, notes));
 	}
 	return text;
+}
+
+/**
+ * The ABC with some bars of one voice locked (harmony/keptBars.js).
+ * @param {string} abc
+ * @param {(abc: string) => any} parse
+ * @param {string} voice
+ * @param {Iterable<number>} bars
+ */
+export function withVoiceBarsKept(abc, parse, voice, bars) {
+	const tune = parse(abc);
+	const index = tune ? voiceChannels(tune).indexOf(voice) : -1;
+	if (index < 0) return abc;
+	return withBarsKept(abc, readScore(abc, tune, index).score.bars, bars, true);
 }
 
 /**

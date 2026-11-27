@@ -20,10 +20,9 @@
 		isTuneChannel,
 		voiceChannels
 	} from '../../melody/harmony/partChannels.js';
-	import { partName } from '../../melody/partNames.js';
 	import { isRecordTrack } from '../../takes/recordTracks.js';
 
-	const { melody, recording, song } = useArranger();
+	const { melody, recording, parts } = useArranger();
 	const tuneChannels = $derived(
 		new Set([...channelsInUse(melody.line), ...(melody.tune ? voiceChannels(melody.tune) : [])])
 	);
@@ -39,7 +38,7 @@
 <section aria-label="Mixer">
 	<div class="console">
 		{#each shown as channel (channel.id)}
-			<ChannelStrip {channel} name={partName(channel.id, song.partNames, channel.name)} />
+			<ChannelStrip {channel} name={parts.name(channel.id, channel.name)} />
 		{/each}
 		<ReverbStrip />
 		<MasterStrip />

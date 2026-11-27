@@ -6,7 +6,8 @@
 	import { useArranger } from '../../state/context.js';
 	import MelodyWarnings from './MelodyWarnings.svelte';
 	import ChordConversion from './ChordConversion.svelte';
-	import HarmonyParts from './HarmonyParts.svelte';
+	import HarmonyChoices from './HarmonyChoices.svelte';
+	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
 	import MelodyDrawing from '../pianoRoll/MelodyDrawing.svelte';
 	import TabSwitch from '$lib/components/TabSwitch.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -54,7 +55,9 @@
 			song's key have the clearest names. Each note plays as you draw it. The ABC tab shows the same
 			tune as text.
 		</p>
-		<HarmonyParts />
+		<div class="mb-3">
+			<HarmonyChoices lead={MELODY_CHANNEL} heading="Harmony lines from the melody" />
+		</div>
 		<MelodyDrawing />
 	{:else if view === 'tab'}
 		<MelodyDrawing view="tab" />

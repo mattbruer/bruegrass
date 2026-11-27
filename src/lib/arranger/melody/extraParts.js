@@ -1,16 +1,18 @@
 /**
- * Extra parts: lines of the tune written by ear (a vocal line, a mandolin
- * break, a fiddle part), added with Transcribe's + Lane. Each is a voice of
- * the tune's ABC like a harmony part (`V:part-1 name="P1"`), so it's drawn,
- * played on its own mixer channel, saved, cut by section and exported the
- * same way, but it's never written from the melody: it starts as rests.
+ * Extra parts: the tune's lines beside the melody, each a voice of its ABC
+ * (`V:part-1 name="P1"`), so it's drawn, played on its own mixer channel,
+ * saved, cut by section and exported like the melody. One is written by
+ * you (+ Inst, + Lane: a vocal line, a mandolin break), starting as rests,
+ * or generated: a harmony line written from another lane
+ * (harmony/generatedParts.js).
  *
  * id: its ABC voice and mixer channel. label: written on the sheet music,
  * and how abcjs's parse finds its channel (partChannels.js). Its name is the
- * song's to change (partNames.js). A new slot is one entry.
+ * song's to change (partNames.js). A new slot is one entry; 11 is as many as
+ * the MIDI file has channels for (export/midi.js).
  */
 export const EXTRA_PARTS = Object.freeze(
-	[1, 2, 3, 4, 5, 6].map((number) => ({
+	[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((number) => ({
 		id: `part-${number}`,
 		name: `Part ${number}`,
 		label: `P${number}`
@@ -87,6 +89,26 @@ export function withExtraPart(abc, resting, part) {
 }
 
 /**
+ * The ABC with a new extra part at the end that's a copy of another voice's
+ * music (a harmony part's line, to change by hand: unlike the harmony part,
+ * it never follows the melody or the chords).
+ * @param {string} abc
+ * @param {string} from the voice copied (its V: id)
+ * @param {(typeof EXTRA_PARTS)[number]} part
+ */
+export function withVoiceCopied(abc, from, part) {
+	const voices = [...abc.matchAll(ANY_VOICE_LINE)];
+	const at = voices.findIndex((match) => match[1] === from);
+	if (at === -1) return abc;
+	const voiceLine = voices[at];
+	const musicStart = (voiceLine.index ?? 0) + voiceLine[0].length;
+	const lineEnd = abc.indexOf('\n', musicStart);
+	const end = voices[at + 1]?.index ?? abc.length;
+	const music = lineEnd === -1 || lineEnd >= end ? '' : abc.slice(lineEnd + 1, end).trimEnd();
+	return `${abc.trimEnd()}\nV:${part.id} name="${part.label}"\n${music}\n`;
+}
+
+/**
  * The melody's music: after the header (and its V:1 line), up to the first other voice.
  * @param {string} abc
  */
@@ -122,7 +144,7 @@ function withoutLoneLeadVoice(abc) {
  * The ABC with its melody marked V:1, if it wasn't.
  * @param {string} abc
  */
-function withLeadVoice(abc) {
+export function withLeadVoice(abc) {
 	const keyLine = /^K:.*$/m.exec(abc);
 	const headerEnd = keyLine ? keyLine.index + keyLine[0].length + 1 : 0;
 	if (/^V:1[ \t]*(\n|$)/.test(abc.slice(headerEnd))) return abc;

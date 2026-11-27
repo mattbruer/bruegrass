@@ -4,7 +4,7 @@
 	 * extra parts, or the bass, each in its own colour (the colour its notes have on the grid).
 	 * Only there once the tune has a harmony part.
 	 */
-	import { voiceColour } from '../../melody/roll/MelodyDrawing.svelte.js';
+	import { voiceColour } from '../../melody/voiceColours.js';
 	import { partName } from '../../melody/partNames.js';
 	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
@@ -32,8 +32,11 @@
 				onclick={() => drawing.editVoice(voice.id)}
 				use:tooltip={TIPS.melody.voices}
 			>
-				<span class="swatch voice-colour" style:--voice={voiceColour(voice.id)}></span>
-				{partName(voice.id, drawing.arranger.song.partNames)}{voice.id === MELODY_CHANNEL
+				<span
+					class="swatch voice-colour"
+					style:--voice={voiceColour(voice.id, drawing.arranger.melody.generated)}
+				></span>
+				{partName(voice.id, drawing.arranger.parts.names)}{voice.id === MELODY_CHANNEL
 					? ' (given)'
 					: ''}
 			</button>

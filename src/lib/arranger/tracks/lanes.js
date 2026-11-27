@@ -6,10 +6,9 @@
  * The chords lane (Band) is the chart's chords bar by bar, drawn and typed
  * by ChordLane from the chart itself. A voicings lane (guitar, mandolin)
  * is the same chords as that instrument plays them, each opening its editor. A notes lane is
- * blocks (bass, melody, harmony parts). A take lane is a record track:
+ * blocks (bass, melody, added parts and the lines generated from them). A take lane is a record track:
  * its clips (takes/clips.js), where they sit on the song in seconds.
  */
-import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { EXTRA_PARTS } from '../melody/extraParts.js';
 import { MELODY_CHANNEL } from '../melody/harmony/partChannels.js';
 import { partName } from '../melody/partNames.js';
@@ -22,7 +21,8 @@ import { stretchOf } from '../takes/takeTempo.js';
  * @typedef {{ start: number, length: number, label?: string, pitch?: number }} Block
  * @typedef {{ id: string, name: string, kind: 'chords' }} ChordsLane
  * @typedef {{ id: 'guitar' | 'mandolin', name: string, kind: 'voicings' }} VoicingsLane
- * @typedef {{ id: string, name: string, kind: 'notes', blocks: Block[] }} NotesLane
+ * @typedef {{ id: string, name: string, kind: 'notes', blocks: Block[], lead?: string }} NotesLane
+ *   lead: the lane a generated line is written from (its name comes from it too)
  * @typedef {ChordsLane | VoicingsLane | NotesLane} BandLane
  * @typedef {{ index: number, clip: import('../takes/clips.js').AudioClip, take: TakeDocument, start: number, end: number, stretch: number }} LaneClip
  *   index: its place on the lane; start, end: seconds from bar 1 at the song's tempo now;
@@ -40,19 +40,21 @@ export const BAND_LANE = 'band';
  *   bass: import('../instruments/bassline.js').BassNote[],
  *   melody: import('../melody/melody.js').Melody | null,
  *   voices?: string[],
+ *   generated?: { id: string, lead: string }[],
  *   names?: import('../melody/partNames.js').PartNames
  * }} song bass: what the bass plays (bass/songBass.js: edited or the band's own);
  *   voices: the tune's voices (their channels), so a part with no notes yet has its lane;
+ *   generated: the lines generated from other lanes (each sits under its lead);
  *   names: the names you gave the lanes
  * @returns {BandLane[]}
  */
-export function bandLanes({ bass, melody, voices = [], names = {} }) {
+export function bandLanes({ bass, melody, voices = [], generated = [], names = {} }) {
 	return [
 		{ id: BAND_LANE, name: partName(BAND_LANE, names, 'Band'), kind: 'chords' },
 		{ id: 'guitar', name: partName('guitar', names, 'Guitar'), kind: 'voicings' },
 		{ id: 'mandolin', name: partName('mandolin', names, 'Mandolin'), kind: 'voicings' },
 		{ id: 'bass', name: partName('bass', names), kind: 'notes', blocks: bassBlocks(bass) },
-		...tuneLanes(melody, voices, names)
+		...tuneLanes(melody, voices, generated, names)
 	];
 }
 
@@ -103,23 +105,32 @@ function bassBlocks(notes) {
 }
 
 /**
- * The melody and each harmony and extra part the tune has, in the mixer's
- * order: one with notes, or a voice of the tune still all rests (a part
- * just added, a tune just started from the chart, which has no line).
+ * The melody and each extra part the tune has, each followed by the lines
+ * generated from it: one with notes, or a voice of the tune still all rests
+ * (a part just added, a tune just started from the chart, which has no line).
  * @param {import('../melody/melody.js').Melody | null} melody
  * @param {string[]} voices the tune's voices (their channels)
+ * @param {{ id: string, lead: string }[]} generated
  * @param {import('../melody/partNames.js').PartNames} names
  * @returns {BandLane[]}
  */
-function tuneLanes(melody, voices, names) {
+function tuneLanes(melody, voices, generated, names) {
 	const notes = melody?.notes ?? [];
-	const all = [MELODY_CHANNEL, ...[...HARMONY_PARTS, ...EXTRA_PARTS].map((part) => part.id)];
+	const isGenerated = (/** @type {string} */ id) => generated.some((part) => part.id === id);
+	const leads = [MELODY_CHANNEL, ...EXTRA_PARTS.map((part) => part.id)].filter(
+		(id) => !isGenerated(id)
+	);
+	const all = leads.flatMap((lead) => [
+		lead,
+		...generated.filter((part) => part.lead === lead).map((part) => part.id)
+	]);
 	return all
 		.map((id) => ({
 			id,
 			name: partName(id, names),
 			/** @type {'notes'} */
 			kind: 'notes',
+			lead: generated.find((part) => part.id === id)?.lead,
 			blocks: notes
 				.filter((note) => note.channel === id)
 				.map((note) => ({ start: note.time, length: note.length, pitch: note.pitch }))

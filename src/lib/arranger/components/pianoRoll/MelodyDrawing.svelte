@@ -20,7 +20,14 @@
 	 * `view`: the notes on the piano roll, or the same part as TAB (fix
 	 * where each note is played; the bass has no TAB yet). Both zoom with
 	 * settings.pianoRoll.zoom (TAB only across).
+	 *
+	 * A generated line is written from another lane and the chords; a bar
+	 * you change is locked (a lock on the ruler at each bar's end shows it
+	 * and toggles it). Copy to a new lane makes a part of your own from it;
+	 * `onPick` (a page that picks the voice) hears its id, to show it.
 	 */
+	import CopyToLaneButton from '../tracks/CopyToLaneButton.svelte';
+	import { partName } from '../../melody/partNames.js';
 	import { untrack } from 'svelte';
 	import { useArranger } from '../../state/context.js';
 	import { MelodyDrawing } from '../../melody/roll/MelodyDrawing.svelte.js';
@@ -31,7 +38,7 @@
 	import { snapDown, TICKS_PER_QUARTER } from '../../melody/roll/ticks.js';
 	import VoicePicker from './VoicePicker.svelte';
 	import HarmonyOptions from './HarmonyOptions.svelte';
-	import { voiceColour } from '../../melody/roll/MelodyDrawing.svelte.js';
+	import { voiceColour } from '../../melody/voiceColours.js';
 	import BassLineNote from './BassLineNote.svelte';
 	import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
 	import TabView from './TabView.svelte';
@@ -55,7 +62,8 @@
 	 *   pickupQuarters?: number,
 	 *   keyMenu?: boolean,
 	 *   view?: 'roll' | 'tab',
-	 *   pickupBar?: boolean
+	 *   pickupBar?: boolean,
+	 *   onPick?: (voice: string) => void
 	 * }} pickupBar: the first bar is a pickup, so the next is numbered 1
 	 */
 	let {
@@ -65,8 +73,27 @@
 		pickupQuarters = 0,
 		keyMenu = true,
 		view = 'roll',
-		pickupBar = false
+		pickupBar = false,
+		onPick
 	} = $props();
+
+	/** @param {string} id a part just made: show it (the page's own pick, when it picks) */
+	function showPart(id) {
+		if (onPick) onPick(id);
+		else if (!voice) drawing.editVoice(id);
+	}
+
+	/** @param {number} bar a bar of the generated line shown: lock it, or unlock it */
+	function toggleLock(bar) {
+		const id = drawing.current?.id;
+		if (id) arranger.parts.keepBar(id, bar, !drawing.kept.has(bar));
+	}
+
+	/** The name of the lane the generated line shown is written from. */
+	const leadName = $derived.by(() => {
+		const lead = melody.generated.find((part) => part.id === drawing.current?.id)?.lead;
+		return lead ? partName(lead, arranger.parts.names) : '';
+	});
 
 	/** @param {number} ticks a click on the roll's ruler: play from there */
 	function seek(ticks) {
@@ -160,7 +187,7 @@
 	 * @param {number} fret
 	 */
 	function setFret({ note, place }, fret) {
-		if (!board || !place || !tabVoice || drawing.problem) return;
+		if (!board || !place || !tabVoice || drawing.readOnly) return;
 		const midi = pitchAt(board.strings[place.string], fret, board.frets);
 		const index = drawing.notes.indexOf(note);
 		if (midi === null || index < 0) return;
@@ -186,7 +213,7 @@
 
 	/** @param {import('../../tab/fingering.js').TabNote} tabNote */
 	function deleteTab({ note }) {
-		if (drawing.problem) return;
+		if (drawing.readOnly) return;
 		drawing.selected = -1;
 		drawing.commit(drawing.notes.filter((each) => each !== note));
 	}
@@ -276,9 +303,9 @@
 				end={drawing.end}
 				gridStep={drawing.gridStep}
 				drawLength={drawing.drawLength}
-				readOnly={drawing.problem !== ''}
+				readOnly={drawing.readOnly}
 				bind:selected={drawing.selected}
-				colour={voiceColour(drawing.current?.id ?? '')}
+				colour={voiceColour(drawing.current?.id ?? '', arranger.melody.generated)}
 				others={drawing.others}
 				options={drawing.options}
 				{playing}
@@ -289,6 +316,7 @@
 				{zoom}
 				lane={clock ? undefined : { name: 'Tempo', draw: tempoLane }}
 				{pickupBar}
+				locks={drawing.isHarmonyPart ? { kept: drawing.kept, onToggle: toggleLock } : null}
 			/>
 			{#snippet tempoLane(
 				/** @type {{ width: number, height: number, tickWidth: number }} */ {
@@ -314,6 +342,7 @@
 			{#if drawing.problem}
 				<p class="mt-2 text-sm text-ink-soft">{drawing.problem}</p>
 			{:else}
+				{#if drawing.isHarmonyPart}{@render generated()}{/if}
 				<p class="mt-2 ui-hover-only text-sm text-ink-soft">
 					Drag to draw a note. Drag a note to move it, or its right end to change its length.
 					Double-click to delete.
@@ -324,15 +353,21 @@
 				</p>
 				{#if drawing.isBass}
 					<BassLineNote notesOutside={drawing.notesOutside} />
-				{:else if drawing.isHarmonyPart}
-					<p class="mt-2 text-sm text-ink-soft">
-						There's more than one good harmony. Pick a note, and dots show the chord's other notes
-						near it: tap one to move the note there. When you change the melody, only the bars you
-						changed get new harmony.
-					</p>
 				{/if}
 			{/if}
 		{/if}
+		{#snippet generated()}
+			<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-ink-soft">
+				<p class="min-w-0 flex-1 basis-64">
+					This line is written from {leadName} and the chords, and follows them. Change a note and its
+					bar is locked, so it stays as you wrote it; the lock at the end of each bar on the ruler locks
+					or unlocks it. Or copy the whole line to a lane of its own.
+				</p>
+				{#if drawing.current}
+					<CopyToLaneButton part={drawing.current.id} class="px-3 py-1.5" onCopied={showPart} />
+				{/if}
+			</div>
+		{/snippet}
 	{:else}
 		<p class="text-sm text-ink-soft">
 			Write some chords in the chart first, and the bars to draw a melody on appear here.

@@ -10,6 +10,7 @@ import { readTune } from '../melody/readTune.js';
 import { readMelody } from '../melody/readMelody.js';
 import { readVoices } from '../melody/roll/drawnMelody.js';
 import { hasChords } from '../melody/abcChords.js';
+import { generatedParts } from '../melody/harmony/generatedParts.js';
 import { STARTER_SONG } from '../starterSong.js';
 import { abcjsIfLoaded } from './abcjsLoaded.svelte.js';
 import { SectionedText } from './SectionedText.svelte.js';
@@ -84,6 +85,9 @@ export class MelodyState {
 	/** Quarters before bar 1, known even when the tune is only rests. */
 	pickup = $derived(this.#melody.pickup);
 	error = $derived(this.#melody.error);
+
+	/** The lines generated from other lanes: what each is written from (harmony/generatedParts.js). */
+	generated = $derived(generatedParts(this.notation));
 
 	/** Every voice as a score of bars and notes, for the piano roll (null: nothing to draw). */
 	voices = $derived(this.tune ? readVoices(this.notation, this.tune) : null);

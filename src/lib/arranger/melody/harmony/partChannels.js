@@ -1,16 +1,15 @@
 /**
  * Which mixer channel each voice of the tune plays through: the melody on
- * Melody, each harmony part and extra part on its own (channel id = part id).
- * A voice is known by the name its V: line gives it (V:tenor name="Ten."),
+ * Melody, each extra part (yours or generated) on its own (channel id = part id).
+ * A voice is known by the name its V: line gives it (V:part-1 name="P1"),
  * the only thing abcjs keeps; a voice with any other name plays on Melody.
  */
-import { HARMONY_PARTS } from './harmonyParts.js';
 import { EXTRA_PARTS } from '../extraParts.js';
 
 export const MELODY_CHANNEL = 'melody';
 
-/** Every voice after the melody: the harmony parts, then the extra parts (+ Lane). */
-const OTHER_VOICES = [...HARMONY_PARTS, ...EXTRA_PARTS];
+/** Every voice after the melody: the extra parts. */
+const OTHER_VOICES = EXTRA_PARTS;
 
 /**
  * @param {import('abcjs').TuneObject} tune
@@ -26,7 +25,7 @@ export function voiceChannels(tune) {
 }
 
 /**
- * Is this one of the channels the tune plays on (Melody, a harmony part or an extra part)?
+ * Is this one of the channels the tune plays on (Melody or an extra part)?
  * @param {string} channelId
  */
 export function isTuneChannel(channelId) {

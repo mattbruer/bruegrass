@@ -99,7 +99,7 @@
 	<button
 		type="button"
 		class="ui-button px-3 py-1.5"
-		disabled={drawing.selected < 0 || drawing.problem !== ''}
+		disabled={drawing.selected < 0 || drawing.readOnly}
 		onclick={deleteSelected}
 		use:tooltip={TIPS.melody.roll.delete}>Delete note</button
 	>

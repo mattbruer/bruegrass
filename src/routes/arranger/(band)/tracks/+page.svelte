@@ -24,14 +24,13 @@
 	import ChopPane from '$lib/arranger/components/mandolin/ChopPane.svelte';
 	import GuitarPane from '$lib/arranger/components/guitar/GuitarPane.svelte';
 	import VideoSection from '$lib/arranger/components/video/VideoSection.svelte';
-	import { partName } from '$lib/arranger/melody/partNames.js';
 	import { TracksCycleState } from '$lib/arranger/state/TracksCycleState.svelte.js';
 	import { rulerBars } from '$lib/arranger/tracks/ruler.js';
 	import { settings } from '$lib/settings/settings.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
-	const { recording, loop, player, song, arrangement, layout, mandolin, guitar } = useArranger();
+	const { recording, loop, player, parts, arrangement, layout, mandolin, guitar } = useArranger();
 
 	/** The lanes whose editor is how that instrument plays a chord, rather than the piano roll. */
 	const VOICING_PANES = {
@@ -140,17 +139,18 @@
 			{#if editing === 'guitar' || editing === 'mandolin'}
 				{@const voicing = VOICING_PANES[editing]}
 				<voicing.Pane
-					name={partName(editing, song.partNames, voicing.name)}
+					name={parts.name(editing, voicing.name)}
 					onPick={(/** @type {number} */ start) => pickChord(voicing.state, start)}
 					onClose={() => history.back()}
 				/>
 			{:else}
 				<PartPane
 					voice={editing}
-					name={partName(editing, song.partNames)}
+					name={parts.name(editing)}
 					clock={bandClock}
 					bind:view={settings.tracks.partView}
 					onClose={() => history.back()}
+					onPick={edit}
 				/>
 			{/if}
 		</div>

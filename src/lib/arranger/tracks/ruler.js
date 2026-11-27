@@ -6,8 +6,8 @@
 import { barsInPlayOrder } from '../chart/chartBars.js';
 
 /**
- * @typedef {{ number: number, start: number, beats: number, sectionName: string | null, label?: string }} RulerBar
- *   number: 0 for the pickup bar; sectionName: where a section starts; label: shown instead of the number
+ * @typedef {{ number: number, start: number, beats: number, sectionName: string | null, place: { section: number, bar: number } | null, label?: string }} RulerBar
+ *   number: 0 for the pickup bar; sectionName: where a section starts; place: where the bar is written in the chart (null for the pickup)
  *
  * @param {import('../chart/timeline.js').Section[]} sections
  * @param {number} songStart quarters from bar 1 (negative: a pickup bar)
@@ -17,14 +17,17 @@ export function rulerBars(sections, songStart) {
 	const bars = barsInPlayOrder(sections);
 	if (bars.length === 0) return [];
 	const pickupBar =
-		songStart < 0 ? [{ number: 0, start: songStart, beats: -songStart, sectionName: null }] : [];
+		songStart < 0
+			? [{ number: 0, start: songStart, beats: -songStart, sectionName: null, place: null }]
+			: [];
 	return [
 		...pickupBar,
 		...bars.map((bar) => ({
 			number: bar.index + 1,
 			start: bar.start,
 			beats: bar.beats,
-			sectionName: bar.sectionStart ? bar.sectionName : null
+			sectionName: bar.sectionStart ? bar.sectionName : null,
+			place: { section: bar.section, bar: bar.measure }
 		}))
 	];
 }

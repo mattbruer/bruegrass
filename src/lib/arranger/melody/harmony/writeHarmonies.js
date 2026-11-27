@@ -1,29 +1,20 @@
 /**
- * Harmony parts written into the ABC as voices of their own (V:tenor, …),
- * so they're drawn, played, saved and can be edited like the melody.
- *
- * A part is the melody's own text with each note's pitch swapped for the
- * harmony note, so its rhythm, ties, bar lines and repeats are the melody's.
- * Chord symbols and lyrics stay with the melody. The melody is marked V:1
- * (abcjs needs that to play the voices together) and the parts follow it,
- * before any extra part (extraParts.js), which stays as it is; writing them
- * again replaces them.
+ * A harmony line's music, written from its lead (the melody, or a part you
+ * added) and the band's chords: the lead's own text with each note's pitch
+ * swapped for the harmony note, so its rhythm, ties, bar lines, repeats and
+ * key changes are the lead's, and its bars line up with the lead's one for
+ * one. Chord symbols, grace notes and lyrics stay with the lead.
+ * Where the line goes in the tune is generatedParts.js's job.
  */
-import { HARMONY_PARTS } from './harmonyParts.js';
 import { harmonyStyle, ROOTS } from './harmonyStyles.js';
 import { abcPitch, noteInKey, tuneKey } from './abcPitch.js';
 import { chordFromName } from '../../theory/musicInKey.js';
 import { melodyFromTune } from '../melody.js';
-import { extraPartBlocks } from '../extraParts.js';
 import { harmonyRoles } from './harmonyRoles.js';
+import { HARMONY_PARTS } from './harmonyParts.js';
+import { voiceChannels } from './partChannels.js';
+import { voiceMusic } from './voiceText.js';
 
-const LEAD_VOICE = 'V:1';
-const PART_LINE = new RegExp(`^V:(${HARMONY_PARTS.map((part) => part.id).join('|')})\\b.*$`, 'gm');
-/** A harmony part's or an extra part's line (extraParts.js: kept as it is): where the melody ends. */
-const PARTS_START = new RegExp(
-	`^V:(${HARMONY_PARTS.map((part) => part.id).join('|')}|part-\\d+)\\b`,
-	'm'
-);
 /* A pitch, or a chord of pitches; decorations (!trill!) are matched only to be skipped */
 const PITCH = /(![^!]*!|\+[^+]*\+)|(\[[^\]:]*\]|[_=^]*[A-Ga-g][,']*)/g;
 
@@ -31,85 +22,47 @@ const PITCH = /(![^!]*!|\+[^+]*\+)|(\[[^\]:]*\]|[_=^]*[A-Ga-g][,']*)/g;
  * @typedef {import('../../theory/musicInKey.js').Note} Note
  * @typedef {(time: number) => string | null} ChordAt the concert chord the band plays at a
  *   time (quarter notes from bar 1)
+ * @typedef {{ lead: string, sings: string, style: string }} HarmonyOf
+ *   lead: the voice it's written from (a channel id); sings: a harmony part
+ *   (harmonyParts.js); style: a harmony style (harmonyStyles.js)
  */
 
 /**
- * Which harmony parts the ABC has.
- * @param {string} abc
- * @returns {string[]} part ids
- */
-export function harmonyPartsIn(abc) {
-	return [...abc.matchAll(PART_LINE)].map((match) => match[1]);
-}
-
-/**
- * The ABC with exactly these harmony parts, written fresh from the melody.
  * @param {string} abc
  * @param {import('abcjs').TuneObject} tune parsed from this ABC, as written (not visually transposed)
  * @param {ChordAt} chordAt
- * @param {string[]} partIds
- * @param {Record<string, string>} [styles] a harmony style (harmonyStyles.js) by part id; the stack when not given
- * @returns {{ abc: string, problem: string }}
+ * @param {HarmonyOf} harmony
+ * @returns {string | null} its music (no V: line); null when the lead can't be found
  */
-export function withHarmonies(abc, tune, chordAt, partIds, styles = {}) {
-	const { headerEnd, bodyStart } = findBody(abc);
-	const partsStart = PARTS_START.exec(abc.slice(bodyStart));
-	const melodyEnd = partsStart ? bodyStart + partsStart.index : abc.length;
-	const extras = extraPartBlocks(abc).map((block) => abc.slice(block.from, block.to).trimEnd());
-	const header = abc.slice(0, headerEnd);
-	const body = abc.slice(bodyStart, melodyEnd).trimEnd();
-	if (/^V:|\[V:/m.test(body)) {
-		return { abc, problem: 'Harmonies can only be added to a melody with a single voice.' };
-	}
-
-	const parts = HARMONY_PARTS.filter((part) => partIds.includes(part.id));
-	if (parts.length === 0) {
-		const lead = extras.length > 0 ? [`${header}${LEAD_VOICE}`, body] : [`${header}${body}`];
-		return { abc: [...lead, ...extras].join('\n') + '\n', problem: '' };
-	}
-
-	const notes = leadNotes(tune, melodyEnd);
+export function harmonyMusic(abc, tune, chordAt, { lead, sings, style }) {
+	const part = HARMONY_PARTS.find((each) => each.id === sings);
+	const voice = voiceChannels(tune).indexOf(lead);
+	const music = voiceMusic(abc, lead);
+	if (!part || voice < 0 || !music) return null;
+	const notes = leadNotes(tune, voice, music);
 	const key = tuneKey(tune.getKeySignature());
 	const roles = harmonyRoles(rolesInput(notes), chordAt, tune.getMeterFraction(), key);
-	const written = parts.map((part) => {
-		const text = partText(abc, bodyStart, melodyEnd, notes, key, {
-			roles,
-			chordAt,
-			count: part.chordTones,
-			style: 'singsRoots' in part ? ROOTS : harmonyStyle(styles[part.id] ?? 'stack')
-		});
-		return `V:${part.id} name="${part.label}"\n${text}`;
+	return partText(abc, music, notes, key, {
+		roles,
+		chordAt,
+		count: part.chordTones,
+		style: 'singsRoots' in part ? ROOTS : harmonyStyle(style)
 	});
-	return {
-		abc: [`${header}${LEAD_VOICE}`, body, ...written, ...extras].join('\n') + '\n',
-		problem: ''
-	};
 }
 
 /**
- * Where the header (up to and including the K: line) ends and the music
- * starts, after a V:1 line if there is one.
- * @param {string} abc
- */
-function findBody(abc) {
-	const keyLine = /^K:.*$/m.exec(abc);
-	const headerEnd = keyLine ? keyLine.index + keyLine[0].length + 1 : 0;
-	const leadLine = new RegExp(`^${LEAD_VOICE}[ \\t]*(\\n|$)`).exec(abc.slice(headerEnd));
-	return { headerEnd, bodyStart: headerEnd + (leadLine ? leadLine[0].length : 0) };
-}
-
-/**
- * The melody's notes, rests, bar lines and key changes in written order,
+ * The lead's notes, rests, bar lines and key changes in written order,
  * each note with when it first plays and what it sounds.
  * @param {import('abcjs').TuneObject} tune
- * @param {number} melodyEnd
+ * @param {number} voice the lead's staff
+ * @param {{ from: number, to: number }} music where the lead's music is in the ABC
  */
-function leadNotes(tune, melodyEnd) {
+function leadNotes(tune, voice, { from, to }) {
 	const { pickup } = melodyFromTune(tune);
 	const sounding = firstSoundings(tune);
 	return tune.lines
-		.flatMap((line) => line.staff?.[0]?.voices?.[0] ?? [])
-		.filter((element) => element.startChar < melodyEnd)
+		.flatMap((line) => line.staff?.[voice]?.voices?.[0] ?? [])
+		.filter((element) => element.startChar >= from && element.startChar < to)
 		.filter((element) => ['note', 'bar', 'key'].includes(element.el_type))
 		.map((element) => ({
 			element,
@@ -118,9 +71,10 @@ function leadNotes(tune, melodyEnd) {
 }
 
 /**
- * When each of the melody's written notes first plays (quarter notes from
- * bar 1) and its pitch, by where it's written (startChar). A part's note
- * is worked out at that time, so a repeated bar takes its first pass's chord.
+ * When each of the tune's written notes first plays (quarter notes from
+ * bar 1) and its pitch, by where it's written (startChar), in every voice.
+ * A harmony note is worked out at that time, so a repeated bar takes its
+ * first pass's chord.
  * @param {import('abcjs').TuneObject} tune
  * @returns {Map<number, { time: number, midi: number }>}
  */
@@ -128,18 +82,21 @@ export function firstSoundings(tune) {
 	const { pickup } = melodyFromTune(tune);
 	/** @type {Map<number, { time: number, midi: number }>} */
 	const sounding = new Map();
-	for (const item of tune.setUpAudio({ chordsOff: true }).tracks[0] ?? []) {
-		if (item.cmd !== 'note') continue;
-		const time = item.start * 4 - pickup;
-		const seen = sounding.get(item.startChar);
-		if (!seen || time < seen.time - 1e-9) sounding.set(item.startChar, { time, midi: item.pitch });
-		else if (Math.abs(time - seen.time) < 1e-9) seen.midi = Math.max(seen.midi, item.pitch);
+	for (const track of tune.setUpAudio({ chordsOff: true }).tracks) {
+		for (const item of track) {
+			if (item.cmd !== 'note') continue;
+			const time = item.start * 4 - pickup;
+			const seen = sounding.get(item.startChar);
+			if (!seen || time < seen.time - 1e-9)
+				sounding.set(item.startChar, { time, midi: item.pitch });
+			else if (Math.abs(time - seen.time) < 1e-9) seen.midi = Math.max(seen.midi, item.pitch);
+		}
 	}
 	return sounding;
 }
 
 /**
- * The melody's notes as the note roles read them: when each first plays,
+ * The lead's notes as the note roles read them: when each first plays,
  * how long (a tied note joined to the one before) and its pitch.
  * @param {ReturnType<typeof leadNotes>} notes
  * @returns {import('./harmonyRoles.js').LeadNote[]}
@@ -180,11 +137,10 @@ function ownPitch(element, pickup) {
 }
 
 /**
- * One part's music: the melody's text with every note's pitch swapped,
- * spelled in the key in force (the melody's `[K:]` changes are copied with it).
+ * The line's music: the lead's text with every note's pitch swapped,
+ * spelled in the key in force (the lead's `[K:]` changes are copied with it).
  * @param {string} abc
- * @param {number} from
- * @param {number} to
+ * @param {{ from: number, to: number }} music where the lead's music is
  * @param {ReturnType<typeof leadNotes>} notes
  * @param {import('../../theory/musicInKey.js').Key} key
  * @param {{
@@ -192,7 +148,7 @@ function ownPitch(element, pickup) {
  *   style: (typeof import('./harmonyStyles.js').HARMONY_STYLES)[number]
  * }} part
  */
-function partText(abc, from, to, notes, key, { roles, chordAt, count, style }) {
+function partText(abc, { from, to }, notes, key, { roles, chordAt, count, style }) {
 	const tonicChord = /** @type {const} */ ({ root: { step: 0, alt: 0 }, quality: '', bass: null });
 	/** @type {Map<number, number>} */
 	let bar = new Map();
@@ -267,7 +223,7 @@ function withPitch(text, pitch) {
 }
 
 /**
- * The part's text without what belongs to the melody: chord symbols,
+ * The line's text without what belongs to the lead: chord symbols,
  * annotations and lyrics. Blank lines would end the tune.
  * @param {string} text
  */

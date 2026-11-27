@@ -1,21 +1,19 @@
 <script>
 	/**
-	 * Try other ways to sing the harmony part being edited, by ear: each
-	 * option swaps in the part written in another style (whole line, or just
-	 * the bar of the picked note). While the band plays, it starts the loop
+	 * Try other ways to sing the generated line shown, by ear: each option
+	 * swaps in the line written in another style, all but the bars you've
+	 * locked. While the band plays, it starts the loop
 	 * again with the new line, so you hear it straight away; loop a few bars
 	 * and flip between options. Put back returns the part to how it was
 	 * before you started trying.
 	 */
 	import { untrack } from 'svelte';
 	import { useArranger } from '../../state/context.js';
-	import { harmonyOptions, withOption } from '../../melody/roll/harmonyOptions.js';
-	import { MELODY_CHANNEL } from '../../melody/harmony/partChannels.js';
-	import { mixer } from '../../mixer/mixer.svelte.js';
-	import { BASS_VOICE } from '../../bass/readBass.js';
-	import { isExtraPart } from '../../melody/extraParts.js';
+	import { harmonyOptions } from '../../melody/roll/harmonyOptions.js';
 	import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
 	import { tuneReader } from '../../melody/abcjs.js';
+	import { partName as partNameOf } from '../../melody/partNames.js';
+	import { mixer } from '../../mixer/mixer.svelte.js';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -27,29 +25,22 @@
 
 	/** @type {import('../../melody/roll/harmonyOptions.js').HarmonyOption[]} */
 	let options = $state.raw([]);
-	let scope = $state(/** @type {'line' | 'bar'} */ ('line'));
 	/** The tune before the first option was tried (null when nothing is being tried). */
 	let before = $state(/** @type {string | null} */ (null));
 	/** The tune as the last option left it, to tell our changes from anyone else's. */
 	let lastTried = '';
 	let restartWhenRead = false;
 
-	let part = $derived(drawing.current?.id ?? MELODY_CHANNEL);
-	let partName = $derived(drawing.current?.name ?? '');
-	/** The bar of the picked note (index into the score's bars), or -1. */
-	let pickedBar = $derived.by(() => {
-		const note = drawing.notes[drawing.selected];
-		if (!note || !drawing.score) return -1;
-		return drawing.score.bars.findIndex(
-			(bar) => bar.start <= note.start && note.start < bar.start + bar.length
-		);
+	let part = $derived(drawing.current?.id ?? '');
+	let partName = $derived(partNameOf(part, arranger.parts.names));
+	/** The line's lead and every line generated from it: the group singing together. */
+	let group = $derived.by(() => {
+		const lead = melody.generated.find((each) => each.id === part)?.lead;
+		if (!lead) return [];
+		return [lead, ...melody.generated.filter((each) => each.lead === lead).map((each) => each.id)];
 	});
-	let barOnly = $derived(scope === 'bar' && pickedBar >= 0);
-	let singers = $derived(
-		drawing.voices.map((voice) => voice.id).filter((id) => id !== BASS_VOICE && !isExtraPart(id))
-	);
-	let singersOnly = $derived(
-		mixer.channels.every((channel) => channel.solo === singers.includes(channel.id))
+	let groupOnly = $derived(
+		mixer.channels.every((channel) => channel.solo === group.includes(channel.id))
 	);
 
 	$effect(() => {
@@ -58,10 +49,10 @@
 		const id = part;
 		untrack(() => {
 			if (abc !== lastTried) before = null;
-			options =
-				id === MELODY_CHANNEL || id === BASS_VOICE
-					? []
-					: harmonyOptions(abc, tune, id, arranger.songForMelody());
+			const abcjs = abcjsIfLoaded();
+			options = abcjs
+				? harmonyOptions(abc, tune, id, arranger.songForMelody(), tuneReader(abcjs))
+				: [];
 		});
 	});
 
@@ -76,10 +67,7 @@
 	/** @param {import('../../melody/roll/harmonyOptions.js').HarmonyOption} option */
 	function tryOption(option) {
 		const abc = melody.notation;
-		const abcjs = abcjsIfLoaded();
-		if (!abcjs) return;
-		const bars = barOnly ? new Set([pickedBar]) : null;
-		const tried = withOption(abc, option, part, bars, tuneReader(abcjs));
+		const tried = option.abc;
 		before ??= abc;
 		lastTried = tried;
 		restartWhenRead = player.isPlaying;
@@ -94,13 +82,13 @@
 		before = null;
 	}
 
-	function toggleSingersOnly() {
-		const on = !singersOnly;
-		for (const channel of mixer.channels) channel.solo = on && singers.includes(channel.id);
+	function toggleGroupOnly() {
+		const on = !groupOnly;
+		for (const channel of mixer.channels) channel.solo = on && group.includes(channel.id);
 	}
 </script>
 
-{#if drawing.isHarmonyPart && options.length > 0}
+{#if options.length > 0}
 	<div class="mb-2 ui-card p-3 text-sm">
 		<p class="mb-2 text-ink-soft">
 			Other ways to sing this line ({partName}). Loop a few bars, press Play, and tap through them.
@@ -110,40 +98,21 @@
 				<button
 					type="button"
 					class="ui-button px-3 py-1.5"
-					class:ui-button-on={option.current && !barOnly}
-					aria-pressed={option.current && !barOnly}
+					class:ui-button-on={option.current}
+					aria-pressed={option.current}
 					onclick={() => tryOption(option)}
 					use:tooltip={TIPS.melody.harmonyOptions.styles[option.id]}>{option.name}</button
 				>
 			{/each}
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
-			<span class="text-ink-soft">Change:</span>
 			<button
 				type="button"
 				class="ui-button px-3 py-1.5"
-				class:ui-button-on={!barOnly}
-				aria-pressed={!barOnly}
-				onclick={() => (scope = 'line')}
-				use:tooltip={TIPS.melody.harmonyOptions.line}>The whole line</button
-			>
-			<button
-				type="button"
-				class="ui-button px-3 py-1.5"
-				class:ui-button-on={barOnly}
-				aria-pressed={barOnly}
-				disabled={pickedBar < 0}
-				onclick={() => (scope = 'bar')}
-				use:tooltip={TIPS.melody.harmonyOptions.bar}
-				>{pickedBar >= 0 ? 'Just this bar' : 'Pick a note for one bar'}</button
-			>
-			<button
-				type="button"
-				class="ui-button px-3 py-1.5"
-				class:ui-button-on={singersOnly}
-				aria-pressed={singersOnly}
-				onclick={toggleSingersOnly}
-				use:tooltip={TIPS.melody.harmonyOptions.singers}>Singers only</button
+				class:ui-button-on={groupOnly}
+				aria-pressed={groupOnly}
+				onclick={toggleGroupOnly}
+				use:tooltip={TIPS.melody.harmonyOptions.singers}>Just the lead and its lines</button
 			>
 			{#if before !== null}
 				<button

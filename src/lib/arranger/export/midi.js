@@ -3,7 +3,6 @@ import { guitarChords } from '../instruments/guitarPlan.js';
 import { endBeforeStops, sectionsToPlay, stops, withoutStops } from '../chart/noChord.js';
 import { DEFAULT_METER, barQuarters, rhythm, slotPositions } from '../chart/timeline.js';
 import { melodyEvents, melodyPitch } from '../melody/melody.js';
-import { HARMONY_PARTS } from '../melody/harmony/harmonyParts.js';
 import { EXTRA_PARTS } from '../melody/extraParts.js';
 import { partName } from '../melody/partNames.js';
 import { bassPart } from '../bass/songBass.js';
@@ -44,8 +43,8 @@ const GUITAR_TRACK = { name: 'Bluegrass Guitar', program: 25 }; // GM 26: Acoust
 const BASS_TRACK = { name: 'Roots Upright', program: 32 }; // GM 33: Acoustic Bass
 const MANDO_TRACK = { name: 'Mandolin Chop', program: 25 }; // no GM mandolin; steel guitar is closest
 const MELODY_TRACK = { name: 'Melody', program: 25 }; // played on the guitar samples, like Bluegrass Guitar
-/* The melody, harmony parts and extra parts, by mixer channel id, on MIDI channels from MELODY_CHANNEL up */
-const TUNE_TRACKS = ['melody', ...[...HARMONY_PARTS, ...EXTRA_PARTS].map((part) => part.id)];
+/* The melody and the extra parts (yours and generated), by mixer channel id, on MIDI channels from MELODY_CHANNEL up */
+const TUNE_TRACKS = ['melody', ...EXTRA_PARTS.map((part) => part.id)];
 const TUNE_CHANNELS = TUNE_TRACKS.map((_, index) => MELODY_CHANNEL + index).map((channel) =>
 	channel >= DRUM_CHANNEL ? channel + 1 : channel
 );
@@ -68,8 +67,8 @@ export function velocityFromDb(db) {
  * a tempo track, the guitar (bass notes + strums, channel 1), a
  * bluegrass bass part (channel 2, see bassline.js), the mandolin chop
  * (channel 3, see mandolin.js) and, when there is one, the ABC melody
- * (channel 4, see melody.js), each harmony part (channels 5–8) and each
- * extra part (from channel 9, skipping the drums' 10), on the same
+ * (channel 4, see melody.js) and each extra part, generated harmony lines
+ * included (from channel 5, skipping the drums' 10), on the same
  * guitar-sampler mapping. A part's track is named as the song names it.
  *
  * A file can't start before its first tick, so when the melody has a

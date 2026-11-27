@@ -4,9 +4,8 @@
  * and bars added to or removed from a section are added to or removed from
  * its tune (melody/sections/barsFollowChart.js), and bars whose chords
  * changed get the chart's chords as the tune's chord symbols
- * (melody/chordsFollowChart.js); if the new chords would change the
- * harmony parts, you're asked whether to rewrite them
- * (state/HarmonyFollowState.svelte.js). Cutting, copying and
+ * (melody/chordsFollowChart.js), and the harmony parts are written again
+ * in those bars (melody/harmonyFollowsChords.js). Cutting, copying and
  * reordering need nothing here: the tune is made from the chart's sections
  * each time. Call once from the arranger's layout,
  * which owns the effect.
@@ -35,15 +34,12 @@ export function keepTuneWithChart(arranger) {
 				if (barsBefore && sameSong) arranger.followBars(barsBefore);
 				barsBefore = barsAfter;
 			}
-			if (!sameSong) {
-				chordsBefore = chordsAfter;
-				arranger.harmonyFollow.forget();
-			}
+			if (!sameSong) chordsBefore = chordsAfter;
 			// While the chart can't be read, the last chords it could be read with stay
 			else if (chordsAfter) {
 				if (chordsBefore && chordsBefore.keys.join() !== chordsAfter.keys.join()) {
 					arranger.followChords();
-					arranger.harmonyFollow.chordsChanged(chordsBefore.chordAt);
+					arranger.harmonyFollowsChords(chordsBefore.chordAt);
 				}
 				chordsBefore = chordsAfter;
 			}

@@ -25,11 +25,13 @@
 	 *   bassStartsEmpty?: boolean,
 	 *   keyMenu?: boolean,
 	 *   pickupBar?: boolean,
-	 *   onClose?: () => void
+	 *   onClose?: () => void,
+	 *   onPick?: (voice: string) => void
 	 * }}
 	 *   voice: the part (a lane id); view: an id in tracks/partViews.js;
 	 *   bassStartsEmpty: an unwritten bass starts empty, to write by ear;
-	 *   pickupBar: the first bar is a pickup, so the next is numbered 1
+	 *   pickupBar: the first bar is a pickup, so the next is numbered 1;
+	 *   onPick: show another part (one just copied from this one)
 	 */
 	let {
 		voice,
@@ -39,7 +41,8 @@
 		bassStartsEmpty = false,
 		keyMenu = true,
 		pickupBar = false,
-		onClose
+		onClose,
+		onPick
 	} = $props();
 
 	const arranger = useArranger();
@@ -83,6 +86,7 @@
 			{bassStartsEmpty}
 			{keyMenu}
 			{pickupBar}
+			{onPick}
 			view={view === 'tab' ? 'tab' : 'roll'}
 		/>
 	{/if}

@@ -17,6 +17,7 @@
 	 */
 	import { useArranger } from '../../state/context.js';
 	import { bandLanes } from '../../tracks/lanes.js';
+	import { voiceColour } from '../../melody/voiceColours.js';
 	import { orderedLanes, withLaneMoved, dropIndex } from '../../tracks/laneOrder.js';
 	import { readChartOnBars } from '../../transcription/readChartOnBars.js';
 	import { chartWithTypedBar, isHeld, slotsOf } from '../../transcription/barChords.js';
@@ -34,6 +35,7 @@
 	import { TIPS } from '$lib/tooltips/tips.js';
 	import NameDialog from '$lib/components/NameDialog.svelte';
 	import TrackRuler from './TrackRuler.svelte';
+	import TrackBarMenu from './TrackBarMenu.svelte';
 	import BlockLane from './BlockLane.svelte';
 	import TakeClip from './TakeClip.svelte';
 	import AudioLaneMenu from './AudioLaneMenu.svelte';
@@ -106,7 +108,8 @@
 			}).notes,
 			melody: melody.line,
 			voices: melody.tune ? voiceChannels(melody.tune) : [],
-			names: song.partNames
+			generated: melody.generated,
+			names: parts.names
 		})
 	);
 	const audioLanes = $derived(recording.lanes);
@@ -186,8 +189,18 @@
 	/** @param {string} id */
 	const channelOf = (id) => mixer.channels.find((each) => each.id === id);
 
-	/** @param {MouseEvent & { currentTarget: HTMLElement }} event */
-	function playFromHere(event) {
+	/** The bar whose number was clicked on the ruler, its menu open (null: none). */
+	let menuBarNumber = $state(/** @type {number | null} */ (null));
+	const menuBar = $derived(bars.find((bar) => bar.number === menuBarNumber) ?? null);
+
+	/**
+	 * A click on a bar's number opens its menu; anywhere else plays from that spot.
+	 * @param {MouseEvent & { currentTarget: HTMLElement }} event
+	 */
+	function clickRuler(event) {
+		const number = /** @type {HTMLElement} */ (event.target).closest('[data-bar]');
+		const bar = Number(/** @type {HTMLElement | null} */ (number)?.dataset.bar);
+		if (bar > 0) return (menuBarNumber = bar);
 		const box = event.currentTarget.getBoundingClientRect();
 		player.goTo(scale.toQuarters(event.clientX - box.left) + scale.start);
 	}
@@ -255,15 +268,23 @@
 					onclick={() => cycle.turn(!cycle.on)}
 					use:tooltip={TIPS.tracks.cycle}>Cycle</button
 				>
-				<CycleSectionMenu {cycle} />
+				<CycleSectionMenu {cycle} ruler={bars} />
 			</div>
 			<CycleStrip {cycle} ruler={bars} {scale} fit={onBarLines} />
 
 			<div class="corner ui-side-column"></div>
 			<!-- svelte-ignore a11y_click_events_have_key_events (Home and the clock get there by keyboard) -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<div class="ruler" onclick={playFromHere} use:tooltip={TIPS.tracks.ruler}>
+			<div class="ruler" onclick={clickRuler} use:tooltip={TIPS.tracks.ruler}>
 				<TrackRuler {bars} {scale} />
+				{#if menuBar}
+					<TrackBarMenu
+						bar={menuBar}
+						{scale}
+						{arrangement}
+						onClose={() => (menuBarNumber = null)}
+					/>
+				{/if}
 			</div>
 
 			<div class="header tempo-header ui-side-column" style:height="{TEMPO_LANE_HEIGHT}px">
@@ -288,11 +309,15 @@
 				{@const picked = editing === lane.id}
 				{@const armed = lane.kind === 'take' && recording.armedTrack === lane.id}
 				{@const lifted = dragging?.id === lane.id}
+				{@const generated = lane.kind === 'notes' && !!lane.lead}
 				<div
 					class="header ui-side-column"
 					class:picked
 					class:armed
 					class:lifted
+					class:generated
+					class:voice-colour={lane.kind === 'notes'}
+					style:--voice={lane.kind === 'notes' ? voiceColour(lane.id, melody.generated) : null}
 					data-lane={lane.id}
 				>
 					<button
@@ -340,7 +365,8 @@
 							class="name pick"
 							aria-pressed={picked}
 							onclick={() => onEdit(lane.id)}
-							use:tooltip={TIPS.tracks.editPart}>{lane.name}</button
+							use:tooltip={generated ? TIPS.tracks.editGeneratedPart : TIPS.tracks.editPart}
+							>{lane.name}</button
 						>
 						<InstLaneMenu {lane} {lanes} />
 					{:else}
@@ -396,11 +422,15 @@
 						/>
 					</div>
 				{:else}
-					<div class="lane" class:lifted>
+					<div
+						class="lane voice-colour"
+						class:lifted
+						style:--voice={voiceColour(lane.id, melody.generated)}
+					>
 						<!-- svelte-ignore a11y_click_events_have_key_events (the lane's name is the button) -->
 						<!-- svelte-ignore a11y_no_static_element_interactions -->
 						<div class="part" class:picked onclick={() => onEdit(lane.id)}>
-							<BlockLane {lane} {scale} />
+							<BlockLane {lane} {scale} hollow={generated} />
 						</div>
 					</div>
 				{/if}
@@ -574,7 +604,25 @@
 	}
 
 	.header.picked .name {
-		color: var(--color-accent);
+		color: var(--voice-colour, var(--color-accent));
+	}
+
+	/* A part's colour (the piano roll's): a stripe down its header's edge, shared by a lead
+	   and the lines generated from it; a generated line's name is softer: it's written for you */
+	.header.voice-colour {
+		box-shadow:
+			var(--shadow-bevel),
+			inset 4px 0 0 var(--voice-colour),
+			inset -1px 0 0 var(--shadow-light-edge);
+	}
+
+	.header.generated .name {
+		font-weight: 600;
+		color: var(--color-ink-soft);
+	}
+
+	.header.generated.picked .name {
+		color: var(--voice-colour, var(--color-accent));
 	}
 
 	.part {
@@ -588,7 +636,7 @@
 	}
 
 	.part.picked {
-		background: color-mix(in oklch, var(--color-accent) 8%, transparent);
+		background: color-mix(in oklch, var(--voice-colour, var(--color-accent)) 8%, transparent);
 	}
 
 	/* Record-enable, Logic's: a round button, its dot red while it's the lane Record records on */
@@ -641,6 +689,12 @@
 		justify-content: flex-start;
 		border-bottom: none;
 		padding: 0.35rem var(--header-padding);
+	}
+
+	@media (pointer: coarse) {
+		.tracks {
+			--cycle-row-height: 2.5rem;
+		}
 	}
 
 	.cycle-header {

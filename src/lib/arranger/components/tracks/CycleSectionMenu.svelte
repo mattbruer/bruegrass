@@ -1,9 +1,10 @@
 <script>
 	/**
-	 * The ▾ beside the Cycle button: pick one of the named sections to cycle
-	 * (from its start to the next section, or End). `empty`: what to say
-	 * while there are none.
+	 * The ▾ beside the Cycle button: the cycle a bar at a time (for a
+	 * finger), and the named sections to cycle (from a section's start to the
+	 * next section, or End). `empty`: what to say while there are none.
 	 */
+	import CycleNudge from './CycleNudge.svelte';
 	import Popover from '$lib/components/Popover.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
@@ -13,19 +14,22 @@
 	/**
 	 * @type {{
 	 *   cycle: {
+	 *     region: Cycle | null,
 	 *     sections: { number: number, label?: string, name: string, region: Cycle }[],
 	 *     set: (region: Cycle) => void,
 	 *     isRegion: (region: Cycle) => boolean
 	 *   },
+	 *   ruler: import('../../tracks/ruler.js').RulerBar[],
 	 *   empty?: string
 	 * }}
 	 */
-	let { cycle, empty = 'No sections yet.' } = $props();
+	let { cycle, ruler, empty = 'No sections yet.' } = $props();
 </script>
 
 <Popover class="px-1 text-xs" tip={TIPS.cycle.sections}>
-	{#snippet button()}<span aria-hidden="true">▾</span><span class="sr-only">Cycle a section</span
+	{#snippet button()}<span aria-hidden="true">▾</span><span class="sr-only">Change the cycle</span
 		>{/snippet}
+	<CycleNudge {cycle} {ruler} />
 	{#each cycle.sections as section (section.number)}
 		<button
 			type="button"

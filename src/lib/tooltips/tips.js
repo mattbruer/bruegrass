@@ -160,9 +160,22 @@ export const TIPS = Object.freeze({
 	},
 
 	cycle: {
-		sections: 'Play one of the song’s sections over and over, from its start to the next section.',
+		sections: 'Change the cycle a bar at a time, or play one of the song’s sections over and over.',
 		section: 'Cycle this section, and turn the cycle on.',
-		strip: 'Drag across to play that stretch over and over (the cycle). Click to turn it on or off.'
+		strip:
+			'Drag across to play that stretch over and over (the cycle). Drag its ends to change it, its middle to move it. Click it to turn it on or off.',
+		start: {
+			earlier: 'Start the cycle a bar earlier.',
+			later: 'Start the cycle a bar later.'
+		},
+		end: {
+			earlier: 'End the cycle a bar earlier.',
+			later: 'End the cycle a bar later.'
+		},
+		move: {
+			earlier: 'Move the whole cycle a bar earlier.',
+			later: 'Move the whole cycle a bar later.'
+		}
 	},
 
 	partPane: {
@@ -461,7 +474,8 @@ export const TIPS = Object.freeze({
 		play: 'Play the band from the playhead, with your takes (Space). Press again to stop.',
 		record:
 			'Record on the lane whose record button is lit: the count-in clicks, then the band plays the song once. Press again (or Play) to finish early.',
-		ruler: 'Click to move the playhead there: Play carries on from that spot.',
+		ruler:
+			'Click anywhere to play from there. Click a bar’s number for its menu: a section marker, like “Verse”.',
 		arm: 'Record on this lane: Record puts the next take here.',
 		addLane:
 			'Add an audio lane, to record on with the mic: a voice, or a real instrument along with the band. You name it first. Up to four.',
@@ -496,6 +510,11 @@ export const TIPS = Object.freeze({
 			'How fast the song goes, bar by bar. Tap or click to add a point and drag it up or down to slow down or speed up there, for a ritard at the end. Double-tap a point to remove it.',
 		edit: 'Open the editor to write the chords and the melody as text. The lanes change as you type.',
 		editPart: 'Edit this part: its piano roll opens under the lanes, and the band keeps playing.',
+		editGeneratedPart:
+			'A line written from the lane it hangs under: it follows that lane’s notes and the chords, and takes its name. Open its piano roll to try other notes or lock bars.',
+		copyPart:
+			'Copy this line to a lane of its own: the copy is all yours, and stays as it is when the chords or the line it came from change.',
+		copyPartFull: 'There’s no room for another lane: remove an added lane first.',
 		editChops:
 			'See the mandolin’s chops: the chord diagram for each chord opens under the lanes, to change.',
 		chop: 'Tap to see this chord’s mandolin chop, and change it. (Type chords on the Band lane.)',
@@ -588,10 +607,8 @@ export const TIPS = Object.freeze({
 				passing:
 					'Like the classic sound, but the voices move through passing chords under the melody’s quick notes, and hold through suspensions.'
 			},
-			line: 'Options change the whole harmony line.',
-			bar: 'Options change only the bar of the picked note, so you can mix styles bar by bar.',
 			singers:
-				'Hear only the melody and the harmony parts (solos them in the mixer). Tap again for the whole band.',
+				'Hear only this line, the lane it’s written from and the other lines from it (solos them in the mixer). Tap again for the whole band.',
 			putBack: 'Go back to the harmony line as it was before you tried any options.'
 		},
 		voices:
@@ -608,6 +625,10 @@ export const TIPS = Object.freeze({
 			},
 			key: 'The key the song is in. It’s guessed from the first chord; pick it here if the guess is wrong.',
 			delete: 'Delete the picked note (or press Delete).',
+			lockBar:
+				'Lock this bar: it stays as it is when the chords or the line it’s written from change. Changing a note locks its bar for you.',
+			unlockBar:
+				'Unlock this bar: it’s written again now from the line it comes from and the chords, and follows them from now on.',
 			noteBar: {
 				earlier: 'Move the picked note a grid step earlier.',
 				later: 'Move the picked note a grid step later.',
@@ -643,7 +664,7 @@ export const TIPS = Object.freeze({
 			layouts: {
 				two: 'Two parts: the melody and a line above it, the usual bluegrass duet.',
 				three: 'Three parts: a line above the melody and one below, the bluegrass trio.',
-				top: 'The melody on top, with two lines below filling out the chord, the way jazz sections are written.'
+				top: 'The melody on top, with two lines below filling out the chord.'
 			},
 			rewrite:
 				'Write the harmony lines again from the melody as it is now. Changes made to them by hand are replaced.'
@@ -652,11 +673,6 @@ export const TIPS = Object.freeze({
 			concert: 'The sheet music as the song sounds, for anyone without a capo.',
 			shapes: 'The sheet music in the key of the guitar’s chord shapes, to read with the capo on.'
 		}
-	},
-
-	harmonyFollow: {
-		rewrite: 'Write these harmony parts again from the melody and the new chords.',
-		keep: 'Leave the harmony parts as they are; they may clash with the new chords.'
 	},
 
 	mixer: {

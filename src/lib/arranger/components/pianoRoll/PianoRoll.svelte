@@ -44,6 +44,7 @@
 	import { barLabel, isShortBar, tickWidthFor } from '../../melody/roll/rollLayout.js';
 	import { keepMiddleInView } from '$lib/components/zoom/zoomLevels.js';
 	import NoteEditBar from './NoteEditBar.svelte';
+	import LockIcon from '../icons/LockIcon.svelte';
 	import { tooltip } from '$lib/tooltips/tooltip.js';
 	import { TIPS } from '$lib/tooltips/tips.js';
 
@@ -84,8 +85,10 @@
 	 *   onSeek?: (ticks: number) => void,
 	 *   zoom?: { across: number, down: number },
 	 *   lane?: { name: string, draw: import('svelte').Snippet<[{ width: number, height: number, tickWidth: number }]> },
-	 *   pickupBar?: boolean
+	 *   pickupBar?: boolean,
+	 *   locks?: { kept: Set<number>, onToggle: (bar: number) => void } | null
 	 * }}
+	 *   locks: a generated line's bars, each with a lock on the ruler (kept: the locked ones)
 	 */
 	let {
 		score,
@@ -111,7 +114,8 @@
 		onSeek,
 		zoom = { across: 1, down: 1 },
 		lane,
-		pickupBar = false
+		pickupBar = false,
+		locks = null
 	} = $props();
 	/** Everything that stays at the top while the rows scroll: the ruler, and the lane if any. */
 	let headHeight = $derived(RULER_HEIGHT + (lane ? LANE_HEIGHT : 0));
@@ -458,6 +462,27 @@
 						<span class="bar-number" style:left="{bar.start * tickWidth}px"
 							>{barLabel(score.bars, index, pickupBar)}</span
 						>
+						{#if locks && bar.from !== null}
+							{@const locked = locks.kept.has(index)}
+							<button
+								type="button"
+								class="lock"
+								class:locked
+								style:left="{(bar.start + bar.length) * tickWidth}px"
+								aria-pressed={locked}
+								aria-label="{locked ? 'Unlock' : 'Lock'} bar {barLabel(
+									score.bars,
+									index,
+									pickupBar
+								)}"
+								onclick={(event) => {
+									event.stopPropagation();
+									locks.onToggle(index);
+								}}
+								use:tooltip={locked ? TIPS.melody.roll.unlockBar : TIPS.melody.roll.lockBar}
+								><LockIcon open={!locked} /></button
+							>
+						{/if}
 					{/each}
 				</div>
 			</div>
@@ -620,6 +645,21 @@
 		position: absolute;
 		top: 0.15rem;
 		padding-left: 0.25rem;
+	}
+	/* At the bar's end, a finger's width wide where it can be: the ruler is short */
+	.lock {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		transform: translateX(-100%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 1.75rem;
+		color: var(--color-ink-faint);
+	}
+	.lock.locked {
+		color: var(--color-accent);
 	}
 	.lane-name {
 		display: flex;

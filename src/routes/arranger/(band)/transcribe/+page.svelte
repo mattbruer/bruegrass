@@ -238,6 +238,7 @@
 				bassStartsEmpty
 				keyMenu={false}
 				pickupBar={transcription.pickupBar}
+				onPick={(id) => (transcription.lane = id)}
 			/>
 		{/if}
 	{/if}

@@ -17,6 +17,10 @@
 
 	/** Space between the button and its panel (px). */
 	const GAP = 6;
+	/** The least space kept between the panel and the screen's edges (px). */
+	const EDGE = 8;
+	/** A panel squeezed by the screen's bottom stays at least this tall, scrolling (px). */
+	const MIN_HEIGHT = 160;
 
 	let open = $state(false);
 	/** @type {HTMLDetailsElement | undefined} */
@@ -30,6 +34,7 @@
 		if (!open || !panel || !summary) return;
 		placeUnder(panel, summary.getBoundingClientRect());
 		panel.showPopover();
+		keepOnScreen(panel);
 		const shown = panel;
 		return () => {
 			if (shown.matches(':popover-open')) shown.hidePopover();
@@ -44,6 +49,22 @@
 		element.style.top = `${box.bottom + GAP}px`;
 		element.style.left = align === 'left' ? `${box.left}px` : 'auto';
 		element.style.right = align === 'right' ? `${window.innerWidth - box.right}px` : 'auto';
+	}
+
+	/**
+	 * Slide a shown panel back inside the screen's sides, and let it scroll
+	 * when it's taller than the room under its button (a phone).
+	 * @param {HTMLElement} element
+	 */
+	function keepOnScreen(element) {
+		const box = element.getBoundingClientRect();
+		const overRight = box.right - (window.innerWidth - EDGE);
+		if (overRight > 0) {
+			element.style.left = `${Math.max(EDGE, box.left - overRight)}px`;
+			element.style.right = 'auto';
+		}
+		const room = window.innerHeight - EDGE - box.top;
+		element.style.maxHeight = box.height > room ? `${Math.max(room, MIN_HEIGHT)}px` : '';
 	}
 
 	/** @param {Event} event */
@@ -96,6 +117,7 @@
 		flex-direction: column;
 		gap: 0.4rem;
 		width: max-content;
+		overflow-y: auto;
 		padding: 0.6rem;
 		color: var(--color-ink);
 	}

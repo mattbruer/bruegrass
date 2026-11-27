@@ -45,7 +45,7 @@
 	 */
 	let { transcription } = $props();
 
-	const { melody, song } = useArranger();
+	const { melody, parts: songParts } = useArranger();
 
 	/** The names column (px); the lanes scroll under it. */
 	const HEADER_WIDTH = 186;
@@ -86,7 +86,7 @@
 					melody: melody.line,
 					voices: melody.tune ? voiceChannels(melody.tune) : [],
 					bass: transcription.bassNotes,
-					names: song.partNames
+					names: songParts.names
 				})
 			: []
 	);
@@ -176,6 +176,7 @@
 					>
 					<CycleSectionMenu
 						cycle={transcription.cycle}
+						{ruler}
 						empty="No named sections yet. Put a marker on a bar to start one."
 					/>
 					<span class="flex items-center gap-1 text-xs text-ink-soft">

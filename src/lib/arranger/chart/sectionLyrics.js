@@ -84,3 +84,49 @@ export function lyricLines({ pickup, bars, rowStarts }) {
 	if (pickup.trim()) lines[0] = pickup.trim() + ' ' + (lines[0] ?? '|');
 	return lines.every((line) => !line.replace(/[|\s]/g, '')) ? [] : lines;
 }
+
+/**
+ * A section's lyric lines cut before bar `at`: the words of the bars before
+ * it, and the words of the bars from it on (for a section split there).
+ * @param {string[]} lines
+ * @param {number} at
+ * @returns {[string[], string[]]}
+ */
+export function splitLyricLines(lines, at) {
+	const { pickup, bars, rowStarts } = lyricsFromLines(lines);
+	return [
+		lyricLines({
+			pickup,
+			bars: bars.slice(0, at),
+			rowStarts: rowStarts.filter((start) => start < at)
+		}),
+		lyricLines({
+			pickup: '',
+			bars: bars.slice(at),
+			rowStarts: rowStarts.filter((start) => start >= at).map((start) => start - at)
+		})
+	];
+}
+
+/**
+ * Two sections' lyric lines as one, the second's bars after the first's
+ * (for a section joined onto the one before it).
+ * @param {string[]} first
+ * @param {number} firstBarCount the first section's bars (its lines may end short of them)
+ * @param {string[]} second
+ * @returns {string[]}
+ */
+export function joinLyricLines(first, firstBarCount, second) {
+	const head = lyricsFromLines(first);
+	const tail = lyricsFromLines(second);
+	const headBars = [...head.bars, ...Array(Math.max(0, firstBarCount - head.bars.length)).fill('')];
+	const bars = [...headBars, ...tail.bars];
+	const headHasBars = headBars.length > 0;
+	if (headHasBars && tail.pickup) {
+		const last = headBars.length - 1;
+		bars[last] = joinWords(bars[last], tail.pickup);
+	}
+	const pickup = headHasBars ? head.pickup : joinWords(head.pickup, tail.pickup);
+	const rowStarts = [...head.rowStarts, ...tail.rowStarts.map((start) => start + headBars.length)];
+	return lyricLines({ pickup, bars, rowStarts });
+}

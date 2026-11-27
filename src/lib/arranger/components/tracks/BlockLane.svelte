@@ -1,16 +1,18 @@
 <script>
 	/**
 	 * A notes lane, read-only: notes as short bars placed by pitch (high at
-	 * the top), like a piano roll squeezed small.
+	 * the top), like a piano roll squeezed small, in the part's colour (`--voice-colour`, set by the host). `hollow`: a generated
+	 * line's notes, outlined, so the lane you write stands out from the lines written for you.
 	 */
 
 	/**
 	 * @type {{
 	 *   lane: import('../../tracks/lanes.js').NotesLane,
-	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>
+	 *   scale: ReturnType<typeof import('../../tracks/trackScale.js').trackScale>,
+	 *   hollow?: boolean
 	 * }}
 	 */
-	let { lane, scale } = $props();
+	let { lane, scale, hollow = false } = $props();
 
 	const pitches = $derived(lane.blocks.map((block) => block.pitch ?? 0));
 	const lowest = $derived(Math.min(...pitches));
@@ -26,6 +28,7 @@
 	{#each lane.blocks as block, index (index)}
 		<div
 			class="note"
+			class:hollow
 			style:left="{scale.toX(block.start)}px"
 			style:width="{Math.max(
 				2,
@@ -49,9 +52,14 @@
 		position: absolute;
 		min-height: 3px;
 		border-radius: 1px;
-		background: var(--color-accent);
+		background: var(--voice-colour, var(--color-accent));
 		box-shadow:
 			inset 0 1px 0 rgb(255 255 255 / calc(0.35 * var(--drop))),
 			0 3px 6px rgb(0 0 0 / calc(0.6 * var(--drop)));
+	}
+
+	.note.hollow {
+		background: color-mix(in oklch, var(--voice-colour, var(--color-accent)) 22%, transparent);
+		box-shadow: inset 0 0 0 1.5px var(--voice-colour, var(--color-accent));
 	}
 </style>

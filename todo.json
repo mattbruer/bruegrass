@@ -364,9 +364,15 @@
 		},
 		{
 			"id": "harmony-follow-browser",
-			"text": "Harmony after a chord edit: try the Rewrite question in the browser and on iPhone",
+			"text": "Harmony locks: lock and unlock bars of a generated line on a real iPhone (the lock on the roll’s ruler is small), and hear a chord change redo only the unlocked bars",
 			"done": false,
-			"addedAt": "2026-11-23"
+			"addedAt": "2026-11-27"
+		},
+		{
+			"id": "harmony-half-bar-locks",
+			"text": "Harmony locks for half a bar (where a note crosses the middle, lock the whole bar), and a lock in the TAB and score views",
+			"done": false,
+			"addedAt": "2026-11-27"
 		},
 		{
 			"id": "passing-chords",
@@ -412,7 +418,7 @@
 		},
 		{
 			"id": "passing-chords-by-ear",
-			"text": "Passing chords harmony style: try it by ear against the stack (piano roll harmony options, a line or a bar)",
+			"text": "Passing chords harmony style: try it by ear against the stack (piano roll harmony options)",
 			"done": false,
 			"addedAt": "2026-11-23"
 		},

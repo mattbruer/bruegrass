@@ -15,7 +15,8 @@ import { barsInPlayOrder } from '../../chart/chartBars.js';
 import { withoutVariant } from '../../instruments/chordBook.js';
 import { isNoChord } from '../../chart/noChord.js';
 import { MELODY_CHANNEL } from '../harmony/partChannels.js';
-import { HARMONY_PARTS } from '../harmony/harmonyParts.js';
+import { isGenerated } from '../harmony/generatedParts.js';
+import { keptBars } from '../harmony/keptBars.js';
 import { transposedDrawnMelody, writeDrawnMelody } from './drawnMelody.js';
 import { OCTAVE, staysOnPiano, transposed } from './octaves.js';
 import { blankScoreForSong } from './scoreFromChart.js';
@@ -26,20 +27,13 @@ import { playedTime, playheadTicks } from './playheadTicks.js';
 import { rewriteAbc } from './scoreToAbc.js';
 import { BASS_ROWS, LANE_ROWS, MELODY_ROWS } from './pitchRows.js';
 import { UPRIGHT_RANGE, isOutside } from '../../instruments/instrumentRanges.js';
-import { EXTRA_PARTS, isExtraPart } from '../extraParts.js';
+import { isExtraPart } from '../extraParts.js';
 import { echoZone, withoutPickupEcho, withPickupEcho } from './pickupEcho.js';
 import { isShortBar } from './rollLayout.js';
 import { BASS_VOICE, bassVoice, readBassScore } from '../../bass/readBass.js';
 import { bassAbcInUse } from '../../bass/bassInUse.js';
+import { voiceColour } from '../voiceColours.js';
 import { abcjsIfLoaded } from '../../state/abcjsLoaded.svelte.js';
-
-/** Every voice's place in the colour wheel: the melody, then each harmony part. */
-const VOICE_ORDER = [MELODY_CHANNEL, ...HARMONY_PARTS.map((part) => part.id)];
-/** The bass sits opposite the melody on the wheel (each step turns 75°, theme/ui.css). */
-const BASS_COLOUR = 2.4;
-/** Extra parts (+ Lane) start past the harmony parts on the wheel, a step each. */
-const LANE_COLOUR = 3.6;
-const LANE_COLOUR_STEP = 0.8;
 
 /**
  * @typedef {import('./readScore.js').Score} Score
@@ -77,16 +71,25 @@ export class MelodyDrawing {
 	score = $derived(this.current?.score ?? null);
 	problem = $derived(this.current?.problem ?? '');
 	isBass = $derived(this.current?.id === BASS_VOICE);
-	/** An extra part (+ Lane): a line of the tune written by ear, for any instrument. */
+	/** An extra part: a line of the tune beside the melody (yours, or generated), for any instrument. */
 	isExtra = $derived(isExtraPart(this.current?.id ?? ''));
 	/** The bass is written as played, bar for bar with the chart: its own bars. */
 	ownBars = $derived(this.isBass);
-	/** A harmony part: one of the tune's voices written from the melody. */
-	isHarmonyPart = $derived(
-		Boolean(this.current) && !this.ownBars && !this.isExtra && this.current?.id !== MELODY_CHANNEL
+	/**
+	 * A generated line: written from another lane and the chords, and
+	 * following them, except in the bars you lock (a bar you change is locked for you).
+	 */
+	isHarmonyPart = $derived(isGenerated(this.arranger.melody.generated, this.current?.id ?? ''));
+	/** The bars of a generated line you've locked (harmony/keptBars.js); none on any other line. */
+	kept = $derived(
+		keptBars(this.arranger.melody.notation, this.isHarmonyPart ? (this.score?.bars ?? []) : [])
 	);
+	/** The notes can't be changed here: a tune the roll can't write. */
+	readOnly = $derived(this.problem !== '');
 	/** Where this part usually plays (the rows are always the piano's). */
-	usualRange = $derived(this.isBass ? BASS_ROWS : this.isExtra ? LANE_ROWS : MELODY_ROWS);
+	usualRange = $derived(
+		this.isBass ? BASS_ROWS : this.isExtra && !this.isHarmonyPart ? LANE_ROWS : MELODY_ROWS
+	);
 	/** Where this part's instrument can naturally play, or null when it isn't known. */
 	playable = $derived(this.isBass ? UPRIGHT_RANGE : null);
 	/** How many notes sit outside it. */
@@ -101,7 +104,7 @@ export class MelodyDrawing {
 	echo = $derived(this.score && !this.ownBars ? echoZone(this.score.bars, isShortBar) : null);
 	/**
 	 * The tune's other voices, drawn faintly behind the one being edited; the
-	 * given melody (the lines are worked out from it) less faintly, outlined.
+	 * given line (the one it's worked out from) less faintly, outlined.
 	 * Not behind the bass: it's written as played, the tune as written.
 	 */
 	others = $derived(
@@ -110,10 +113,16 @@ export class MelodyDrawing {
 			: this.voices
 					.filter((each) => each !== this.current && each.id !== BASS_VOICE)
 					.map((each) => ({
-						colour: voiceColour(each.id),
+						colour: voiceColour(each.id, this.arranger.melody.generated),
 						notes: each.score.notes,
-						given: each.id === MELODY_CHANNEL
+						given: each.id === this.#given
 					}))
+	);
+
+	/** The line the one shown is worked out from: a generated line's lead, else the melody. */
+	#given = $derived(
+		this.arranger.melody.generated.find((part) => part.id === this.current?.id)?.lead ??
+			MELODY_CHANNEL
 	);
 
 	/** The tune's own bars, as played (null: written as played already). */
@@ -148,10 +157,10 @@ export class MelodyDrawing {
 		return chordsUnderBars(score, sequence, barsInPlayOrder(arrangement.sections));
 	});
 
-	/** Where the picked harmony or bass note could go instead: the chord's other notes nearby. */
+	/** Where the picked note of a part could go instead: the chord's other notes nearby. */
 	options = $derived.by(() => {
 		const note = this.notes[this.selected];
-		if (!note || this.voice === MELODY_CHANNEL || this.problem) return [];
+		if (!note || this.voice === MELODY_CHANNEL || this.readOnly) return [];
 		const { melodyKey } = this.arranger;
 		const under = this.chordsUnder.find(
 			(chord) => chord.at <= note.start && note.start < chord.at + chord.length
@@ -182,26 +191,28 @@ export class MelodyDrawing {
 	 * @param {DrawnNote[]} notes
 	 */
 	commit(notes) {
+		if (this.readOnly) return;
 		const own = withoutPickupEcho(notes, this.current?.score.notes ?? [], this.echo);
 		this.notes = withPickupEcho(own, this.echo);
 		this.#write(this.current?.id ?? MELODY_CHANNEL, own);
 	}
 
 	/**
-	 * The voices an octave move takes: the melody brings its harmony parts
-	 * along (they're written from it); any other part moves alone.
+	 * The voices an octave move takes: a lane brings the lines generated
+	 * from it along (they're written from it).
 	 */
 	#octaveVoices = $derived.by(() => {
 		const current = this.current;
 		if (!current || this.read?.lineStarts) return [];
-		if (current.id !== MELODY_CHANNEL) return [current];
-		return this.voices.filter(
-			(each) => each.id === MELODY_CHANNEL || VOICE_ORDER.includes(each.id)
-		);
+		const lines = this.arranger.melody.generated
+			.filter((part) => part.lead === current.id)
+			.map((part) => part.id);
+		return this.voices.filter((each) => each === current || lines.includes(each.id));
 	});
 
 	/** @param {1 | -1} direction up or down */
 	canMoveOctave(direction) {
+		if (this.isHarmonyPart) return false;
 		const voices = this.#octaveVoices;
 		return (
 			voices.some((each) => each.score.notes.length > 0) &&
@@ -216,7 +227,7 @@ export class MelodyDrawing {
 	moveOctave(direction) {
 		if (!this.canMoveOctave(direction)) return;
 		const semitones = OCTAVE * direction;
-		if (this.voice !== MELODY_CHANNEL) return this.commit(transposed(this.notes, semitones));
+		if (this.#octaveVoices.length === 1) return this.commit(transposed(this.notes, semitones));
 		const { melody } = this.arranger;
 		melody.notation = transposedDrawnMelody(melody.notation, this.#octaveVoices, semitones);
 	}
@@ -309,18 +320,6 @@ export class MelodyDrawing {
 		this.notes = this.#shown();
 		if (this.selected >= this.notes.length) this.selected = -1;
 	}
-}
-
-/**
- * A voice's colour, as a step round the colour wheel from the accent
- * (the same for a voice whichever others the tune has).
- * @param {string} id
- */
-export function voiceColour(id) {
-	if (id === BASS_VOICE) return BASS_COLOUR;
-	if (isExtraPart(id))
-		return LANE_COLOUR + LANE_COLOUR_STEP * EXTRA_PARTS.findIndex((part) => part.id === id);
-	return Math.max(0, VOICE_ORDER.indexOf(id));
 }
 
 /** @param {Score} score */

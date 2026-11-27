@@ -4,7 +4,9 @@
 	 * cycle and it turns on (its ends snap to sixteenth notes, or go anywhere
 	 * with Snap off); drag either end of the cycle to lengthen or shorten it,
 	 * or its middle to slide it; click it to turn the cycle on or off (with no
-	 * cycle yet, a click cycles that bar). `fit` given, every cycle made is
+	 * cycle yet, a click cycles that bar). A finger gets wider end grips, and a
+	 * tap on an end leaves the cycle as it is (the ▾ menu steps it a bar at a
+	 * time, for when an end is off screen). `fit` given, every cycle made is
 	 * fitted by it (Tracks: onto bar lines, as the band loops whole bars).
 	 */
 	import {
@@ -33,8 +35,9 @@
 
 	/** px before a press counts as a drag */
 	const DRAG_THRESHOLD = 4;
-	/** px either side of the cycle's end that still grab it */
+	/** px either side of the cycle's end that still grab it, with a mouse and with a finger */
 	const END_GRIP = 7;
+	const FINGER_GRIP = 22;
 
 	const lines = $derived(barLines(ruler));
 	/** @type {{ x: number, quarters: number, part: 'from' | 'to' | 'body' | null, cycle: import('../../transcription/cycle.js').Cycle | null } | null} */
@@ -57,7 +60,8 @@
 		const region = cycle.region;
 		const box = event.currentTarget.getBoundingClientRect();
 		const edges = region ? { left: scale.toX(region.from), right: scale.toX(region.to) } : null;
-		return grabbedPart(event.clientX - box.left, edges, END_GRIP);
+		const grip = event.pointerType === 'touch' ? FINGER_GRIP : END_GRIP;
+		return grabbedPart(event.clientX - box.left, edges, grip);
 	}
 
 	/** @param {PointerEvent & { currentTarget: HTMLElement }} event */
@@ -100,10 +104,11 @@
 	function up(event) {
 		if (!press) return;
 		const made = dragged;
-		const clickedAt = press.quarters;
+		const { quarters: clickedAt, part } = press;
 		press = null;
 		dragged = null;
 		if (made) return cycle.set(made);
+		if (part === 'from' || part === 'to') return;
 		if (cycle.region) return cycle.turn(!cycle.on);
 		const bar = barAround(clickedAt, lines);
 		if (bar) cycle.set(bar);
@@ -135,7 +140,10 @@
 			class:on={cycle.on || dragged}
 			style:left="{scale.toX(shown.from)}px"
 			style:width="{scale.toX(shown.to) - scale.toX(shown.from)}px"
-		></div>
+		>
+			<span class="grip left"></span>
+			<span class="grip right"></span>
+		</div>
 	{/if}
 </div>
 
@@ -165,5 +173,27 @@
 	.region.on {
 		border-color: var(--color-accent);
 		background: var(--color-accent);
+	}
+
+	.grip {
+		position: absolute;
+		top: 50%;
+		width: 3px;
+		height: 60%;
+		border-radius: 2px;
+		transform: translateY(-50%);
+		background: var(--color-ink-faint);
+	}
+
+	.region.on .grip {
+		background: var(--color-surface);
+	}
+
+	.grip.left {
+		left: 3px;
+	}
+
+	.grip.right {
+		right: 3px;
 	}
 </style>
