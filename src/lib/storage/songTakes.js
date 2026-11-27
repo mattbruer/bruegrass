@@ -11,7 +11,8 @@
  *   takeAudio  each take's audio, by the take's id (big: read one at a time);
  *              a take received in a shared song also keeps the file it came
  *              in (`sent`), so sharing the song again passes it on unchanged
- *   takeVideo  an A/V take's film, by the take's id (the file the camera made)
+ *   takeVideo  an A/V take's film, by the take's id (the file the camera made,
+ *              kept as bytes: iPhone and iPad Safari fail to store a camera's Blob)
  */
 import { askToKeepData, finished, keptOpen, result } from './indexedDb.js';
 import { newId } from './newId.js';
@@ -109,6 +110,7 @@ export function addTake(details, channels, film = null) {
 export async function putTake(take, channels, { sent = null, film = null } = {}) {
 	const db = await database();
 	const others = (await listTakes(take.songId)).filter((each) => each.trackId === take.trackId);
+	const filmBytes = film ? await film.arrayBuffer() : null; // before the transaction: an await would end it
 
 	const transaction = db.transaction(ALL_STORES, 'readwrite');
 	const store = transaction.objectStore('takes');
@@ -118,7 +120,7 @@ export async function putTake(take, channels, { sent = null, film = null } = {})
 	transaction
 		.objectStore('takeAudio')
 		.put(sent ? { id: take.id, channels, sent } : { id: take.id, channels });
-	if (film) transaction.objectStore('takeVideo').put({ id: take.id, film });
+	if (film) transaction.objectStore('takeVideo').put({ id: take.id, bytes: filmBytes, type: film.type });
 	await finished(transaction);
 	await askToKeepData();
 	return take;
@@ -179,7 +181,7 @@ export async function readSentAudio(id) {
 export async function readTakeVideo(id) {
 	const db = await database();
 	const stored = await result(db.transaction('takeVideo').objectStore('takeVideo').get(id));
-	return stored?.film ?? null;
+	return stored ? new Blob([stored.bytes], { type: stored.type }) : null;
 }
 
 /**
