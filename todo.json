@@ -22,7 +22,7 @@
 		},
 		{
 			"id": "virtuals-next",
-			"text": "Virtuals, next: move or transpose the picked bars (an octave, a step in the key), paste an octave down (melody onto the bass), pick bars across several lanes, Repeat ×n",
+			"text": "Virtuals, next: move the picked bars, paste an octave down (melody onto the bass), pick bars across several lanes, Repeat ×n",
 			"done": false,
 			"addedAt": "2026-11-27"
 		},
