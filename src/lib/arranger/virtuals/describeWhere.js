@@ -25,6 +25,7 @@ export function barsText(bars, span) {
  * @param {(lane: string) => string} nameOf
  */
 export function whereText(bars, where, nameOf) {
+	if (where?.wholeSong && where.spans[0]) return `the song, ${barsText(bars, where.spans[0])}`;
 	if (!where || where.lanes.length === 0) return '';
 	const others = where.lanes.length - 1;
 	const lanes = nameOf(where.lanes[0]) + (others > 0 ? ` + ${others}` : '');

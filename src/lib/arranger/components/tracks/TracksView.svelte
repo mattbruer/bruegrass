@@ -48,6 +48,7 @@
 	import VoicingLane from './VoicingLane.svelte';
 	import CycleStrip from './CycleStrip.svelte';
 	import CycleSectionMenu from './CycleSectionMenu.svelte';
+	import SongBarTools from './SongBarTools.svelte';
 	import TempoLane from '../tempo/TempoLane.svelte';
 	import MuteSoloButtons from '../mixer/MuteSoloButtons.svelte';
 	import LaneVolume from '../transcription/LaneVolume.svelte';
@@ -287,7 +288,9 @@
 					onclick={() => cycle.turn(!cycle.on)}
 					use:tooltip={TIPS.tracks.cycle}>Cycle</button
 				>
-				<CycleSectionMenu {cycle} ruler={bars} />
+				<CycleSectionMenu {cycle} ruler={bars}>
+					<SongBarTools {cycle} ruler={bars} />
+				</CycleSectionMenu>
 			</div>
 			<CycleStrip {cycle} ruler={bars} {scale} fit={onBarLines} />
 

@@ -514,6 +514,12 @@ export const TIPS = Object.freeze({
 			'Tap a bar to pick it, then tap another to pick the bars between (tap inside to let go). Its tools show under the controls.',
 		undo: 'Take back the last edit (⌘Z). It says what and where first, and shows the place on the lanes after.',
 		redo: 'Do the edit you took back again (⇧⌘Z).',
+		songBars: {
+			takeOut:
+				'Take these bars out of the whole song: the chart, its words, every part, the guitar and mandolin changes, the tempo lane and your takes. The rest of the song moves up to close the gap.',
+			insert:
+				'Put as many empty bars in before these, in the whole song: they hold the chord before, the parts rest there, and everything after (takes too) moves later.'
+		},
 		virtuals: {
 			repeat:
 				'Play these bars again straight after themselves, over what’s there (R). Press again for another time round.',

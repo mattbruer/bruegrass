@@ -13,7 +13,7 @@ import { barLines } from './sectionRests.js';
 import { MELODY_VOICE } from './tuneBySection.js';
 
 /** Repeats and endings: their bars can't be matched one for one with the chart's. */
-const REPEATS = /:\||\|:|\[\d|\|\d/;
+export const REPEATS = /:\||\|:|\[\d|\|\d/;
 /** A chord symbol, dropped from the rests a harmony part gets. */
 const CHORD_SYMBOL = /"[^"]*"/g;
 
@@ -78,18 +78,22 @@ export function partsFollowingBars(parts, before, after, emptyBars) {
 		const empty = splitBars(emptyBars(section));
 		/** @type {Record<string, string>} */
 		const moved = {};
+		let anyMoved = false;
 		for (const [voice, body] of Object.entries(voices)) {
 			const bars = splitBars(body);
+			// Not lined up with the old bars: written with repeats, or already moved (songBars/)
 			if (REPEATS.test(body) || bars.length !== old.length) {
 				moved[voice] = body;
 				continue;
 			}
+			anyMoved = true;
 			const rest = (/** @type {number} */ index) => {
 				const bar = empty[index] ?? '';
 				return voice === MELODY_VOICE ? bar : bar.replace(CHORD_SYMBOL, '');
 			};
 			moved[voice] = barLines(barsAfter(bars, now.length, matched, rest));
 		}
+		if (!anyMoved) continue;
 		followed[section] = moved;
 		changed = true;
 	}

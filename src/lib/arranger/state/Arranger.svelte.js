@@ -13,6 +13,7 @@
  *   arranger.song          which song is open; New, Open, Rename; it saves itself
  *   arranger.recording     recording along with the band, and the song's takes
  *   arranger.audioEdits    editing the audio lanes' clips (trim, split, comp, level, fades)
+ *   arranger.songBars      bars taken out of the whole song or empty ones put in, everything moving together
  *   arranger.virtuals      editing the virtuals (piano-roll parts) bars at a time: repeat, copy, paste, clear, take out, insert
  *   arranger.mandolin      the mandolin's chop for each chord, and changing one
  *   arranger.guitar        the guitar's shape, booms and chucks for each chord, and changing them
@@ -34,6 +35,7 @@ import { PartsState } from './PartsState.svelte.js';
 import { TranscriptionState } from '../transcription/TranscriptionState.svelte.js';
 import { AudioEditsState } from './AudioEditsState.svelte.js';
 import { VirtualEditsState } from './VirtualEditsState.svelte.js';
+import { SongBarsState } from './SongBarsState.svelte.js';
 import { MandolinState } from './MandolinState.svelte.js';
 import { GuitarState } from './GuitarState.svelte.js';
 import { EditHistory } from './EditHistory.svelte.js';
@@ -81,6 +83,11 @@ export class Arranger {
 	/** Undo and Redo for the parts' notes, the audio lanes' clips, the mandolin's chops, the guitar's chords and the tempo lane. */
 	history = new EditHistory(
 		{
+			chart: {
+				read: () => this.arrangement.text,
+				write: (text) => (this.arrangement.text = /** @type {string} */ (text)),
+				label: 'Change the chart'
+			},
 			tune: keptTextField(this.melody, 'Change the tune'),
 			bassLine: keptTextField(this.bass, 'Change the bass line'),
 			audioClips: {
@@ -116,6 +123,8 @@ export class Arranger {
 	audioEdits = new AudioEditsState(this);
 	/** Editing the virtuals (the parts written with the piano roll) bars at a time on their lanes. */
 	virtuals = new VirtualEditsState(this);
+	/** Bars taken out of the whole song, or empty ones put in (the chart, every lane, the takes). */
+	songBars = new SongBarsState(this);
 	/** The mandolin's chops, and changing one. */
 	mandolin = new MandolinState(this);
 	/** What the guitar plays on each chord, and changing it. */
@@ -283,7 +292,7 @@ export class Arranger {
 			: splitTune(melody.notation, melody.tune, instances, barCounts);
 		if (!tune) return `The tune can't be split: ${problem}`;
 		melody.bySection = tune;
-		this.#splitBass();
+		this.splitBassIntoSections();
 		return '';
 	}
 
@@ -308,7 +317,7 @@ export class Arranger {
 	}
 
 	/** The bass line by section too, unless it was written by ear from nothing. */
-	#splitBass() {
+	splitBassIntoSections() {
 		const own = this.#bandsOwnBass();
 		if (!own || this.bass.bySection || isAsPlayed(this.bass.notation)) return;
 		this.bass.split(own.header);
